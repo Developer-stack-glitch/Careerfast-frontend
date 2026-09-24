@@ -24,6 +24,7 @@ if (typeof window !== "undefined") {
       msg.includes("FedCM get() rejects") ||
       msg.includes("[GSI_LOGGER]") ||
       msg.includes("[antd: compatible]") ||
+      msg.includes("[antd: message]") ||
       msg.includes("src attribute")
     ) {
       return;
@@ -35,6 +36,7 @@ if (typeof window !== "undefined") {
     const msg = args[0] ? String(args[0]) : "";
     if (
       msg.includes("[antd: compatible]") ||
+      msg.includes("[antd: message]") ||
       msg.includes("antd v5 support React") ||
       msg.includes("src attribute")
     ) {

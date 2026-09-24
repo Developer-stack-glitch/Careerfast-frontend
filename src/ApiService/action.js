@@ -42,8 +42,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     console.log("Interceptor caught error:", error?.response?.status);
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      console.log("Triggering ShowModal from interceptor");
+    // Only 401 Unauthorized indicates invalid or expired session.
+    // 403 Forbidden indicates business/quota/permission limits and should NOT wipe authentication!
+    if (error.response && error.response.status === 401) {
+      console.log("Triggering ShowModal from interceptor for 401 Unauthorized");
       ShowModal();
       localStorage.removeItem("AccessToken");
     }
@@ -76,7 +78,7 @@ export const isTokenExpired = (token) => {
 // modal
 export const ShowModal = () => {
   console.log("ShowModal called.");
-  
+
   if (document.getElementById('session-expired-modal')) {
     return;
   }
@@ -176,6 +178,15 @@ export const register = async (registerload) => {
 export const getOrganizationType = async () => {
   try {
     const response = await api.get("/api/organization/type/get");
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getIndustryTypes = async () => {
+  try {
+    const response = await api.get("/api/industry/type/get");
     return response;
   } catch (error) {
     throw error;
@@ -377,6 +388,16 @@ export const sendOtp = async (payload) => {
   }
 };
 
+// Send Email Verification OTP (Wizard / Profile)
+export const verifyEmail = async (payload) => {
+  try {
+    const response = await api.post("/api/VerifyEmail", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Step 2: Verify OTP
 export const verifyOtp = async (payload) => {
   try {
@@ -420,17 +441,6 @@ export const getHrProfileData = async (userId) => {
 export const insertHrProfileData = async (payload) => {
   try {
     const response = await api.post("/api/insertHrProfile", payload);
-    return response;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// verify email
-
-export const verifyEmail = async (payload) => {
-  try {
-    const response = await api.post("/api/VerifyEmail", payload);
     return response;
   } catch (error) {
     throw error;
@@ -529,6 +539,17 @@ export const updateAbout = async (payload) => {
 export const updateSkills = async (payload) => {
   try {
     const response = await api.put("/api/updateSkills", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// updateVisibility
+
+export const updateVisibility = async (payload) => {
+  try {
+    const response = await api.put("/api/updateVisibility", payload);
     return response;
   } catch (error) {
     throw error;
@@ -1434,10 +1455,10 @@ export const getUniqueCompanies = async () => {
   }
 };
 
-export const getSuperAdminDashboardStats = async (timeFilter) => {
+export const getSuperAdminDashboardStats = async (timeFilter, extraParams = {}) => {
   try {
     const response = await api.get("/api/superadmin/dashboard-stats", {
-      params: { timeFilter }
+      params: { timeFilter, ...extraParams }
     });
     return response;
   } catch (error) {
@@ -1497,12 +1518,12 @@ export const updateJobPosting = async (payload) => {
   }
 };
 
-export const getPendingJobs = async (limit = 20, page = 1) => {
+export const getPendingJobs = async (limit = 20, page = 1, extraParams = {}) => {
   try {
     const token = localStorage.getItem("AccessToken");
     if (!token) throw new Error("No AccessToken found");
     const response = await api.get("/api/getPendingJobs", {
-      params: { limit, page },
+      params: { limit, page, ...extraParams },
       headers: { Authorization: `Bearer ${token}` },
     });
     return response;
@@ -1716,5 +1737,246 @@ export const addCandidatesToFolderAPI = async (folderIdentifier, candidateIds, s
   }
 };
 
+// ==========================================
+// 👑 Super Admin Plan Management APIs
+// ==========================================
+export const getAdminPlans = async () => {
+  try {
+    const response = await api.get("/api/admin/plans");
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminPlanById = async (id) => {
+  try {
+    const response = await api.get(`/api/admin/plans/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createAdminPlan = async (payload) => {
+  try {
+    const response = await api.post("/api/admin/plans", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateAdminPlan = async (id, payload) => {
+  try {
+    const response = await api.put(`/api/admin/plans/${id}`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const duplicateAdminPlan = async (id) => {
+  try {
+    const response = await api.post(`/api/admin/plans/${id}/duplicate`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const toggleAdminPlanStatus = async (id, status) => {
+  try {
+    const response = await api.put(`/api/admin/plans/${id}/status`, { status });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteAdminPlan = async (id) => {
+  try {
+    const response = await api.delete(`/api/admin/plans/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminPlanSubscribers = async (id) => {
+  try {
+    const response = await api.get(`/api/admin/plans/${id}/subscribers`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// ==========================================
+// 🏢 Super Admin Recruiter Management APIs
+// ==========================================
+export const getAdminRecruiters = async (params = {}) => {
+  try {
+    const response = await api.get("/api/admin/recruiters", { params });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminRecruiterDetails = async (id) => {
+  try {
+    const response = await api.get(`/api/admin/recruiters/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createAdminRecruiter = async (payload) => {
+  try {
+    const response = await api.post("/api/admin/recruiters", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeAdminRecruiterPlan = async (id, payload) => {
+  try {
+    const response = await api.post(`/api/admin/recruiters/${id}/change-plan`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const extendAdminRecruiterSubscription = async (id, payload) => {
+  try {
+    const response = await api.post(`/api/admin/recruiters/${id}/extend-subscription`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateAdminRecruiterStatus = async (id, payload) => {
+  try {
+    const response = await api.put(`/api/admin/recruiters/${id}/status`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resetAdminRecruiterPassword = async (id, payload) => {
+  try {
+    const response = await api.post(`/api/admin/recruiters/${id}/reset-password`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminSubscriptions = async (params = {}) => {
+  try {
+    const response = await api.get("/api/admin/subscriptions", { params });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminAuditLogs = async (limit = 50) => {
+  try {
+    const response = await api.get("/api/admin/audit-logs", { params: { limit } });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
 
 
+// ==========================================
+// 👥 Recruiter Team & Sub-Recruiter API Service
+// ==========================================
+export const getRecruiterTeam = async (params = {}) => {
+  try {
+    const response = await api.get("/api/recruiter/team", { params });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createSubRecruiter = async (payload) => {
+  try {
+    const response = await api.post("/api/recruiter/team", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateSubRecruiterPermissions = async (id, payload) => {
+  try {
+    const response = await api.put(`/api/recruiter/team/${id}/permissions`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const toggleSubRecruiterStatus = async (id, status) => {
+  try {
+    const response = await api.patch(`/api/recruiter/team/${id}/status`, { status });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteSubRecruiter = async (id) => {
+  try {
+    const response = await api.delete(`/api/recruiter/team/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminRecruiterTeam = async (recruiterId) => {
+  try {
+    const response = await api.get(`/api/admin/recruiters/${recruiterId}/team`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createAdminSubRecruiter = async (recruiterId, payload) => {
+  try {
+    const response = await api.post(`/api/admin/recruiters/${recruiterId}/team`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
+// Worldwide Job Roles & Locations & Skills & Companies Third-Party APIs
+export {
+  fetchWorldwideJobRoles,
+  fetchWorldwideLocations,
+  fetchWorldwideSkills,
+  fetchWorldwideCompanies,
+  getInitialJobRoles,
+  getInitialLocations,
+  getInitialSkills,
+  getInitialCompanies,
+  POPULAR_WORLDWIDE_JOB_ROLES,
+  POPULAR_WORLDWIDE_LOCATIONS,
+  POPULAR_WORLDWIDE_SKILLS,
+  POPULAR_WORLDWIDE_COMPANIES,
+  SKILL_CATEGORIES,
+} from "../Common/worldwideDataService";

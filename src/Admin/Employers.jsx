@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { getUsers, getUserProfile, updateUserStatus } from '../ApiService/action';
 import toast from 'react-hot-toast';
+import AdminDateFilter from './AdminDateFilter';
 
 // ── Format Last Active Dynamically ──
 const formatLastActive = (dateString) => {
@@ -24,7 +25,7 @@ const formatLastActive = (dateString) => {
     });
 
     if (diffInSec < 0 || diffInSec < 60) return { relative: 'Active now', exact, isOnline: true };
-    
+
     const diffInMin = Math.floor(diffInSec / 60);
     if (diffInMin < 15) return { relative: 'Active now', exact, isOnline: true };
     if (diffInMin < 60) return { relative: `${diffInMin}m ago`, exact, isOnline: false };
@@ -227,8 +228,8 @@ export default function Employers() {
     const [selectedProfileId, setSelectedProfileId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, new: 0 });
-
     const [lastActiveSort, setLastActiveSort] = useState(null); // null | 'desc' | 'asc'
+    const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
     // Pagination state
     const [matchedUsers, setMatchedUsers] = useState(0);
@@ -249,7 +250,7 @@ export default function Employers() {
             fetchUsers();
         }, 500);
         return () => clearTimeout(timeout);
-    }, [currentPage, searchTerm, activeFilter]);
+    }, [currentPage, searchTerm, activeFilter, dateFilter]);
 
     const fetchUsers = async () => {
         try {
@@ -260,7 +261,10 @@ export default function Employers() {
                 limit: itemsPerPage,
                 search: searchTerm,
                 status: statusFilter,
-                role: "1,3"
+                role: "1,3",
+                start_date: dateFilter.startDate || undefined,
+                end_date: dateFilter.endDate || undefined,
+                timeFilter: dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined
             };
             const response = await getUsers(payload);
             const responseData = response?.data?.data;
@@ -342,7 +346,7 @@ export default function Employers() {
         <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full">
             {/* Header Section */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Employers</h1>
+                <h1 className="text-2xl font-bold text-gray-900 mb-1">Recruiter Management</h1>
                 <p className="text-[14px] text-gray-500 mt-0">Manage and monitor all employers across your platform.</p>
             </div>
 
@@ -360,10 +364,10 @@ export default function Employers() {
                             }`}
                     >
                         <Users className="w-4 h-4" />
-                        <span>All Employers</span>
+                        <span>All Recruiters</span>
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'All' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-600'
                             }`}>
-                            {globalStats.total || matchedUsers}
+                            {globalStats.total !== undefined ? globalStats.total : matchedUsers}
                         </span>
                     </button>
 
@@ -379,7 +383,7 @@ export default function Employers() {
                         <span>Active</span>
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
                             }`}>
-                            {globalStats.active || 0}
+                            {globalStats.active !== undefined ? globalStats.active : 0}
                         </span>
                     </button>
 
@@ -395,13 +399,20 @@ export default function Employers() {
                         <span>Disabled</span>
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Disabled' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
                             }`}>
-                            {globalStats.pending || 0}
+                            {globalStats.pending !== undefined ? globalStats.pending : 0}
                         </span>
                     </button>
                 </div>
 
-                {/* Right: Search and Add Button */}
-                <div className="flex items-center gap-3">
+                {/* Right: Date Filter and Search */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                    <AdminDateFilter
+                        value={dateFilter}
+                        onChange={(newFilter) => {
+                            setDateFilter(newFilter);
+                            setCurrentPage(1);
+                        }}
+                    />
                     <div className="relative group w-full sm:w-[280px]">
                         <input
                             type="text"
@@ -431,7 +442,7 @@ export default function Employers() {
                                 <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
                                     <div className="flex items-center gap-2">STATUS <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
                                 </th>
-                                <th 
+                                <th
                                     onClick={() => setLastActiveSort(prev => prev === 'desc' ? 'asc' : prev === 'asc' ? null : 'desc')}
                                     className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-gray-900 select-none transition-colors"
                                     title="Click to sort by Last Active"

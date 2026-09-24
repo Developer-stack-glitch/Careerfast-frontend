@@ -116,3 +116,269 @@ a.whatsapp-btn span {
   color: inherit !important;
 }
 
+/* ==========================================================================
+   Candidate Profile Wizard Form Fields Uniform Styling
+   - Uniform height (44px)
+   - Uniform rounded corners (12px)
+   - Brand purple hover & focus border colors
+   - Perfect text & icon vertical alignment
+   ========================================================================== */
+
+/* Critical Reset: NEVER give border/height/box-shadow to an input nested inside an affix-wrapper */
+.profile-wizard-scope .ant-input-affix-wrapper>input.ant-input,
+.profile-wizard-scope .ant-input-affix-wrapper input,
+.profile-wizard-modal .ant-input-affix-wrapper>input.ant-input,
+.profile-wizard-modal .ant-input-affix-wrapper input {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  border-radius: 0 !important;
+  padding: 0 0 0 6px !important;
+  outline: none !important;
+}
+
+/* Single-line form controls: Standalone Input, Affix Wrapper, Select, DatePicker, InputNumber */
+.profile-wizard-scope input.ant-input:not(.ant-input-affix-wrapper input),
+.profile-wizard-scope .ant-input-affix-wrapper:not(.ant-input-textarea-affix-wrapper):not(:has(textarea)),
+.profile-wizard-scope .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.profile-wizard-scope .ant-picker,
+.profile-wizard-scope .ant-input-number,
+.profile-wizard-modal input.ant-input:not(.ant-input-affix-wrapper input),
+.profile-wizard-modal .ant-input-affix-wrapper:not(.ant-input-textarea-affix-wrapper):not(:has(textarea)),
+.profile-wizard-modal .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.profile-wizard-modal .ant-picker,
+.profile-wizard-modal .ant-input-number {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  line-height: 42px !important;
+  box-sizing: border-box !important;
+}
+
+/* Multi-select and Tags */
+.profile-wizard-scope .ant-select-multiple .ant-select-selector,
+.profile-wizard-modal .ant-select-multiple .ant-select-selector {
+  min-height: 44px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  padding: 3px 8px !important;
+  box-sizing: border-box !important;
+}
+
+/* Textarea & Textarea Affix Wrapper styling */
+.profile-wizard-scope textarea.ant-input,
+.profile-wizard-modal textarea.ant-input {
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  padding: 10px 14px !important;
+  box-sizing: border-box !important;
+}
+
+/* When textarea is inside affix wrapper (e.g. showCount or allowClear) */
+.profile-wizard-scope .ant-input-textarea-affix-wrapper,
+.profile-wizard-modal .ant-input-textarea-affix-wrapper,
+.profile-wizard-scope .ant-input-affix-wrapper:has(textarea),
+.profile-wizard-modal .ant-input-affix-wrapper:has(textarea) {
+  display: flex !important;
+  align-items: stretch !important;
+  height: auto !important;
+  min-height: 110px !important;
+  max-height: none !important;
+  line-height: 1.5 !important;
+  padding: 10px 14px !important;
+  border-radius: 12px !important;
+  box-sizing: border-box !important;
+}
+
+.profile-wizard-scope .ant-input-textarea-affix-wrapper>textarea.ant-input,
+.profile-wizard-modal .ant-input-textarea-affix-wrapper>textarea.ant-input,
+.profile-wizard-scope .ant-input-affix-wrapper>textarea.ant-input,
+.profile-wizard-modal .ant-input-affix-wrapper>textarea.ant-input {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  outline: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: 80px !important;
+  max-height: none !important;
+  line-height: 1.5 !important;
+  resize: vertical !important;
+}
+
+.profile-wizard-scope .ant-input-textarea-affix-wrapper .ant-input-suffix,
+.profile-wizard-modal .ant-input-textarea-affix-wrapper .ant-input-suffix,
+.profile-wizard-scope .ant-input-affix-wrapper:has(textarea) .ant-input-suffix,
+.profile-wizard-modal .ant-input-affix-wrapper:has(textarea) .ant-input-suffix {
+  display: flex !important;
+  justify-content: flex-end !important;
+  align-self: flex-end !important;
+  margin-top: 6px !important;
+  color: #9CA3AF !important;
+  font-size: 12px !important;
+}
+
+/* Default border color */
+.profile-wizard-scope input.ant-input:not(.ant-input-affix-wrapper input):not(.ant-input-disabled),
+.profile-wizard-scope textarea.ant-input:not(.ant-input-affix-wrapper textarea):not(.ant-input-disabled),
+.profile-wizard-scope .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled),
+.profile-wizard-scope .ant-select:not(.ant-select-disabled) .ant-select-selector,
+.profile-wizard-scope .ant-picker:not(.ant-picker-disabled),
+.profile-wizard-scope .ant-input-number:not(.ant-input-number-disabled),
+.profile-wizard-modal input.ant-input:not(.ant-input-affix-wrapper input):not(.ant-input-disabled),
+.profile-wizard-modal textarea.ant-input:not(.ant-input-affix-wrapper textarea):not(.ant-input-disabled),
+.profile-wizard-modal .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled),
+.profile-wizard-modal .ant-select:not(.ant-select-disabled) .ant-select-selector,
+.profile-wizard-modal .ant-picker:not(.ant-picker-disabled),
+.profile-wizard-modal .ant-input-number:not(.ant-input-number-disabled) {
+  border: 1px solid #E5E7EB !important;
+  background-color: #FFFFFF !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Hover border color - Brand purple hover */
+.profile-wizard-scope input.ant-input:not(.ant-input-affix-wrapper input):not(.ant-input-disabled):hover,
+.profile-wizard-scope textarea.ant-input:not(.ant-input-affix-wrapper textarea):not(.ant-input-disabled):hover,
+.profile-wizard-scope .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover,
+.profile-wizard-scope .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+.profile-wizard-scope .ant-picker:not(.ant-picker-disabled):hover,
+.profile-wizard-scope .ant-input-number:not(.ant-input-number-disabled):hover,
+.profile-wizard-modal input.ant-input:not(.ant-input-affix-wrapper input):not(.ant-input-disabled):hover,
+.profile-wizard-modal textarea.ant-input:not(.ant-input-affix-wrapper textarea):not(.ant-input-disabled):hover,
+.profile-wizard-modal .ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover,
+.profile-wizard-modal .ant-select:not(.ant-select-disabled):hover .ant-select-selector,
+.profile-wizard-modal .ant-picker:not(.ant-picker-disabled):hover,
+.profile-wizard-modal .ant-input-number:not(.ant-input-number-disabled):hover {
+  border-color: #8B5CF6 !important;
+}
+
+/* Focus / Active state - Deep purple border + soft glow */
+.profile-wizard-scope input.ant-input:not(.ant-input-affix-wrapper input):not(.ant-input-disabled):focus,
+.profile-wizard-scope textarea.ant-input:not(.ant-input-affix-wrapper textarea):not(.ant-input-disabled):focus,
+.profile-wizard-scope .ant-input-affix-wrapper-focused,
+.profile-wizard-scope .ant-select-focused:not(.ant-select-disabled) .ant-select-selector,
+.profile-wizard-scope .ant-picker-focused,
+.profile-wizard-scope .ant-input-number-focused,
+.profile-wizard-modal input.ant-input:not(.ant-input-affix-wrapper input):not(.ant-input-disabled):focus,
+.profile-wizard-modal textarea.ant-input:not(.ant-input-affix-wrapper textarea):not(.ant-input-disabled):focus,
+.profile-wizard-modal .ant-input-affix-wrapper-focused,
+.profile-wizard-modal .ant-select-focused:not(.ant-select-disabled) .ant-select-selector,
+.profile-wizard-modal .ant-picker-focused,
+.profile-wizard-modal .ant-input-number-focused {
+  border-color: #6B21A8 !important;
+  box-shadow: 0 0 0 3px rgba(107, 33, 168, 0.12) !important;
+  outline: none !important;
+}
+
+/* Disabled state */
+.profile-wizard-scope .ant-input-disabled,
+.profile-wizard-scope .ant-input-affix-wrapper-disabled,
+.profile-wizard-scope .ant-select-disabled .ant-select-selector,
+.profile-wizard-scope .ant-picker-disabled,
+.profile-wizard-modal .ant-input-disabled,
+.profile-wizard-modal .ant-input-affix-wrapper-disabled,
+.profile-wizard-modal .ant-select-disabled .ant-select-selector,
+.profile-wizard-modal .ant-picker-disabled {
+  background-color: #F9FAFB !important;
+  border-color: #E5E7EB !important;
+  color: #6B7280 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+/* Vertical alignment inside Select */
+.profile-wizard-scope .ant-select-single:not(.ant-select-customize-input) .ant-select-selector,
+.profile-wizard-modal .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 14px !important;
+}
+
+.profile-wizard-scope .ant-select-single .ant-select-selection-item,
+.profile-wizard-scope .ant-select-single .ant-select-selection-placeholder,
+.profile-wizard-modal .ant-select-single .ant-select-selection-item,
+.profile-wizard-modal .ant-select-single .ant-select-selection-placeholder {
+  line-height: normal !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 !important;
+}
+
+.profile-wizard-scope .ant-select .ant-select-arrow,
+.profile-wizard-modal .ant-select .ant-select-arrow {
+  color: #9CA3AF !important;
+  right: 14px !important;
+}
+
+/* Vertical alignment inside DatePicker */
+.profile-wizard-scope .ant-picker,
+.profile-wizard-modal .ant-picker {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 14px !important;
+}
+
+.profile-wizard-scope .ant-picker .ant-picker-suffix,
+.profile-wizard-modal .ant-picker .ant-picker-suffix {
+  color: #9CA3AF !important;
+}
+
+/* Vertical alignment inside Affix Wrapper (inputs with icons) */
+.profile-wizard-scope .ant-input-affix-wrapper:not(.ant-input-textarea-affix-wrapper):not(:has(textarea)),
+.profile-wizard-modal .ant-input-affix-wrapper:not(.ant-input-textarea-affix-wrapper):not(:has(textarea)) {
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 14px !important;
+}
+
+/* Standalone inputs padding */
+.profile-wizard-scope input.ant-input:not(.ant-input-affix-wrapper input),
+.profile-wizard-modal input.ant-input:not(.ant-input-affix-wrapper input) {
+  padding: 8px 14px !important;
+}
+
+/* Dropdown styling */
+.ant-select-dropdown {
+  border-radius: 12px !important;
+  padding: 6px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+.ant-select-item-option {
+  border-radius: 8px !important;
+  margin-bottom: 2px !important;
+  font-size: 13px !important;
+}
+
+.ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: #F5F0FF !important;
+  color: #6B21A8 !important;
+  font-weight: 600 !important;
+}
+
+.ant-select-item-option-active:not(.ant-select-item-option-selected) {
+  background-color: #FAF5FF !important;
+  color: #6B21A8 !important;
+}
+
+.ant-picker-dropdown .ant-picker-panel-container {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+.ant-picker-cell-selected .ant-picker-cell-inner {
+  background-color: #6B21A8 !important;
+  border-radius: 8px !important;
+}
+
+.ant-picker-today-btn {
+  color: #6B21A8 !important;
+  font-weight: 600 !important;
+}

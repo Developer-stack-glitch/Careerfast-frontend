@@ -5,7 +5,7 @@ import {
     Plug, LineChart, Sparkles, Users, CreditCard,
     Rocket, ChevronRight, Bell, PanelLeftClose, PanelLeftOpen, X, Command,
     Building, Briefcase, FileCheck, MessageSquare,
-    TimerReset, LogOut
+    TimerReset, LogOut, UserPlus, Layers, PlusCircle, Users2
 } from 'lucide-react';
 import Overview from './Overview';
 import JobPost from './JobPost';
@@ -23,37 +23,41 @@ const mockNavGroups = [
     {
         heading: 'Overview',
         items: [
-            { id: 'dashboard', title: 'Dashboard', icon: LineChart },
-            { id: 'analytics', title: 'Analytics & Reports', icon: Sparkles },
+            { id: 'dashboard', title: 'Dashboard', icon: LineChart, href: '/admin' },
+            { id: 'analytics', title: 'Analytics & Reports', icon: Sparkles, href: '/admin/analytics' },
         ]
     },
     {
-        heading: 'User Management',
+        heading: 'Recruiters',
         items: [
-            { id: 'job-seekers', title: 'Job Seekers', icon: Users },
+            { id: 'all-recruiters', title: 'All Recruiters', icon: Building, href: '/admin/recruiters' },
+            { id: 'add-recruiter', title: 'Add Recruiter', icon: UserPlus, href: '/admin/recruiters/create' },
+            { id: 'recruiter-subscriptions', title: 'Recruiter Subscriptions', icon: CreditCard, href: '/admin/recruiters/subscriptions' },
         ]
     },
     {
-        heading: 'Recruiter Management',
+        heading: 'Plans',
         items: [
-            { id: 'employers', title: 'Employers', icon: Building },
-            { id: 'job-post', title: 'Job Postings', icon: Briefcase },
-            { id: 'applications', title: 'Applications', icon: FileCheck },
-            { id: 'pending-jobs', title: 'Approval Pending Jobs', icon: TimerReset },
+            { id: 'all-plans', title: 'All Plans', icon: Layers, href: '/admin/plans' },
+            { id: 'add-plan', title: 'Add Plan', icon: PlusCircle, href: '/admin/plans/create' },
+            { id: 'plan-subscribers', title: 'Plan Subscribers', icon: Users2, href: '/admin/plans/subscribers' },
+        ]
+    },
+    {
+        heading: 'Jobs & Candidates',
+        items: [
+            { id: 'job-post', title: 'Job Postings', icon: Briefcase, href: '/admin/job-post' },
+            { id: 'applications', title: 'Applications', icon: FileCheck, href: '/admin/applications' },
+            { id: 'pending-jobs', title: 'Approval Pending Jobs', icon: TimerReset, href: '/admin/pending-jobs' },
+            { id: 'job-seekers', title: 'Job Seekers', icon: Users, href: '/admin/job-seekers' },
         ]
     },
     {
         heading: 'Platform',
         items: [
-            { id: 'billing', title: 'Billing & Plans', icon: CreditCard },
-            { id: 'support', title: 'Support Tickets', icon: MessageSquare },
-        ]
-    },
-    {
-        heading: 'Configuration',
-        items: [
-            { id: 'general', title: 'General Settings', icon: Settings },
-            { id: 'integrations', title: 'Integrations', icon: Plug },
+            { id: 'support', title: 'Support Tickets', icon: MessageSquare, href: '/admin/support' },
+            { id: 'general', title: 'General Settings', icon: Settings, href: '/admin/general' },
+            { id: 'integrations', title: 'Integrations', icon: Plug, href: '/admin/integrations' },
         ]
     }
 ];
@@ -74,8 +78,10 @@ function WorkspaceSwitcher() {
     );
 }
 
-function NavItem({ item, activeId, onSelect }) {
-    const isActive = activeId === item.id;
+function NavItem({ item, currentPath, activeId, onSelect }) {
+    const isActive = item.href
+        ? (item.href === '/admin' ? currentPath === '/admin' : currentPath === item.href || currentPath.startsWith(item.href + '/'))
+        : activeId === item.id;
 
     return (
         <div
@@ -85,7 +91,7 @@ function NavItem({ item, activeId, onSelect }) {
                     : item.id === 'logout'
                         ? 'text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg'
                         : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg'}`}
-            onClick={() => onSelect(item.id)}
+            onClick={() => onSelect(item)}
         >
             <item.icon className={`w-[16px] h-[16px] ${isActive ? 'text-gray-700' : item.id === 'logout' ? 'text-red-500' : 'text-gray-400'}`} strokeWidth={isActive ? 2 : 1.5} />
             <span className="truncate">{item.title}</span>
@@ -93,7 +99,7 @@ function NavItem({ item, activeId, onSelect }) {
     );
 }
 
-export function SidebarNav({ className = '', activeId, onSelect }) {
+export function SidebarNav({ className = '', currentPath, activeId, onSelect }) {
     return (
         <div className={`flex flex-col w-[260px] h-full bg-white border-r border-gray-100 font-sans ${className}`}>
             <WorkspaceSwitcher />
@@ -110,6 +116,7 @@ export function SidebarNav({ className = '', activeId, onSelect }) {
                             <NavItem
                                 key={item.id}
                                 item={item}
+                                currentPath={currentPath}
                                 activeId={activeId}
                                 onSelect={onSelect}
                             />
@@ -149,6 +156,7 @@ export function SidebarNav({ className = '', activeId, onSelect }) {
                     <NavItem
                         key={item.id}
                         item={item}
+                        currentPath={currentPath}
                         activeId={activeId}
                         onSelect={onSelect}
                     />
@@ -191,18 +199,23 @@ export default function AdminLayout({ children }) {
         checkAccess();
     }, []);
 
-    const activeItem = allItems.find(i => i.id === activeId);
+    const activeItem = allItems.find(i => i.href ? i.href === pathname : i.id === activeId);
     const activeTitle = activeItem ? activeItem.title : 'Dashboard';
 
-    const handleSelect = (id) => {
-        if (id === 'dashboard') {
-            router.push('/admin');
-        } else if (id === 'logout') {
+    const handleSelect = (itemOrId) => {
+        const item = typeof itemOrId === 'object' ? itemOrId : (allItems.find(i => i.id === itemOrId) || { id: itemOrId });
+        const id = item.id;
+
+        if (id === 'logout') {
             localStorage.removeItem("AccessToken");
             localStorage.removeItem("loginDetails");
             document.cookie = "AccessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             document.cookie = "loginDetails=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             window.location.href = "/superadmin/login";
+        } else if (item.href) {
+            router.push(item.href);
+        } else if (id === 'dashboard') {
+            router.push('/admin');
         } else if (id === 'back') {
             router.push('/');
         } else {
@@ -218,6 +231,7 @@ export default function AdminLayout({ children }) {
             >
                 <SidebarNav
                     className="w-[260px] border-none"
+                    currentPath={pathname}
                     activeId={activeId}
                     onSelect={handleSelect}
                 />

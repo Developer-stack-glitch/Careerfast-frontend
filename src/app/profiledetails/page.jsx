@@ -1,8 +1,8 @@
 'use client';
 import dynamic from 'next/dynamic';
 
-const PageComponent = dynamic(() => import('@/ProfileDetails/ProfileDetails'), { ssr: false });
+const CandidateProfileWizard = dynamic(() => import('@/ProfileWizard/CandidateProfileWizard'), { ssr: false });
 
 export default function Page() {
-  return <PageComponent />;
+  return <CandidateProfileWizard />;
 }

@@ -4,20 +4,23 @@ import {
 } from 'recharts';
 import { Users, Briefcase, FileCheck, Building, TrendingUp, Download } from 'lucide-react';
 import { getSuperAdminDashboardStats } from '../ApiService/action';
+import AdminDateFilter from './AdminDateFilter';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
+const StatCard = ({ title, value, icon: Icon, color, bg, accent, trend = null }) => (
     <div className="bg-white rounded-2xl p-4 relative overflow-hidden group">
         <div className={`absolute top-0 right-0 w-24 h-24 rounded-full ${bg} opacity-50 -translate-y-10 translate-x-10 group-hover:scale-110 transition-transform duration-500`}></div>
         <div className="flex items-center justify-between mb-3 relative z-10">
             <div className={`p-2.5 rounded-lg ${bg} ${color} ring-1 ring-inset ${accent}`}>
                 <Icon className="w-5 h-5" strokeWidth={2} />
             </div>
-            <div className="flex items-center text-[13px] font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                <span>+12%</span>
-            </div>
+            {trend && (
+                <div className="flex items-center text-[13px] font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
+                    <TrendingUp className="w-3 h-3 mr-1" />
+                    <span>{trend}</span>
+                </div>
+            )}
         </div>
         <div className="relative z-10">
             <h4 className="text-gray-500 text-[15px] font-medium mb-1">{title}</h4>
@@ -28,6 +31,7 @@ const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
 
 export default function AnalyticsReport() {
     const [loading, setLoading] = useState(true);
+    const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
     const [data, setData] = useState({
         summary: { totalUsers: 0, activeJobs: 0, totalApplications: 0, totalEmployers: 0 },
         userGrowth: [],
@@ -38,7 +42,13 @@ export default function AnalyticsReport() {
     useEffect(() => {
         const fetchAnalytics = async () => {
             try {
-                const response = await getSuperAdminDashboardStats();
+                setLoading(true);
+                const timeFilter = dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined;
+                const extraParams = {
+                    start_date: dateFilter.startDate || undefined,
+                    end_date: dateFilter.endDate || undefined
+                };
+                const response = await getSuperAdminDashboardStats(timeFilter, extraParams);
 
                 if (response.data && response.data.data) {
                     setData(response.data.data);
@@ -53,18 +63,18 @@ export default function AnalyticsReport() {
         };
 
         fetchAnalytics();
-    }, []);
+    }, [dateFilter]);
 
     const handleExport = () => {
         if (!data || !data.summary) return;
-        
+
         const csvRows = [];
         csvRows.push(['Metric', 'Count']);
         csvRows.push(['Total Users', data.summary.totalUsers || 0]);
         csvRows.push(['Active Jobs', data.summary.activeJobs || 0]);
         csvRows.push(['Total Applications', data.summary.totalApplications || 0]);
         csvRows.push(['Total Employers', data.summary.totalEmployers || 0]);
-        
+
         // Add User Growth Trends
         if (data.userGrowth && data.userGrowth.length > 0) {
             csvRows.push([]);
@@ -154,13 +164,20 @@ export default function AnalyticsReport() {
                     <h1 className="text-2xl font-bold text-gray-900 mb-0">Platform Analytics</h1>
                     <p className="text-gray-500 text-[14px] mt-1 mb-0">Comprehensive overview of platform growth and activity.</p>
                 </div>
-                <button
-                    onClick={handleExport}
-                    className="flex items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 hover:text-gray-900 px-4 py-2 rounded-lg font-medium text-[14px] transition-colors focus:outline-none focus:ring-2 focus:ring-gray-200"
-                >
-                    <Download className="w-4 h-4" />
-                    Download Report
-                </button>
+                <div className="flex items-center gap-3">
+                    <AdminDateFilter
+                        value={dateFilter}
+                        onChange={(newFilter) => setDateFilter(newFilter)}
+                        presets={['All Time', 'Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'This Month', 'Last Month', 'This Quarter', 'This Year']}
+                    />
+                    <button
+                        onClick={handleExport}
+                        className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:text-gray-900 px-4 py-2.5 rounded-xl font-medium text-[13px] transition-colors shadow-xs"
+                    >
+                        <Download className="w-4 h-4" />
+                        Download Report
+                    </button>
+                </div>
             </div>
 
             {/* Top Stats Cards */}
@@ -292,23 +309,6 @@ export default function AnalyticsReport() {
                         ) : (
                             <div className="text-gray-400 text-sm">No job distribution data</div>
                         )}
-                    </div>
-                </div>
-
-                {/* Additional Widget (Placeholder for Future) */}
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 rounded-2xl shadow-md lg:col-span-2 text-white relative overflow-hidden flex flex-col justify-center">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-20 translate-x-20"></div>
-                    <div className="absolute bottom-0 left-0 w-40 h-40 bg-white opacity-10 rounded-full translate-y-16 -translate-x-10"></div>
-
-                    <div className="relative z-10 max-w-md">
-                        <span className="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block">Pro Feature</span>
-                        <h2 className="text-3xl font-bold mb-3">Unlock Advanced Reports</h2>
-                        <p className="text-blue-100 text-[15px] mb-6 leading-relaxed">
-                            Upgrade to Premium to access predictive analytics, automated PDF reporting, and deeper insights into applicant demographics.
-                        </p>
-                        <button className="bg-white text-blue-700 px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-blue-50 transition-colors shadow-sm">
-                            Upgrade Now
-                        </button>
                     </div>
                 </div>
             </div>

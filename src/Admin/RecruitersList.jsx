@@ -1,0 +1,704 @@
+'use client';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+    Building, Users, Search, Filter, Plus,
+    Eye, CreditCard, Clock, CheckCircle2, XCircle,
+    KeyRound, RefreshCw, AlertCircle, Shield,
+    ChevronRight, Loader2, Sparkles, X, Mail,
+    Briefcase, AlertTriangle, ArrowUpRight
+} from 'lucide-react';
+import {
+    getAdminRecruiters,
+    getAdminPlans,
+    updateAdminRecruiterStatus
+} from '../ApiService/action';
+import ChangePlanModal from './ChangePlanModal';
+import ExtendSubscriptionModal from './ExtendSubscriptionModal';
+import ResetPasswordModal from './ResetPasswordModal';
+import toast from 'react-hot-toast';
+
+// Consistent color gradient generator for company logos/initials
+const getCompanyAvatarGradient = (name = '') => {
+    const gradients = [
+        'from-blue-600 to-indigo-600',
+        'from-emerald-600 to-teal-600',
+        'from-purple-600 to-pink-600',
+        'from-amber-500 to-orange-600',
+        'from-cyan-600 to-blue-600',
+        'from-rose-500 to-red-600',
+        'from-violet-600 to-purple-700',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % gradients.length;
+    return gradients[index];
+};
+
+export default function RecruitersList() {
+    const router = useRouter();
+    const [recruiters, setRecruiters] = useState([]);
+    const [plans, setPlans] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Filters
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedPlanId, setSelectedPlanId] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState('');
+
+    // Modals
+    const [changePlanRecruiter, setChangePlanRecruiter] = useState(null);
+    const [extendRecruiter, setExtendRecruiter] = useState(null);
+    const [resetPassRecruiter, setResetPassRecruiter] = useState(null);
+
+    useEffect(() => {
+        loadData();
+    }, [selectedPlanId, statusFilter, subscriptionStatusFilter]);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [recRes, planRes] = await Promise.all([
+                getAdminRecruiters({
+                    search: searchTerm,
+                    planId: selectedPlanId,
+                    status: statusFilter,
+                    subscriptionStatus: subscriptionStatusFilter
+                }),
+                getAdminPlans()
+            ]);
+
+            if (recRes?.data?.success) {
+                setRecruiters(recRes.data.data || []);
+            }
+            if (planRes?.data?.success) {
+                setPlans(planRes.data.data || []);
+            }
+        } catch (error) {
+            console.error("Error loading recruiters list:", error);
+            toast.error("Failed to load recruiters directory.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSearchSubmit = (e) => {
+        e?.preventDefault();
+        loadData();
+    };
+
+    const handleClearFilters = () => {
+        setSearchTerm('');
+        setSelectedPlanId('');
+        setStatusFilter('');
+        setSubscriptionStatusFilter('');
+    };
+
+    const hasActiveFilters = Boolean(searchTerm || selectedPlanId || statusFilter || subscriptionStatusFilter);
+
+    const handleToggleStatus = async (recruiter) => {
+        try {
+            const nextActive = recruiter.user_active ? 0 : 1;
+            const res = await updateAdminRecruiterStatus(recruiter.recruiter_id, { is_active: nextActive });
+            if (res?.data?.success) {
+                toast.success(`Recruiter account ${nextActive ? 'activated' : 'suspended'}.`);
+                loadData();
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to update status.");
+        }
+    };
+
+    // Format dates cleanly without wrapping
+    const formatDate = (dateString) => {
+        if (!dateString) return '—';
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    // Check expiry proximity
+    const getDaysRemaining = (expiryDate) => {
+        if (!expiryDate) return null;
+        const d = new Date(expiryDate);
+        if (isNaN(d.getTime())) return null;
+        const diff = Math.ceil((d.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+        return diff;
+    };
+
+    return (
+        <div className="w-full max-w-7xl mx-auto font-sans pb-16 px-1 sm:px-2">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 border-1 border-blue-100 flex items-center justify-center text-blue-600">
+                            <Building className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-0">
+                                Recruiters & Companies
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-0.5 mb-0">
+                                Manage corporate recruiters, subscription quotas, and account statuses
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                    <button
+                        onClick={() => router.push('/admin/recruiters/subscriptions')}
+                        className="px-3.5 py-2 border-1 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                    >
+                        <Shield className="w-4 h-4 text-slate-500" />
+                        <span>Subscriptions</span>
+                    </button>
+                    <button
+                        onClick={() => router.push('/admin/recruiters/create')}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white rounded-xl text-sm font-medium transition-all shadow-sm shadow-blue-500/20 flex items-center gap-1.5"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Recruiter</span>
+                    </button>
+                </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
+                {/* Total Recruiters */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-600">Total Recruiters</span>
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                            <Users className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-slate-900">{recruiters.length}</span>
+                        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md border-1 border-emerald-100">
+                            {recruiters.filter(r => r.user_active).length} Active
+                        </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1 mb-0">Registered hiring accounts</p>
+                </div>
+
+                {/* Paid Subscriptions */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-600">Active Plans</span>
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <CreditCard className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-emerald-600">
+                            {recruiters.filter(r => r.subscription_status === 'Active').length}
+                        </span>
+                        <span className="text-[11px] text-slate-500">plan holders</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1 mb-0">Currently active billing</p>
+                </div>
+
+                {/* Expiring Soon */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-600">Expiring Soon</span>
+                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <Clock className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-amber-600">
+                            {recruiters.filter(r => {
+                                const diff = getDaysRemaining(r.subscription_expiry);
+                                return diff !== null && diff > 0 && diff <= 7;
+                            }).length}
+                        </span>
+                        <span className="text-[11px] text-amber-600 font-medium">Within 7 days</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1 mb-0">May require renewal</p>
+                </div>
+
+                {/* Suspended / Expired */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-600">Attention Needed</span>
+                        <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                            <AlertTriangle className="w-4 h-4" />
+                        </div>
+                    </div>
+                    <div className="mt-1 flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-rose-600">
+                            {recruiters.filter(r => r.subscription_status === 'Expired' || !r.user_active).length}
+                        </span>
+                        <span className="text-[11px] text-rose-600 font-medium">Suspended / Expired</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-1 mb-0">Requires administrator review</p>
+                </div>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="bg-white rounded-2xl p-3 border border-slate-200/80 mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <input
+                        type="text"
+                        placeholder="Search company, recruiter name, or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition-all"
+                    />
+                    {searchTerm && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSearchTerm('');
+                                loadData();
+                            }}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                </form>
+
+                <div className="flex flex-wrap items-center gap-2.5">
+                    {/* Plan Filter */}
+                    <select
+                        value={selectedPlanId}
+                        onChange={(e) => setSelectedPlanId(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500"
+                    >
+                        <option value="">All Plans</option>
+                        {plans.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
+
+                    {/* Recruiter Login Status */}
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500"
+                    >
+                        <option value="">All Accounts</option>
+                        <option value="Active">Active Only</option>
+                        <option value="Suspended">Suspended Only</option>
+                    </select>
+
+                    {/* Subscription Status Filter */}
+                    <select
+                        value={subscriptionStatusFilter}
+                        onChange={(e) => setSubscriptionStatusFilter(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500"
+                    >
+                        <option value="">All Subscriptions</option>
+                        <option value="Active">Active</option>
+                        <option value="Trial">Trial</option>
+                        <option value="Expired">Expired</option>
+                        <option value="Suspended">Suspended</option>
+                    </select>
+
+                    {hasActiveFilters && (
+                        <button
+                            type="button"
+                            onClick={handleClearFilters}
+                            className="px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors whitespace-nowrap"
+                        >
+                            Reset
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        onClick={loadData}
+                        className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl text-slate-600 transition-colors"
+                        title="Reload directory"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-600' : ''}`} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Recruiters Master Table Container */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden">
+                {loading ? (
+                    <div className="py-20 flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
+                        <p className="text-sm font-medium text-slate-600">Loading recruiters directory...</p>
+                    </div>
+                ) : recruiters.length === 0 ? (
+                    <div className="py-20 text-center px-4">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                            <Building className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900">No recruiters found</h3>
+                        <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                            {hasActiveFilters
+                                ? "No recruiter matches the current search or filter criteria. Try resetting the filters."
+                                : "You haven't added any recruiters yet. Click below to add one."}
+                        </p>
+                        {hasActiveFilters ? (
+                            <button
+                                onClick={handleClearFilters}
+                                className="mt-3 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                            >
+                                Clear All Filters
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => router.push('/admin/recruiters/create')}
+                                className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition-colors shadow-sm"
+                            >
+                                + Add Recruiter Now
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[1240px]">
+                            <thead>
+                                <tr className="border-b border-slate-200/80 bg-slate-50/90 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
+                                    <th className="py-3.5 px-4 w-[210px]">Company</th>
+                                    <th className="py-3.5 px-4 w-[200px]">Recruiter</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Plan & Cycle</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Job Post</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Resume Views</th>
+                                    <th className="py-3.5 px-4 w-[130px]">Sub-Recruiters</th>
+                                    <th className="py-3.5 px-4 w-[110px]">Start Date</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Expiry Date</th>
+                                    <th className="py-3.5 px-4 w-[110px]">Status</th>
+                                    <th className="py-3.5 px-4 text-right w-[170px] whitespace-nowrap">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {recruiters.map((rec) => {
+                                    const recruiterName = rec.recruiter_name?.trim() || `${rec.first_name || ''} ${rec.last_name || ''}`.trim() || 'Recruiter';
+                                    const companyName = rec.company_name || 'Individual Recruiter';
+                                    const hasPlan = Boolean(rec.plan_name && rec.plan_name !== 'No Plan');
+                                    const planName = hasPlan ? rec.plan_name : 'No Plan';
+
+                                    const jobPostsUsed = Number(rec.job_posts_used || 0);
+                                    const jobPostLimit = Number(rec.job_post_limit || 0);
+                                    const jobPercent = jobPostLimit > 0 ? Math.round((jobPostsUsed / jobPostLimit) * 100) : 0;
+
+                                    const resumeUsed = Number(rec.resume_views_used || 0);
+                                    const resumeLimit = Number(rec.resume_view_limit || 0);
+                                    const resumePercent = resumeLimit > 0 ? Math.round((resumeUsed / resumeLimit) * 100) : 0;
+
+                                    const subRecruitersCount = Number(rec.sub_recruiters_count || 0);
+                                    const subRecruiterLimit = hasPlan ? Number(rec.sub_recruiter_limit || 1) : 0;
+                                    const subPercent = subRecruiterLimit > 0 ? Math.round((subRecruitersCount / subRecruiterLimit) * 100) : 0;
+
+                                    const isSubActive = rec.subscription_status === 'Active';
+                                    const isSubExpired = rec.subscription_status === 'Expired';
+                                    const isSubSuspended = rec.subscription_status === 'Suspended';
+                                    const isSubTrial = rec.subscription_status === 'Trial';
+                                    const isUserActive = Boolean(rec.user_active);
+
+                                    const daysRemaining = getDaysRemaining(rec.subscription_expiry);
+                                    const isExpiringSoon = daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 7;
+
+                                    // Plan badge styling
+                                    const isPremium = /premium|enterprise|vip|gold/i.test(planName);
+                                    const isStandard = /standard|silver|growth|pro/i.test(planName);
+
+                                    return (
+                                        <tr
+                                            key={rec.recruiter_id}
+                                            className="hover:bg-slate-50/75 transition-colors group"
+                                        >
+                                            {/* Company */}
+                                            <td className="py-3.5 px-4">
+                                                <div className="flex items-center gap-3">
+                                                    {rec.company_logo ? (
+                                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white border border-slate-200 shadow-sm">
+                                                            <img
+                                                                src={rec.company_logo}
+                                                                alt={companyName}
+                                                                className="w-[80%] h-[80%] object-contain"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.parentElement.classList.remove('bg-white', 'border', 'border-slate-200');
+                                                                    e.currentTarget.parentElement.classList.add('bg-gradient-to-br', ...getCompanyAvatarGradient(companyName).split(' '));
+                                                                    e.currentTarget.replaceWith(document.createTextNode(companyName[0]?.toUpperCase() || 'C'));
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0 overflow-hidden bg-gradient-to-br ${getCompanyAvatarGradient(companyName)}`}>
+                                                            {companyName[0]?.toUpperCase() || 'C'}
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0">
+                                                        <div
+                                                            onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}
+                                                            className="font-semibold text-xs text-slate-900 hover:text-blue-600 cursor-pointer transition-colors truncate max-w-[170px]"
+                                                            title={companyName}
+                                                        >
+                                                            {companyName}
+                                                        </div>
+                                                        <div className="text-[11px] text-slate-400 truncate max-w-[160px]">
+                                                            {rec.industry_type || 'Corporate'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* Recruiter */}
+                                            <td className="py-3.5 px-4">
+                                                <div className="font-semibold text-xs text-slate-900 truncate max-w-[190px]">
+                                                    {recruiterName}
+                                                </div>
+                                                <div className="text-[11px] text-slate-400 truncate max-w-[190px] mt-0.5" title={rec.email}>
+                                                    {rec.email || '—'}
+                                                </div>
+                                            </td>
+
+                                            {/* Plan & Cycle */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                {hasPlan ? (
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${isPremium
+                                                        ? 'bg-purple-50 text-purple-700 border-1 border-purple-200/80'
+                                                        : isStandard
+                                                            ? 'bg-blue-50 text-blue-700 border-1 border-blue-200/80'
+                                                            : 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80'
+                                                        }`}>
+                                                        {planName}
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200/70">
+                                                        No Plan
+                                                    </span>
+                                                )}
+                                                <div className="text-[11px] text-slate-400 capitalize mt-0.5">
+                                                    {rec.billing_cycle || 'monthly'}
+                                                </div>
+                                            </td>
+
+                                            {/* Job Usage */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-xs">
+                                                    <span className="font-bold text-slate-800">{jobPostsUsed}</span>
+                                                    <span className="text-slate-400 font-normal"> / {jobPostLimit} Jobs</span>
+                                                </div>
+                                                <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${jobPercent >= 90
+                                                            ? 'bg-rose-500'
+                                                            : jobPercent >= 75
+                                                                ? 'bg-amber-500'
+                                                                : 'bg-blue-600'
+                                                            }`}
+                                                        style={{ width: `${Math.min(jobPercent, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </td>
+
+                                            {/* Resume Views */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-xs">
+                                                    <span className="font-bold text-slate-800">{resumeUsed}</span>
+                                                    <span className="text-slate-400 font-normal"> / {resumeLimit}</span>
+                                                </div>
+                                                <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${resumePercent >= 90
+                                                            ? 'bg-rose-500'
+                                                            : resumePercent >= 75
+                                                                ? 'bg-amber-500'
+                                                                : 'bg-teal-500'
+                                                            }`}
+                                                        style={{ width: `${Math.min(resumePercent, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </td>
+
+                                            {/* Sub-Recruiters Limit & Usage */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-xs">
+                                                    <span className="font-bold text-slate-800">{subRecruitersCount}</span>
+                                                    <span className="text-slate-400 font-normal"> / {hasPlan ? `${subRecruiterLimit} Seats` : '0'}</span>
+                                                </div>
+                                                <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${subPercent >= 100
+                                                            ? 'bg-rose-500'
+                                                            : subPercent >= 75
+                                                                ? 'bg-amber-500'
+                                                                : 'bg-indigo-600'
+                                                            }`}
+                                                        style={{ width: `${Math.min(subPercent, 100)}%` }}
+                                                    />
+                                                </div>
+                                            </td>
+
+                                            {/* Subscription Start */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-600 font-medium">
+                                                {formatDate(rec.subscription_start)}
+                                            </td>
+
+                                            {/* Subscription Expiry */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-xs font-medium text-slate-700">
+                                                    {formatDate(rec.subscription_expiry)}
+                                                </div>
+                                                {isExpiringSoon && (
+                                                    <span className="inline-block mt-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded">
+                                                        {daysRemaining}d left
+                                                    </span>
+                                                )}
+                                                {daysRemaining !== null && daysRemaining <= 0 && isSubExpired && (
+                                                    <span className="inline-block mt-0.5 text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200/80 px-1.5 py-0.2 rounded">
+                                                        Expired
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            {/* Status Badge */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                {!isUserActive ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                        Suspended
+                                                    </span>
+                                                ) : isSubActive ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                        Active
+                                                    </span>
+                                                ) : isSubTrial ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border-1 border-blue-200/80">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                        Trial
+                                                    </span>
+                                                ) : isSubExpired ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border-1 border-rose-200/80">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                        Expired
+                                                    </span>
+                                                ) : isSubSuspended ? (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border-1 border-amber-200/80">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                        Suspended
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/80">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                        No Plan
+                                                    </span>
+                                                )}
+                                            </td>
+
+                                            {/* Actions */}
+                                            <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    {/* View Profile */}
+                                                    <button
+                                                        onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}
+                                                        title="View Recruiter Profile"
+                                                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50/80 border border-transparent hover:border-blue-100 rounded-lg transition-all"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* Manage Sub-Recruiter Team */}
+                                                    <button
+                                                        onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}
+                                                        title="Manage Sub-Recruiter Team"
+                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/80 border border-transparent hover:border-indigo-100 rounded-lg transition-all"
+                                                    >
+                                                        <Users className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* Change Plan */}
+                                                    <button
+                                                        onClick={() => setChangePlanRecruiter(rec)}
+                                                        title="Change Subscription Plan"
+                                                        className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50/80 border border-transparent hover:border-purple-100 rounded-lg transition-all"
+                                                    >
+                                                        <CreditCard className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* Extend Subscription */}
+                                                    <button
+                                                        onClick={() => setExtendRecruiter(rec)}
+                                                        title="Extend Subscription"
+                                                        className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/80 border border-transparent hover:border-emerald-100 rounded-lg transition-all"
+                                                    >
+                                                        <Clock className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* Reset Password */}
+                                                    <button
+                                                        onClick={() => setResetPassRecruiter(rec)}
+                                                        title="Reset Recruiter Password"
+                                                        className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50/80 border border-transparent hover:border-amber-100 rounded-lg transition-all"
+                                                    >
+                                                        <KeyRound className="w-4 h-4" />
+                                                    </button>
+
+                                                    {/* Toggle Status (Active / Suspended) */}
+                                                    <button
+                                                        onClick={() => handleToggleStatus(rec)}
+                                                        title={rec.user_active ? 'Suspend Recruiter Login' : 'Activate Recruiter Login'}
+                                                        className={`p-1.5 rounded-lg border border-transparent transition-all ${rec.user_active
+                                                            ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50/80 hover:border-rose-100'
+                                                            : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/80 hover:border-emerald-100'
+                                                            }`}
+                                                    >
+                                                        {rec.user_active ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Table Footer with Summary */}
+                {!loading && recruiters.length > 0 && (
+                    <div className="border-t border-slate-100 px-5 py-3 bg-slate-50/60 flex items-center justify-between text-xs text-slate-500">
+                        <span>
+                            Showing <strong className="text-slate-700">{recruiters.length}</strong> {recruiters.length === 1 ? 'recruiter' : 'recruiters'}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                            Use action buttons to manage plans, extend validity, or toggle access.
+                        </span>
+                    </div>
+                )}
+            </div>
+
+            {/* Change Plan Modal */}
+            <ChangePlanModal
+                recruiter={changePlanRecruiter}
+                isOpen={Boolean(changePlanRecruiter)}
+                onClose={() => setChangePlanRecruiter(null)}
+                onSuccess={loadData}
+            />
+
+            {/* Extend Subscription Modal */}
+            <ExtendSubscriptionModal
+                recruiter={extendRecruiter}
+                isOpen={Boolean(extendRecruiter)}
+                onClose={() => setExtendRecruiter(null)}
+                onSuccess={loadData}
+            />
+
+            {/* Reset Password Modal */}
+            <ResetPasswordModal
+                recruiter={resetPassRecruiter}
+                isOpen={Boolean(resetPassRecruiter)}
+                onClose={() => setResetPassRecruiter(null)}
+            />
+        </div>
+    );
+}
+
