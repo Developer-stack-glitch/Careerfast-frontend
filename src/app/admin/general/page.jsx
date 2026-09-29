@@ -1,12 +1,7 @@
 'use client';
 import React from 'react';
-import AdminLayout from '@/Admin/AdminLayout';
-import Settings from '@/Admin/Settings';
+import SettingsPage from '@/Admin/Settings';
 
-export default function GeneralSettingsPage() {
-    return (
-        <AdminLayout>
-            <Settings />
-        </AdminLayout>
-    );
+export default function AdminGeneralSettingsPage() {
+    return <SettingsPage />;
 }

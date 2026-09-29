@@ -341,9 +341,39 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                 </div>
 
                 {loading ? (
-                    <div className="py-16 flex flex-col items-center justify-center space-y-2">
-                        <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-                        <span className="text-xs text-slate-500">Loading team members...</span>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[900px]">
+                            <thead>
+                                <tr className="border-b border-slate-100 bg-slate-50/80 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
+                                    <th className="py-3 px-4">Member Name & Contact</th>
+                                    <th className="py-3 px-4">Designation</th>
+                                    <th className="py-3 px-4">Role Preset</th>
+                                    <th className="py-3 px-4">Granted Permissions</th>
+                                    <th className="py-3 px-4">Status</th>
+                                    <th className="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td className="py-3.5 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-slate-200 shrink-0"></div>
+                                                <div className="space-y-1">
+                                                    <div className="h-3.5 w-28 bg-slate-200 rounded"></div>
+                                                    <div className="h-3 w-36 bg-slate-200 rounded"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-3.5 px-4"><div className="h-3.5 w-24 bg-slate-200 rounded"></div></td>
+                                        <td className="py-3.5 px-4"><div className="h-5 w-24 bg-slate-200 rounded-md"></div></td>
+                                        <td className="py-3.5 px-4"><div className="h-5 w-40 bg-slate-200 rounded-md"></div></td>
+                                        <td className="py-3.5 px-4"><div className="h-5 w-16 bg-slate-200 rounded-full"></div></td>
+                                        <td className="py-3.5 px-4 text-right"><div className="h-7 w-16 bg-slate-200 rounded-lg ml-auto"></div></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 ) : team.length === 0 ? (
                     <div className="py-16 text-center px-4">

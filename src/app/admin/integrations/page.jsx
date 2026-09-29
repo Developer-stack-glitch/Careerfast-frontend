@@ -1,12 +1,7 @@
 'use client';
 import React from 'react';
-import AdminLayout from '@/Admin/AdminLayout';
-import Integration from '@/Admin/Integration';
+import IntegrationPage from '@/Admin/Integration';
 
-export default function IntegrationsPage() {
-    return (
-        <AdminLayout>
-            <Integration />
-        </AdminLayout>
-    );
+export default function AdminIntegrationsPage() {
+    return <IntegrationPage />;
 }

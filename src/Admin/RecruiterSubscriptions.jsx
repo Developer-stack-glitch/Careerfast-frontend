@@ -10,6 +10,7 @@ import { getAdminSubscriptions, getAdminPlans } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import ChangePlanModal from './ChangePlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
+import { getImageUrl } from '../utils/getImageUrl';
 
 export default function RecruiterSubscriptions() {
     const router = useRouter();
@@ -138,7 +139,7 @@ export default function RecruiterSubscriptions() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div
                     onClick={() => setSelectedStatus('Active')}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${selectedStatus === 'Active'
+                    className={`p-4 rounded-2xl transition-all cursor-pointer ${selectedStatus === 'Active'
                         ? 'bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-500/20'
                         : 'bg-white border-gray-100 hover:border-gray-200'
                         }`}
@@ -157,7 +158,7 @@ export default function RecruiterSubscriptions() {
 
                 <div
                     onClick={() => setSelectedStatus('expiring_soon')}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${selectedStatus === 'expiring_soon'
+                    className={`p-4 rounded-2xl transition-all cursor-pointer ${selectedStatus === 'expiring_soon'
                         ? 'bg-amber-50/70 border-amber-300 ring-2 ring-amber-500/20'
                         : 'bg-white border-gray-100 hover:border-gray-200'
                         }`}
@@ -176,7 +177,7 @@ export default function RecruiterSubscriptions() {
 
                 <div
                     onClick={() => setSelectedStatus('Expired')}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${selectedStatus === 'Expired'
+                    className={`p-4 rounded-2xl transition-all cursor-pointer ${selectedStatus === 'Expired'
                         ? 'bg-rose-50/70 border-rose-300 ring-2 ring-rose-500/20'
                         : 'bg-white border-gray-100 hover:border-gray-200'
                         }`}
@@ -195,7 +196,7 @@ export default function RecruiterSubscriptions() {
 
                 <div
                     onClick={() => setSelectedStatus('Suspended')}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${selectedStatus === 'Suspended'
+                    className={`p-4 rounded-2xl transition-all cursor-pointer ${selectedStatus === 'Suspended'
                         ? 'bg-gray-100 border-gray-400 ring-2 ring-gray-400/20'
                         : 'bg-white border-gray-100 hover:border-gray-200'
                         }`}
@@ -214,7 +215,7 @@ export default function RecruiterSubscriptions() {
             </div>
 
             {/* Filter Bar */}
-            <div className="bg-white p-3 rounded-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="bg-white p-3 rounded-2xl border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
                 <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
                     <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-3" />
                     <input
@@ -269,9 +270,46 @@ export default function RecruiterSubscriptions() {
             {/* Subscriptions Master Table */}
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 {loading ? (
-                    <div className="py-16 flex flex-col items-center justify-center space-y-3">
-                        <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-                        <span className="text-xs text-gray-500">Loading master subscriptions list...</span>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                            <thead>
+                                <tr className="border-b border-gray-100 text-gray-400 uppercase text-[10px] tracking-wider bg-gray-50/50">
+                                    <th className="py-3.5 px-5 font-semibold">Recruiter / Company</th>
+                                    <th className="py-3.5 px-4 font-semibold">Assigned Plan</th>
+                                    <th className="py-3.5 px-4 font-semibold">Cycle & Price</th>
+                                    <th className="py-3.5 px-4 font-semibold">Start Date</th>
+                                    <th className="py-3.5 px-4 font-semibold">Expiry Date</th>
+                                    <th className="py-3.5 px-4 font-semibold">Validity Left</th>
+                                    <th className="py-3.5 px-4 font-semibold">Status</th>
+                                    <th className="py-3.5 px-5 font-semibold text-right">Quick Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td className="py-3.5 px-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-gray-200"></div>
+                                                <div className="space-y-1">
+                                                    <div className="h-3.5 w-24 bg-gray-200 rounded"></div>
+                                                    <div className="h-3 w-16 bg-gray-200 rounded"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-3.5 px-4"><div className="h-5 w-20 bg-gray-200 rounded-md"></div></td>
+                                        <td className="py-3.5 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-gray-200 rounded"></div>
+                                            <div className="h-2.5 w-12 bg-gray-200 rounded"></div>
+                                        </td>
+                                        <td className="py-3.5 px-4"><div className="h-3.5 w-18 bg-gray-200 rounded"></div></td>
+                                        <td className="py-3.5 px-4"><div className="h-3.5 w-18 bg-gray-200 rounded"></div></td>
+                                        <td className="py-3.5 px-4"><div className="h-4 w-16 bg-gray-200 rounded-full"></div></td>
+                                        <td className="py-3.5 px-4"><div className="h-5 w-16 bg-gray-200 rounded-full"></div></td>
+                                        <td className="py-3.5 px-5 text-right"><div className="h-7 w-20 bg-gray-200 rounded-lg ml-auto"></div></td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 ) : subscriptions.length === 0 ? (
                     <div className="py-16 text-center space-y-2">
@@ -300,12 +338,30 @@ export default function RecruiterSubscriptions() {
                                         {/* Recruiter / Company */}
                                         <td className="py-4 px-5">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center shrink-0 border border-blue-100">
-                                                    {s.company_logo ? (
-                                                        <img src={s.company_logo} alt="" className="w-full h-full object-cover rounded-xl" />
-                                                    ) : (
-                                                        s.company_name?.charAt(0) || 'C'
-                                                    )}
+                                                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 font-bold flex items-center justify-center shrink-0 border border-blue-100 overflow-hidden shadow-2xs">
+                                                    {(() => {
+                                                        const logoSrc = s.company_logo || s.profile_image || s.user_avatar;
+                                                        return logoSrc ? (
+                                                            <>
+                                                                <img
+                                                                    src={getImageUrl(logoSrc)}
+                                                                    alt={s.company_name}
+                                                                    className="w-full h-full object-cover"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.style.display = 'none';
+                                                                        if (e.currentTarget.nextElementSibling) {
+                                                                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <span className="hidden items-center justify-center w-full h-full font-bold text-xs uppercase">
+                                                                    {s.company_name?.charAt(0) || 'C'}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="font-bold text-xs uppercase">{s.company_name?.charAt(0) || 'C'}</span>
+                                                        );
+                                                    })()}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <span

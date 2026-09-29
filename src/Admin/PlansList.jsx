@@ -215,14 +215,14 @@ export default function PlansList() {
                             onClick={() => fetchPlans(true)}
                             disabled={refreshing || loading}
                             title="Refresh plans data"
-                            className="p-2.5 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl shadow-xs transition-all active:scale-95 disabled:opacity-50"
+                            className="p-2.5 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border-slate-200 rounded-xl shadow-xs transition-all active:scale-95 disabled:opacity-50"
                         >
                             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
                         </button>
 
                         <button
                             onClick={() => router.push('/admin/plans/subscribers')}
-                            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-xl text-[13px] font-semibold transition-all shadow-xs flex items-center gap-2"
+                            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300 rounded-xl text-[13px] font-semibold transition-all shadow-xs flex items-center gap-2"
                         >
                             <Users className="w-4 h-4 text-slate-500" />
                             <span>Subscribers</span>
@@ -245,7 +245,7 @@ export default function PlansList() {
             {/* Quick Metrics Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Metric 1: Total Plans */}
-                <div className="bg-white rounded-2xl p-3 border border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
+                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
                     <div className="flex items-center justify-between">
                         <span className="text-[14px] font-semibold text-slate-600">Total Plans</span>
                         <div className="w-8 h-8 rounded-lg bg-indigo-50 border-1 border-indigo-100 flex items-center justify-center text-indigo-600">
@@ -265,7 +265,7 @@ export default function PlansList() {
                 </div>
 
                 {/* Metric 2: Active Subscribers */}
-                <div className="bg-white rounded-2xl p-3 border border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
+                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
                     <div className="flex items-center justify-between">
                         <span className="text-[14px] font-semibold text-slate-600">Active Subscribers</span>
                         <div className="w-8 h-8 rounded-lg bg-blue-50 border-1 border-blue-100 flex items-center justify-center text-blue-600">
@@ -282,7 +282,7 @@ export default function PlansList() {
                 </div>
 
                 {/* Metric 3: Most Popular Plan */}
-                <div className="bg-white rounded-2xl p-3 border border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
+                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
                     <div className="flex items-center justify-between">
                         <span className="text-[14px] font-semibold text-slate-600">Top Performing Tier</span>
                         <div className="w-8 h-8 rounded-lg bg-amber-50 border-1 border-amber-100 flex items-center justify-center text-amber-600">
@@ -298,7 +298,7 @@ export default function PlansList() {
                 </div>
 
                 {/* Metric 4: Average Plan Value */}
-                <div className="bg-white rounded-2xl p-3 border border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
+                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
                     <div className="flex items-center justify-between">
                         <span className="text-[14px] font-semibold text-slate-600">Average Plan Value</span>
                         <div className="w-8 h-8 rounded-lg bg-emerald-50 border-1 border-emerald-100 flex items-center justify-center text-emerald-600">
@@ -316,7 +316,7 @@ export default function PlansList() {
             </div>
 
             {/* Filter & Controls Toolbar */}
-            <div className="bg-white rounded-2xl p-3.5 border border-slate-200/80 shadow-xs mb-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl p-3.5 border-slate-200/80 shadow-xs mb-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
                 {/* Search & Status Quick Filter */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
                     <div className="relative flex-1 max-w-md">
@@ -410,10 +410,41 @@ export default function PlansList() {
 
             {/* Main Content Area */}
             {loading ? (
-                <div className="bg-white rounded-2xl p-16 border border-slate-200/80 shadow-xs flex flex-col items-center justify-center text-center">
-                    <Loader2 className="w-9 h-9 text-blue-600 animate-spin mb-3.5" />
-                    <p className="text-[14px] font-semibold text-slate-700">Loading subscription plans...</p>
-                    <p className="text-xs text-slate-400 mt-1">Fetching package limits and active assignments</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5 animate-pulse">
+                            <div className="flex justify-between items-start">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-200"></div>
+                                    <div className="space-y-1.5">
+                                        <div className="h-4 w-28 bg-slate-200 rounded"></div>
+                                        <div className="h-3 w-16 bg-slate-200 rounded"></div>
+                                    </div>
+                                </div>
+                                <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
+                            </div>
+
+                            <div className="space-y-2 py-3 border-y border-slate-100">
+                                <div className="h-8 w-32 bg-slate-200 rounded-lg"></div>
+                                <div className="h-3.5 w-full bg-slate-200 rounded"></div>
+                                <div className="h-3.5 w-4/5 bg-slate-200 rounded"></div>
+                            </div>
+
+                            <div className="space-y-2.5">
+                                {[1, 2, 3, 4].map((j) => (
+                                    <div key={j} className="flex items-center gap-2.5">
+                                        <div className="w-4 h-4 rounded-full bg-slate-200 shrink-0"></div>
+                                        <div className="h-3.5 w-full bg-slate-200 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="pt-2 flex items-center gap-3">
+                                <div className="h-10 flex-1 bg-slate-200 rounded-xl"></div>
+                                <div className="h-10 w-10 bg-slate-200 rounded-xl"></div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             ) : filteredPlans.length === 0 ? (
                 <div className="bg-white rounded-2xl p-10 border border-slate-200/80 shadow-xs text-center max-w-lg mx-auto">
@@ -448,7 +479,7 @@ export default function PlansList() {
                 /* ======================================================== */
                 /* MODERN TABLE VIEW                                        */
                 /* ======================================================== */
-                <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div className="bg-white rounded-2xl border-slate-200/80 shadow-xs overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-[13px]">
                             <thead>

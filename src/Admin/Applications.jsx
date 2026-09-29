@@ -246,13 +246,18 @@ export default function Applications() {
     const [openDropdown, setOpenDropdown] = useState(null);
     const [selectedProfileId, setSelectedProfileId] = useState(null);
     const itemsPerPage = 10;
+    const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            fetchApplications();
-        }, 500);
-        return () => clearTimeout(timeout);
-    }, [currentPage, searchTerm]);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        fetchApplications();
+    }, [currentPage, debouncedSearch]);
 
     const fetchApplications = async () => {
         try {
@@ -260,7 +265,7 @@ export default function Applications() {
             const payload = {
                 page: currentPage,
                 limit: itemsPerPage,
-                search: searchTerm,
+                search: debouncedSearch,
             };
             const response = await getAllAppliedCandidates(payload);
             const data = response?.data?.data || [];

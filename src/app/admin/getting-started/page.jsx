@@ -1,9 +1,7 @@
 'use client';
 import React from 'react';
-import AdminLayout from '@/Admin/AdminLayout';
+import Overview from '@/Admin/Overview';
 
 export default function GettingStartedPage() {
-    return (
-        <AdminLayout />
-    );
+    return <Overview />;
 }

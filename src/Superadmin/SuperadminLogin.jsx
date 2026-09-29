@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { login } from '../ApiService/action';
 import { storeLoginStatus } from '../Redux/Slice';
+import defaultLogo from '../images/careerfastlogofinal.png';
+import { getImageUrl } from '../utils/getImageUrl';
 
 export default function SuperadminLogin() {
     const router = useRouter();
@@ -240,7 +242,7 @@ export default function SuperadminLogin() {
                 <div className="flex items-center gap-3.5">
                     <a href="/" className="transition-opacity hover:opacity-85">
                         <img
-                            src="https://careerfast.in/_next/static/media/careerfastlogofinal.0nplzw.k4hsr8.png"
+                            src={getImageUrl(defaultLogo)}
                             alt="CareerFast Logo"
                             className="h-9 w-auto"
                         />

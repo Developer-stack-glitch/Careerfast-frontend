@@ -16,6 +16,7 @@ import {
 import ChangePlanModal from './ChangePlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
 import ResetPasswordModal from './ResetPasswordModal';
+import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
 
 // Consistent color gradient generator for company logos/initials
@@ -61,15 +62,19 @@ export default function RecruitersList() {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [recRes, planRes] = await Promise.all([
+            const promises = [
                 getAdminRecruiters({
                     search: searchTerm,
                     planId: selectedPlanId,
                     status: statusFilter,
                     subscriptionStatus: subscriptionStatusFilter
-                }),
-                getAdminPlans()
-            ]);
+                })
+            ];
+            if (plans.length === 0) {
+                promises.push(getAdminPlans());
+            }
+
+            const [recRes, planRes] = await Promise.all(promises);
 
             if (recRes?.data?.success) {
                 setRecruiters(recRes.data.data || []);
@@ -153,7 +158,7 @@ export default function RecruitersList() {
                 <div className="flex items-center gap-2.5">
                     <button
                         onClick={() => router.push('/admin/recruiters/subscriptions')}
-                        className="px-3.5 py-2 border-1 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
+                        className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
                     >
                         <Shield className="w-4 h-4 text-slate-500" />
                         <span>Subscriptions</span>
@@ -171,7 +176,7 @@ export default function RecruitersList() {
             {/* Quick Metrics Bar */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
                 {/* Total Recruiters */}
-                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-600">Total Recruiters</span>
                         <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
@@ -188,7 +193,7 @@ export default function RecruitersList() {
                 </div>
 
                 {/* Paid Subscriptions */}
-                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-600">Active Plans</span>
                         <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -205,7 +210,7 @@ export default function RecruitersList() {
                 </div>
 
                 {/* Expiring Soon */}
-                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-600">Expiring Soon</span>
                         <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
@@ -225,7 +230,7 @@ export default function RecruitersList() {
                 </div>
 
                 {/* Suspended / Expired */}
-                <div className="bg-white rounded-2xl p-4 border border-slate-200/80 hover:border-slate-300 transition-colors">
+                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
                     <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-600">Attention Needed</span>
                         <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
@@ -243,7 +248,7 @@ export default function RecruitersList() {
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="bg-white rounded-2xl p-3 border border-slate-200/80 mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl p-3 mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
@@ -326,11 +331,74 @@ export default function RecruitersList() {
             </div>
 
             {/* Recruiters Master Table Container */}
-            <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden">
+            <div className="bg-white rounded-2xl overflow-hidden">
                 {loading ? (
-                    <div className="py-20 flex flex-col items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
-                        <p className="text-sm font-medium text-slate-600">Loading recruiters directory...</p>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[1240px]">
+                            <thead>
+                                <tr className="border-b border-slate-200/80 bg-slate-50/90 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
+                                    <th className="py-3.5 px-4 w-[210px]">Company</th>
+                                    <th className="py-3.5 px-4 w-[200px]">Recruiter</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Plan & Cycle</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Job Post</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Resume Views</th>
+                                    <th className="py-3.5 px-4 w-[130px]">Sub-Recruiters</th>
+                                    <th className="py-3.5 px-4 w-[110px]">Start Date</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Expiry Date</th>
+                                    <th className="py-3.5 px-4 w-[110px]">Status</th>
+                                    <th className="py-3.5 px-4 text-right w-[170px]">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {Array.from({ length: 6 }).map((_, i) => (
+                                    <tr key={i} className="animate-pulse">
+                                        <td className="py-4 px-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-slate-200 shrink-0"></div>
+                                                <div className="space-y-1.5 flex-1">
+                                                    <div className="h-4 w-28 bg-slate-200 rounded"></div>
+                                                    <div className="h-3 w-20 bg-slate-200 rounded"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1.5">
+                                            <div className="h-4 w-32 bg-slate-200 rounded"></div>
+                                            <div className="h-3 w-24 bg-slate-200 rounded"></div>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <div className="h-6 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <div className="h-3.5 w-18 bg-slate-200 rounded"></div>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <div className="h-3.5 w-18 bg-slate-200 rounded"></div>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                            <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <div className="w-8 h-8 rounded-lg bg-slate-200"></div>
+                                                <div className="w-8 h-8 rounded-lg bg-slate-200"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
                 ) : recruiters.length === 0 ? (
                     <div className="py-20 text-center px-4">
@@ -416,24 +484,27 @@ export default function RecruitersList() {
                                             {/* Company */}
                                             <td className="py-3.5 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    {rec.company_logo ? (
-                                                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white border border-slate-200 shadow-sm">
-                                                            <img
-                                                                src={rec.company_logo}
-                                                                alt={companyName}
-                                                                className="w-[80%] h-[80%] object-contain"
-                                                                onError={(e) => {
-                                                                    e.currentTarget.parentElement.classList.remove('bg-white', 'border', 'border-slate-200');
-                                                                    e.currentTarget.parentElement.classList.add('bg-gradient-to-br', ...getCompanyAvatarGradient(companyName).split(' '));
-                                                                    e.currentTarget.replaceWith(document.createTextNode(companyName[0]?.toUpperCase() || 'C'));
-                                                                }}
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-sm shrink-0 overflow-hidden bg-gradient-to-br ${getCompanyAvatarGradient(companyName)}`}>
-                                                            {companyName[0]?.toUpperCase() || 'C'}
-                                                        </div>
-                                                    )}
+                                                    {(() => {
+                                                        const logoSrc = rec.company_logo || rec.profile_image || rec.user_avatar;
+                                                        return logoSrc ? (
+                                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white shadow-md p-0.5">
+                                                                <img
+                                                                    src={getImageUrl(logoSrc)}
+                                                                    alt={companyName}
+                                                                    className="w-full h-full object-cover"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.parentElement.classList.remove('bg-white', 'border', 'border-slate-200');
+                                                                        e.currentTarget.parentElement.classList.add('bg-gradient-to-br', ...getCompanyAvatarGradient(companyName).split(' '));
+                                                                        e.currentTarget.replaceWith(document.createTextNode(companyName[0]?.toUpperCase() || 'C'));
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-md text-white shadow-sm shrink-0 overflow-hidden bg-gradient-to-br ${getCompanyAvatarGradient(companyName)}`}>
+                                                                {companyName[0]?.toUpperCase() || 'C'}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                     <div className="min-w-0">
                                                         <div
                                                             onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}

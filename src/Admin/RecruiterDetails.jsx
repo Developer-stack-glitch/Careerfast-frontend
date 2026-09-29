@@ -16,6 +16,8 @@ import ChangePlanModal from './ChangePlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
 import ResetPasswordModal from './ResetPasswordModal';
 import ManageRecruiterTeam from './ManageRecruiterTeam';
+import { AdminDetailSkeleton } from './AdminSkeletons';
+import { getImageUrl } from '../utils/getImageUrl';
 
 export default function RecruiterDetails({ recruiterId }) {
     const router = useRouter();
@@ -106,12 +108,7 @@ export default function RecruiterDetails({ recruiterId }) {
     };
 
     if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[450px] bg-white rounded-2xl border border-gray-100 p-8 space-y-3">
-                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                <p className="text-sm font-medium text-gray-500">Loading recruiter profile & subscription...</p>
-            </div>
-        );
+        return <AdminDetailSkeleton />;
     }
 
     if (!recruiterData || !r) {
@@ -255,12 +252,30 @@ export default function RecruiterDetails({ recruiterId }) {
                 {/* 1. Recruiter & Company Overview Card */}
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 space-y-4">
                     <div className="flex items-start gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center font-bold text-blue-600 text-xl overflow-hidden shrink-0">
-                            {r.company_logo ? (
-                                <img src={r.company_logo} alt={r.company_name} className="w-full h-full object-cover" />
-                            ) : (
-                                r.company_name?.charAt(0) || 'C'
-                            )}
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center font-bold text-blue-600 text-xl overflow-hidden shrink-0 shadow-xs">
+                            {(() => {
+                                const logoSrc = r.company_logo || r.profile_image || r.user_avatar;
+                                return logoSrc ? (
+                                    <>
+                                        <img
+                                            src={getImageUrl(logoSrc)}
+                                            alt={r.company_name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                                if (e.currentTarget.nextElementSibling) {
+                                                    e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                }
+                                            }}
+                                        />
+                                        <div className="w-full h-full hidden items-center justify-center font-bold text-blue-600 text-xl bg-blue-50">
+                                            {r.company_name?.charAt(0)?.toUpperCase() || 'C'}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <span>{r.company_name?.charAt(0)?.toUpperCase() || 'C'}</span>
+                                );
+                            })()}
                         </div>
                         <div className="min-w-0 flex-1">
                             <h2 className="text-base font-bold text-gray-900 truncate mb-0">{r.company_name}</h2>

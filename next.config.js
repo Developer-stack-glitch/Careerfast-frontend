@@ -1,5 +1,7 @@
+/** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  turbopack: {},
   env: Object.keys(process.env)
     .filter(key => key.startsWith('REACT_APP_'))
     .reduce((acc, key) => {
@@ -9,9 +11,43 @@ const nextConfig = {
   reactStrictMode: false,
   images: {
     unoptimized: false,
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
+  },
+  onDemandEntries: {
+    maxInactiveAge: 60 * 1000,
+    pagesBufferLength: 4,
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'react-icons', '@ant-design/icons', 'antd', 'framer-motion', 'date-fns'],
+    optimizePackageImports: [
+      'lucide-react',
+      'react-icons',
+      '@ant-design/icons',
+      'antd',
+      'framer-motion',
+      'date-fns',
+      'recharts',
+      'react-slick',
+    ],
+  },
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      config.watchOptions = {
+        poll: false,
+        aggregateTimeout: 300,
+        ignored: ['**/node_modules/**', '**/.git/**', '**/.next/**'],
+      };
+    }
+    return config;
   },
   async redirects() {
     return [
@@ -28,7 +64,7 @@ const nextConfig = {
       { source: '/all-candidates', destination: '/recruiter/all-candidates', permanent: true },
       { source: '/settings', destination: '/recruiter/settings', permanent: true },
       { source: '/pro-subscription', destination: '/recruiter/billing', permanent: true },
-    ]
+    ];
   },
 };
 

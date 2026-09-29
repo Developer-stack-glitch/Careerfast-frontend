@@ -249,12 +249,18 @@ export default function JobSeekers() {
         });
     }, [users, lastActiveSort]);
 
+    const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            fetchUsers();
-        }, 500);
-        return () => clearTimeout(timeout);
-    }, [currentPage, searchTerm, activeFilter, dateFilter]);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        fetchUsers();
+    }, [currentPage, debouncedSearch, activeFilter, dateFilter]);
 
     const fetchUsers = async () => {
         try {
@@ -263,7 +269,7 @@ export default function JobSeekers() {
             const payload = {
                 page: currentPage,
                 limit: itemsPerPage,
-                search: searchTerm,
+                search: debouncedSearch,
                 status: statusFilter,
                 role: 2,
                 start_date: dateFilter.startDate || undefined,

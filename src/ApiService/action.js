@@ -53,6 +53,50 @@ api.interceptors.response.use(
   }
 );
 
+// In-flight request deduplication map and micro-cache for high-speed navigation
+const inFlightRequests = new Map();
+const cacheMap = new Map();
+
+export const cachedGet = async (url, config = {}, ttlMs = 10000) => {
+  const cacheKey = url + (config?.params ? JSON.stringify(config.params) : '');
+  const now = Date.now();
+
+  const cached = cacheMap.get(cacheKey);
+  if (cached && (now - cached.timestamp < ttlMs)) {
+    return cached.data;
+  }
+
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey);
+  }
+
+  const promise = api.get(url, config)
+    .then((response) => {
+      inFlightRequests.delete(cacheKey);
+      cacheMap.set(cacheKey, { timestamp: Date.now(), data: response });
+      return response;
+    })
+    .catch((error) => {
+      inFlightRequests.delete(cacheKey);
+      throw error;
+    });
+
+  inFlightRequests.set(cacheKey, promise);
+  return promise;
+};
+
+export const clearApiCache = (urlPrefix = '') => {
+  if (!urlPrefix) {
+    cacheMap.clear();
+    return;
+  }
+  for (const key of cacheMap.keys()) {
+    if (key.startsWith(urlPrefix)) {
+      cacheMap.delete(key);
+    }
+  }
+};
+
 // TokenExpired
 export const isTokenExpired = (token) => {
   if (!token) return true; // No token means it's "expired"
@@ -177,7 +221,7 @@ export const register = async (registerload) => {
 
 export const getOrganizationType = async () => {
   try {
-    const response = await api.get("/api/organization/type/get");
+    const response = await cachedGet("/api/organization/type/get", {}, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -186,7 +230,7 @@ export const getOrganizationType = async () => {
 
 export const getIndustryTypes = async () => {
   try {
-    const response = await api.get("/api/industry/type/get");
+    const response = await cachedGet("/api/industry/type/get", {}, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -195,7 +239,7 @@ export const getIndustryTypes = async () => {
 
 export const getJobNature = async () => {
   try {
-    const response = await api.get("/api/job/getJobNature");
+    const response = await cachedGet("/api/job/getJobNature", {}, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -204,7 +248,7 @@ export const getJobNature = async () => {
 
 export const getDurationTypes = async () => {
   try {
-    const response = await api.get("/api/job/durationTypes/get");
+    const response = await cachedGet("/api/job/durationTypes/get", {}, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -213,7 +257,7 @@ export const getDurationTypes = async () => {
 
 export const getDuration = async (payload) => {
   try {
-    const response = await api.get("/api/getDuration", { params: payload });
+    const response = await cachedGet("/api/getDuration", { params: payload }, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -222,7 +266,7 @@ export const getDuration = async (payload) => {
 
 export const getWorkPlaceType = async () => {
   try {
-    const response = await api.get("/api/job/workplace-type/get");
+    const response = await cachedGet("/api/job/workplace-type/get", {}, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -231,7 +275,7 @@ export const getWorkPlaceType = async () => {
 
 export const getVenues = async () => {
   try {
-    const response = await api.get("/api/venue/get");
+    const response = await cachedGet("/api/venue/get", {}, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -1457,9 +1501,9 @@ export const getUniqueCompanies = async () => {
 
 export const getSuperAdminDashboardStats = async (timeFilter, extraParams = {}) => {
   try {
-    const response = await api.get("/api/superadmin/dashboard-stats", {
+    const response = await cachedGet("/api/superadmin/dashboard-stats", {
       params: { timeFilter, ...extraParams }
-    });
+    }, 10000);
     return response;
   } catch (error) {
     throw error;
@@ -1573,7 +1617,7 @@ export const rejectJobPost = async (id, reason) => {
 
 export const getSettings = async () => {
   try {
-    const response = await api.get("/api/settings/get");
+    const response = await cachedGet("/api/settings/get", {}, 60000);
     return response;
   } catch (error) {
     throw error;
@@ -1587,6 +1631,7 @@ export const updateSettings = async (payload) => {
     const response = await api.put("/api/settings/update", payload, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    clearApiCache("/api/settings/get");
     return response;
   } catch (error) {
     throw error;
@@ -1742,7 +1787,7 @@ export const addCandidatesToFolderAPI = async (folderIdentifier, candidateIds, s
 // ==========================================
 export const getAdminPlans = async () => {
   try {
-    const response = await api.get("/api/admin/plans");
+    const response = await cachedGet("/api/admin/plans", {}, 20000);
     return response;
   } catch (error) {
     throw error;
@@ -1751,7 +1796,7 @@ export const getAdminPlans = async () => {
 
 export const getAdminPlanById = async (id) => {
   try {
-    const response = await api.get(`/api/admin/plans/${id}`);
+    const response = await cachedGet(`/api/admin/plans/${id}`, {}, 20000);
     return response;
   } catch (error) {
     throw error;
@@ -1761,6 +1806,7 @@ export const getAdminPlanById = async (id) => {
 export const createAdminPlan = async (payload) => {
   try {
     const response = await api.post("/api/admin/plans", payload);
+    clearApiCache("/api/admin/plans");
     return response;
   } catch (error) {
     throw error;
@@ -1770,6 +1816,7 @@ export const createAdminPlan = async (payload) => {
 export const updateAdminPlan = async (id, payload) => {
   try {
     const response = await api.put(`/api/admin/plans/${id}`, payload);
+    clearApiCache("/api/admin/plans");
     return response;
   } catch (error) {
     throw error;
@@ -1779,6 +1826,7 @@ export const updateAdminPlan = async (id, payload) => {
 export const duplicateAdminPlan = async (id) => {
   try {
     const response = await api.post(`/api/admin/plans/${id}/duplicate`);
+    clearApiCache("/api/admin/plans");
     return response;
   } catch (error) {
     throw error;
@@ -1788,6 +1836,7 @@ export const duplicateAdminPlan = async (id) => {
 export const toggleAdminPlanStatus = async (id, status) => {
   try {
     const response = await api.put(`/api/admin/plans/${id}/status`, { status });
+    clearApiCache("/api/admin/plans");
     return response;
   } catch (error) {
     throw error;

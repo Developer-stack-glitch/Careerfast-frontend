@@ -6,8 +6,28 @@ import {
     ChevronsUpDown, Folder, GraduationCap, ClipboardList, Users
 } from 'lucide-react';
 import { getJobPosts, deleteJobPost, expireJobPost, makeJobActive } from '../ApiService/action';
+import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
+
+// Consistent color gradient generator for company logos/initials
+const getCompanyAvatarGradient = (name = '') => {
+    const gradients = [
+        'from-blue-600 to-indigo-600',
+        'from-emerald-600 to-teal-600',
+        'from-purple-600 to-pink-600',
+        'from-amber-500 to-orange-600',
+        'from-cyan-600 to-blue-600',
+        'from-rose-500 to-red-600',
+        'from-violet-600 to-purple-700',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % gradients.length;
+    return gradients[index];
+};
 
 // ── Stat Card Component ──
 const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
@@ -75,16 +95,20 @@ export default function JobPost() {
     const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, closed: 0, companies: 0 });
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [jobToDelete, setJobToDelete] = useState(null);
-    const [isDeleting, setIsDeleting] = useState(false);
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
     const itemsPerPage = 10;
+    const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
     useEffect(() => {
-        const timeout = setTimeout(() => {
-            fetchJobs();
-        }, 500);
-        return () => clearTimeout(timeout);
-    }, [currentPage, searchTerm, activeFilter, dateFilter]);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        fetchJobs();
+    }, [currentPage, debouncedSearch, activeFilter, dateFilter]);
 
     const fetchJobs = async () => {
         try {
@@ -94,7 +118,7 @@ export default function JobPost() {
                 page: currentPage,
                 include_stats: true,
             };
-            if (searchTerm) payload.searchTerm = searchTerm;
+            if (debouncedSearch) payload.searchTerm = debouncedSearch;
             if (activeFilter === 'Active') payload.is_closed = 0;
             if (activeFilter === 'Closed') payload.is_closed = 1;
             if (dateFilter.startDate) payload.start_date = dateFilter.startDate;
@@ -190,7 +214,7 @@ export default function JobPost() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             toast.success('Export completed', { id: toastId });
         } catch (error) {
             console.error("Export error:", error);
@@ -328,7 +352,7 @@ export default function JobPost() {
                             setCurrentPage(1);
                         }}
                     />
-                    <button 
+                    <button
                         onClick={handleExport}
                         className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all flex items-center gap-2 shrink-0 active:scale-[0.98]"
                     >
@@ -427,7 +451,7 @@ export default function JobPost() {
                                 <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
                                     <div className="flex items-center gap-2">DATE POSTED <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
                                 </th>
-                                <th 
+                                <th
                                     onClick={() => setSortApplied(prev => prev === 'desc' ? 'asc' : prev === 'asc' ? null : 'desc')}
                                     className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-gray-900 select-none transition-colors"
                                     title="Click to sort by applied candidates count"
@@ -503,16 +527,34 @@ export default function JobPost() {
                                         >
                                             {/* Job Role */}
                                             <td className="px-4 py-3 max-w-[280px]">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-12 h-12 rounded-2xl ${companyColor.bg} border ${companyColor.border} flex items-center justify-center shrink-0`}>
-                                                        {job.company_logo ? (
-                                                            <img src={job.company_logo} alt={job.company_name} className="w-6 h-6 object-contain" />
+                                                <div className="flex items-center gap-3.5">
+                                                    {(() => {
+                                                        const logoSrc = job.company_logo || job.logo;
+                                                        const compName = job.company_name || 'Company';
+                                                        const grad = getCompanyAvatarGradient(compName);
+                                                        return logoSrc ? (
+                                                            <div className="w-12 h-12 p-0.5 rounded-xl bg-white shadow-md flex items-center justify-center shrink-0 overflow-hidden">
+                                                                <img
+                                                                    src={getImageUrl(logoSrc)}
+                                                                    alt={compName}
+                                                                    className="w-full h-full object-contain"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.style.display = 'none';
+                                                                        if (e.currentTarget.nextElementSibling) {
+                                                                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <div className={`w-full h-full rounded-lg bg-gradient-to-br ${grad} text-white hidden items-center justify-center font-bold text-base uppercase`}>
+                                                                    {compName.slice(0, 2)}
+                                                                </div>
+                                                            </div>
                                                         ) : (
-                                                            <span className={`text-xl font-medium ${companyColor.text}`}>
-                                                                {(job.company_name || 'C').charAt(0).toUpperCase()}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${grad} text-white shadow-2xs flex items-center justify-center font-bold text-base uppercase shrink-0`}>
+                                                                {compName.slice(0, 2)}
+                                                            </div>
+                                                        );
+                                                    })()}
                                                     <div className="min-w-0 flex flex-col justify-center">
                                                         <div className="relative group/title inline-block min-w-0">
                                                             <h3 className="text-[14px] font-bold text-blue-950 group-hover:text-blue-600 transition-colors truncate mb-0">
@@ -584,11 +626,10 @@ export default function JobPost() {
                                             <td className="px-4 py-3 whitespace-nowrap">
                                                 <a
                                                     href={`/admin/applications?search=${encodeURIComponent(jobTitleText)}`}
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${
-                                                        (Number(job.applicants_count) > 0)
-                                                            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200/80 shadow-2xs'
-                                                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200/60'
-                                                    }`}
+                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${(Number(job.applicants_count) > 0)
+                                                        ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200/80 shadow-2xs'
+                                                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200/60'
+                                                        }`}
                                                     title={`View ${job.applicants_count || 0} applied candidates`}
                                                 >
                                                     <Users className={`w-3.5 h-3.5 ${Number(job.applicants_count) > 0 ? 'text-indigo-600' : 'text-gray-400'}`} />

@@ -5,10 +5,29 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { getPendingJobs, approveJobPost, rejectJobPost, approveAllPendingJobs } from '../ApiService/action';
+import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { Modal } from 'antd';
 import AdminDateFilter from './AdminDateFilter';
+
+const getCompanyAvatarGradient = (name = '') => {
+    const gradients = [
+        'from-blue-600 to-indigo-600',
+        'from-emerald-600 to-teal-600',
+        'from-purple-600 to-pink-600',
+        'from-amber-500 to-orange-600',
+        'from-cyan-600 to-blue-600',
+        'from-rose-500 to-red-600',
+        'from-violet-600 to-purple-700',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % gradients.length;
+    return gradients[index];
+};
 
 const PendingJobs = () => {
     const [jobs, setJobs] = useState([]);
@@ -25,7 +44,7 @@ const PendingJobs = () => {
         try {
             setLoading(true);
             const extraParams = {
-                search: searchTerm || undefined,
+                search: debouncedSearch || undefined,
                 start_date: dateFilter.startDate || undefined,
                 end_date: dateFilter.endDate || undefined
             };
@@ -45,12 +64,18 @@ const PendingJobs = () => {
         }
     };
 
+    const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+
     useEffect(() => {
         const timer = setTimeout(() => {
-            fetchPendingJobs();
+            setDebouncedSearch(searchTerm);
         }, 300);
         return () => clearTimeout(timer);
-    }, [page, limit, dateFilter, searchTerm]);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        fetchPendingJobs();
+    }, [page, limit, dateFilter, debouncedSearch]);
 
     const openModal = (type, id, title) => {
         setActionModal({ isOpen: true, type, id, title });
@@ -157,7 +182,7 @@ const PendingJobs = () => {
                             <tbody className="divide-y divide-slate-100 animate-pulse">
                                 {[...Array(5)].map((_, i) => (
                                     <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-4">
                                             <div className="flex items-start gap-4">
                                                 <div className="w-12 h-12 rounded-xl bg-slate-200 shrink-0"></div>
                                                 <div className="flex flex-col gap-2 w-full mt-1">
@@ -167,19 +192,19 @@ const PendingJobs = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-4">
                                             <div className="flex flex-col gap-2.5 mt-1">
                                                 <div className="h-6 w-20 bg-slate-200 rounded-md"></div>
                                                 <div className="h-3.5 w-32 bg-slate-200 rounded mt-0.5"></div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-4">
                                             <div className="flex flex-col gap-2.5 mt-1">
                                                 <div className="h-4 w-24 bg-slate-200 rounded"></div>
                                                 <div className="h-3.5 w-20 bg-slate-200 rounded mt-0.5"></div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6 text-right align-middle">
+                                        <td className="py-3 px-4 text-right align-middle">
                                             <div className="flex items-center justify-end gap-3 mt-1">
                                                 <div className="h-8 w-24 bg-slate-200 rounded-lg"></div>
                                                 <div className="h-8 w-24 bg-slate-200 rounded-lg"></div>
@@ -228,25 +253,44 @@ const PendingJobs = () => {
                             <tbody className="divide-y divide-slate-100">
                                 {filteredJobs.map((job) => (
                                     <tr key={job.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-4">
                                             <div className="flex items-start gap-4">
-                                                <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 p-0">
-                                                    {job.company_logo ? (
-                                                        <img src={job.company_logo} alt={job.company_name} className="w-full h-full object-contain" />
+                                                {(() => {
+                                                    const logoSrc = job.company_logo || job.logo;
+                                                    const compName = job.company_name || 'Company';
+                                                    const grad = getCompanyAvatarGradient(compName);
+                                                    return logoSrc ? (
+                                                        <div className="w-12 h-12 rounded-xl bg-white shadow-md flex items-center justify-center p-0.5 shrink-0 overflow-hidden">
+                                                            <img
+                                                                src={getImageUrl(logoSrc)}
+                                                                alt={compName}
+                                                                className="w-full h-full object-contain"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    if (e.currentTarget.nextElementSibling) {
+                                                                        e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <div className={`w-full h-full rounded-lg bg-gradient-to-br ${grad} text-white hidden items-center justify-center font-bold text-base uppercase`}>
+                                                                {compName.slice(0, 2)}
+                                                            </div>
+                                                        </div>
                                                     ) : (
-                                                        <Briefcase className="w-6 h-6 text-slate-400" />
-                                                    )}
-                                                </div>
+                                                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${grad} text-white shadow-2xs flex items-center justify-center font-bold text-base uppercase shrink-0`}>
+                                                            {compName.slice(0, 2)}
+                                                        </div>
+                                                    );
+                                                })()}
                                                 <div className="flex flex-col gap-0.5">
                                                     <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 mb-0">{job.job_title}</h3>
                                                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                                                         <p className="text-sm font-semibold text-slate-700 mb-0">{job.company_name}</p>
                                                         {job.recruiter_plan_name && (
-                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                                                                job.recruiter_can_approve === false
-                                                                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                                                    : 'bg-blue-50 text-blue-700 border border-blue-100'
-                                                            }`}>
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold ${job.recruiter_can_approve === false
+                                                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                                : 'bg-blue-50 text-blue-700 border border-blue-100'
+                                                                }`}>
                                                                 {job.recruiter_can_approve === false ? '⚠️ Limit Reached: ' : ''}
                                                                 {job.recruiter_plan_name} Plan ({job.recruiter_active_count ?? 0}/{job.recruiter_active_limit ?? 3} Active)
                                                             </span>
@@ -259,7 +303,7 @@ const PendingJobs = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
+                                        <td className="py-3 px-4">
                                             <div className="flex flex-col gap-2">
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-[13px] font-semibold bg-indigo-50 text-indigo-600 w-fit">
                                                     <Briefcase className="w-3.5 h-3.5" />
@@ -269,19 +313,19 @@ const PendingJobs = () => {
                                                     <MapPin className="w-3.5 h-3.5" />
                                                     <span className="truncate max-w-[200px]">
                                                         {(() => {
-                                                             try {
-                                                                 const locs = typeof job.work_location === 'string' ? JSON.parse(job.work_location) : job.work_location;
-                                                                 return Array.isArray(locs) ? locs.join(', ') : (locs || 'Not Specified');
-                                                             } catch (e) {
-                                                                 return 'Not Specified';
-                                                             }
-                                                         })()}
+                                                            try {
+                                                                const locs = typeof job.work_location === 'string' ? JSON.parse(job.work_location) : job.work_location;
+                                                                return Array.isArray(locs) ? locs.join(', ') : (locs || 'Not Specified');
+                                                            } catch (e) {
+                                                                return 'Not Specified';
+                                                            }
+                                                        })()}
                                                     </span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6">
-                                            <div className="flex flex-col gap-2 text-[14px] text-slate-700 font-semibold">
+                                        <td className="py-3 px-4">
+                                            <div className="flex flex-col gap-2 text-[12px] text-slate-700 font-semibold">
                                                 <div className="flex items-center gap-2.5">
                                                     <Calendar className="w-4 h-4 text-slate-400" />
                                                     {new Date(job.created_at).toLocaleDateString('en-US', {
@@ -294,11 +338,11 @@ const PendingJobs = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="py-4 px-6 text-right align-middle">
+                                        <td className="py-3 px-4 text-right align-middle">
                                             <div className="flex items-center justify-end gap-3">
                                                 <Link prefetch={false} target='_blank' href={`/job-details/${job.id}?preview=true`} className="no-underline hover:no-underline">
                                                     <button
-                                                        className="flex items-center gap-1.5 px-3 py-2 text-[13px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                                                     >
                                                         <Eye className="w-4 h-4" /> Preview
                                                     </button>
@@ -314,18 +358,17 @@ const PendingJobs = () => {
                                                         }
                                                         openModal('approve', job.id, job.job_title);
                                                     }}
-                                                    className={`flex items-center gap-1.5 px-3 py-2 text-[13px] font-semibold rounded-lg transition-colors ${
-                                                        job.recruiter_can_approve === false
-                                                            ? 'text-slate-400 bg-slate-100 hover:bg-slate-200 cursor-not-allowed'
-                                                            : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
-                                                    }`}
+                                                    className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-semibold rounded-lg transition-colors ${job.recruiter_can_approve === false
+                                                        ? 'text-slate-400 bg-slate-100 hover:bg-slate-200 cursor-not-allowed'
+                                                        : 'text-emerald-600 bg-emerald-50 hover:bg-emerald-100'
+                                                        }`}
                                                     title={job.recruiter_can_approve === false ? `Active limit reached (${job.recruiter_active_count}/${job.recruiter_active_limit})` : "Approve job post"}
                                                 >
                                                     <CheckCircle className="w-4 h-4" /> Approve
                                                 </button>
                                                 <button
                                                     onClick={() => openModal('reject', job.id, job.job_title)}
-                                                    className="flex items-center gap-1.5 px-3 py-2 text-[13px] font-semibold text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-semibold text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
                                                 >
                                                     <XCircle className="w-4 h-4" /> Reject
                                                 </button>
@@ -364,17 +407,16 @@ const PendingJobs = () => {
                                                 )}
                                                 <button
                                                     onClick={() => setPage(p)}
-                                                    className={`w-8 h-8 rounded-md flex items-center justify-center text-sm font-semibold transition-colors border ${
-                                                        page === p 
-                                                            ? 'bg-indigo-50 border-indigo-200 text-indigo-700' 
-                                                            : 'border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-200'
-                                                    }`}
+                                                    className={`w-8 h-8 rounded-md flex items-center justify-center text-sm font-semibold transition-colors border ${page === p
+                                                        ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                                        : 'border-transparent text-slate-600 hover:bg-slate-50 hover:border-slate-200'
+                                                        }`}
                                                 >
                                                     {p}
                                                 </button>
                                             </React.Fragment>
                                         );
-                                })}
+                                    })}
 
                                 <button
                                     onClick={() => setPage(p => Math.min(totalPages, p + 1))}
@@ -387,7 +429,7 @@ const PendingJobs = () => {
 
                             <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
                                 Rows per page:
-                                <select 
+                                <select
                                     className="px-2 py-1.5 border border-slate-200 rounded-md text-slate-700 text-[13px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
                                     value={limit}
                                     onChange={(e) => {

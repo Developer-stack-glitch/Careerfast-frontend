@@ -12,6 +12,7 @@ import {
     getAdminPlanById
 } from '../ApiService/action';
 import toast from 'react-hot-toast';
+import { AdminFormSkeleton } from './AdminSkeletons';
 
 export default function PlanForm({ planId = null }) {
     const router = useRouter();
@@ -179,12 +180,7 @@ export default function PlanForm({ planId = null }) {
     };
 
     if (loading) {
-        return (
-            <div className="w-full max-w-4xl mx-auto p-12 bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-                <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
-                <p className="text-[14px] text-gray-500">Loading plan configuration...</p>
-            </div>
-        );
+        return <AdminFormSkeleton />;
     }
 
     return (
@@ -210,7 +206,7 @@ export default function PlanForm({ planId = null }) {
 
             <form onSubmit={(e) => handleSubmit(e, false)} className="space-y-6">
                 {/* 1. Basic Information */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                <div className="bg-white rounded-2xl p-6">
                     <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
                         <CreditCard className="w-5 h-5 text-blue-600" />
                         Basic Information
@@ -319,7 +315,7 @@ export default function PlanForm({ planId = null }) {
                 </div>
 
                 {/* 2. Job Posting Limits */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                <div className="bg-white rounded-2xl p-6">
                     <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
                         <Briefcase className="w-5 h-5 text-emerald-600" />
                         Job Posting Limits
@@ -392,7 +388,7 @@ export default function PlanForm({ planId = null }) {
                 </div>
 
                 {/* 3. Candidate / Resume Limits */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                <div className="bg-white rounded-2xl p-6">
                     <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
                         <Users className="w-5 h-5 text-indigo-600" />
                         Candidate / Resume Quotas
@@ -451,7 +447,7 @@ export default function PlanForm({ planId = null }) {
                 </div>
 
                 {/* 4. Additional Feature Switches */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100">
+                <div className="bg-white rounded-2xl p-6">
                     <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-amber-500" />
                         Recruiter Features & Privileges

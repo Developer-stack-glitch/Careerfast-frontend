@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+import React, { useState, useEffect, useMemo, memo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 import {
     Search, Settings,
     Plug, LineChart, Sparkles, Users, CreditCard,
@@ -7,17 +9,8 @@ import {
     Building, Briefcase, FileCheck, MessageSquare,
     TimerReset, LogOut, UserPlus, Layers, PlusCircle, Users2
 } from 'lucide-react';
-import Overview from './Overview';
-import JobPost from './JobPost';
-import AnalyticsReport from './AnalyticsReport';
-import JobSeekers from './JobSeekers';
-import Employers from './Employers';
-import Applications from './Applications';
-import PendingJobs from './PendingJobs';
-import BillingPlan from './BillingPlan';
-import SupportTicket from './SupportTicket';
-import SettingsPage from './Settings';
-import IntegrationPage from './Integration';
+import defaultLogo from '../images/careerfastlogofinal.png';
+import { getImageUrl } from '../utils/getImageUrl';
 
 const mockNavGroups = [
     {
@@ -66,40 +59,61 @@ const mockBottomItems = [
     { id: 'logout', title: 'Logout', icon: LogOut },
 ];
 
-function WorkspaceSwitcher() {
+const allItems = [
+    ...mockNavGroups.flatMap(g => g.items),
+    ...mockBottomItems,
+    { id: 'getting-started', title: 'Getting started', icon: Rocket }
+];
+
+const WorkspaceSwitcher = memo(function WorkspaceSwitcher() {
     return (
         <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
-            <div className="flex items-center justify-center w-full cursor-pointer group">
+            <Link href="/admin" className="flex items-center justify-center w-full cursor-pointer group no-underline">
                 <div className="flex items-center gap-2">
-                    <img src="https://careerfast.in/_next/static/media/careerfastlogofinal.0nplzw.k4hsr8.png" alt="" className='w-[180px]' />
+                    <img src={getImageUrl(defaultLogo)} alt="CareerFast" className="w-[180px] h-auto object-contain" />
                 </div>
-            </div>
+            </Link>
         </div>
     );
-}
+});
 
-function NavItem({ item, currentPath, activeId, onSelect }) {
+const NavItem = memo(function NavItem({ item, currentPath, onLogout }) {
     const isActive = item.href
         ? (item.href === '/admin' ? currentPath === '/admin' : currentPath === item.href || currentPath.startsWith(item.href + '/'))
-        : activeId === item.id;
+        : false;
+
+    if (item.id === 'logout') {
+        return (
+            <button
+                type="button"
+                className="w-[calc(100%-24px)] flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer transition-colors mx-3 text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg text-left border-0 bg-transparent"
+                onClick={onLogout}
+            >
+                <item.icon className="w-[16px] h-[16px] text-red-500 shrink-0" strokeWidth={1.5} />
+                <span className="truncate">{item.title}</span>
+            </button>
+        );
+    }
 
     return (
-        <div
-            className={`flex items-center gap-3 px-3 py-2 text-[13px] cursor-pointer transition-colors mx-3
+        <Link
+            href={item.href || '#'}
+            prefetch={true}
+            className={`flex items-center gap-3 px-3 py-2 text-[13px] transition-colors mx-3 no-underline
                 ${isActive
                     ? 'bg-gray-100/80 text-gray-900 font-medium rounded-lg'
-                    : item.id === 'logout'
-                        ? 'text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg'}`}
-            onClick={() => onSelect(item)}
+                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg'}`}
         >
-            <item.icon className={`w-[16px] h-[16px] ${isActive ? 'text-gray-700' : item.id === 'logout' ? 'text-red-500' : 'text-gray-400'}`} strokeWidth={isActive ? 2 : 1.5} />
+            <item.icon
+                className={`w-[16px] h-[16px] shrink-0 ${isActive ? 'text-gray-700' : 'text-gray-400'}`}
+                strokeWidth={isActive ? 2 : 1.5}
+            />
             <span className="truncate">{item.title}</span>
-        </div>
+        </Link>
     );
-}
+});
 
-export function SidebarNav({ className = '', currentPath, activeId, onSelect }) {
+export const SidebarNav = memo(function SidebarNav({ className = '', currentPath, onLogout }) {
     return (
         <div className={`flex flex-col w-[260px] h-full bg-white border-r border-gray-100 font-sans ${className}`}>
             <WorkspaceSwitcher />
@@ -117,8 +131,7 @@ export function SidebarNav({ className = '', currentPath, activeId, onSelect }) 
                                 key={item.id}
                                 item={item}
                                 currentPath={currentPath}
-                                activeId={activeId}
-                                onSelect={onSelect}
+                                onLogout={onLogout}
                             />
                         ))}
                     </div>
@@ -126,101 +139,61 @@ export function SidebarNav({ className = '', currentPath, activeId, onSelect }) 
             </div>
 
             <div className="mt-auto pb-2 flex flex-col gap-1 bg-white pt-2">
-                {/* <div className="px-3 mb-2">
-                    <div
-                        onClick={() => onSelect('getting-started')}
-                        className={`border rounded-xl p-3.5 flex flex-col gap-3 cursor-pointer transition-colors mx-1 ${activeId === 'getting-started'
-                            ? 'bg-[#f5fbff] border-blue-200/80 hover:bg-blue-50/80'
-                            : 'bg-white border-gray-100 hover:bg-gray-50'
-                            }`}
-                    >
-                        <div className="flex items-center justify-between">
-                            <div className={`flex items-center gap-2 font-medium text-[13px] ${activeId === 'getting-started' ? 'text-blue-600' : 'text-gray-700'
-                                }`}>
-                                <Rocket className={`w-4 h-4 ${activeId === 'getting-started' ? 'text-blue-600' : 'text-gray-400'
-                                    }`} />
-                                <span>Getting started</span>
-                            </div>
-                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${activeId === 'getting-started' ? 'text-blue-700 bg-blue-100/50' : 'text-gray-500 bg-gray-100'
-                                }`}>2/3</span>
-                        </div>
-                        <div className={`h-1 rounded-full overflow-hidden ${activeId === 'getting-started' ? 'bg-blue-100' : 'bg-gray-100'
-                            }`}>
-                            <div className={`h-full w-2/3 rounded-full ${activeId === 'getting-started' ? 'bg-blue-600' : 'bg-gray-400'
-                                }`} />
-                        </div>
-                    </div>
-                </div> */}
                 <div className="h-px bg-gray-100/80 w-full mb-2 mt-1" />
                 {mockBottomItems.map(item => (
                     <NavItem
                         key={item.id}
                         item={item}
                         currentPath={currentPath}
-                        activeId={activeId}
-                        onSelect={onSelect}
+                        onLogout={onLogout}
                     />
                 ))}
             </div>
         </div>
     );
-}
-
-const allItems = [
-    ...mockNavGroups.flatMap(g => g.items),
-    ...mockBottomItems,
-    { id: 'getting-started', title: 'Getting started', icon: Rocket }
-];
+});
 
 export default function AdminLayout({ children }) {
     const router = useRouter();
     const pathname = usePathname();
-    const activeId = pathname === '/admin' ? 'dashboard' : pathname.split('/').pop();
 
     const [isOpen, setIsOpen] = useState(true);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
 
     useEffect(() => {
-        const checkAccess = () => {
+        try {
             const stored = localStorage.getItem("loginDetails");
             if (!stored) {
-                if (typeof window !== 'undefined') window.location.href = "/superadmin/login";
+                window.location.href = "/superadmin/login";
                 return;
             }
-            try {
-                const loginDetails = JSON.parse(stored);
-                if (loginDetails.role_id !== 1) {
-                    if (typeof window !== 'undefined') window.location.href = "/superadmin/login";
-                }
-            } catch (e) {
-                if (typeof window !== 'undefined') window.location.href = "/superadmin/login";
+            const loginDetails = JSON.parse(stored);
+            if (loginDetails?.role_id !== 1 && loginDetails?.role_name !== 'SUPERADMIN' && loginDetails?.role_name !== 'SUPER-ADMIN') {
+                window.location.href = "/superadmin/login";
             }
-        };
-        checkAccess();
+        } catch (e) {
+            window.location.href = "/superadmin/login";
+        }
     }, []);
 
-    const activeItem = allItems.find(i => i.href ? i.href === pathname : i.id === activeId);
+    const activeItem = useMemo(() => {
+        return allItems.find(i => {
+            if (i.href) {
+                if (i.href === '/admin') return pathname === '/admin';
+                return pathname === i.href || pathname.startsWith(i.href + '/');
+            }
+            return false;
+        });
+    }, [pathname]);
+
     const activeTitle = activeItem ? activeItem.title : 'Dashboard';
 
-    const handleSelect = (itemOrId) => {
-        const item = typeof itemOrId === 'object' ? itemOrId : (allItems.find(i => i.id === itemOrId) || { id: itemOrId });
-        const id = item.id;
-
-        if (id === 'logout') {
-            localStorage.removeItem("AccessToken");
-            localStorage.removeItem("loginDetails");
-            document.cookie = "AccessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            document.cookie = "loginDetails=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            window.location.href = "/superadmin/login";
-        } else if (item.href) {
-            router.push(item.href);
-        } else if (id === 'dashboard') {
-            router.push('/admin');
-        } else if (id === 'back') {
-            router.push('/');
-        } else {
-            router.push(`/admin/${id}`);
-        }
+    const handleLogout = () => {
+        localStorage.removeItem("AccessToken");
+        localStorage.removeItem("loginDetails");
+        document.cookie = "AccessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = "loginDetails=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        window.location.href = "/superadmin/login";
     };
 
     return (
@@ -232,22 +205,25 @@ export default function AdminLayout({ children }) {
                 <SidebarNav
                     className="w-[260px] border-none"
                     currentPath={pathname}
-                    activeId={activeId}
-                    onSelect={handleSelect}
+                    onLogout={handleLogout}
                 />
             </div>
 
             <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 bg-white border-l border-gray-100">
-                <div className="h-[72px] flex items-center px-6 justify-between bg-white shrink-0">
+                <div className="h-[72px] flex items-center px-6 justify-between bg-white shrink-0 border-b border-gray-100">
                     <div className="flex items-center gap-4">
                         <button
+                            type="button"
                             onClick={() => setIsOpen(!isOpen)}
-                            className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                            className="p-1.5 rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors border-0 bg-transparent cursor-pointer"
+                            aria-label="Toggle sidebar"
                         >
                             {isOpen ? <PanelLeftClose className="w-[18px] h-[18px]" /> : <PanelLeftOpen className="w-[18px] h-[18px]" />}
                         </button>
                         <div className="flex items-center text-[13px] text-gray-500">
-                            <span className="cursor-pointer hover:text-gray-900">Dashboard</span>
+                            <Link href="/admin" className="cursor-pointer hover:text-gray-900 text-gray-500 no-underline">
+                                Dashboard
+                            </Link>
                             <ChevronRight className="w-3.5 h-3.5 mx-2 text-gray-300" />
                             <span className="font-medium text-gray-900">{activeTitle}</span>
                         </div>
@@ -266,8 +242,7 @@ export default function AdminLayout({ children }) {
                         </div>
 
                         <div className="flex items-center gap-4 ml-2">
-
-                            <button className="text-gray-400 hover:text-gray-600 transition-colors">
+                            <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors border-0 bg-transparent p-0 cursor-pointer">
                                 <Bell className="w-5 h-5" />
                             </button>
 
@@ -278,23 +253,19 @@ export default function AdminLayout({ children }) {
                     </div>
                 </div>
 
-                <div className="p-8 md:p-8 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1 bg-[#f5f5f5]">
-                    {children ? children : (
-                        <div>
-                            {activeId === 'analytics' ? <AnalyticsReport /> : activeId === 'job-post' ? <JobPost /> : activeId === 'job-seekers' ? <JobSeekers /> : activeId === 'employers' ? <Employers /> : activeId === 'applications' ? <Applications /> : activeId === 'pending-jobs' ? <PendingJobs /> : activeId === 'billing' ? <BillingPlan /> : activeId === 'support' ? <SupportTicket /> : activeId === 'general' ? <SettingsPage /> : activeId === 'integrations' ? <IntegrationPage /> : <Overview />}
-                        </div>
-                    )}
+                <div className="p-6 md:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1 bg-[#f5f5f5]">
+                    {children}
                 </div>
 
                 {isSearchOpen && (
-                    <div className="absolute inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/20 backdrop-blur-sm px-4">
+                    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/20 backdrop-blur-sm px-4">
                         <div className="absolute inset-0" onClick={() => setIsSearchOpen(false)} />
                         <div className="relative w-full max-w-xl bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                             <div className="flex items-center px-4 border-b border-gray-100">
                                 <Search className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
                                 <input
                                     autoFocus
-                                    className="flex-1 bg-transparent py-4 outline-none text-[15px] text-gray-900 placeholder:text-gray-400"
+                                    className="flex-1 bg-transparent py-4 outline-none text-[15px] text-gray-900 placeholder:text-gray-400 border-0"
                                     placeholder="Search..."
                                 />
                                 <kbd

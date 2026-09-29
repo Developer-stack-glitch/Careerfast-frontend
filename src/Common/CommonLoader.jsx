@@ -1,72 +1,94 @@
 'use client';
 import React from 'react';
-import logo from '../images/careerfastlogofinal.png';
+import defaultLogo from '../images/careerfastlogofinal.png';
 import { getImageUrl } from '../utils/getImageUrl';
 import '../css/CommonLoader.css';
 
 export default function CommonLoader({
-    fullScreen = true,
-    text = 'Loading CareerFast',
-    size = 'default',
-    style = {}
+  fullScreen = true,
+  text = 'Loading CareerFast',
+  size = 'default',
+  logo = defaultLogo,
+  backdropBlur = false,
+  showProgress = true,
+  showAmbient = true,
+  style = {},
+  className = '',
 }) {
-    const logoSrc = getImageUrl(logo);
+  const logoSrc = getImageUrl(logo || defaultLogo);
 
-    const logoWidth = size === 'small' ? 140 : size === 'large' ? 220 : 180;
-    const barWidth = size === 'small' ? 120 : size === 'large' ? 180 : 150;
+  // Responsive dynamic widths
+  const logoWidth = size === 'small' ? 140 : size === 'large' ? 240 : 190;
+  const barWidth = size === 'small' ? 120 : size === 'large' ? 190 : 150;
 
-    // Clean trailing dots if passed in text (e.g., "Loading CareerFast..." -> "Loading CareerFast")
-    const cleanText = text ? text.replace(/\.+$/, '') : '';
+  // Clean trailing dots if passed in text (e.g., "Loading Superadmin Console..." -> "Loading Superadmin Console")
+  const cleanText = text ? text.replace(/\.+$/, '') : '';
 
-    const wrapperInlineStyle = {
-        position: fullScreen ? 'fixed' : 'relative',
-        top: 0,
-        left: 0,
-        width: fullScreen ? '100vw' : '100%',
-        height: fullScreen ? '100vh' : 'auto',
-        minHeight: fullScreen ? '100vh' : '200px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: fullScreen ? 999999 : 10,
-        background: fullScreen ? '#ffffff' : 'transparent',
-        boxSizing: 'border-box',
-        ...style
-    };
+  const wrapperInlineStyle = {
+    position: fullScreen ? 'fixed' : 'relative',
+    top: 0,
+    left: 0,
+    width: fullScreen ? '100vw' : '100%',
+    height: fullScreen ? '100vh' : 'auto',
+    minHeight: fullScreen ? '100vh' : '220px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: fullScreen ? 999999 : 10,
+    background: fullScreen
+      ? backdropBlur
+        ? 'rgba(255, 255, 255, 0.92)'
+        : '#ffffff'
+      : 'transparent',
+    boxSizing: 'border-box',
+    ...style,
+  };
 
-    return (
-        <div
-            className={`common-loader-wrapper ${fullScreen ? 'fullscreen' : 'inline'}`}
-            style={wrapperInlineStyle}
-        >
-            <div className="common-loader-content">
-                {/* Brand Logo Container */}
-                <div className="cf-logo-box">
-                    <img
-                        src={logoSrc}
-                        alt="CareerFast"
-                        className="brand-logo-img"
-                        style={{ width: `${logoWidth}px` }}
-                    />
-                </div>
-
-                {/* Sleek Minimal Progress Line */}
-                <div className="cf-progress-track" style={{ width: `${barWidth}px` }}>
-                    <div className="cf-progress-indicator" />
-                </div>
-
-                {/* Subtle Text with Bouncing Dots */}
-                {cleanText && (
-                    <p className="loading-caption">
-                        <span>{cleanText}</span>
-                        <span className="loading-dots">
-                            <span className="loading-dot" />
-                            <span className="loading-dot" />
-                            <span className="loading-dot" />
-                        </span>
-                    </p>
-                )}
-            </div>
+  return (
+    <div
+      className={`common-loader-wrapper ${fullScreen ? 'fullscreen' : 'inline'} ${
+        backdropBlur ? 'backdrop-blur' : ''
+      } ${className}`}
+      style={wrapperInlineStyle}
+    >
+      {/* Aurora Ambient Lighting Effect */}
+      {fullScreen && showAmbient && (
+        <div className="cf-loader-ambient" aria-hidden="true">
+          <div className="cf-loader-glow-1" />
+          <div className="cf-loader-glow-2" />
         </div>
-    );
+      )}
+
+      <div className="common-loader-content">
+        {/* Brand Logo Container */}
+        <div className="cf-logo-box">
+          <img
+            src={logoSrc}
+            alt="CareerFast"
+            className="brand-logo-img"
+            style={{ width: `${logoWidth}px` }}
+          />
+        </div>
+
+        {/* Sleek Minimal Progress Line */}
+        {showProgress && (
+          <div className="cf-progress-track" style={{ width: `${barWidth}px` }}>
+            <div className="cf-progress-indicator" />
+          </div>
+        )}
+
+        {/* Subtle Text with Bouncing Brand Dots */}
+        {cleanText && (
+          <p className="loading-caption">
+            <span>{cleanText}</span>
+            <span className="loading-dots">
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+              <span className="loading-dot" />
+            </span>
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
