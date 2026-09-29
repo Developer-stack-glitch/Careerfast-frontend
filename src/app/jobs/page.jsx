@@ -1,8 +1,11 @@
-'use client';
-import dynamic from 'next/dynamic';
+import JobFilter from '@/JobPortal/JobFilter';
 
-const PageComponent = dynamic(() => import('@/JobPortal/JobFilter'), { ssr: false });
+export const metadata = {
+  title: "Latest Job Openings - Find Your Dream Job | CareerFast",
+  description: "Search and apply for the latest jobs across various industries and locations. CareerFast brings you the best career opportunities to help you succeed.",
+  keywords: "jobs, job search, careers, hiring, vacancies, recruitment, CareerFast",
+};
 
 export default function Page() {
-  return <PageComponent />;
+  return <JobFilter />;
 }

@@ -58,10 +58,25 @@ export default function CommonSelectField({
           filterOption={(input, option) =>
             (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
           }
-          options={options.map((item) => ({
-            label: item.label || item.name || String(item.value),
-            value: item.value ?? item.isoCode ?? item.id ?? item.name,
-          }))}
+          options={(() => {
+            const mapped = (options || []).map((item) => ({
+              label: item.label || item.name || String(item.value ?? item.id ?? ""),
+              value: item.value ?? item.isoCode ?? item.id ?? item.name,
+            }));
+            if (
+              value !== undefined &&
+              value !== null &&
+              value !== "" &&
+              !mapped.some(
+                (opt) =>
+                  String(opt.value) === String(value) ||
+                  String(opt.label).trim().toLowerCase() === String(value).trim().toLowerCase()
+              )
+            ) {
+              mapped.unshift({ label: String(value), value: value });
+            }
+            return mapped;
+          })()}
           {...rest}
         />
       </div>

@@ -1,31 +1,66 @@
 /* Base Styles */
+:root {
+  --cf-purple: #6800ad;
+  --cf-purple-hover: #55008f;
+  --cf-purple-light: #f5effc;
+  --cf-orange: #ff7300;
+  --cf-orange-hover: #e66700;
+  --cf-orange-light: #fff4eb;
+  --cf-peach: #ffd8bb;
+  --pf-primary: #6800ad;
+  --pf-primary-hover: #55008f;
+  --pf-primary-light: #f5effc;
+  --pf-primary-gradient: linear-gradient(135deg, #6800ad 0%, #8b1cd4 60%, #ff7300 100%);
+  --pf-hero-gradient: linear-gradient(135deg, #250040 0%, #460074 50%, #6800ad 100%);
+  --pf-surface: #ffffff;
+  --pf-bg: #f8fafc;
+  --pf-border: #e2e8f0;
+  --pf-border-subtle: #f1f5f9;
+  --pf-text-primary: #0f172a;
+  --pf-text-secondary: #475569;
+  --pf-text-muted: #64748b;
+  --pf-success: #10b981;
+  --pf-success-light: #ecfdf5;
+  --pf-warning: #ff7300;
+  --pf-warning-light: #fff4eb;
+  --pf-danger: #ef4444;
+  --pf-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+  --pf-shadow-md: 0 4px 14px -2px rgba(104, 0, 173, 0.08), 0 2px 6px -1px rgba(104, 0, 173, 0.04);
+  --pf-shadow-lg: 0 12px 28px -6px rgba(104, 0, 173, 0.12), 0 4px 10px -2px rgba(104, 0, 173, 0.06);
+  --pf-radius-lg: 16px;
+  --pf-radius-md: 12px;
+  --pf-radius-sm: 8px;
+}
+
 .profile-layout {
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--pf-bg);
+  font-family: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Sidebar Styles */
 .profile-layout .profile-sider {
-  background: #fff;
-  box-shadow: 0 10px 2px -3px rgb(0 0 0 / 24%), 0 4px 6px -2px rgb(0 0 0 / 17%);
-  z-index: 10;
+  background: #ffffff !important;
+  border-right: 1px solid var(--pf-border);
+  box-shadow: 1px 0 12px rgba(15, 23, 42, 0.03);
+  z-index: 20;
 }
 
 .profile-layout .ant-menu-title-content {
   text-align: left;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .profile-layout .profile-card-sidebar {
-  padding: 0 0 24px 0;
+  padding: 20px 16px 20px;
   text-align: center;
-  border-bottom: 1px solid #f0f0f0;
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+  border-bottom: 1px solid var(--pf-border-subtle);
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
   position: relative;
 }
 
 .sidebar-logo-container {
-  padding: 24px 20px 20px;
+  padding: 8px 12px 18px;
   cursor: pointer;
   display: flex;
   justify-content: center;
@@ -33,126 +68,151 @@
 }
 
 .sidebar-logo {
-  width: 140px;
+  width: 144px;
   height: auto;
   object-fit: contain;
-  transition: transform 0.3s ease;
+  transition: transform 0.25s ease;
 }
 
 .sidebar-logo-container:hover .sidebar-logo {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 .avatar-wrapper {
   position: relative;
   display: inline-block;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .active-status-dot {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 16px;
-  height: 16px;
-  background-color: #22c55e;
-  border: 3px solid #fff;
+  bottom: 4px;
+  right: 4px;
+  width: 15px;
+  height: 15px;
+  background-color: var(--pf-success);
+  border: 2.5px solid #ffffff;
   border-radius: 50%;
   z-index: 2;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
 .profile-layout .profile-avatar {
-  border: 4px solid #fff;
-  box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 14px -2px rgba(79, 70, 229, 0.18);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
 }
 
 .profile-layout .profile-avatar:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 20px -4px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 8px 18px -2px rgba(79, 70, 229, 0.28);
 }
 
 .profile-layout .profile-name {
-  margin: 8px 0 4px;
-  font-size: 18px;
+  margin: 6px 0 2px;
+  font-size: 16px;
   font-weight: 700;
-  color: #1e293b;
-  font-family: 'Outfit', sans-serif;
+  color: var(--pf-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 4px;
 }
 
 .profile-layout .profile-email {
-  margin: 0;
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 500;
+  margin: 0 0 8px 0;
+  font-size: 12.5px;
+  color: var(--pf-text-muted);
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 6px;
 }
 
-.profile-layout .profile-completion {
-  margin-top: 16px;
+.sidebar-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background-color: var(--pf-success-light);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #065f46;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
 }
 
-.profile-layout .progress-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 2px;
-  font-size: 12px;
-  color: #64748b;
+.sidebar-role-badge-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--pf-success);
+  border-radius: 50%;
+  animation: pulse-dot 2s infinite ease-in-out;
 }
 
-.profile-layout .profile-progress {
-  margin-bottom: 0;
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
 }
 
 .profile-layout .profile-menu {
   border-right: none;
-  padding: 12px 16px;
+  padding: 12px 10px;
   background: transparent;
 }
 
 .profile-layout .profile-menu .ant-menu-item {
-  height: 52px;
-  margin: 6px 0;
-  border-radius: 12px;
-  font-size: 15px;
+  height: 44px;
+  margin: 4px 0;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 500;
-  color: #475569;
-  font-family: 'Outfit', sans-serif;
-  transition: all 0.3s ease;
+  color: var(--pf-text-secondary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
+  padding: 0 14px !important;
 }
 
 .profile-layout .profile-menu .ant-menu-item .ant-menu-item-icon,
 .profile-layout .profile-menu .ant-menu-item svg {
-  font-size: 18px;
-  color: #64748b;
-  transition: color 0.3s ease;
+  font-size: 17px;
+  color: var(--pf-text-muted);
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .profile-layout .profile-menu .ant-menu-item:hover {
-  background-color: rgba(99, 102, 241, 0.05);
-  color: #4f46e5;
+  background-color: var(--pf-primary-light);
+  color: var(--pf-primary);
 }
 
 .profile-layout .profile-menu .ant-menu-item:hover .ant-menu-item-icon,
 .profile-layout .profile-menu .ant-menu-item:hover svg {
-  color: #4f46e5;
-  transform: scale(1.1);
+  color: var(--pf-primary);
+  transform: scale(1.08);
 }
 
 .profile-menu .ant-menu-item-selected {
-  background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%) !important;
-  color: #4f46e5 !important;
+  background: var(--pf-primary-light) !important;
+  color: var(--pf-primary) !important;
   font-weight: 600 !important;
-  border-left: 3px solid #4f46e5;
-  border-radius: 4px 12px 12px 4px !important;
 }
 
 .profile-menu .ant-menu-item-selected .ant-menu-item-icon,
 .profile-menu .ant-menu-item-selected svg {
-  color: #4f46e5 !important;
+  color: var(--pf-primary) !important;
 }
 
 /* Main Content Styles */
@@ -505,13 +565,179 @@
   padding: 0 !important;
 }
 
-.user_details_drawer .ant-menu-vertical {
-  background: none !important;
-  border: none !important;
+.user_details_drawer.ant-drawer {
+  z-index: 1060 !important;
 }
 
-.user_details_drawer .ant-menu-item-selected {
-  margin-bottom: 10px !important;
+.user_details_drawer .ant-drawer-mask {
+  z-index: 1059 !important;
+}
+
+.user_details_drawer .ant-drawer-content-wrapper {
+  z-index: 1060 !important;
+}
+
+/* ── Drawer Sidebar ── */
+.drawer-sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: #fafbfc;
+  border-right: 1px solid #eef2f6;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.drawer-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.drawer-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #eef2f6;
+}
+
+.drawer-sidebar-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6800ad, #5f2eea);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drawer-close-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+}
+.drawer-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.drawer-progress-block {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef2f6;
+}
+
+/* ── Drawer Navigation ── */
+.drawer-nav {
+  padding: 12px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.drawer-nav-item:hover {
+  background: #f1f5f9;
+}
+
+.drawer-nav-item.active {
+  background: linear-gradient(135deg, rgba(95, 46, 234, 0.08), rgba(104, 0, 173, 0.06));
+}
+
+.drawer-nav-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.drawer-nav-item.active .drawer-nav-label {
+  color: #5f2eea;
+  font-weight: 600;
+}
+
+.drawer-nav-item:hover .drawer-nav-label {
+  color: #334155;
+}
+
+.drawer-nav-indicator {
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(180deg, #5f2eea, #6800ad);
+  border-radius: 4px;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* ── Drawer Content Area ── */
+.drawer-content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  min-width: 0;
+}
+
+.drawer-content-header {
+  padding: 20px 36px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.drawer-content-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.drawer-content-body {
+  flex: 1;
+  padding: 28px 36px 40px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.drawer-content-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .drawer-sidebar {
+    width: 220px;
+    min-width: 220px;
+  }
+  .drawer-content-body {
+    padding: 20px 16px 32px;
+  }
+  .drawer-content-header {
+    padding: 16px 16px 12px;
+  }
 }
 
 @keyframes pulse {
@@ -1131,7 +1357,7 @@
 }
 
 .view-all-btn:hover {
-  background: #f0f7ff;
+  background: #f5effc;
 }
 
 .recently-viewed-list {
@@ -1989,7 +2215,7 @@
 }
 
 .card-content {
-  padding: 24px;
+  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -2120,7 +2346,7 @@
 
 /* Project Description */
 .project-description {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   flex-grow: 1;
 }
 
@@ -3161,7 +3387,7 @@
   gap: 16px;
   align-items: center;
   background: rgba(255, 255, 255, 0.8);
-  padding: 20px;
+  padding: 14px;
   border-radius: 16px;
   border: 1px solid rgba(226, 220, 255, 0.5);
   transition: all 0.3s ease;
@@ -3177,8 +3403,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   background: rgba(95, 46, 234, 0.1);
   border-radius: 12px;
   font-size: 24px;
@@ -3192,10 +3418,10 @@
 }
 
 .experience-preview .item-value {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #111827;
-  margin-top: 4px;
+  margin-top: 0px;
 }
 
 .experience-preview .experience-company-card {
@@ -4146,4 +4372,1255 @@
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* ==========================================================================
+   EXACT NAUKRI.COM CANDIDATE PROFILE UI STYLES
+   ========================================================================== */
+
+.profile-layout {
+  min-height: 100vh;
+  background-color: #f4f5f7 !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.profile-content-layout {
+  background-color: #f4f5f7 !important;
+}
+
+.profile-main-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 20px 60px 20px;
+  width: 100%;
+}
+
+/* Naukri Top Profile Header Card */
+.naukri-header-card {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  border-radius: 14px;
+  padding: 24px 28px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  position: relative;
+}
+
+/* Avatar with Green Circular Progress Ring */
+.naukri-avatar-wrapper {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.naukri-progress-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 96px;
+  height: 96px;
+  transform: rotate(-90deg);
+}
+
+.naukri-progress-track {
+  fill: none;
+  stroke: #e2e8f0;
+  stroke-width: 4;
+}
+
+.naukri-progress-bar {
+  fill: none;
+  stroke: #22c55e;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+}
+
+.naukri-avatar-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffffff;
+  display: block;
+}
+
+.naukri-progress-pill {
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #22c55e;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 12px;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+
+.naukri-avatar-camera-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.naukri-avatar-camera-btn:hover {
+  background: #f1f5f9;
+  color: #6800ad;
+}
+
+/* Header Text Information */
+.naukri-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.naukri-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.naukri-name-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.naukri-candidate-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: #091e42;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.naukri-edit-icon {
+  color: #6800ad;
+  cursor: pointer;
+  font-size: 14px;
+  transition: transform 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 4px;
+}
+
+.naukri-edit-icon:hover {
+  transform: scale(1.15);
+  background: #f5effc;
+}
+
+.naukri-updated-text {
+  font-size: 11.5px;
+  color: #718b9e;
+  font-weight: 400;
+}
+
+.naukri-role-text {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 2px 0;
+}
+
+.naukri-company-text {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 16px 0;
+  font-weight: 400;
+}
+
+.naukri-header-divider {
+  height: 1px;
+  background-color: #f1f5f9;
+  margin: 12px 0 14px 0;
+}
+
+/* 2-Column Info Matrix */
+.naukri-header-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 8px;
+  column-gap: 32px;
+}
+
+.naukri-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #445566;
+}
+
+.naukri-meta-item svg {
+  color: #718b9e;
+  flex-shrink: 0;
+}
+
+.naukri-verified-check {
+  color: #22c55e;
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+/* 2-Column Layout Below Header */
+.naukri-body-grid {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* Left Column: Sticky Quick Links */
+.naukri-left-col {
+  width: 220px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+}
+
+.naukri-quick-links-card {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  padding: 16px 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.naukri-quick-links-header {
+  font-size: 14px;
+  font-weight: 700;
+  color: #091e42;
+  padding: 0 16px 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+}
+
+.naukri-quick-link-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px;
+  font-size: 13px;
+  color: #445566;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.naukri-quick-link-item:hover {
+  background-color: #f8fafc;
+  color: #6800ad;
+}
+
+.naukri-quick-link-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6800ad;
+  cursor: pointer;
+}
+
+.naukri-quick-link-action:hover {
+  text-decoration: underline;
+}
+
+/* Right Column: Main Content Cards */
+.naukri-right-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Survey Prompt Card */
+.naukri-survey-card {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  padding: 18px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  position: relative;
+}
+
+.naukri-survey-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.naukri-survey-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #091e42;
+  margin: 0;
+}
+
+.naukri-diversity-tag {
+  font-size: 11px;
+  color: #718b9e;
+  font-weight: 500;
+}
+
+.naukri-survey-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.naukri-survey-pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.naukri-survey-pill:hover {
+  border-color: #6800ad;
+  color: #6800ad;
+}
+
+.naukri-survey-pill.active {
+  border-color: #6800ad;
+  background: #f5effc;
+  color: #6800ad;
+  font-weight: 600;
+}
+
+.naukri-survey-submit {
+  margin-left: auto;
+  background: #e2e8f0;
+  color: #64748b;
+  border: none;
+  border-radius: 16px;
+  padding: 5px 18px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.naukri-survey-submit.enabled {
+  background: #6800ad;
+  color: #ffffff;
+}
+
+/* PRO Banner */
+.naukri-pro-banner {
+  background: linear-gradient(90deg, #fff9f0 0%, #fff3db 100%);
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.06);
+}
+
+.naukri-pro-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.naukri-pro-badge {
+  background: #ff7300;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.naukri-pro-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.naukri-pro-btn {
+  background: #ff7300;
+  color: #ffffff;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+}
+
+.naukri-pro-btn:hover {
+  background: #e66700;
+}
+
+/* General Naukri Card */
+.naukri-card {
+  background: #ffffff;
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s ease;
+}
+
+.naukri-card:hover {
+  border-color: #cbd5e1;
+}
+
+.naukri-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.naukri-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.naukri-card-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #091e42;
+  margin: 0;
+}
+
+.naukri-blue-action {
+  color: #6800ad;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.naukri-blue-action:hover {
+  text-decoration: underline;
+}
+
+/* Resume Section */
+.naukri-resume-file-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+}
+
+.naukri-resume-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #091e42;
+  margin: 0 0 2px 0;
+}
+
+.naukri-resume-meta {
+  font-size: 12px;
+  color: #718b9e;
+  margin: 0;
+}
+
+.naukri-resume-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.naukri-icon-btn {
+  color: #6800ad;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.naukri-icon-btn:hover {
+  background: #f5effc;
+}
+
+.naukri-resume-dropzone {
+  border: 1px dashed #d8b4fe;
+  background: #fdfaff;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.naukri-update-resume-btn {
+  display: inline-block;
+  padding: 6px 26px;
+  border: 1px solid #6800ad;
+  border-radius: 20px;
+  color: #6800ad;
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: 6px;
+}
+
+.naukri-update-resume-btn:hover {
+  background: #6800ad;
+  color: #ffffff;
+}
+
+.naukri-resume-format-hint {
+  font-size: 11.5px;
+  color: #718b9e;
+  margin: 0;
+}
+
+/* Resume Headline & Profile Summary text */
+.naukri-headline-text {
+  font-size: 13.5px;
+  color: #334155;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.naukri-read-more-link {
+  color: #6800ad;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+/* Key Skills Pills */
+.naukri-skills-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.naukri-skill-pill {
+  border: 1px solid #dcdcdc;
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12.5px;
+  color: #445566;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.15s ease;
+}
+
+.naukri-skill-pill:hover {
+  border-color: #6800ad;
+  color: #6800ad;
+}
+
+/* Employment Section */
+.naukri-employment-item {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.naukri-employment-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.naukri-job-role-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.naukri-job-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #091e42;
+  margin: 0;
+}
+
+.naukri-job-company {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #445566;
+  margin: 0 0 4px 0;
+}
+
+.naukri-job-meta-row {
+  font-size: 12px;
+  color: #718b9e;
+  margin-bottom: 6px;
+}
+
+.naukri-job-notice {
+  font-size: 12px;
+  color: #718b9e;
+  margin-bottom: 8px;
+}
+
+.naukri-job-desc {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.55;
+  margin: 0 0 8px 0;
+}
+
+.naukri-top-skills-row {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0;
+}
+
+.naukri-top-skills-row strong {
+  color: #334155;
+}
+
+/* Education Section */
+.naukri-education-item {
+  margin-bottom: 16px;
+}
+
+.naukri-degree-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.naukri-degree-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #091e42;
+  margin: 0;
+}
+
+.naukri-edu-college {
+  font-size: 13px;
+  color: #445566;
+  margin: 0 0 2px 0;
+}
+
+.naukri-edu-meta {
+  font-size: 12px;
+  color: #718b9e;
+  margin: 0;
+}
+
+.naukri-edu-add-links {
+  display: flex;
+  gap: 20px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* IT Skills Table */
+.naukri-table-wrapper {
+  overflow-x: auto;
+}
+
+.naukri-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.naukri-table th {
+  text-align: left;
+  padding: 8px 12px;
+  color: #718b9e;
+  font-weight: 500;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12px;
+}
+
+.naukri-table td {
+  padding: 10px 12px;
+  color: #334155;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.naukri-table tr:hover td {
+  background: #fafbfc;
+}
+
+/* Projects Section */
+.naukri-project-item {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.naukri-project-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.naukri-project-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.naukri-project-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #091e42;
+  margin: 0;
+}
+
+.naukri-project-client {
+  font-size: 13px;
+  color: #445566;
+  margin: 0 0 2px 0;
+}
+
+.naukri-project-dates {
+  font-size: 12px;
+  color: #718b9e;
+  margin: 0 0 6px 0;
+}
+
+/* Accomplishments Section */
+.naukri-accomplishment-item {
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.naukri-accomplishment-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.naukri-acc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2px;
+}
+
+.naukri-acc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #091e42;
+  margin: 0;
+}
+
+.naukri-acc-desc {
+  font-size: 12.5px;
+  color: #718b9e;
+  margin: 0;
+}
+
+.naukri-acc-link {
+  font-size: 13px;
+  color: #6800ad;
+  word-break: break-all;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* 2-Column Data Grid (Career Profile, Personal Details) */
+.naukri-2col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  row-gap: 16px;
+  column-gap: 32px;
+}
+
+.naukri-data-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.naukri-data-label {
+  font-size: 11.5px;
+  color: #718b9e;
+  font-weight: 400;
+  text-transform: capitalize;
+}
+
+.naukri-data-val {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .naukri-body-grid {
+    flex-direction: column;
+  }
+
+  .naukri-left-col {
+    width: 100%;
+    position: static;
+  }
+
+  .naukri-header-card {
+    flex-direction: column;
+  }
+
+  .naukri-header-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .naukri-2col-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================================
+   NAUKRI TOP NAVBAR (Matches PDF Page 1)
+   ======================================================== */
+.naukri-navbar-root {
+  background: #ffffff;
+  border-bottom: 1px solid #e7e7e7;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.naukri-navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.naukri-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.naukri-nav-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.naukri-logo-text {
+  font-size: 24px;
+  font-weight: 800;
+  color: #6800ad;
+  letter-spacing: -0.8px;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.naukri-logo-dot {
+  width: 7px;
+  height: 7px;
+  background-color: #6800ad;
+  border-radius: 50%;
+  margin-left: -2px;
+  margin-top: -6px;
+}
+
+.naukri-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.naukri-nav-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.naukri-nav-link:hover {
+  color: #6800ad;
+}
+
+.naukri-badge-count {
+  background-color: #ff7300;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  margin-top: -6px;
+  margin-left: 1px;
+}
+
+.naukri-nav-center {
+  flex: 1;
+  max-width: 360px;
+}
+
+.naukri-search-box {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 24px;
+  padding: 4px 6px 4px 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.naukri-search-box:focus-within {
+  border-color: #6800ad;
+  box-shadow: 0 0 0 2px rgba(104, 0, 173, 0.15);
+}
+
+.naukri-search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #1e293b;
+  width: 100%;
+}
+
+.naukri-search-box input::placeholder {
+  color: #94a3b8;
+}
+
+.naukri-search-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #6800ad;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.naukri-search-btn:hover {
+  background: #55008f;
+}
+
+.naukri-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.naukri-360-btn {
+  border: 1.5px solid #ff7300;
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ff7300;
+  background: #fff7ed;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.naukri-360-btn:hover {
+  background: #ffedd5;
+}
+
+.naukri-nav-bell {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.naukri-bell-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 7px;
+  height: 7px;
+  background: #ff7300;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+}
+
+.naukri-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 20px;
+  transition: background 0.15s ease;
+  user-select: none;
+}
+
+.naukri-user-trigger:hover {
+  background: #f8fafc;
+}
+
+.naukri-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid #e2e8f0;
+}
+
+.naukri-user-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.naukri-nav-hamburger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.naukri-nav-hamburger:hover {
+  background: #f1f5f9;
+}
+
+/* ========================================================
+   NAUKRI FOOTER (Matches PDF Page 3)
+   ======================================================== */
+.naukri-footer-root {
+  background: #ffffff;
+  border-top: 1px solid #e7e7e7;
+  padding: 44px 0 24px 0;
+  margin-top: 40px;
+}
+
+.naukri-footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.naukri-footer-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr 1fr 1.4fr;
+  gap: 28px;
+  margin-bottom: 36px;
+}
+
+.naukri-footer-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.naukri-footer-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.naukri-footer-connect-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 10px;
+}
+
+.naukri-footer-socials {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.naukri-social-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.naukri-social-btn:hover {
+  border-color: #6800ad;
+  color: #6800ad;
+  background: #f5effc;
+}
+
+.naukri-footer-heading {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+}
+
+.naukri-footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.naukri-footer-links li a {
+  font-size: 12.5px;
+  color: #64748b;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.naukri-footer-links li a:hover {
+  color: #6800ad;
+}
+
+.naukri-footer-subtext {
+  font-size: 12px;
+  color: #718b9e;
+  margin: 0 0 12px 0;
+}
+
+.naukri-app-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.naukri-app-badge img {
+  height: 34px;
+  width: auto;
+  border-radius: 4px;
+}
+
+.naukri-footer-bottom {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.naukri-footer-infoedge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.naukri-infoedge-logo {
+  font-size: 20px;
+  font-weight: 400;
+  color: #475569;
+  letter-spacing: -0.5px;
+}
+
+.naukri-infoedge-copyright {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.naukri-footer-businesses {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.naukri-biz-label {
+  color: #94a3b8;
+}
+
+.naukri-biz-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #334155;
+  font-weight: 600;
+}
+
+.biz-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+@media (max-width: 900px) {
+  .naukri-footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .naukri-nav-center {
+    display: none;
+  }
 }

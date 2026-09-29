@@ -23,7 +23,7 @@ const ProfileSidebar = () => {
   const calculateCompletedStepsCount = () => {
     let count = 0;
     const { basic, professional, experience, education, skills, jobPreferences, resume, visibility } = profileData;
-    if (basic?.firstName && basic?.lastName && basic?.email && basic?.city && basic?.state) count++;
+    if (basic?.firstName && basic?.lastName && basic?.email && basic?.city && basic?.state && (basic?.isEmailVerified === true || basic?.isEmailVerified === 1)) count++;
     if (professional?.jobTitle && professional?.headline) count++;
     if (experience?.isFresher || experience?.list?.length > 0) count++;
     if (education?.length > 0) count++;

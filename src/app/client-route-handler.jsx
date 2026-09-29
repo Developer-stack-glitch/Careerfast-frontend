@@ -152,8 +152,6 @@ export default function ClientRouteHandler({ children }) {
     }
   }, [pathname, dispatch, isLoggedIn, searchParams, router]);
 
-  if (isCheckingMaintenance) return null; // Avoid flicker
-
   const isExemptPath = pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/superadmin');
   if (maintenanceMode && !isExemptPath) {
     const Maintenance = require('../Components/Maintenance').default;

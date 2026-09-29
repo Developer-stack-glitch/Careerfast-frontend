@@ -60,7 +60,7 @@ import { Blocks, Book, BookAlert, LayoutDashboard, Briefcase, GraduationCap as L
 
 const { Title, Text } = Typography;
 
-export default function Header() {
+export default function Header({ noSticky = false }) {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state) => state.loginstatus);
@@ -543,9 +543,9 @@ export default function Header() {
         <div className="container-fluid" style={{ paddingLeft: 35, paddingRight: 35 }}>
           <div className="d-flex justify-content-between align-items-center w-100 top-bar-inner">
             <div className="d-flex align-items-center gap-3">
-              <div className="top-bar-item"><MailOutlined /> careerfastcontact@gmail.com</div>
+              <div className="top-bar-item top-bar-contact"><MailOutlined /> <a href="mailto:careerfastcontact@gmail.com">careerfastcontact@gmail.com</a></div>
               <div className="top-bar-divider">|</div>
-              <div className="top-bar-item"><PhoneOutlined /> +91 81227 38034</div>
+              <div className="top-bar-item top-bar-contact"><PhoneOutlined /> <a href="tel:+918122738034">+91 81227 38034</a></div>
             </div>
 
             <div className="d-none d-lg-flex align-items-center justify-content-center" style={{ flex: 1, overflow: 'hidden', padding: '0px 20px 0px 0px' }}>
@@ -598,7 +598,7 @@ export default function Header() {
           </div>
         </div>
       </div>
-      <header className="bg-white py-2 elite-header sticky-top">
+      <header className={`bg-white py-2 elite-header ${noSticky ? '' : 'sticky-top'}`}>
         <div className="container-fluid" style={{ paddingLeft: 35, paddingRight: 35 }}>
           <div className="d-flex justify-content-between align-items-center w-100">
             <div className="d-flex align-items-center gap-4 global_search">
@@ -1640,45 +1640,67 @@ export default function Header() {
           .drawer-content-scroll {
             flex: 1;
             overflow-y: auto;
-            padding: 24px;
+            padding: 32px 24px;
+            background: #f8fafc;
           }
 
           .premium-menu-section {
-            margin-bottom: 30px;
+            margin-bottom: 24px;
           }
 
           .menu-section-title {
             display: block;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
-            color: #94a3b8;
+            color: #64748b;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 16px;
-            padding-left: 12px;
+            letter-spacing: 0.15em;
+            margin-bottom: 20px;
+            padding-left: 16px;
           }
 
           .premium-menu-item {
-            padding: 12px !important;
+            padding: 12px 16px !important;
             border-radius: 12px !important;
             cursor: pointer;
-            transition: all 0.2s ease !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             border: 1px solid transparent !important;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
             background: transparent !important;
+            position: relative;
+            overflow: hidden;
+          }
+
+          .premium-menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: #6366f1;
+            border-radius: 0 4px 4px 0;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+            transform-origin: center;
           }
 
           .premium-menu-item:hover {
-            background: #f8fafc !important;
-            border-color: #e2e8f0 !important;
+            background: #ffffff !important;
+            border-color: rgba(99, 102, 241, 0.1) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
             transform: translateX(4px);
           }
 
+          .premium-menu-item:hover::before {
+            transform: scaleY(1);
+          }
+
           .menu-icon-wrapper {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
-            background: #f1f5f9;
+            background: rgba(99, 102, 241, 0.08);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1688,44 +1710,53 @@ export default function Header() {
           }
 
           .premium-menu-item:hover .menu-icon-wrapper {
-            background: #6366f1;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
             color: white;
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+            transform: scale(1.05);
           }
 
           .menu-item-text {
             font-size: 15px;
             font-weight: 500;
-            color: #334155;
+            color: #1e293b;
             font-family: 'Outfit', sans-serif;
+            transition: color 0.3s ease;
+          }
+
+          .premium-menu-item:hover .menu-item-text {
+            color: #6366f1;
+            font-weight: 600;
           }
 
           .drawer-footer {
-            padding: 24px;
-            border-top: 1px solid #f1f5f9;
-            background: #fff;
+            padding: 24px 32px;
+            border-top: 1px solid rgba(226, 232, 240, 0.6);
+            background: #ffffff;
           }
 
           .logout-btn {
             width: 100%;
-            height: 48px !important;
+            height: 44px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 8px !important;
-            background: #ffffff !important;
-            color: #ef4444 !important;
-            border: 1px solid #fee2e2 !important;
+            gap: 10px !important;
+            background: #fff1f2 !important;
+            color: #e11d48 !important;
+            border: 1px solid transparent !important;
             border-radius: 12px !important;
             font-weight: 600 !important;
-            font-size: 15px !important;
-            transition: all 0.3s ease !important;
+            font-size: 14px !important;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
           }
 
           .logout-btn:hover {
-            background: #ef4444 !important;
+            background: #e11d48 !important;
             color: white !important;
-            border-color: #ef4444 !important;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+            box-shadow: 0 8px 16px rgba(225, 29, 72, 0.2);
+            transform: translateY(-2px);
           }
 
           /* --- Premium Host Popover Styles --- */

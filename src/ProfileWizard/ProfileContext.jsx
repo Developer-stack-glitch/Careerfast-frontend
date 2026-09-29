@@ -17,7 +17,7 @@ export const isStepMandatoryComplete = (stepId, data) => {
   const { basic, professional, experience, jobPreferences } = data;
 
   switch (stepId) {
-    case 1: // Basic Information: First Name, Last Name, Email, City, State
+    case 1: // Basic Information: First Name, Last Name, Email, City, State, and Email Verified
       return Boolean(
         basic?.firstName &&
         basic?.firstName.trim() &&
@@ -28,7 +28,8 @@ export const isStepMandatoryComplete = (stepId, data) => {
         basic?.city &&
         basic?.city.trim() &&
         basic?.state &&
-        basic?.state.trim()
+        basic?.state.trim() &&
+        (basic?.isEmailVerified === true || basic?.isEmailVerified === 1)
       );
     case 2: { // Professional Details
       const isFresher = experience?.isFresher === true || professional?.careerLevel === 'Fresher';
@@ -109,6 +110,7 @@ export const ProfileProvider = ({ children }) => {
       workMode: [],
       jobType: [],
       expectedSalary: '',
+      currentSalary: '',
       noticePeriod: null,
       relocation: null
     },
@@ -154,13 +156,11 @@ export const ProfileProvider = ({ children }) => {
         const isValid = await stepValidatorRef.current();
         setIsStepSaving(false);
         if (!isValid) {
-          message.error('Please complete all mandatory fields before moving to the next step.');
           return false;
         }
       } catch (error) {
         setIsStepSaving(false);
         console.error('Validation error moving to next step:', error);
-        message.error('Please complete all mandatory fields before moving to the next step.');
         return false;
       }
     }
@@ -191,20 +191,24 @@ export const ProfileProvider = ({ children }) => {
     try {
       setLoading(true);
       const loginDetails = JSON.parse(localStorage.getItem('loginDetails') || '{}');
-      const userId = loginDetails.id || localStorage.getItem('user_id'); 
+      const userId = loginDetails.id || localStorage.getItem('user_id');
       if (!userId) return;
-      
+
       const payload = { user_id: userId };
       const response = await getUserProfile(payload);
-      
+
       if (response && response.status === 200) {
-        const data = response.data;
+        const data = response.data?.data || response.data;
         const loginDetails = JSON.parse(localStorage.getItem('loginDetails') || '{}');
-        
+
         let preferredJobObj = {};
         try {
-          if (typeof data.preferred_job_type === 'string' && data.preferred_job_type.startsWith('{')) {
-            preferredJobObj = JSON.parse(data.preferred_job_type);
+          if (data.preferred_job_type) {
+            if (typeof data.preferred_job_type === 'string' && data.preferred_job_type.startsWith('{')) {
+              preferredJobObj = JSON.parse(data.preferred_job_type);
+            } else if (typeof data.preferred_job_type === 'object') {
+              preferredJobObj = data.preferred_job_type;
+            }
           }
         } catch (e) {
           preferredJobObj = {};
@@ -258,9 +262,11 @@ export const ProfileProvider = ({ children }) => {
             workMode: preferredJobObj.workMode || [],
             jobType: preferredJobObj.jobType || [],
             expectedSalary: preferredJobObj.expectedSalary || data.expected_salary || '',
+            currentSalary: preferredJobObj.currentSalary || data.current_salary || '',
             noticePeriod: preferredJobObj.noticePeriod || data.notice_period || null,
             relocation: preferredJobObj.relocation || null,
           },
+          resume: data.resume || null,
           visibility: {
             mode: data.visibility_mode || 'Limited',
             hiddenCompanies: Array.isArray(data.hidden_companies) ? data.hidden_companies : [],
@@ -280,7 +286,9 @@ export const ProfileProvider = ({ children }) => {
   const updateProfileSection = useCallback((section, data) => {
     setProfileData(prev => ({
       ...prev,
-      [section]: { ...prev[section], ...data }
+      [section]: (data && typeof data === 'object' && !(data instanceof File) && !Array.isArray(data))
+        ? { ...prev[section], ...data }
+        : data
     }));
   }, []);
 
@@ -288,8 +296,8 @@ export const ProfileProvider = ({ children }) => {
     setProfileData(prev => {
       if (Array.isArray(prev[section])) {
         return {
-           ...prev,
-           [section]: value
+          ...prev,
+          [section]: value
         };
       }
       return {
@@ -305,8 +313,8 @@ export const ProfileProvider = ({ children }) => {
   const calculateCompletion = () => {
     let score = 0;
     const { basic, professional, experience, education, skills, jobPreferences, resume } = profileData;
-    
-    if (basic.firstName && basic.lastName && basic.email && basic.mobile) score += 10;
+
+    if (basic.firstName && basic.lastName && basic.email && basic.mobile && (basic.isEmailVerified === true || basic.isEmailVerified === 1)) score += 10;
     if (professional.jobTitle && professional.headline) score += 15;
     if (experience.isFresher || experience.list.length > 0) score += 20;
     if (education.length > 0) score += 15;
@@ -314,7 +322,7 @@ export const ProfileProvider = ({ children }) => {
     if (jobPreferences.preferredRoles?.length > 0) score += 10;
     if (resume) score += 10;
     if (basic.profilePhoto) score += 5;
-    
+
     return score;
   };
 

@@ -42,14 +42,6 @@ const StepNavigation = ({ onValidateStep, isSaving }) => {
     }
   };
 
-  const handleSaveAndContinueLater = async () => {
-    if (onValidateStep) {
-      // Validate and save current step before leaving
-      await onValidateStep();
-    }
-    message.info('Your progress has been saved. You can continue anytime!');
-    navigate('/candidate-profile/mainprofile');
-  };
 
   return (
     <div className="bg-white rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
@@ -76,15 +68,6 @@ const StepNavigation = ({ onValidateStep, isSaving }) => {
             Back
           </button>
         )}
-
-        <button
-          type="button"
-          onClick={handleSaveAndContinueLater}
-          disabled={isSaving}
-          className="px-4 py-2.5 rounded-xl border-1 border-[#6B21A8] text-[#6B21A8] hover:bg-purple-50 font-medium text-sm transition-colors disabled:opacity-50"
-        >
-          Save as Draft
-        </button>
 
         <button
           type="button"

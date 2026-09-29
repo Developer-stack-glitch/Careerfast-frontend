@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import "../css/PostCourse.css";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import CommonLoader from "../Common/CommonLoader";
 import Link from "next/link";
 
 const testimonials = [
@@ -184,6 +185,10 @@ export default function Courses() {
         }
     };
 
+    if (loading) {
+        return <CommonLoader text="Loading Courses" />;
+    }
+
     return (
         <>
             <SEO
@@ -341,7 +346,7 @@ export default function Courses() {
                         </div>
 
                         <div className="namaste-banner-v2">
-                            <img src="/namaste.png" alt="" />
+                            <img src="/namaste.webp" alt="" />
                         </div>
                     </div>
                 </section>

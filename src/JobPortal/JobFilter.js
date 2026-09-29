@@ -49,7 +49,6 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import { CgWorkAlt } from "react-icons/cg";
 import { BiCategoryAlt } from "react-icons/bi";
 
-import cities from "cities-list";
 import "../css/JobFilter.css";
 import "../css/naukri-ui-styles.css";
 
@@ -69,6 +68,27 @@ const getCurrencySymbol = (currencyCode) => {
   };
   return currencyMap[currencyCode] || currencyCode;
 };
+
+const POPULAR_CITIES = [
+  { value: "Bangalore", label: "Bengaluru / Bangalore" },
+  { value: "Delhi", label: "Delhi / NCR" },
+  { value: "Hyderabad", label: "Hyderabad" },
+  { value: "Pune", label: "Pune" },
+  { value: "Mumbai", label: "Mumbai" },
+  { value: "Chennai", label: "Chennai" },
+  { value: "Gurgaon", label: "Gurugram / Gurgaon" },
+  { value: "Noida", label: "Noida" },
+  { value: "Kolkata", label: "Kolkata" },
+  { value: "Ahmedabad", label: "Ahmedabad" },
+  { value: "Chandigarh", label: "Chandigarh" },
+  { value: "Jaipur", label: "Jaipur" },
+  { value: "Kochi", label: "Kochi" },
+  { value: "Indore", label: "Indore" },
+  { value: "Coimbatore", label: "Coimbatore" },
+  { value: "Thiruvananthapuram", label: "Thiruvananthapuram" },
+  { value: "Bhubaneswar", label: "Bhubaneswar" },
+  { value: "Pan India", label: "Pan India" }
+];
 
 const isClient = typeof window !== "undefined";
 
@@ -124,12 +144,11 @@ export default function JobFilter() {
   const [companyOptions, setCompanyOptions] = useState([]);
   const [companySearch, setCompanySearch] = useState("");
 
-  // Derived
-  const [allCities, setAllCities] = useState([]);
+  // Derived - lightweight list replacing heavy cities-list package
+  const [allCities] = useState(POPULAR_CITIES);
+
 
   /** -------------------- EFFECTS -------------------- **/
-
-
   useEffect(() => {
     fetchCourses();
     fetchCompanies();
@@ -154,20 +173,6 @@ export default function JobFilter() {
     }
   };
 
-  // Cities
-  useEffect(() => {
-    const mapped = Object.keys(cities).map((city) => ({
-      value: city,
-      label: city,
-      country: cities[city].country,
-    }));
-
-    // Add "Pan India" at the top
-    setAllCities([
-      { value: "Pan India", label: "Pan India" },
-      ...mapped
-    ]);
-  }, []);
 
 
   // Categories (with custom merge preserved)

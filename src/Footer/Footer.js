@@ -4,7 +4,7 @@ import logo from "../images/careerfastlogofinal.png";
 import { useNavigate } from "@/routing-shim";
 // Footer.css already in layout.jsx
 import { getImageUrl } from "../utils/getImageUrl";
-import { getJobPosts, getAllCourses } from "../ApiService/action";
+import { getAllCourses } from "../ApiService/action";
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -26,81 +26,14 @@ export default function Footer() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [jobsRes, coursesRes] = await Promise.all([
-          getJobPosts({ limit: 150 }).catch(() => null),
-          getAllCourses({ limit: 8 }).catch(() => null)
-        ]);
-
-        const jobs = jobsRes?.data?.data?.data || [];
+        const coursesRes = await getAllCourses({ limit: 8 }).catch(() => null);
         const courses = coursesRes?.data || coursesRes || [];
-
-        const intLocs = new Set();
-        const intStreams = new Set();
-        const jLocs = new Set();
-        const jStreams = new Set();
-
-        jobs.forEach(job => {
-          // Parse work_location
-          let locations = [];
-          if (job.work_location) {
-            try {
-              const parsed = Array.isArray(job.work_location)
-                ? job.work_location
-                : JSON.parse(job.work_location);
-              if (Array.isArray(parsed)) {
-                locations = parsed;
-              } else if (typeof parsed === "string") {
-                locations = [parsed];
-              }
-            } catch {
-              if (typeof job.work_location === "string") {
-                locations = [job.work_location];
-              }
-            }
-          }
-          locations = locations.map(l => l.trim()).filter(Boolean);
-
-          // Parse job_category
-          let categories = [];
-          if (job.job_category) {
-            try {
-              const parsed = Array.isArray(job.job_category)
-                ? job.job_category
-                : JSON.parse(job.job_category);
-              if (Array.isArray(parsed)) {
-                categories = parsed;
-              } else if (typeof parsed === "string") {
-                categories = [parsed];
-              }
-            } catch {
-              if (typeof job.job_category === "string") {
-                categories = [job.job_category];
-              }
-            }
-          }
-          categories = categories.map(c => c.trim()).filter(Boolean);
-
-          const isInternship = String(job.job_nature).toLowerCase().includes("intern");
-          const isJob = String(job.job_nature).toLowerCase() === "job";
-
-          if (isInternship) {
-            locations.forEach(l => intLocs.add(l));
-            categories.forEach(c => intStreams.add(c));
-          } else if (isJob) {
-            locations.forEach(l => jLocs.add(l));
-            categories.forEach(c => jStreams.add(c));
-          }
-        });
-
-        setInternshipLocations(Array.from(intLocs).slice(0, 8));
-        setInternshipStreams(Array.from(intStreams).slice(0, 8));
-        setJobLocations(Array.from(jLocs).slice(0, 8));
-        setJobStreams(Array.from(jStreams).slice(0, 8));
-
         const formattedCourses = Array.isArray(courses) ? courses : (courses.data || []);
-        setCoursesList(formattedCourses.slice(0, 8));
+        if (formattedCourses.length > 0) {
+          setCoursesList(formattedCourses.slice(0, 8));
+        }
       } catch (err) {
-        console.error("Error fetching footer categorization data:", err);
+        console.error("Error fetching footer data:", err);
       }
     };
 

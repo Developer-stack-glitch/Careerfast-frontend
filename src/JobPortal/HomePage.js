@@ -26,9 +26,7 @@ import {
     SolutionOutlined,
     ClockCircleOutlined,
 } from "@ant-design/icons";
-import { message, Select, Row, Col } from "antd";
-import dynamic from "next/dynamic";
-const ParticlesBg = dynamic(() => import("particles-bg"), { ssr: false });
+import { message, Select, Row, Col, Spin } from "antd";
 
 import "../css/HomePage.css";
 import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getBlogs, getAllCourses } from "../ApiService/action";
@@ -41,10 +39,11 @@ import company_logos1 from "../images/counter_box2.png";
 import company_logos2 from "../images/verified.png";
 import company_logos3 from "../images/applied.png";
 import logo from "../images/careerfastlogofinal.png";
+import CommonLoader from "../Common/CommonLoader";
 import BangaloreCity from "../images/bangalore.jpg";
 import MumbaiCity from "../images/mumbai.jpg";
 import DelhiCity from "../images/delhi.jpg";
-import HyderabadCity from "../images/Hyderabad.jpg";
+import HyderabadCity from "../images/Hyderabad.webp";
 import ChennaiCity from "../images/chennai.jpg";
 import RemoteCity from "../images/remote.jpg";
 import interviewImage from "../images/ab-interview-ot.png";
@@ -89,17 +88,32 @@ const sliderSettings = {
 };
 
 const Counter = ({ end, duration = 2, decimals = 0, suffix = "" }) => {
-    const count = useMotionValue(0);
-    const rounded = useTransform(count, (latest) => {
-        return latest.toFixed(decimals) + suffix;
-    });
+    const [displayValue, setDisplayValue] = useState(0);
 
     useEffect(() => {
-        const controls = animate(count, end, { duration, ease: "easeOut" });
-        return controls.stop;
+        let startTime = null;
+        const startValue = 0;
+        const targetValue = Number(end) || 0;
+        let animFrame;
+
+        const step = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
+            // smooth easeOutExpo
+            const ease = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
+            const current = startValue + (targetValue - startValue) * ease;
+            setDisplayValue(current);
+
+            if (progress < 1) {
+                animFrame = requestAnimationFrame(step);
+            }
+        };
+
+        animFrame = requestAnimationFrame(step);
+        return () => cancelAnimationFrame(animFrame);
     }, [end, duration]);
 
-    return <motion.span>{rounded}</motion.span>;
+    return <span>{displayValue.toFixed(decimals)}{suffix}</span>;
 };
 
 
@@ -111,10 +125,31 @@ export default function HomePage() {
     const [categories, setCategories] = useState([]);
     const [fresherCategories, setFresherCategories] = useState([]);
     const [internshipCategories, setInternshipCategories] = useState([]);
-    const [companies, setCompanies] = useState([]);
-    const [roles, setRoles] = useState([]);
+    const [companies, setCompanies] = useState([
+        { name: "Google", rating: "4.8", reviews: "12.4k reviews", type: "Technology" },
+        { name: "Amazon", rating: "4.6", reviews: "18.2k reviews", type: "E-Commerce" },
+        { name: "Microsoft", rating: "4.7", reviews: "15.1k reviews", type: "Cloud & AI" },
+        { name: "Infosys", rating: "4.1", reviews: "22.5k reviews", type: "IT Consulting" },
+        { name: "TCS", rating: "4.2", reviews: "28.9k reviews", type: "IT Services" }
+    ]);
+    const [roles, setRoles] = useState([
+        { title: "Full Stack Developer", jobs: "500+ Jobs" },
+        { title: "Software Engineer", jobs: "450+ Jobs" },
+        { title: "Frontend Developer", jobs: "380+ Jobs" },
+        { title: "Backend Developer", jobs: "340+ Jobs" },
+        { title: "Data Analyst", jobs: "290+ Jobs" },
+        { title: "Data Scientist", jobs: "240+ Jobs" },
+        { title: "UI/UX Designer", jobs: "210+ Jobs" },
+        { title: "DevOps Engineer", jobs: "180+ Jobs" },
+        { title: "Mobile App Developer", jobs: "160+ Jobs" },
+        { title: "QA Engineer", jobs: "150+ Jobs" },
+        { title: "Product Manager", jobs: "130+ Jobs" },
+        { title: "Cloud Architect", jobs: "110+ Jobs" }
+    ]);
     const [fresherJobs, setFresherJobs] = useState([]);
     const [internshipJobs, setInternshipJobs] = useState([]);
+    const [loadingFresher, setLoadingFresher] = useState(false);
+    const [loadingInternships, setLoadingInternships] = useState(false);
     const [activeTab, setActiveTab] = useState("");
     const [activeInternshipTab, setActiveInternshipTab] = useState("");
     const [loading, setLoading] = useState(true);
@@ -126,17 +161,26 @@ export default function HomePage() {
     const [trendingSearches, setTrendingSearches] = useState([]);
     const [recentBlogs, setRecentBlogs] = useState([]);
     const [coursesList, setCoursesList] = useState([]);
+    const [loadingCourses, setLoadingCourses] = useState(false);
     const [activeCourseCategory, setActiveCourseCategory] = useState("All Programs");
+    const initialFetchDone = useRef(false);
+    const lastFetchedFresherTab = useRef("");
+    const lastFetchedInternshipTab = useRef("");
 
     useEffect(() => {
         fetchInitialData();
     }, []);
 
     useEffect(() => {
+        if (!initialFetchDone.current || !activeTab) return;
+        if (lastFetchedFresherTab.current === activeTab) return;
+        lastFetchedFresherTab.current = activeTab;
         fetchFresherJobs();
     }, [activeTab]);
 
     const fetchFresherJobs = async () => {
+        if (!activeTab) return;
+        setLoadingFresher(true);
         try {
             let params = { limit: 12, experience_type: "Fresher" };
 
@@ -152,14 +196,21 @@ export default function HomePage() {
             setFresherJobs(fresherRes?.data?.data?.data || []);
         } catch (err) {
             console.error("Failed to fetch fresher jobs", err);
+        } finally {
+            setLoadingFresher(false);
         }
     };
 
     useEffect(() => {
+        if (!initialFetchDone.current || !activeInternshipTab) return;
+        if (lastFetchedInternshipTab.current === activeInternshipTab) return;
+        lastFetchedInternshipTab.current = activeInternshipTab;
         fetchInternshipJobs();
     }, [activeInternshipTab]);
 
     const fetchInternshipJobs = async () => {
+        if (!activeInternshipTab) return;
+        setLoadingInternships(true);
         try {
             let params = { limit: 12, job_nature: "Internship" };
 
@@ -175,105 +226,130 @@ export default function HomePage() {
             setInternshipJobs(internshipRes?.data?.data?.data || []);
         } catch (err) {
             console.error("Failed to fetch internship jobs", err);
+        } finally {
+            setLoadingInternships(false);
         }
     };
 
     const fetchInitialData = async () => {
-        setLoading(true);
         try {
-            // Fetch Categories (All)
-            const catRes = await getJobCategoryData({ min_jobs: 4 });
-            const catData = catRes?.data?.data || [];
-            const mappedCats = catData.slice(0, 12).map(c => ({
-                name: c.category_name,
-                icon: getCategoryIcon(c.category_name)
-            }));
-            setCategories(mappedCats);
+            // Step 1: Fetch stats, trending searches, blogs, courses, and categories
+            const [
+                statsRes,
+                trendingRes,
+                blogsRes,
+                coursesRes,
+                catRes,
+                fresherCatRes,
+                internshipCatRes
+            ] = await Promise.allSettled([
+                getHomePageStats(),
+                getTrendingSearches(),
+                getBlogs(),
+                getAllCourses({ limit: 6 }),
+                getJobCategoryData({ min_jobs: 4 }),
+                getJobCategoryData({ job_nature: 'Job', experience_type: 'Fresher', min_jobs: 4 }),
+                getJobCategoryData({ job_nature: 'Internship', min_jobs: 4 })
+            ]);
 
-            // Fetch Fresher Categories (specifically for Jobs)
-            const fresherCatRes = await getJobCategoryData({ job_nature: 'Job', experience_type: 'Fresher', min_jobs: 4 });
-            const fresherCatData = fresherCatRes?.data?.data || [];
-            const mappedFresherCats = fresherCatData.map(c => ({
-                name: c.category_name,
-                icon: getCategoryIcon(c.category_name)
-            }));
-            setFresherCategories(mappedFresherCats);
-            if (mappedFresherCats.length > 0) {
-                setActiveTab(mappedFresherCats[0].name);
+            // Stats
+            if (statsRes.status === 'fulfilled' && statsRes.value?.data?.data) {
+                setStats(statsRes.value.data.data);
             }
 
-            // Fetch Internship Categories (specifically for Internships)
-            const internshipCatRes = await getJobCategoryData({ job_nature: 'Internship', min_jobs: 4 });
-            const internshipCatData = internshipCatRes?.data?.data || [];
-            const mappedInternshipCats = internshipCatData.map(c => ({
-                name: c.category_name,
-                icon: getCategoryIcon(c.category_name)
-            }));
-            setInternshipCategories(mappedInternshipCats);
-            if (mappedInternshipCats.length > 0) {
-                setActiveInternshipTab(mappedInternshipCats[0].name);
+            // Trending Searches
+            if (trendingRes.status === 'fulfilled' && trendingRes.value?.data?.data) {
+                setTrendingSearches(trendingRes.value.data.data);
             }
 
-            // Fetch Jobs to derive Companies and Roles
-            const jobRes = await getJobPosts({ limit: 50, job_nature: "Job" });
-            const jobData = jobRes?.data?.data?.data || [];
+            // Blogs
+            if (blogsRes.status === 'fulfilled') {
+                const blogs = blogsRes.value?.data || [];
+                setRecentBlogs(blogs.slice(0, 3));
+            }
 
-            // Extract unique companies
-            const uniqueCompanies = [];
-            const companyNames = new Set();
-            jobData.forEach(job => {
-                if (job.company_name && !companyNames.has(job.company_name)) {
-                    companyNames.add(job.company_name);
-                    uniqueCompanies.push({
-                        name: job.company_name,
-                        logo: job.company_logo,
-                        rating: (Math.random() * (4.8 - 3.5) + 3.5).toFixed(1),
-                        reviews: Math.floor(Math.random() * 1000) + " reviews",
-                        type: job.job_category?.[0] || "Hiring"
-                    });
+            // Courses
+            if (coursesRes.status === 'fulfilled') {
+                const courses = coursesRes.value;
+                setCoursesList(Array.isArray(courses) ? courses : []);
+            }
+
+            // Categories (All)
+            const catData = catRes.status === 'fulfilled' ? (catRes.value?.data?.data || []) : [];
+            const seenCats = new Set();
+            const mappedCats = [];
+            for (const c of catData) {
+                const name = c.category_name?.trim();
+                if (name && !seenCats.has(name)) {
+                    seenCats.add(name);
+                    mappedCats.push({ name, icon: getCategoryIcon(name) });
                 }
-            });
-            setCompanies(uniqueCompanies.slice(0, 5));
+            }
+            setCategories(mappedCats.slice(0, 12));
 
-            // Extract popular roles
-            const roleCounts = {};
-            jobData.forEach(job => {
-                const title = job.job_title;
-                roleCounts[title] = (roleCounts[title] || 0) + 1;
-            });
-            const sortedRoles = Object.keys(roleCounts)
-                .sort((a, b) => roleCounts[b] - roleCounts[a])
-                .slice(0, 18)
-                .map(role => ({
-                    title: role,
-                    jobs: `${roleCounts[role] * 10}+ Jobs`
-                }));
-            setRoles(sortedRoles);
-
-            // Fetch Stats
-            const statsRes = await getHomePageStats();
-            setStats(statsRes?.data?.data || { totalJobs: 0, totalRecruiters: 0, totalApplications: 0 });
-
-            // Fetch Trending Searches
-            const trendingRes = await getTrendingSearches();
-            setTrendingSearches(trendingRes?.data?.data || []);
-
-            // Fetch Recent Blogs
-            const blogRes = await getBlogs();
-            const blogs = blogRes?.data || [];
-            setRecentBlogs(blogs.slice(0, 3));
-
-            // Fetch Dynamic Courses
-            try {
-                const coursesRes = await getAllCourses({ limit: 6 });
-                setCoursesList(coursesRes || []);
-            } catch (courseErr) {
-                console.error("Failed to fetch courses for homepage", courseErr);
+            // Fresher Categories
+            const fresherCatData = fresherCatRes.status === 'fulfilled' ? (fresherCatRes.value?.data?.data || []) : [];
+            const seenFresher = new Set();
+            const mappedFresherCats = [];
+            for (const c of fresherCatData) {
+                const name = c.category_name?.trim();
+                if (name && !seenFresher.has(name)) {
+                    seenFresher.add(name);
+                    mappedFresherCats.push({ name, icon: getCategoryIcon(name) });
+                }
+            }
+            setFresherCategories(mappedFresherCats);
+            const firstFresherTab = mappedFresherCats[0]?.name || "";
+            if (firstFresherTab) {
+                setActiveTab(firstFresherTab);
+                lastFetchedFresherTab.current = firstFresherTab;
             }
 
+            // Internship Categories
+            const internshipCatData = internshipCatRes.status === 'fulfilled' ? (internshipCatRes.value?.data?.data || []) : [];
+            const seenInternship = new Set();
+            const mappedInternshipCats = [];
+            for (const c of internshipCatData) {
+                const name = c.category_name?.trim();
+                if (name && !seenInternship.has(name)) {
+                    seenInternship.add(name);
+                    mappedInternshipCats.push({ name, icon: getCategoryIcon(name) });
+                }
+            }
+            setInternshipCategories(mappedInternshipCats);
+            const firstInternshipTab = mappedInternshipCats[0]?.name || "";
+            if (firstInternshipTab) {
+                setActiveInternshipTab(firstInternshipTab);
+                lastFetchedInternshipTab.current = firstInternshipTab;
+            }
+
+            // Step 2: Fetch initial jobs for the active tabs so when loader finishes, all content is ready
+            const fresherParams = { limit: 12, experience_type: "Fresher" };
+            if (firstFresherTab && firstFresherTab !== "Big brands") {
+                fresherParams.job_categories = [firstFresherTab];
+            }
+            const internshipParams = { limit: 12, job_nature: "Internship" };
+            if (firstInternshipTab && firstInternshipTab !== "Big brands") {
+                internshipParams.job_categories = [firstInternshipTab];
+            }
+
+            const [fresherJobsRes, internshipJobsRes] = await Promise.allSettled([
+                getJobPosts(fresherParams),
+                getJobPosts(internshipParams)
+            ]);
+
+            if (fresherJobsRes.status === 'fulfilled') {
+                setFresherJobs(fresherJobsRes.value?.data?.data?.data || []);
+            }
+            if (internshipJobsRes.status === 'fulfilled') {
+                setInternshipJobs(internshipJobsRes.value?.data?.data?.data || []);
+            }
+
+            initialFetchDone.current = true;
         } catch (err) {
-            console.error("Failed to fetch initial data", err);
+            console.error("Failed to fetch initial homepage data", err);
         } finally {
+            // Cut off the loader only after all data has loaded
             setLoading(false);
         }
     };
@@ -324,7 +400,9 @@ export default function HomePage() {
     };
 
     const generateBlogUrl = (blog) => {
-        const slug = blog.blogTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        const title = blog?.blogTitle || blog?.title || "";
+        if (!title) return '/blogs';
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         return `/blog/${slug}`;
     };
 
@@ -506,9 +584,9 @@ export default function HomePage() {
         { name: "Remote", img: RemoteCity }
     ];
 
-    //    if (loading) {
-    //         return null;
-    //     }
+    if (loading) {
+        return <CommonLoader text="Loading CareerFast" />;
+    }
 
     return (
         <div className="hp-container">
@@ -516,8 +594,6 @@ export default function HomePage() {
 
             {/* Hero Section */}
             <section className="hp-hero">
-                <ParticlesBg type="cobweb" bg={true} color="#7f5af0" num={50} />
-
                 <div className="hp-hero-bg-shapes">
                     <div className="shape shape-1"></div>
                     <div className="shape shape-2"></div>
@@ -707,13 +783,13 @@ export default function HomePage() {
 
                 <div className="hp-fresher-header">
                     <div className="hp-tabs-container">
-                        {fresherCategories.map(c => c.name).slice(0, 5).map(tab => (
+                        {fresherCategories.slice(0, 5).map((c, idx) => (
                             <div
-                                key={tab}
-                                className={`hp-tab-chip ${activeTab === tab ? "active" : ""}`}
-                                onClick={() => setActiveTab(tab)}
+                                key={`${c.name}-${idx}`}
+                                className={`hp-tab-chip ${activeTab === c.name ? "active" : ""}`}
+                                onClick={() => setActiveTab(c.name)}
                             >
-                                {tab}
+                                {c.name}
                             </div>
                         ))}
                     </div>
@@ -830,13 +906,13 @@ export default function HomePage() {
 
                 <div className="hp-fresher-header">
                     <div className="hp-tabs-container">
-                        {internshipCategories.map(c => c.name).slice(0, 5).map(tab => (
+                        {internshipCategories.slice(0, 5).map((c, idx) => (
                             <div
-                                key={tab}
-                                className={`hp-tab-chip ${activeInternshipTab === tab ? "active" : ""}`}
-                                onClick={() => setActiveInternshipTab(tab)}
+                                key={`${c.name}-${idx}`}
+                                className={`hp-tab-chip ${activeInternshipTab === c.name ? "active" : ""}`}
+                                onClick={() => setActiveInternshipTab(c.name)}
                             >
-                                {tab}
+                                {c.name}
                             </div>
                         ))}
                     </div>
@@ -1096,24 +1172,43 @@ export default function HomePage() {
 
                     {/* Category Filter Tabs */}
                     <div className="hp-cert-tabs">
-                        {["All Programs", "Tech", "Design", "Marketing", "Business", "Management"].map((cat) => (
-                            <button
-                                key={cat}
-                                className={`hp-cert-tab-btn ${activeCourseCategory === cat ? "active" : ""}`}
-                                onClick={() => setActiveCourseCategory(cat)}
-                            >
-                                {cat}
-                            </button>
-                        ))}
+                        {(() => {
+                            const dynamicCats = Array.from(new Set(coursesList.map(c => c.category?.trim()).filter(Boolean)));
+                            const tabsToShow = dynamicCats.length > 0
+                                ? ["All Programs", ...dynamicCats.slice(0, 5)]
+                                : ["All Programs", "Development", "Data Analytics", "Data Science", "Cloud Computing"];
+                            return tabsToShow.map((cat) => (
+                                <button
+                                    key={cat}
+                                    className={`hp-cert-tab-btn ${activeCourseCategory === cat ? "active" : ""}`}
+                                    onClick={() => setActiveCourseCategory(cat)}
+                                >
+                                    {cat}
+                                </button>
+                            ));
+                        })()}
                     </div>
 
                     <div className="hp-cert-grid">
-                        {coursesList
-                            .filter(course => activeCourseCategory === "All Programs" || course.category === activeCourseCategory)
-                            .slice(0, 6)
-                            .map((course, idx) => {
+                        {(() => {
+                            const filteredCourses = coursesList
+                                .filter(course => activeCourseCategory === "All Programs" || (course.category?.trim()?.toLowerCase() === activeCourseCategory.toLowerCase()))
+                                .slice(0, 6);
+                            if (filteredCourses.length === 0) {
+                                return (
+                                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px 0', color: '#8292b4' }}>
+                                        {loadingCourses ? "Loading certifications..." : "No certifications found in this category."}
+                                    </div>
+                                );
+                            }
+                            return filteredCourses.map((course, idx) => {
                                 const stats = getCourseStats(course.slug);
-                                const content = typeof course.content === 'string' ? JSON.parse(course.content) : course.content;
+                                let content = null;
+                                try {
+                                    content = typeof course.content === 'string' ? JSON.parse(course.content) : course.content;
+                                } catch (e) {
+                                    content = null;
+                                }
                                 const discPrice = content?.hero?.prices?.discounted || "3,999";
                                 const origPrice = content?.hero?.prices?.original || "7,999";
 
@@ -1184,7 +1279,8 @@ export default function HomePage() {
                                         </div>
                                     </motion.div>
                                 );
-                            })}
+                            });
+                        })()}
                     </div>
 
                     {/* Explore More Button */}
@@ -1291,16 +1387,30 @@ export default function HomePage() {
                         description="Stay ahead with the latest trends, career tips, and industry expertise to accelerate your professional growth."
                         backgroundLabel="BLOGS"
                         backgroundPosition="right"
-                        posts={recentBlogs.map(blog => ({
-                            id: blog.id,
-                            title: blog.blogTitle,
-                            category: "Career Advice",
-                            imageUrl: getImageUrl(blog.blogImage),
-                            views: Math.floor(Math.random() * 5000) + 1200,
-                            readTime: parseInt(blog.readingTime) || 5,
-                            rating: 5
-                        }))}
-                        onPostClick={(blog) => navigate(generateBlogUrl(recentBlogs.find(b => b.id === blog.id)))}
+                        posts={recentBlogs.map(blog => {
+                            let cat = blog.category;
+                            if (!cat) {
+                                const t = (blog.blogTitle || "").toLowerCase();
+                                if (t.includes("ai") || t.includes("learning") || t.includes("machine learning")) {
+                                    cat = "AI & Learning";
+                                } else if (t.includes("devops") || t.includes("cloud") || t.includes("docker")) {
+                                    cat = "DevOps";
+                                } else {
+                                    cat = "Career Advice";
+                                }
+                            }
+                            return {
+                                id: blog.id,
+                                title: blog.blogTitle,
+                                overview: blog.overview,
+                                category: cat,
+                                imageUrl: getImageUrl(blog.blogImage),
+                                createdDate: blog.createdDate,
+                                readTime: blog.readingTime,
+                                rawBlog: blog
+                            };
+                        })}
+                        onPostClick={(blog) => navigate(generateBlogUrl(blog.rawBlog || blog))}
                     />
                 )}
 

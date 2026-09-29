@@ -259,7 +259,7 @@ const ReviewStep = () => {
               {profileData.skills.map((skill, idx) => {
                 const parts = skill.split(' | ');
                 return (
-                  <span key={idx} className="px-3 py-1.5 bg-[#F5F0FF] text-[#6B21A8] border border-purple-200 rounded-xl text-xs font-bold">
+                  <span key={idx} className="px-3 py-1.5 bg-[#F5F0FF] text-[#6B21A8] border-1 border-purple-200 rounded-xl text-xs font-semibold">
                     {parts[0]} {parts.length > 1 && <span className="opacity-60 ml-1">| {parts[1]}</span>}
                   </span>
                 );
@@ -306,7 +306,9 @@ const ReviewStep = () => {
                   <FilePdfOutlined className="text-base text-red-500" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-gray-800 truncate mb-0">{profileData.resume.name || 'Current_Resume.pdf'}</p>
+                  <p className="text-xs font-bold text-gray-800 truncate mb-0">
+                    {profileData.resume?.name || (typeof profileData.resume === 'string' && !profileData.resume.startsWith('data:') ? profileData.resume.split('/').pop().split('\\').pop() : 'Current_Resume.pdf')}
+                  </p>
                   <p className="text-[10px] text-green-600 font-medium flex items-center gap-1 mt-0.5 mb-0">
                     <CheckCircleFilled className="text-[10px]" /> Uploaded
                   </p>

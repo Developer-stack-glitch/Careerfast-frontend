@@ -14,13 +14,11 @@ import {
   SearchOutlined,
   HeartFilled,
 } from "@ant-design/icons";
-import { debounce } from "lodash";
 import { CommonToaster } from "../Common/CommonToaster";
 import { getSavedJobs, removeSavedJobs } from "../ApiService/action";
 import { useNavigate } from "@/routing-shim";
 import Header from "../Header/Header";
 import { FaRegEye } from "react-icons/fa";
-import moment from "moment";
 
 const { Title, Text } = Typography;
 const getCurrencySymbol = (currencyCode) => {
@@ -262,9 +260,7 @@ export default function WatchList() {
     } catch (error) {
       console.error("Error fetching jobs", error);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 500);
+      setLoading(false);
     }
   };
 

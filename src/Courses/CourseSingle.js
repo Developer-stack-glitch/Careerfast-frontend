@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
+import CommonLoader from "../Common/CommonLoader";
 import "../css/CourseSingle.css";
 import Link from "next/link";
 import { getAllCourses } from "../ApiService/action";
@@ -164,10 +165,7 @@ export default function CourseSingle() {
             } catch (err) {
                 console.error("Error fetching course:", err);
             } finally {
-                // Artificial delay for smooth transition
-                setTimeout(() => {
-                    setLoading(false);
-                }, 800);
+                setLoading(false);
             }
         };
 
@@ -175,7 +173,7 @@ export default function CourseSingle() {
     }, [slug]);
 
     if (loading) {
-        return null;
+        return <CommonLoader text="Loading Course Details" />;
     }
 
     if (!courseData) {
@@ -367,7 +365,7 @@ export default function CourseSingle() {
                 title={`${courseData.title} - CareerFast Courses`}
                 description={courseData.description}
             />
-            <Header />
+            <Header noSticky />
 
             <div className="course-single-page">
                 {/* Hero Section */}

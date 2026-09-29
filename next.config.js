@@ -6,15 +6,12 @@ const nextConfig = {
       acc[key] = process.env[key];
       return acc;
     }, {}),
-  compiler: {
-    styledComponents: true,
-  },
   reactStrictMode: false,
   images: {
-    unoptimized: true,
+    unoptimized: false,
   },
   experimental: {
-    optimizePackageImports: ['lucide-react', 'react-icons', '@ant-design/icons', 'antd'],
+    optimizePackageImports: ['lucide-react', 'react-icons', '@ant-design/icons', 'antd', 'framer-motion', 'date-fns'],
   },
   async redirects() {
     return [

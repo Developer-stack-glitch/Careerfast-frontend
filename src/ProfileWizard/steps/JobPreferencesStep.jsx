@@ -28,6 +28,8 @@ const JobPreferencesStep = () => {
   const roleSearchTimer = useRef(null);
   const locationSearchTimer = useRef(null);
 
+  const isInitializedRef = useRef(false);
+
   useEffect(() => {
     const savedRoles = profileData.jobPreferences.preferredRoles || [];
     const savedLocations = profileData.jobPreferences.preferredLocations || [];
@@ -40,15 +42,25 @@ const JobPreferencesStep = () => {
       setLocationOptions(prev => [...new Set([...savedLocations, ...prev])]);
     }
 
+    if (isInitializedRef.current && form.isFieldsTouched()) {
+      return;
+    }
+
+    const currentValues = form.getFieldsValue();
     form.setFieldsValue({
-      preferredRoles: savedRoles,
-      preferredLocations: savedLocations,
-      workMode: profileData.jobPreferences.workMode || [],
-      jobType: profileData.jobPreferences.jobType || [],
-      expectedSalary: profileData.jobPreferences.expectedSalary,
-      noticePeriod: profileData.jobPreferences.noticePeriod,
-      relocation: profileData.jobPreferences.relocation,
+      preferredRoles: (currentValues.preferredRoles && currentValues.preferredRoles.length > 0) ? currentValues.preferredRoles : savedRoles,
+      preferredLocations: (currentValues.preferredLocations && currentValues.preferredLocations.length > 0) ? currentValues.preferredLocations : savedLocations,
+      workMode: (currentValues.workMode && currentValues.workMode.length > 0) ? currentValues.workMode : (profileData.jobPreferences.workMode || []),
+      jobType: (currentValues.jobType && currentValues.jobType.length > 0) ? currentValues.jobType : (profileData.jobPreferences.jobType || []),
+      expectedSalary: currentValues.expectedSalary !== undefined && currentValues.expectedSalary !== '' ? currentValues.expectedSalary : profileData.jobPreferences.expectedSalary,
+      currentSalary: currentValues.currentSalary !== undefined && currentValues.currentSalary !== '' ? currentValues.currentSalary : profileData.jobPreferences.currentSalary,
+      noticePeriod: currentValues.noticePeriod !== undefined ? currentValues.noticePeriod : profileData.jobPreferences.noticePeriod,
+      relocation: currentValues.relocation !== undefined ? currentValues.relocation : profileData.jobPreferences.relocation,
     });
+
+    if (savedRoles.length > 0 || savedLocations.length > 0 || profileData.jobPreferences.noticePeriod) {
+      isInitializedRef.current = true;
+    }
   }, [profileData.jobPreferences, form]);
 
   // Debounced search for worldwide job roles via third-party API
@@ -117,6 +129,7 @@ const JobPreferencesStep = () => {
         work_mode: values.workMode,
         job_type: values.jobType,
         expected_salary: values.expectedSalary,
+        current_salary: values.currentSalary,
         notice_period: values.noticePeriod,
         relocation: values.relocation,
         user_id: userId,
@@ -285,6 +298,19 @@ const JobPreferencesStep = () => {
                 />
               </Form.Item>
               <p className="text-[11px] text-gray-400 -mt-4 mb-4">Only used for matching. Not shown to recruiters unless you share it.</p>
+            </Col>
+            <Col xs={24} sm={12}>
+              <Form.Item
+                name="currentSalary"
+                label={<span className="text-xs font-semibold text-gray-800">Current Salary (₹) <span className="text-gray-400 font-normal">(Optional)</span></span>}
+              >
+                <Input
+                  prefix={<DollarOutlined className="text-gray-400 mr-1.5" />}
+                  placeholder="e.g. 10 LPA"
+                  className="h-11 rounded-xl text-sm border-gray-200"
+                />
+              </Form.Item>
+              <p className="text-[11px] text-gray-400 -mt-4 mb-4">Confidential. Helps us recommend better salary matches.</p>
             </Col>
             <Col xs={24} sm={12}>
               <Form.Item

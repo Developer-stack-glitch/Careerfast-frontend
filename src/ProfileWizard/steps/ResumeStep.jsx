@@ -49,6 +49,7 @@ const ResumeStep = () => {
       const formData = new FormData();
       formData.append('resume', file);
       formData.append('user_id', userId);
+      formData.append('id', userId);
 
       const res = await updateResume(formData);
 
@@ -140,7 +141,9 @@ const ResumeStep = () => {
                 <p className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-0">
                   Resume uploaded <CheckCircleFilled className="text-green-500 text-xs" />
                 </p>
-                <p className="text-[11px] text-gray-500 mt-0.5 mb-0">{fileList[0]?.name || 'Current_Resume.pdf'}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5 mb-0">
+                  {fileList[0]?.name || (profileData.resume?.name) || (typeof profileData.resume === 'string' && !profileData.resume.startsWith('data:') ? profileData.resume.split('/').pop().split('\\').pop() : 'Current_Resume.pdf')}
+                </p>
               </div>
             </div>
             <div className="flex gap-2.5">

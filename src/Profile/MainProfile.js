@@ -25,7 +25,44 @@ import {
   Modal,
   Alert,
 } from "antd";
-import { Check, Clock, Briefcase, FileText, Award } from "lucide-react";
+import {
+  Check,
+  Clock,
+  Briefcase,
+  FileText,
+  Award,
+  MapPin,
+  Mail,
+  Calendar,
+  Sparkles,
+  Share2,
+  Download,
+  Eye,
+  RefreshCw,
+  Code2,
+  GraduationCap,
+  FolderGit2,
+  Globe,
+  ExternalLink,
+  ChevronRight,
+  Flame,
+  Trophy,
+  CheckCircle2,
+  Building2,
+  User,
+  Plus,
+  ArrowRight,
+  ShieldCheck,
+  FileCheck,
+  TrendingUp,
+  UploadCloud,
+  Phone,
+  Wallet,
+  Trash2,
+  X,
+  Camera,
+  MoreHorizontal
+} from "lucide-react";
 import {
   EditOutlined,
   CheckCircleFilled,
@@ -46,7 +83,8 @@ import { FaUserPen } from "react-icons/fa6";
 
 import "../css/Profile.css";
 import "../css/ProfileDetailsPage.css";
-import { FaFacebookF, FaTwitter } from "react-icons/fa";
+import "../css/ModernCandidateProfile.css";
+import { FaFacebookF, FaTwitter, FaGithub } from "react-icons/fa";
 import { FiBriefcase, FiCalendar, FiPlusCircle, FiFolder } from "react-icons/fi";
 import { FaInstagram } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
@@ -124,9 +162,6 @@ import {
   updateSocialLinks,
 } from "../ApiService/action";
 import { useNavigate } from "@/routing-shim";
-import { TbShare3 } from "react-icons/tb";
-import { format, subDays, parseISO } from "date-fns";
-import CalendarHeatmap from "react-calendar-heatmap";
 
 const { Title, Text } = Typography;
 
@@ -134,13 +169,18 @@ const { Content } = Layout;
 const { Meta } = Card;
 
 const items = [
-  { key: "basic", label: "Basic Details" },
+  { key: "basic", label: "Personal Details" },
+  { key: "preferences", label: "Career & Availability" },
   { key: "resume", label: "Resume" },
-  { key: "about", label: "About" },
-  { key: "skills", label: "Skills" },
-  { key: "education", label: "Education" },
+  { key: "about", label: "Professional Summary" },
+  { key: "skills", label: "Key Skills" },
   { key: "experience", label: "Work Experience" },
+  { key: "education", label: "Education" },
   { key: "projects", label: "Projects" },
+  { key: "certifications", label: "Certifications" },
+  { key: "accomplishments", label: "Accomplishments" },
+  { key: "languages", label: "Languages" },
+  { key: "additional", label: "Additional Info" },
   { key: "sociallinks", label: "Social Links" },
 ];
 
@@ -183,6 +223,8 @@ const workingEndDateOptions = workingYearOptions;
 
 export default function MainProfile() {
   const [activeTab, setActiveTab] = useState("basic");
+  const [open, setOpen] = useState(false);
+  const showDrawer = () => setOpen(true);
   const [aboutText, setAboutText] = useState("");
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [customSkill, setCustomSkill] = useState("");
@@ -192,7 +234,39 @@ export default function MainProfile() {
   const defaultAvatar =
     "https://cdn-icons-png.flaticon.com/512/3135/3135715.png";
   const [profileImage, setProfileImage] = useState(null);
-  const [lateral, setLateral] = useState(null);
+  // Dynamic profile states
+  const [dob, setDob] = useState("");
+  const [maritalStatus, setMaritalStatus] = useState("Single");
+  const [noticePeriod, setNoticePeriod] = useState("1 Month");
+  const [expectedSalary, setExpectedSalary] = useState("₹4,00,000");
+  const [currentSalary, setCurrentSalary] = useState("");
+  const [availableFrom, setAvailableFrom] = useState("01 Nov 2024");
+  const [preferredRoles, setPreferredRoles] = useState("Frontend Developer, Fullstack Developer");
+  const [preferredJobType, setPreferredJobType] = useState("Full Time");
+  const [preferredLocations, setPreferredLocations] = useState("Chennai, Bangalore, Mumbai");
+  const [willingToRelocate, setWillingToRelocate] = useState("Yes");
+  const [certifications, setCertifications] = useState([]);
+  const [accomplishments, setAccomplishments] = useState([]);
+  const [additionalInfo, setAdditionalInfo] = useState({
+    strengths: [],
+    interests: [],
+    about_me: "",
+  });
+  const [languages, setLanguages] = useState([]);
+
+  // Helper form states for new items
+  const [newCertTitle, setNewCertTitle] = useState("");
+  const [newCertIssuer, setNewCertIssuer] = useState("");
+  const [newCertYear, setNewCertYear] = useState("");
+  const [newCertUrl, setNewCertUrl] = useState("");
+  const [newAccTitle, setNewAccTitle] = useState("");
+  const [newAccIcon, setNewAccIcon] = useState("🏆");
+  const [newLangName, setNewLangName] = useState("");
+  const [newLangProf, setNewLangProf] = useState("Professional");
+  const [newStrength, setNewStrength] = useState("");
+  const [newInterest, setNewInterest] = useState("");
+  const [editingEduId, setEditingEduId] = useState(null);
+  const [editingProjId, setEditingProjId] = useState(null);
 
   //
   const [form] = Form.useForm();
@@ -253,6 +327,7 @@ export default function MainProfile() {
   const [courseTypeError, setCourseTypeError] = useState("");
   const [percentage, setPercentage] = useState("");
   const [cgpa, setCgpa] = useState("");
+  const [lateral, setLateral] = useState("No");
   const [educationStartDate, setEducationStartDate] = useState("");
   const [educationStartDateError, setEducationStartDateError] = useState("");
   const [educationEndDate, setEducationEndDate] = useState("");
@@ -340,8 +415,6 @@ export default function MainProfile() {
 
   const [isColorModalVisible, setColorModalVisible] = useState(false);
   const [isImageModalVisible, setImageModalVisible] = useState(false);
-  const [tempColor, setTempColor] = useState("#481eaf");
-  const [tempImage, setTempImage] = useState(null);
 
   // active streak
 
@@ -350,18 +423,6 @@ export default function MainProfile() {
   const [maxStreak, setMaxStreak] = useState(0);
   const today = new Date();
 
-  // Update the getClassForValue function
-  const getClassForValue = (value) => {
-    if (!value || value.count === 0) return "color-empty";
-    const dateFormatted = format(new Date(), "yyyy-MM-dd");
-    if (value.date === dateFormatted) {
-      return "color-today";
-    }
-    if (value.count === 1) return "color-scale-1";
-    if (value.count === 2) return "color-scale-2";
-    if (value.count === 3) return "color-scale-3";
-    return "color-scale-4";
-  };
 
   useEffect(() => {
     getDailyStreakData();
@@ -412,46 +473,6 @@ export default function MainProfile() {
       setIsLoading(false);
     }
   };
-
-  // Update the LegendBox and StreakBox components
-  const LegendBox = ({ color, label }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <div
-        style={{
-          width: "12px",
-          height: "12px",
-          borderRadius: "50%",
-          background: color,
-        }}
-      />
-      <span style={{ color: "#475569", fontSize: "0.85rem", fontWeight: 500 }}>
-        {label}
-      </span>
-    </div>
-  );
-
-  const StreakBox = ({ label, value, color }) => (
-    <div
-      style={{
-        textAlign: "center",
-        padding: "12px",
-        background: "#fdfdff",
-        border: "1px solid #f0f0f5",
-        borderRadius: "12px",
-        minWidth: "120px",
-      }}
-    >
-      <div style={{ color: "#334155", fontSize: "0.9rem", fontWeight: 600 }}>
-        {label}
-      </div>
-      <div
-        style={{ color, fontSize: "18px", fontWeight: 700, marginTop: "0px" }}
-      >
-        {value} {value === 1 ? "Day" : "Days"}
-      </div>
-    </div>
-  );
-  //////////////
 
   const handleMenuClick = ({ key }) => {
     if (key === "color") {
@@ -589,33 +610,36 @@ export default function MainProfile() {
   };
 
   // DELETE EDUCATION
-  const handleDeleteEducation = async () => {
-    if (!educationData) {
+  const handleDeleteEducation = async (idToDelete) => {
+    const targetId = (typeof idToDelete === "number" || typeof idToDelete === "string") ? idToDelete : educationData?.id;
+    if (!targetId) {
       message.error("No education data to delete.");
       return;
     }
 
     const payload = {
-      id: educationData.id,
+      id: targetId,
       user_id: loginUserId,
     };
 
     try {
       const response = await deleteEducation(payload);
       console.log("deleteEducation", response);
-      message.success("Education deleted successfully.");
-      setShowEducationForm(true);
+      message.success("Education removed successfully.");
+      setEducationData(null);
+      setEditingEduId(null);
       setQualification("");
       setEducationCourse("");
       setSpecialization("");
       setEducationCollege("");
       setEducationStartDate("");
       setEducationEndDate("");
-      setCourseType("");
+      setCourseType("Full Time");
       setPercentage("");
       setCgpa("");
       setRollNumber("");
-      setLateral(false);
+      setLateral("No");
+      setShowEducationForm(false);
       getUserProfileData();
     } catch (error) {
       console.error("Error deleting education:", error);
@@ -647,15 +671,25 @@ export default function MainProfile() {
       setIsAbout(response?.data?.data?.about || "");
       setIsEducation(response?.data?.data?.education || []);
       setIsProjects(response?.data?.data?.projects || []);
+      const expString = response?.data?.data?.total_years || "";
+      let parsedYears = "";
+      let parsedMonths = "";
+      if (expString && expString !== 'Fresher (0 Years)' && expString !== '0 years') {
+        const lowerExp = expString.toLowerCase();
+        const yearMatch = lowerExp.match(/(\d+)\s*year/);
+        if (yearMatch) parsedYears = `${yearMatch[1]} Years`;
+        const monthMatch = lowerExp.match(/(\d+)\s*month/);
+        if (monthMatch) {
+          const m = parseInt(monthMatch[1], 10);
+          parsedMonths = m <= 1 ? `${m} Month` : `${m} Months`;
+        }
+      }
+
       setTotalYearsExperience(
-        response?.data?.data?.total_years
-          ? `${response.data.data.total_years}`
-          : ""
+        parsedYears || (response?.data?.data?.total_years && !expString.toLowerCase().includes('month') ? `${response.data.data.total_years}` : "")
       );
       setTotalMonthsExperience(
-        response?.data?.data?.total_months
-          ? `${response.data.data.total_months}`
-          : ""
+        parsedMonths || (response?.data?.data?.total_months ? `${response.data.data.total_months}` : "")
       );
 
 
@@ -668,6 +702,8 @@ export default function MainProfile() {
         Twitter: fetchedLinks.twitter || "",
         Dribbble: fetchedLinks.dribble || "",
         Behance: fetchedLinks.behance || "",
+        Github: fetchedLinks.github || "",
+        Portfolio: fetchedLinks.portfolio || "",
       });
       setIsSocialLinks(fetchedLinks);
 
@@ -678,6 +714,46 @@ export default function MainProfile() {
 
       if (response?.data?.data) {
         const profile = response.data.data;
+        if (profile.first_name) setFname(profile.first_name);
+        if (profile.last_name) setLname(profile.last_name);
+        if (profile.email) setEmail(profile.email);
+        if (profile.phone) setPhoneNumber(profile.phone);
+        if (profile.dob) setDob(profile.dob ? String(profile.dob).slice(0, 10) : "");
+        if (profile.marital_status) setMaritalStatus(profile.marital_status);
+        if (profile.experince_type) setSelectExperienceType(profile.experince_type);
+        if (profile.notice_period) setNoticePeriod(profile.notice_period);
+        if (profile.expected_salary) setExpectedSalary(profile.expected_salary);
+        if (profile.current_salary) setCurrentSalary(profile.current_salary);
+        if (profile.available_from) setAvailableFrom(profile.available_from);
+        if (profile.preferred_roles) setPreferredRoles(profile.preferred_roles);
+        if (profile.preferred_locations) setPreferredLocations(profile.preferred_locations);
+        if (profile.willing_to_relocate) setWillingToRelocate(profile.willing_to_relocate);
+        if (profile.preferred_job_type) {
+          if (typeof profile.preferred_job_type === "object") {
+            if (profile.preferred_job_type.jobType) setPreferredJobType(profile.preferred_job_type.jobType);
+            if (profile.preferred_job_type.expectedSalary) setExpectedSalary(profile.preferred_job_type.expectedSalary);
+            if (profile.preferred_job_type.currentSalary) setCurrentSalary(profile.preferred_job_type.currentSalary);
+            if (profile.preferred_job_type.noticePeriod) setNoticePeriod(profile.preferred_job_type.noticePeriod);
+            if (profile.preferred_job_type.preferredRoles) setPreferredRoles(Array.isArray(profile.preferred_job_type.preferredRoles) ? profile.preferred_job_type.preferredRoles.join(", ") : profile.preferred_job_type.preferredRoles);
+            if (profile.preferred_job_type.preferredLocations) setPreferredLocations(Array.isArray(profile.preferred_job_type.preferredLocations) ? profile.preferred_job_type.preferredLocations.join(", ") : profile.preferred_job_type.preferredLocations);
+            if (profile.preferred_job_type.relocation) setWillingToRelocate(profile.preferred_job_type.relocation);
+          } else {
+            setPreferredJobType(profile.preferred_job_type);
+          }
+        }
+        if (profile.certifications) {
+          setCertifications(Array.isArray(profile.certifications) ? profile.certifications : []);
+        }
+        if (profile.accomplishments) {
+          setAccomplishments(Array.isArray(profile.accomplishments) ? profile.accomplishments : []);
+        }
+        if (profile.additional_info && typeof profile.additional_info === "object" && Object.keys(profile.additional_info).length > 0) {
+          setAdditionalInfo(profile.additional_info);
+        }
+        if (profile.languages && Array.isArray(profile.languages) && profile.languages.length > 0) {
+          setLanguages(profile.languages);
+        }
+
         setUserType(profile.user_type || "");
         setGender(profile.gender || "");
         setExperienceType(profile.experince_type || "");
@@ -709,9 +785,12 @@ export default function MainProfile() {
 
         // Handle about
         if (profile.about) {
+          setAboutText(profile.about || "");
           setAboutTextNew(profile.about || "");
           setAboutData(profile.about);
         } else {
+          setAboutText("");
+          setAboutTextNew("");
           setAboutData(null);
         }
 
@@ -785,6 +864,44 @@ export default function MainProfile() {
         setUserProfileLoading(false);
       }, 1000);
     }
+  };
+
+  const handleProfileImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      message.error("File size must be less than 2MB");
+      return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/jpg', 'image/webp'].includes(file.type)) {
+      message.error("Only JPG, PNG and WEBP files are allowed");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64Image = reader.result;
+      setProfileImage(base64Image);
+      localStorage.setItem("profileImage", base64Image);
+
+      const payload = {
+        user_id: loginUserId,
+        profile_image: base64Image
+      };
+
+      try {
+        const response = await updateProfileImage(payload);
+        if (response?.data?.success || response?.status === 200) {
+          message.success("Profile photo updated successfully!");
+        }
+      } catch (error) {
+        console.error("Profile image upload error:", error);
+        message.error("An error occurred while uploading profile photo");
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const getGenderDataType = async () => {
@@ -894,6 +1011,9 @@ export default function MainProfile() {
       last_name: lname,
       gender: gender,
       user_type: userType,
+      phone: phoneNumber,
+      dob: dob,
+      marital_status: maritalStatus,
       ...(userType === "College Student" && {
         course: courseOptions.find((item) => item.id === course)?.name || "",
         start_year: startDate,
@@ -906,12 +1026,14 @@ export default function MainProfile() {
       }),
       location: location,
       experince_type: selectExperienceType,
-      total_years: totalYearsExperience,
-      total_months: totalMonthsExperience,
+      experience: selectExperienceType === "Fresher" ? "0 years" : `${totalYearsExperience || '0 Years'} ${totalMonthsExperience || '0 Month'}`.trim(),
+      total_years: selectExperienceType === "Fresher" ? "0 years" : `${totalYearsExperience || '0 Years'} ${totalMonthsExperience || '0 Month'}`.trim(),
+      total_months: selectExperienceType === "Fresher" ? "0 Month" : totalMonthsExperience,
       ...(userType === "School Student" && {
         classes: Class,
       }),
 
+      current_salary: currentSalary,
       user_id: loginUserId,
     };
     try {
@@ -923,6 +1045,217 @@ export default function MainProfile() {
     } catch (error) {
       console.log("Saving user data:", error);
     }
+  };
+
+  const handleSavePreferences = async () => {
+    const payload = {
+      user_id: loginUserId,
+      preferred_roles: preferredRoles,
+      preferred_job_type: preferredJobType,
+      preferred_locations: preferredLocations,
+      willing_to_relocate: willingToRelocate,
+      notice_period: noticePeriod,
+      expected_salary: expectedSalary,
+      current_salary: currentSalary,
+      available_from: availableFrom,
+      marital_status: maritalStatus,
+      dob: dob,
+    };
+    try {
+      await updateBasicDetails(payload);
+      message.success("Preferences updated successfully!");
+      getUserProfileData();
+    } catch (error) {
+      console.error("Error updating preferences:", error);
+      message.error("Failed to update preferences.");
+    }
+  };
+
+  const handleSaveCertifications = async (newCerts) => {
+    const payload = {
+      user_id: loginUserId,
+      certifications: newCerts,
+    };
+    try {
+      await updateBasicDetails(payload);
+      setCertifications(newCerts);
+      message.success("Certifications updated successfully!");
+      getUserProfileData();
+    } catch (error) {
+      console.error("Error updating certifications:", error);
+      message.error("Failed to update certifications.");
+    }
+  };
+
+  const handleSaveAccomplishments = async (newAccomplishments) => {
+    const payload = {
+      user_id: loginUserId,
+      accomplishments: newAccomplishments,
+    };
+    try {
+      await updateBasicDetails(payload);
+      setAccomplishments(newAccomplishments);
+      message.success("Accomplishments updated successfully!");
+      getUserProfileData();
+    } catch (error) {
+      console.error("Error updating accomplishments:", error);
+      message.error("Failed to update accomplishments.");
+    }
+  };
+
+  const handleSaveLanguages = async (newLanguages) => {
+    const payload = {
+      user_id: loginUserId,
+      languages: newLanguages,
+    };
+    try {
+      await updateBasicDetails(payload);
+      setLanguages(newLanguages);
+      message.success("Languages updated successfully!");
+      getUserProfileData();
+    } catch (error) {
+      console.error("Error updating languages:", error);
+      message.error("Failed to update languages.");
+    }
+  };
+
+  const handleSaveAdditionalInfo = async (newInfo) => {
+    const payload = {
+      user_id: loginUserId,
+      additional_info: newInfo,
+    };
+    try {
+      await updateBasicDetails(payload);
+      setAdditionalInfo(newInfo);
+      message.success("Additional info updated successfully!");
+      getUserProfileData();
+    } catch (error) {
+      console.error("Error updating additional info:", error);
+      message.error("Failed to update additional info.");
+    }
+  };
+
+  const handleEditCompany = (exp) => {
+    setEditingCompanyId(exp.id);
+    setJobTitle(exp.job_title || exp.jobTitle || "");
+    setCompanyName(exp.company_name || exp.workingCompanyName || "");
+    setShowWorkExpForm(true);
+    setActiveTab("experience");
+    showDrawer();
+  };
+
+  const handleAddNewExperience = () => {
+    setEditingCompanyId(null);
+    handleAddCompany();
+    setShowWorkExpForm(true);
+    setActiveTab("experience");
+    showDrawer();
+  };
+
+  const handleEditEducationItem = (edu) => {
+    setEducationData(edu);
+    setEditingEduId(edu.id);
+
+    const qualMatch = qualificationOptions.find(
+      (item) =>
+        item.name?.trim().toLowerCase() === edu.qualification?.trim().toLowerCase() ||
+        String(item.id) === String(edu.qualification)
+    );
+    setQualification(qualMatch ? qualMatch.id : (edu.qualification || ""));
+
+    const courseMatch = educationCourseOptions.find(
+      (item) =>
+        item.name?.trim().toLowerCase() === edu.course?.trim().toLowerCase() ||
+        String(item.id) === String(edu.course)
+    );
+    setEducationCourse(courseMatch ? courseMatch.id : (edu.course || ""));
+
+    const specMatch = specializationOptions.find(
+      (item) =>
+        item.name?.trim().toLowerCase() === edu.specialization?.trim().toLowerCase() ||
+        String(item.id) === String(edu.specialization)
+    );
+    setSpecialization(specMatch ? specMatch.id : (edu.specialization || ""));
+
+    const colMatch = collageOptions.find(
+      (item) =>
+        item.name?.trim().toLowerCase() === edu.college?.trim().toLowerCase() ||
+        String(item.id) === String(edu.college)
+    );
+    setEducationCollege(colMatch ? colMatch.id : (edu.college || ""));
+
+    setEducationStartDate(edu.start_date ? String(edu.start_date) : (edu.startYear ? String(edu.startYear) : ""));
+    setEducationEndDate(edu.end_date ? String(edu.end_date) : (edu.endYear ? String(edu.endYear) : ""));
+    setCourseType(edu.course_type || "Full Time");
+    setPercentage(edu.percentage || "");
+    setCgpa(edu.cgpa || "");
+    setRollNumber(edu.roll_number || "");
+    setLateral(
+      edu.lateral_entry === 1 || edu.lateral_entry === "Yes" || edu.lateral_entry === "yes"
+        ? "Yes"
+        : "No"
+    );
+    setShowEducationForm(true);
+    setActiveTab("education");
+    showDrawer();
+  };
+
+  const handleAddNewEducation = () => {
+    setEducationData(null);
+    setEditingEduId(null);
+    setQualification("");
+    setEducationCourse("");
+    setSpecialization("");
+    setEducationCollege("");
+    setEducationStartDate("");
+    setEducationEndDate("");
+    setCourseType("Full Time");
+    setPercentage("");
+    setCgpa("");
+    setRollNumber("");
+    setLateral("No");
+    setShowEducationForm(true);
+    setActiveTab("education");
+    showDrawer();
+  };
+
+  const handleEditProjectItem = (proj) => {
+    setProjectData(proj);
+    setEditingProjId(proj.id);
+    setProject(proj.project_title || proj.projectTitle || proj.title || "");
+    setCompanyName(proj.company_name || proj.projectClient || proj.client || "");
+    const pType = proj.project_type || proj.projectType || "Full Time";
+    setProjectType(pType);
+    setActiveButton(pType);
+    setProjectStartDate(
+      proj.start_date
+        ? String(proj.start_date).slice(0, 10)
+        : (proj.projectStartDate ? String(proj.projectStartDate).slice(0, 10) : "")
+    );
+    setProjectEndDate(
+      proj.end_date
+        ? String(proj.end_date).slice(0, 10)
+        : (proj.projectEndDate ? String(proj.projectEndDate).slice(0, 10) : "")
+    );
+    setProjectDescription(proj.description || proj.projectDescription || "");
+    setShowForm(true);
+    setActiveTab("projects");
+    showDrawer();
+  };
+
+  const handleAddNewProject = () => {
+    setProjectData(null);
+    setEditingProjId(null);
+    setCompanyName("");
+    setProject("");
+    setProjectType("Full Time");
+    setActiveButton("Full Time");
+    setProjectStartDate("");
+    setProjectEndDate("");
+    setProjectDescription("");
+    setShowForm(true);
+    setActiveTab("projects");
+    showDrawer();
   };
 
   //
@@ -1002,16 +1335,29 @@ export default function MainProfile() {
       id: educationData?.id,
       user_id: loginUserId,
       qualification:
-        qualificationOptions.find((item) => item.id === qualificaton)?.name ||
+        qualificationOptions.find(
+          (item) => item.id === qualificaton || item.name === qualificaton
+        )?.name ||
+        (typeof qualificaton === "string" ? qualificaton : "") ||
         "",
       course:
-        educationCourseOptions.find((item) => item.id === educationCourse)
-          ?.name || "",
+        educationCourseOptions.find(
+          (item) => item.id === educationCourse || item.name === educationCourse
+        )?.name ||
+        (typeof educationCourse === "string" ? educationCourse : "") ||
+        "",
       specialization:
-        specializationOptions.find((item) => item.id === specialization)
-          ?.name || "",
+        specializationOptions.find(
+          (item) => item.id === specialization || item.name === specialization
+        )?.name ||
+        (typeof specialization === "string" ? specialization : "") ||
+        "",
       college:
-        collageOptions.find((item) => item.id === educationCollege)?.name || "",
+        collageOptions.find(
+          (item) => item.id === educationCollege || item.name === educationCollege
+        )?.name ||
+        (typeof educationCollege === "string" ? educationCollege : "") ||
+        "",
       start_date: educationStartDate,
       end_date: educationEndDate,
       course_type: courseType,
@@ -1275,43 +1621,36 @@ export default function MainProfile() {
     }
   };
 
-  const handleAddNewProject = () => {
-    setProjectData(null);
-    setShowForm(true);
-    setCompanyName("");
-    setProject("");
-    setProjectStartDate("");
-    setProjectEndDate("");
-    setProjectType("");
-    setProjectDescription("");
-    setActiveButton("");
-  };
-
   const handleDeleteCompany = async (id) => {
-    if (!id) {
+    const targetId = (typeof id === "number" || typeof id === "string") ? id : projectData?.id;
+    if (!targetId) {
       message.error("No project ID to delete.");
       return;
     }
 
     const payload = {
-      id,
+      id: targetId,
       user_id: loginUserId,
     };
 
     try {
       const response = await deleteProject(payload);
       console.log("deleteProject", response);
-      message.success("Project deleted successfully.");
+      message.success("Project removed successfully.");
+      setProjectData(null);
+      setEditingProjId(null);
+      setCompanyName("");
+      setProject("");
+      setProjectType("Full Time");
+      setActiveButton("Full Time");
+      setProjectStartDate("");
+      setProjectEndDate("");
+      setProjectDescription("");
+      setShowForm(false);
       getUserProfileData();
 
-      const updatedList = projectsList.filter((item) => item.id !== id);
+      const updatedList = projectsList.filter((item) => item.id !== targetId);
       setProjectsList(updatedList);
-
-      if (updatedList.length === 0) {
-        handleAddNewProject();
-      } else {
-        setShowForm(false);
-      }
     } catch (error) {
       console.error("Error deleting project:", error);
       message.error("Failed to delete project.");
@@ -1339,7 +1678,9 @@ export default function MainProfile() {
     try {
       const response = await updateAbout(payload);
       console.log("updateAbout", response);
-      setAboutText(response?.data?.data || []);
+      setAboutText(aboutTextNew);
+      setAboutTextNew(aboutTextNew);
+      setAboutData(aboutTextNew);
       resetFormFields();
       message.success("About details saved successfully");
       getUserProfileData();
@@ -1447,17 +1788,10 @@ export default function MainProfile() {
     }
   };
 
-  const socialIcons = [
-    { key: "linkedin", icon: <FaLinkedinIn />, color: "#0077B5" },
-    { key: "facebook", icon: <FaFacebookF />, color: "#3b5998" },
-    { key: "instagram", icon: <FaInstagram />, color: "#E1306C" },
-    { key: "behance", icon: <FaBehance />, color: "#1769ff" },
-    { key: "twitter", icon: <FaTwitter />, color: "#17aaffff" },
-    { key: "dribble", icon: <FaDribbble />, color: "#ea4c89" },
-  ];
-
   const [socialLinks, setSocialLinks] = useState({
     Linkedin: "",
+    Github: "",
+    Portfolio: "",
     Facebook: "",
     Instagram: "",
     Twitter: "",
@@ -1467,6 +1801,8 @@ export default function MainProfile() {
 
   const [socialLinkErrors, setSocialLinkErrors] = useState({
     Linkedin: "",
+    Github: "",
+    Portfolio: "",
     Facebook: "",
     Instagram: "",
     Twitter: "",
@@ -1523,6 +1859,8 @@ export default function MainProfile() {
 
     const payload = {
       linkedin: socialLinks["Linkedin"] || "",
+      github: socialLinks["Github"] || "",
+      portfolio: socialLinks["Portfolio"] || "",
       facebook: socialLinks["Facebook"] || "",
       instagram: socialLinks["Instagram"] || "",
       twitter: socialLinks["Twitter"] || "",
@@ -1548,7 +1886,10 @@ export default function MainProfile() {
   };
 
   const formatDateTime = (date) => {
-    return new Date(date).toISOString().slice(0, 19).replace("T", " "); // 'YYYY-MM-DD HH:MM:SS'
+    if (!date) return null;
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return null;
+    return d.toISOString().slice(0, 19).replace("T", " "); // 'YYYY-MM-DD HH:MM:SS'
   };
 
   useEffect(() => {
@@ -1576,11 +1917,6 @@ export default function MainProfile() {
       return () => clearTimeout(timer);
     }
   }, []);
-
-  const [open, setOpen] = useState(false);
-  const showDrawer = () => {
-    setOpen(true);
-  };
 
   const resetFormFields = () => {
     // Errors
@@ -1714,10 +2050,6 @@ export default function MainProfile() {
         try {
           const response = await updateProfileImage(payload);
           console.log("Profile updated:", response);
-          getUserProfileData();
-
-          // Hard refresh the page
-          window.location.reload();
         } catch (error) {
           console.error("Failed to update profile:", error);
         }
@@ -1738,15 +2070,6 @@ export default function MainProfile() {
       interviewsScheduled: 0,
     },
   });
-
-  const style = {
-    "project-card": {
-      background: "#fff",
-      padding: "10px 24px",
-      borderRadius: 12,
-      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-    },
-  }
 
   useEffect(() => {
     // Calculate profile completion percentage
@@ -1833,8 +2156,6 @@ export default function MainProfile() {
                     setFname(e.target.value);
                     setFnameError(nameValidator(e.target.value));
                   }}
-                  readOnly={true}
-                  disabled={true}
                   error={fnameError}
                 />
               </div>
@@ -1849,8 +2170,6 @@ export default function MainProfile() {
                     setLname(e.target.value);
                     setLnameError(nameValidator(e.target.value));
                   }}
-                  readOnly={true}
-                  disabled={true}
                   error={lnameError}
                 />
               </div>
@@ -1864,10 +2183,6 @@ export default function MainProfile() {
                   mandatory={true}
                   value={email}
                   placeholder="Enter your Email"
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    setEmailError(emailValidator(e.target.value));
-                  }}
                   readOnly={true}
                   disabled={true}
                   error={emailError}
@@ -1884,34 +2199,72 @@ export default function MainProfile() {
                     setPhoneNumber(e.target.value);
                     setPhoneNumberError(phoneValidation(e.target.value));
                   }}
-                  readOnly={true}
-                  disabled={true}
                   error={phoneNumberError}
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <Form.Item
-                layout="vertical"
-                label={<span style={{ fontWeight: 500 }}>Gender</span>}
-                required
-              >
-                <div className="job_nature">
+            <div className="form-row">
+              <div className="form-group">
+                <CommonInputField
+                  name="dob"
+                  label="Date of Birth"
+                  type="date"
+                  value={dob}
+                  placeholder="YYYY-MM-DD"
+                  onChange={(e) => setDob(e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <CommonSelectField
+                  label="Marital Status"
+                  name="maritalStatus"
+                  placeholder="Select Marital Status"
+                  value={maritalStatus}
+                  options={[
+                    { value: "Single", label: "Single" },
+                    { value: "Married", label: "Married" },
+                    { value: "Divorced", label: "Divorced" },
+                    { value: "Other", label: "Other" },
+                  ]}
+                  onChange={(val) => setMaritalStatus(val)}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: 24, marginBottom: 24, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.02)' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                <div>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '0.2px' }}>Gender</p>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Select your gender to complete your profile details.</p>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', backgroundColor: '#f8fafc', padding: '4px', borderRadius: '10px', border: '1px solid #e2e8f0', gap: '4px' }}>
                   {genderOptions.map((item) => {
+                    const mappedName = item.name === "Male" ? "Man" : item.name === "Female" ? "Woman" : item.name;
+                    const isActive = gender === mappedName || gender === item.name || genderActiveButton === mappedName || genderActiveButton === item.name;
                     return (
                       <button
                         key={item.id || item.name}
                         type="button"
-                        className={
-                          genderActiveButton === item.name
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
                         onClick={() => {
-                          handleButtonClick(item.name);
-                          setGender(item.name);
+                          handleButtonClick(mappedName);
+                          setGender(mappedName);
                           setGenderError("");
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          cursor: 'pointer',
+                          border: isActive ? '1px solid rgba(104, 0, 173, 0.1)' : '1px solid transparent',
+                          ...(isActive
+                            ? { backgroundColor: '#ffffff', color: '#6800ad', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }
+                            : { backgroundColor: 'transparent', color: '#64748b' })
                         }}
                       >
                         {item.name === "Male" ? (
@@ -1929,443 +2282,83 @@ export default function MainProfile() {
                         ) : (
                           ""
                         )}{" "}
-                        {item.name}
+                        {item.name === "Male" ? "Man" : item.name === "Female" ? "Woman" : item.name}
                       </button>
                     );
                   })}
                 </div>
-
-                {genderError && (
-                  <div style={{ color: "red", marginTop: 6, fontSize: 13 }}>
-                    {genderError}
-                  </div>
-                )}
-              </Form.Item>
-            </div>
-
-            <div style={{ marginTop: 15 }} className="form-group">
-              <Form.Item
-                layout="vertical"
-                label={<span style={{ fontWeight: 500 }}>User Type </span>}
-                name="usertype"
-                rules={[
-                  {
-                    required: true,
-                    message: "Please Select your User Type ",
-                  },
-                ]}
-              >
-                <div>
-                  <div className="job_nature">
-                    {userTypeName.map((item) => {
-                      return (
-                        <button
-                          key={item.id || item.name}
-                          type="button"
-                          className={
-                            userTypeactiveButton === item.name
-                              ? "job_nature_button_active"
-                              : "job_nature_button"
-                          }
-                          onClick={() => {
-                            handleUserTypeClick(item.name);
-                            setUserType(item.name);
-                            setUserTypeError("");
-                          }}
-                        >
-                          {item.name === "College Student" ? (
-                            <LuGraduationCap />
-                          ) : item.name === "Professional" ? (
-                            <GiOfficeChair />
-                          ) : item.name === "School Student" ? (
-                            <PiStudent />
-                          ) : item.name === "Fresher" ? (
-                            <GiNewShoot />
-                          ) : (
-                            ""
-                          )}
-                          {item.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {userTypeError && (
-                    <div style={{ color: "red", marginTop: 6, fontSize: 13 }}>
-                      {userTypeError}
-                    </div>
-                  )}
+              </div>
+              {genderError && (
+                <div style={{ color: "red", marginTop: 6, fontSize: 13 }}>
+                  {genderError}
                 </div>
-              </Form.Item>
-            </div>
-
-            <div className="">
-              {userTypeactiveButton === "College Student" && (
-                <>
-                  <div style={{ marginTop: 15 }} className="form-group">
-                    <CommonSelectField
-                      label="Course"
-                      disabled={false}
-                      name="course"
-                      mandatory={true}
-                      placeholder="Select Course"
-                      value={course}
-                      showSearch={true}
-                      options={courseOptions}
-                      onChange={(value) => {
-                        setCourse(value);
-                        setCourseError(selectValidator(value));
-                      }}
-                      error={courseError}
-                    />
-                  </div>
-
-                  <div
-                    className="form-row"
-                    style={{
-                      display: "flex",
-                      gap: "16px",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <CommonSelectField
-                        value={startDate}
-                        label="Start Year"
-                        mandatory={true}
-                        name="startyear"
-                        placeholder="Start Year"
-                        options={startYearOptions}
-                        onChange={(value) => {
-                          setStartDate(value);
-
-                          if (!value || value.trim() === "") {
-                            setStartDateError("Start year is required");
-                          } else {
-                            setStartDateError("");
-                          }
-
-                          if (endDate && parseInt(value) > parseInt(endDate)) {
-                            setEndDateError(
-                              " must be after start year"
-                            );
-                          } else {
-                            setEndDateError("");
-                          }
-                        }}
-                        error={startDateError}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <CommonSelectField
-                        value={endDate}
-                        label="End Year"
-                        name="endyear"
-                        placeholder="End Year"
-                        mandatory={true}
-                        options={endYearOptions}
-                        onChange={(value) => {
-                          setEndDate(value);
-
-                          if (!value || value.trim() === "") {
-                            setEndDateError("End year is required");
-                          } else if (
-                            startDate &&
-                            parseInt(value) < parseInt(startDate)
-                          ) {
-                            setEndDateError(
-                              " must be after start year"
-                            );
-                          } else {
-                            setEndDateError("");
-                          }
-                        }}
-                        error={endDateError}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {userTypeactiveButton === "Fresher" && (
-                <>
-                  <div style={{ marginTop: 15 }} className="form-group">
-                    <CommonSelectField
-                      label="Course"
-                      disabled={false}
-                      name="course1"
-                      mandatory={true}
-                      placeholder="Select Course"
-                      showSearch={true}
-                      value={fresherCourse}
-                      options={fresherCourseOptions}
-                      onChange={(value) => {
-                        setFresherCourse(value);
-                        setFresherCourseError(selectValidator(value));
-                      }}
-                      error={fresherCourseError}
-                    />
-                  </div>
-
-                  {/*  */}
-
-                  <div
-                    className="form-row"
-                    style={{
-                      display: "flex",
-                      gap: "16px",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <CommonSelectField
-                        value={fresherStartDate}
-                        label="Start Year"
-                        name="startyear"
-                        placeholder="Start Year"
-                        options={fresherStartYearOptions}
-                        onChange={(value) => {
-                          setFresherStartDate(value);
-
-                          if (!value || value.trim() === "") {
-                            setFresherStartDateError("Start year is required");
-                          } else {
-                            setFresherStartDateError("");
-                          }
-
-                          if (endDate && parseInt(value) > parseInt(endDate)) {
-                            setFresherEndDateError(
-                              " must be after start year"
-                            );
-                          } else {
-                            setFresherEndDateError("");
-                          }
-                        }}
-                        error={fresherStartDateError}
-                      />
-                    </div>
-
-                    <div className="form-group" style={{ flex: 1 }}>
-                      <CommonSelectField
-                        label="End Year"
-                        name="endyear"
-                        placeholder="End Year"
-                        value={fresherEndtDate}
-                        options={fresherEndYearOptions}
-                        onChange={(value) => {
-                          setFresherEndDate(value);
-
-                          if (!value || value.trim() === "") {
-                            setFresherEndDateError("End year is required");
-                          } else if (
-                            startDate &&
-                            parseInt(value) < parseInt(startDate)
-                          ) {
-                            setFresherEndDateError(
-                              " must be after start year"
-                            );
-                          } else {
-                            setFresherEndDateError("");
-                          }
-                        }}
-                        error={fresherEndDateError} // fixed
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {userTypeactiveButton === "School Student" && (
-                <>
-                  <Form.Item
-                    style={{ marginTop: 15 }}
-                    layout="vertical"
-                    label={<span style={{ fontWeight: 500 }}>Class</span>}
-                    name="usertype"
-                    rules={[
-                      {
-                        required: true,
-                        message: "Please Select your Class",
-                      },
-                    ]}
-                  >
-                    <div className="job_nature">
-                      <button
-                        type="button"
-                        className={
-                          Class === "1"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("1")}
-                      >
-                        <LiaSchoolSolid /> 1
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "2"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("2")}
-                      >
-                        <LiaSchoolSolid /> 2
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "3"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("3")}
-                      >
-                        <LiaSchoolSolid /> 3
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "4"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("4")}
-                      >
-                        <LiaSchoolSolid /> 4
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "5"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("5")}
-                      >
-                        <LiaSchoolSolid /> 5
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "6"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("6")}
-                      >
-                        <LiaSchoolSolid /> 6
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "7"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("7")}
-                      >
-                        <LiaSchoolSolid /> 7
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "8"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("8")}
-                      >
-                        <LiaSchoolSolid /> 8
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "9"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("9")}
-                      >
-                        <LiaSchoolSolid /> 9
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "10"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("10")}
-                      >
-                        <LiaSchoolSolid /> 10
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "11"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("11")}
-                      >
-                        <LiaSchoolSolid /> 11
-                      </button>
-
-                      <button
-                        type="button"
-                        className={
-                          Class === "12"
-                            ? "job_nature_button_active"
-                            : "job_nature_button"
-                        }
-                        onClick={() => handleClassClick("12")}
-                      >
-                        <LiaSchoolSolid /> 12
-                      </button>
-                    </div>
-                  </Form.Item>
-                </>
               )}
             </div>
 
-            <div style={{ marginTop: 20 }} className="form-group">
-              <CommonSelectField
-                label="Fresher / Experience"
-                name="fresherexperience"
-                mandatory={true}
-                placeholder="Select Experience"
-                value={selectExperienceType}
-                options={[
-                  {
-                    value: "Fresher",
-                    label: "Fresher",
-                  },
-                  {
-                    value: "Experience",
-                    label: "Experience",
-                  },
-                ]}
-                onChange={(value) => {
-                  handleExperienceTypeChange(value);
-                  setSelectExperienceType(value);
-                  setSelectExperienceTypeError(selectValidator(value));
-                  setTotalYearsExperience("")
-                  setTotalMonthsExperience("")
-                }}
-                showSearch={true}
-                error={selectExperienceTypeError}
-              />
+
+
+            <div style={{ marginTop: 24, marginBottom: 24, backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px 20px', boxShadow: '0 1px 3px rgba(15, 23, 42, 0.02)' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                <div>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', margin: '0 0 4px 0', letterSpacing: '0.2px' }}>Experience Status</p>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>Select your status to customize your profile details.</p>
+                </div>
+                <div style={{ display: 'flex', backgroundColor: '#f8fafc', padding: '4px', borderRadius: '10px', border: '1px solid #e2e8f0', gap: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExperienceTypeChange("Fresher");
+                      setSelectExperienceType("Fresher");
+                      setSelectExperienceTypeError("");
+                      setTotalYearsExperience("");
+                      setTotalMonthsExperience("");
+                    }}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      cursor: 'pointer',
+                      border: selectExperienceType === "Fresher" ? '1px solid rgba(104, 0, 173, 0.1)' : '1px solid transparent',
+                      ...(selectExperienceType === "Fresher"
+                        ? { backgroundColor: '#ffffff', color: '#6800ad', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }
+                        : { backgroundColor: 'transparent', color: '#64748b' })
+                    }}
+                  >
+                    🎓 I am a Fresher
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleExperienceTypeChange("Experience");
+                      setSelectExperienceType("Experience");
+                      setSelectExperienceTypeError("");
+                      setTotalYearsExperience("");
+                      setTotalMonthsExperience("");
+                    }}
+                    style={{
+                      padding: '8px 18px',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      cursor: 'pointer',
+                      border: selectExperienceType === "Experience" ? '1px solid rgba(104, 0, 173, 0.1)' : '1px solid transparent',
+                      ...(selectExperienceType === "Experience"
+                        ? { backgroundColor: '#ffffff', color: '#6800ad', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }
+                        : { backgroundColor: 'transparent', color: '#64748b' })
+                    }}
+                  >
+                    💼 I have Experience
+                  </button>
+                </div>
+              </div>
+              {selectExperienceTypeError && (
+                <div style={{ color: "red", marginTop: 6, fontSize: 13 }}>
+                  {selectExperienceTypeError}
+                </div>
+              )}
             </div>
 
             <div className="form-row">
@@ -2524,6 +2517,17 @@ export default function MainProfile() {
                 error={locationError}
               />
             </div>
+
+            <div style={{ marginTop: 0 }} className="form-group">
+              <CommonInputField
+                name="currentSalary"
+                label="Current Salary"
+                value={currentSalary}
+                placeholder="e.g. ₹3,50,000 / Year or 10 LPA"
+                type="text"
+                onChange={(e) => setCurrentSalary(e.target.value)}
+              />
+            </div>
             <div style={{ textAlign: "-webkit-right" }} className="save_btn">
               <Button
                 type="primary"
@@ -2540,133 +2544,317 @@ export default function MainProfile() {
       </Form>
     ),
 
+    preferences: () => (
+      <div>
+        <Title level={4}>Career Preferences & Availability</Title>
+        <Text type="secondary">
+          Set your target job roles, preferred work locations, and notice period so recruiters can find the right match.
+        </Text>
+        <Divider style={{ margin: "16px 0" }} />
+
+        <div className="form-group" style={{ marginBottom: 16 }}>
+          <CommonInputField
+            label="Preferred Job Roles"
+            name="preferredRoles"
+            value={preferredRoles}
+            placeholder="e.g. Frontend Developer, Fullstack Developer"
+            onChange={(e) => setPreferredRoles(e.target.value)}
+          />
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <CommonSelectField
+              label="Preferred Job Type"
+              name="preferredJobType"
+              placeholder="Select Job Type"
+              value={preferredJobType}
+              options={[
+                { value: "Full Time", label: "Full Time" },
+                { value: "Part Time", label: "Part Time" },
+                { value: "Contract", label: "Contract" },
+                { value: "Internship", label: "Internship" },
+                { value: "Freelance", label: "Freelance" },
+              ]}
+              onChange={(val) => setPreferredJobType(val)}
+            />
+          </div>
+          <div className="form-group">
+            <CommonSelectField
+              label="Willing to Relocate"
+              name="willingToRelocate"
+              placeholder="Select"
+              value={willingToRelocate}
+              options={[
+                { value: "Yes", label: "Yes" },
+                { value: "No", label: "No" },
+              ]}
+              onChange={(val) => setWillingToRelocate(val)}
+            />
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginBottom: 16 }}>
+          <CommonInputField
+            label="Preferred Locations"
+            name="preferredLocations"
+            value={preferredLocations}
+            placeholder="e.g. Chennai, Bangalore, Remote"
+            onChange={(e) => setPreferredLocations(e.target.value)}
+          />
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <CommonSelectField
+              label="Notice Period"
+              name="noticePeriod"
+              placeholder="Select Notice Period"
+              value={noticePeriod}
+              options={[
+                { value: "Immediate", label: "Immediate" },
+                { value: "15 Days", label: "15 Days" },
+                { value: "1 Month", label: "1 Month" },
+                { value: "2 Months", label: "2 Months" },
+                { value: "3 Months", label: "3 Months" },
+              ]}
+              onChange={(val) => setNoticePeriod(val)}
+            />
+          </div>
+          <div className="form-group">
+            <CommonInputField
+              label="Available From"
+              name="availableFrom"
+              value={availableFrom}
+              placeholder="e.g. Immediate or DD Mon YYYY"
+              onChange={(e) => setAvailableFrom(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginBottom: 20 }}>
+          <CommonInputField
+            label="Expected Salary"
+            name="expectedSalary"
+            value={expectedSalary}
+            placeholder="e.g. ₹5,00,000 / Year"
+            onChange={(e) => setExpectedSalary(e.target.value)}
+          />
+        </div>
+
+        <div className="form-group" style={{ marginBottom: 20 }}>
+          <CommonInputField
+            label="Current Salary"
+            name="currentSalary"
+            value={currentSalary}
+            placeholder="e.g. ₹3,50,000 / Year"
+            onChange={(e) => setCurrentSalary(e.target.value)}
+          />
+        </div>
+
+        <div style={{ textAlign: "right" }} className="save_btn">
+          <Button
+            type="primary"
+            size="large"
+            onClick={handleSavePreferences}
+            className="nav-btn next-btn"
+          >
+            <MdFileDownloadDone style={{ fontSize: 22 }} />
+            Save Preferences
+          </Button>
+        </div>
+      </div>
+    ),
+
     resume: () => (
       <>
         {detailsLoading ? (
           <Skeleton active />
         ) : (
           <div>
-            <Title level={4}>Resume</Title>
-            <Text type="secondary">
-              Remember that one pager that highlights how amazing you are? Time
-              to let employers notice your potential through it.
-            </Text>
+            <div style={{ marginBottom: 24 }}>
+              <Title level={4} style={{ margin: 0 }}>Resume</Title>
+              <Text type="secondary" style={{ fontSize: 15 }}>
+                Remember that one pager that highlights how amazing you are? Time
+                to let employers notice your potential through it.
+              </Text>
+            </div>
 
             {/* Show uploaded resume if available */}
             {isResume && (
               <div
                 style={{
                   border: "1px solid #e8e8e8",
-                  borderRadius: 8,
-                  padding: "16px 24px",
+                  borderRadius: 12,
+                  padding: "20px 24px",
                   marginTop: 24,
-                  backgroundColor: "#f9f9f9",
+                  background: "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)",
+                  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  transition: "all 0.3s ease",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  <FileText
-                    style={{
-                      color: "#5f2eea",
-                      fontSize: 24,
-                      marginRight: 12,
-                    }}
-                  />
+                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                  <div style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: "50%",
+                    background: "rgba(95, 46, 234, 0.1)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
+                    <FileText
+                      style={{
+                        color: "#5f2eea",
+                        fontSize: 24,
+                      }}
+                    />
+                  </div>
                   <div>
-                    <Text strong>Current Resume</Text>
+                    <Text strong style={{ fontSize: 16, color: "#1a1a1a" }}>Current Resume</Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: 12 }}>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
                       Uploaded resume is ready for employers to view
                     </Text>
                   </div>
                 </div>
-                <Button
-                  style={{ background: "#5f2eea", boxShadow: "none", color: "#fff" }}
-                  onClick={() => {
-                    if (isResume.startsWith("http")) {
-                      window.open(isResume, "_blank");
-                    } else if (isResume.startsWith("data:application/pdf")) {
-                      const win = window.open("", "_blank");
-                      win.document.write(`
-                        <iframe 
-                          width="100%" 
-                          height="100%" 
-                          src="${isResume}" 
-                          frameborder="0"
-                        ></iframe>
-                      `);
-                    } else {
-                      const a = document.createElement("a");
-                      a.href = isResume;
-                      a.download = "resume.pdf";
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }
-                  }}
-                >
-                  View Resume
-                </Button>
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<Eye size={18} style={{ marginRight: 4 }} />}
+                    style={{
+                      background: "#5f2eea",
+                      boxShadow: "0 2px 6px rgba(95, 46, 234, 0.3)",
+                      color: "#fff",
+                      borderRadius: 8,
+                      height: 40,
+                      display: "flex",
+                      alignItems: "center",
+                      fontWeight: 500
+                    }}
+                    onClick={() => {
+                      if (isResume.startsWith("http")) {
+                        window.open(isResume, "_blank");
+                      } else if (isResume.startsWith("data:application/pdf")) {
+                        const win = window.open("", "_blank");
+                        win.document.write(`
+                          <iframe 
+                            width="100%" 
+                            height="100%" 
+                            src="${isResume}" 
+                            frameborder="0"
+                          ></iframe>
+                        `);
+                      } else {
+                        const a = document.createElement("a");
+                        a.href = isResume;
+                        a.download = "resume.pdf";
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                      }
+                    }}
+                  >
+                    View Resume
+                  </Button>
+                </Space>
               </div>
             )}
 
-            <div
-              style={{
-                border: "1px dashed #d9d9d9",
-                borderRadius: 8,
-                padding: 32,
-                textAlign: "center",
-                marginTop: 24,
-              }}
-            >
-              <Upload
+            <div style={{ marginTop: 32 }}>
+              <Text strong style={{ fontSize: 16, display: "block", marginBottom: 16, color: "#262626" }}>
+                {isResume ? "Upload a New Resume" : "Upload Your Resume"}
+              </Text>
+
+              <Upload.Dragger
                 name="resume"
                 showUploadList={false}
                 accept=".doc,.docx,.pdf"
                 maxCount={1}
                 beforeUpload={handleBeforeUpload}
+                style={{
+                  background: "#fafafa",
+                  border: "2px dashed #d9d9d9",
+                  borderRadius: 12,
+                  padding: "40px 0",
+                  transition: "all 0.3s",
+                }}
               >
-                <Button
-                  style={{ background: "#5f2eea" }}
-                  icon={<UploadOutlined />}
-                  type="primary"
-                >
-                  {isResume ? "Upload New Resume" : "Upload Resume"}
-                </Button>
-                <div style={{ marginTop: 8 }}>
-                  <Text type="secondary">
-                    Supported file formats: DOC, DOCX, PDF. File size limit: 10
-                    MB.
-                  </Text>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{
+                    width: 72,
+                    height: 72,
+                    borderRadius: "50%",
+                    background: "rgba(95, 46, 234, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 16
+                  }}>
+                    <UploadCloud style={{ color: "#5f2eea", width: 36, height: 36 }} />
+                  </div>
+                  <p className="ant-upload-text" style={{ fontSize: 18, fontWeight: 600, color: "#1a1a1a", margin: "0 0 8px 0" }}>
+                    Click or drag file to this area to upload
+                  </p>
+                  <p className="ant-upload-hint" style={{ color: "#8c8c8c", fontSize: 14, margin: 0 }}>
+                    Supported file formats: DOC, DOCX, PDF. File size limit: 10 MB.
+                  </p>
                 </div>
-              </Upload>
+              </Upload.Dragger>
 
               {resumeFile && (
-                <div style={{ marginTop: 16 }}>
-                  <Text strong>Selected File: </Text>
-                  <Text>{resumeFile.name}</Text>
+                <div style={{
+                  marginTop: 24,
+                  padding: "16px 24px",
+                  background: "#f0f5ff",
+                  border: "1px solid #adc6ff",
+                  borderRadius: 12,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  boxShadow: "0 2px 8px rgba(47, 84, 235, 0.05)"
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <div style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      background: "rgba(47, 84, 235, 0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}>
+                      <FileCheck style={{ color: "#2f54eb", fontSize: 20 }} />
+                    </div>
+                    <div>
+                      <Text style={{ color: "#595959", fontSize: 13, display: "block", marginBottom: 2 }}>Selected File</Text>
+                      <Text strong style={{ color: "#1d39c4", fontSize: 15 }}>{resumeFile.name}</Text>
+                    </div>
+                  </div>
+                  <Button
+                    type="primary"
+                    size="large"
+                    style={{
+                      background: "#5f2eea",
+                      borderRadius: 8,
+                      boxShadow: "0 2px 6px rgba(95, 46, 234, 0.3)",
+                      fontWeight: 500
+                    }}
+                    onClick={handleFileSave}
+                  >
+                    {isResume ? "Confirm Replacement" : "Save Resume"}
+                  </Button>
                 </div>
               )}
 
               {resumeError && (
-                <div style={{ marginTop: 8 }}>
-                  <Text type="danger" style={{ color: "red" }}>
-                    {resumeError}
-                  </Text>
+                <div style={{ marginTop: 16 }}>
+                  <Alert message={resumeError} type="error" showIcon style={{ borderRadius: 8 }} />
                 </div>
               )}
-
-              <div style={{ textAlign: "right", marginTop: 24 }}>
-                <Button
-                  type="primary"
-                  style={{ background: "#5f2eea" }}
-                  onClick={handleFileSave}
-                >
-                  {isResume ? "Replace Resume" : "Save Resume"}
-                </Button>
-              </div>
             </div>
           </div>
         )}
@@ -2739,105 +2927,151 @@ export default function MainProfile() {
             className="drawer_skills"
             style={{
               background: "#fff",
-              borderRadius: 8,
-              padding: 24,
-              boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+              borderRadius: '12px',
+              padding: '24px 28px',
+              border: '1px solid #e2e8f0',
+              boxShadow: "0 2px 8px rgba(15, 23, 42, 0.04)",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 16,
-              }}
-            >
-              <CheckCircleFilled style={{ color: "#00c853", marginRight: 8 }} />
-              <Title level={4} style={{ margin: 0 }}>
-                Skills
-              </Title>
+            <div style={{ display: "flex", alignItems: "center", marginBottom: 24, borderBottom: '1px solid #f1f5f9', paddingBottom: 16 }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#f5effc', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                <Sparkles style={{ color: "#6800ad", width: 18, height: 18 }} />
+              </div>
+              <div>
+                <Title level={4} style={{ margin: 0, color: '#0f172a' }}>Skills & Competencies</Title>
+                <Text type="secondary" style={{ fontSize: 13, marginTop: 2 }}>Highlight your technical and professional expertise.</Text>
+              </div>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <Text strong>Suggestions</Text>
-              <div style={{ marginTop: 12 }}>
+            <div style={{ marginBottom: 28 }}>
+              <Text strong style={{ fontSize: 13.5, color: '#1e293b' }}>Suggested for you</Text>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: 12 }}>
                 {suggestions.map((skill) => (
                   <Tag
                     key={skill}
-                    style={{
-                      borderStyle: "dashed",
-                      marginBottom: 8,
-                      borderRadius: 50,
-                      cursor: "pointer",
-                      fontSize: 13,
-                      padding: "7px 10px",
-                    }}
                     onClick={() => handleAddSkill(skill)}
+                    style={{
+                      margin: 0,
+                      border: '1px solid #e2e8f0',
+                      backgroundColor: '#ffffff',
+                      color: '#475569',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      padding: '6px 14px',
+                      transition: 'all 0.2s ease',
+                      fontWeight: 500,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = '#6800ad';
+                      e.currentTarget.style.color = '#6800ad';
+                      e.currentTarget.style.backgroundColor = '#f5effc';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#e2e8f0';
+                      e.currentTarget.style.color = '#475569';
+                      e.currentTarget.style.backgroundColor = '#ffffff';
+                    }}
                   >
-                    {skill}
+                    <Plus style={{ width: 12, height: 12 }} /> {skill}
                   </Tag>
                 ))}
               </div>
             </div>
 
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ marginTop: 8, marginBottom: 12 }}>
-                {selectedSkills.map((skill) => (
-                  <Tag
-                    key={skill}
-                    closable
-                    onClose={() => handleRemoveSkill(skill)}
-                    style={{
-                      marginBottom: 15,
-                      fontSize: 14,
-                      padding: "5px 10px",
-                      border: "none",
-                      backgroundColor: "#e9e0fe",
-                      color: "#5f2eea",
-                      borderRadius: 50,
+            <div style={{ marginBottom: 28, background: '#f8fafc', padding: 20, borderRadius: 12, border: '1px dashed #cbd5e1' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                <div style={{ flex: 1 }}>
+                  <CommonInputField
+                    label={"Add a Custom Skill"}
+                    onPressEnter={handleCustomSkillAdd}
+                    value={customSkill}
+                    name={"Skills"}
+                    onChange={(e) => {
+                      setCustomSkill(e.target.value);
+                      if (customSkillError) setCustomSkillError("");
                     }}
-                  >
-                    {skill}
-                  </Tag>
-                ))}
+                    mandatory={false}
+                    placeholder={"e.g. Project Management, React, Marketing..."}
+                    error={customSkillError}
+                  />
+                </div>
+                <Button
+                  type="primary"
+                  onClick={handleCustomSkillAdd}
+                  style={{
+                    marginTop: '25px', // Aligns with the input field
+                    height: '44px',
+                    borderRadius: '8px',
+                    background: '#ffffff',
+                    color: '#6800ad',
+                    border: '1px solid #6800ad',
+                    fontWeight: 600,
+                    padding: '0 20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  <Plus style={{ width: 16, height: 16 }} />
+                  Add
+                </Button>
               </div>
 
-              <CommonInputField
-                label={"Skills"}
-                onPressEnter={handleCustomSkillAdd}
-                value={customSkill}
-                name={"Skills"}
-                onChange={(e) => {
-                  setCustomSkill(e.target.value);
-                  if (customSkillError) setCustomSkillError("");
-                }}
-                mandatory={true}
-                placeholder={
-                  "List your skills here, showcasing what you excel at."
-                }
-                error={customSkillError}
-              />
-              <Alert
-                style={{
-                  marginTop: 15,
-                  marginBottom: 20,
-                  fontSize: 12,
-                  border: "none",
-                  display: "inline-flex",
-                }}
-                message="Click “Add Skill” to update and display your competencies."
-                type="warning"
-                showIcon
-              /><br></br>
+              {selectedSkills.length > 0 && (
+                <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #e2e8f0' }}>
+                  <Text strong style={{ fontSize: 13.5, color: '#1e293b', display: 'block', marginBottom: 12 }}>Your Added Skills</Text>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {selectedSkills.map((skill) => (
+                      <Tag
+                        key={skill}
+                        closable
+                        onClose={() => handleRemoveSkill(skill)}
+                        style={{
+                          margin: 0,
+                          fontSize: '13.5px',
+                          padding: '6px 14px',
+                          border: '1px solid rgba(104, 0, 173, 0.15)',
+                          backgroundColor: '#f5effc',
+                          color: '#6800ad',
+                          borderRadius: '20px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontWeight: 500
+                        }}
+                      >
+                        {skill}
+                      </Tag>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
               <Button
                 type="primary"
-                style={{
-                  marginTop: 4,
-                  background:
-                    "linear-gradient(135deg, #7f5af0 0%, #5f2eea 100%)",
-                }}
+                size="large"
                 onClick={handleSkillsSave}
+                style={{
+                  background: "#6800ad",
+                  borderRadius: "8px",
+                  fontWeight: 600,
+                  height: "44px",
+                  padding: "0 24px",
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  border: 'none',
+                  boxShadow: '0 4px 14px rgba(104, 0, 173, 0.2)'
+                }}
               >
-                Add Skill
+                <MdFileDownloadDone style={{ fontSize: 20 }} />
+                Save Skills
               </Button>
             </div>
           </div>
@@ -2853,193 +3087,139 @@ export default function MainProfile() {
           <div>
             {showEducationForm && (
               <>
-                <div className="form-group">
-                  <CommonSelectField
-                    label={"Qualification"}
-                    name={"qualificaton"}
-                    placeholder={"Select Qualification"}
-                    value={qualificaton}
-                    mandatory={true}
-                    showSearch={true}
-                    optionFilterProp={"lable"}
-                    options={qualificationOptions}
-                    onChange={(value) => {
-                      setQualification(value);
-                      setQualificationError(selectValidator(value));
-                    }}
-                    error={qualificatonError}
-                  />
-                </div>
+                <div style={{ background: '#ffffff', borderRadius: '16px', padding: '32px', border: '1px solid rgba(226, 220, 255, 0.6)', boxShadow: '0 4px 20px rgba(95, 46, 234, 0.05)', marginBottom: '24px' }}>
+                  <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: '0 0 24px 0', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                    {educationData ? "Edit Education Details" : "Add Education Details"}
+                  </h4>
 
-                <div className="form-group">
-                  <div className="form-group">
-                    <CommonSelectField
-                      label={"Course"}
-                      name={"course"}
-                      placeholder={"Select Course"}
-                      mandatory={true}
-                      showSearch={true}
-                      optionFilterProp={"lable"}
-                      value={educationCourse}
-                      options={educationCourseOptions}
-                      onChange={(value) => {
-                        setEducationCourse(value);
-                        setEducationCourseError(selectValidator(value));
-                      }}
-                      error={educationCourseError}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <CommonSelectField
-                    label={"Specialization"}
-                    name={"specialization"}
-                    placeholder={"Select Specialization"}
-                    mandatory={true}
-                    value={specialization}
-                    showSearch={true}
-                    optionFilterProp={"lable"}
-                    options={specializationOptions}
-                    onChange={(value) => {
-                      setSpecialization(value);
-                      setSpecializationError(selectValidator(value));
-                    }}
-                    error={specializationError}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <CommonSelectField
-                    label={"Collage"}
-                    name={"Collage"}
-                    placeholder={"Select Collage"}
-                    mandatory={true}
-                    value={educationCollege}
-                    showSearch={true}
-                    optionFilterProp={"lable"}
-                    options={collageOptions}
-                    onChange={(value) => {
-                      setEducationCollege(value);
-                      setCollageError(selectValidator(value));
-                    }}
-                    error={collageError}
-                  />
-                </div>
-
-                <div
-                  style={{ alignItems: "center", marginTop: 10 }}
-                  className="form-row"
-                >
-                  <div className="form-group">
-                    <CommonSelectField
-                      value={educationStartDate}
-                      options={educationStartDateOptions}
-                      label="Start Year"
-                      name="startyear"
-                      mandatory={true}
-                      placeholder="Start Year"
-                      onChange={(value) => {
-                        setEducationStartDate(value);
-
-                        if (!value || value.trim() === "") {
-                          setEducationStartDateError(" is required");
-                        } else {
-                          setEducationStartDateError("");
-                        }
-                      }}
-                      error={educationStartDateError}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <CommonSelectField
-                      value={educationEndDate}
-                      options={educationEndDateOptions}
-                      mandatory={true}
-                      label="End Year"
-                      name="endyear"
-                      placeholder="End Year"
-                      onChange={(value) => {
-                        setEducationEndDate(value);
-
-                        if (!value || value.trim() === "") {
-                          setEducationEndDateError(" is required");
-                        } else {
-                          setEducationEndDateError("");
-                        }
-                      }}
-                      error={educationEndDateError}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <CommonSelectField
-                    label={"Course type"}
-                    name={"coursetype"}
-                    placeholder={"Select Course type"}
-                    mandatory={true}
-                    showSearch={true}
-                    optionFilterProp={"lable"}
-                    value={courseType}
-                    options={courseTypeOptions}
-                    onChange={(value) => {
-                      setCourseType(value);
-                      setCourseTypeError(selectValidator(value));
-                    }}
-                    error={courseTypeError}
-                  />
-                </div>
-
-                <Row style={{ alignItems: "end", gap: 20 }}>
-                  <Col lg={11}>
-                    <div className="form-group">
-                      <CommonInputField
-                        name="percentage"
-                        label="Percentage"
-                        placeholder="Percentage"
-                        type="text"
-                        value={percentage}
-                        onChange={(e) => {
-                          setPercentage(e.target.value);
+                  <Row gutter={[24, 24]}>
+                    <Col xs={24} md={12}>
+                      <CommonSelectField
+                        label="Qualification"
+                        name="qualificaton"
+                        placeholder="Select Qualification"
+                        value={qualificaton}
+                        mandatory={true}
+                        showSearch={true}
+                        optionFilterProp="lable"
+                        options={qualificationOptions}
+                        onChange={(value) => {
+                          setQualification(value);
+                          setQualificationError(selectValidator(value));
                         }}
+                        error={qualificatonError}
                       />
-                    </div>
-                  </Col>
-                  <Col lg={11}>
-                    <div className="form-group">
-                      <CommonInputField
-                        name="cgpa"
-                        label="CGPA"
-                        placeholder="CGPA"
-                        type="text"
-                        value={cgpa}
-                        onChange={(e) => {
-                          setCgpa(e.target.value);
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <CommonSelectField
+                        label="Course"
+                        name="course"
+                        placeholder="Select Course"
+                        mandatory={true}
+                        showSearch={true}
+                        optionFilterProp="lable"
+                        value={educationCourse}
+                        options={educationCourseOptions}
+                        onChange={(value) => {
+                          setEducationCourse(value);
+                          setEducationCourseError(selectValidator(value));
                         }}
+                        error={educationCourseError}
                       />
-                    </div>
-                  </Col>
-                </Row>
+                    </Col>
 
-                <Row style={{ gap: 20, marginTop: 30 }}>
-                  <Col lg={11}>
-                    <div className="form-group">
-                      <CommonInputField
-                        name="rollnumber"
-                        label="Roll Number"
-                        placeholder="Roll Number"
-                        type="number"
-                        value={rollNumber}
-                        onChange={(e) => {
-                          setRollNumber(e.target.value);
+                    <Col xs={24} md={12}>
+                      <CommonSelectField
+                        label="Specialization"
+                        name="specialization"
+                        placeholder="Select Specialization"
+                        mandatory={true}
+                        value={specialization}
+                        showSearch={true}
+                        optionFilterProp="lable"
+                        options={specializationOptions}
+                        onChange={(value) => {
+                          setSpecialization(value);
+                          setSpecializationError(selectValidator(value));
                         }}
+                        error={specializationError}
                       />
-                    </div>
-                  </Col>
-                  <Col lg={11}>
-                    <div className="form-group">
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <CommonSelectField
+                        label="College / University"
+                        name="Collage"
+                        placeholder="Select College"
+                        mandatory={true}
+                        value={educationCollege}
+                        showSearch={true}
+                        optionFilterProp="lable"
+                        options={collageOptions}
+                        onChange={(value) => {
+                          setEducationCollege(value);
+                          setCollageError(selectValidator(value));
+                        }}
+                        error={collageError}
+                      />
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <CommonSelectField
+                        value={educationStartDate}
+                        options={educationStartDateOptions}
+                        label="Start Year"
+                        name="startyear"
+                        mandatory={true}
+                        placeholder="Start Year"
+                        onChange={(value) => {
+                          setEducationStartDate(value);
+                          if (!value || value.trim() === "") {
+                            setEducationStartDateError(" is required");
+                          } else {
+                            setEducationStartDateError("");
+                          }
+                        }}
+                        error={educationStartDateError}
+                      />
+                    </Col>
+                    <Col xs={24} md={12}>
+                      <CommonSelectField
+                        value={educationEndDate}
+                        options={educationEndDateOptions}
+                        mandatory={true}
+                        label="End Year"
+                        name="endyear"
+                        placeholder="End Year"
+                        onChange={(value) => {
+                          setEducationEndDate(value);
+                          if (!value || value.trim() === "") {
+                            setEducationEndDateError(" is required");
+                          } else {
+                            setEducationEndDateError("");
+                          }
+                        }}
+                        error={educationEndDateError}
+                      />
+                    </Col>
+
+                    <Col xs={24} md={12}>
+                      <CommonSelectField
+                        label="Course Type"
+                        name="coursetype"
+                        placeholder="Select Course Type"
+                        mandatory={true}
+                        showSearch={true}
+                        optionFilterProp="lable"
+                        value={courseType}
+                        options={courseTypeOptions}
+                        onChange={(value) => {
+                          setCourseType(value);
+                          setCourseTypeError(selectValidator(value));
+                        }}
+                        error={courseTypeError}
+                      />
+                    </Col>
+                    <Col xs={24} md={12}>
                       <CommonSelectField
                         label="Are you a Lateral Entry Student?"
                         name="lateralstudent"
@@ -3053,38 +3233,85 @@ export default function MainProfile() {
                         optionFilterProp="label"
                         onChange={handleLateralTypeChange}
                       />
-                    </div>
-                  </Col>
-                </Row>
-                <div style={{ marginTop: 25 }} className="form-row">
-                  <div style={{ textAlign: "left" }} className="save_btn">
-                    {educationData ? (
+                    </Col>
+
+                    <Col xs={24} md={8}>
+                      <CommonInputField
+                        name="percentage"
+                        label="Percentage"
+                        placeholder="e.g. 85%"
+                        type="text"
+                        value={percentage}
+                        onChange={(e) => {
+                          setPercentage(e.target.value);
+                        }}
+                      />
+                    </Col>
+                    <Col xs={24} md={8}>
+                      <CommonInputField
+                        name="cgpa"
+                        label="CGPA"
+                        placeholder="e.g. 8.5"
+                        type="text"
+                        value={cgpa}
+                        onChange={(e) => {
+                          setCgpa(e.target.value);
+                        }}
+                      />
+                    </Col>
+                    <Col xs={24} md={8}>
+                      <CommonInputField
+                        name="rollnumber"
+                        label="Roll Number"
+                        placeholder="Roll Number"
+                        type="number"
+                        value={rollNumber}
+                        onChange={(e) => {
+                          setRollNumber(e.target.value);
+                        }}
+                      />
+                    </Col>
+                  </Row>
+
+                  <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #f1f5f9', display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: '12px', alignItems: "center" }}>
                       <Button
-                        type="danger"
+                        type="default"
                         size="large"
                         onClick={handleEducationDiscard}
-                        className="nav-btn discard-btn"
+                        style={{ borderRadius: '8px', fontWeight: 600, color: '#64748b', borderColor: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '6px' }}
                       >
-                        Discard
-                        <HiMiniXMark style={{ fontSize: 22 }} />
+                        <HiMiniXMark size={18} /> Discard
                       </Button>
-                    ) : null}
-                  </div>
 
-                  <div
-                    style={{ textAlign: "-webkit-right" }}
-                    className="save_btn"
-                  >
+                      {educationData && (
+                        <Popconfirm
+                          title="Are you sure you want to remove this education?"
+                          description="This will permanently delete this entry."
+                          onConfirm={() => handleDeleteEducation(educationData.id)}
+                          okText="Yes, Remove"
+                          cancelText="Cancel"
+                          okButtonProps={{ danger: true }}
+                        >
+                          <Button
+                            danger
+                            size="large"
+                            style={{ borderRadius: '8px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444', borderColor: '#fecaca', background: '#fef2f2' }}
+                          >
+                            <MdDeleteForever size={18} /> Remove
+                          </Button>
+                        </Popconfirm>
+                      )}
+                    </div>
+
                     <Button
                       type="primary"
                       size="large"
                       onClick={handleEducationSave}
-                      className="nav-btn next-btn"
+                      style={{ borderRadius: "8px", fontWeight: 600, padding: "0 28px", display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #7f5af0 0%, #5f2eea 100%)', border: 'none' }}
                     >
-                      <MdFileDownloadDone
-                        style={{ fontSize: 22, marginRight: 6 }}
-                      />
-                      {educationData ? "Update" : "Save"}
+                      <MdFileDownloadDone size={20} />
+                      {educationData ? "Update Details" : "Save Details"}
                     </Button>
                   </div>
                 </div>
@@ -3092,119 +3319,75 @@ export default function MainProfile() {
             )}
 
             {!showEducationForm && (
-              <div className="education-details-container">
-                <div className="education-header">
-                  <div className="header-contents">
-                    <div className="header-icons">
-                      <MdSchool className="icon" />
+              <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid rgba(226, 220, 255, 0.6)', boxShadow: '0 4px 20px rgba(95, 46, 234, 0.05)', marginBottom: '24px', overflow: 'hidden', position: 'relative' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '4px', background: 'linear-gradient(90deg, #7f5af0 0%, #5f2eea 100%)' }} />
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '24px 28px', borderBottom: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{ width: 52, height: 52, borderRadius: '14px', background: 'linear-gradient(135deg, #f5effc 0%, #e9e0fe 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#5f2eea', boxShadow: '0 2px 10px rgba(95, 46, 234, 0.1)', flexShrink: 0 }}>
+                      <MdSchool style={{ fontSize: 26 }} />
                     </div>
-                    <h3 className="header-titles">Education Details</h3>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{educationCollege || "Education Details"}</h3>
+                      <p style={{ margin: '6px 0 0 0', fontSize: '13.5px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 500 }}>
+                        <MdDateRange style={{ fontSize: 16, color: '#94a3b8' }} /> {educationStartDate || "Start"} — {educationEndDate || "End"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => setShowEducationForm(true)}
+                      style={{ background: '#f8fafc', color: '#5f2eea', border: '1px solid transparent', width: 36, height: 36, borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e9e0fe'; e.currentTarget.style.borderColor = '#d4c5f9'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.borderColor = 'transparent'; }}
+                    >
+                      <MdEdit size={18} />
+                    </button>
+                    <Popconfirm
+                      title="Delete your Education?"
+                      onConfirm={handleDeleteEducation}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <button style={{ background: '#f8fafc', color: '#ef4444', border: '1px solid transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '8px', transition: 'all 0.2s' }} onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca'; }} onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#f8fafc'; e.currentTarget.style.borderColor = 'transparent'; }}>
+                        <MdDeleteForever size={20} />
+                      </button>
+                    </Popconfirm>
                   </div>
                 </div>
 
-                <div className="education-content">
-                  <Row gutter={[24, 30]}>
+                <div style={{ padding: '28px' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', marginBottom: '28px' }}>
+                    <div style={{ flex: '1 1 180px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Qualification</span>
+                      <div style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginTop: '6px' }}>{qualificaton || "-"}</div>
+                    </div>
+                    <div style={{ flex: '1 1 180px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Course</span>
+                      <div style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginTop: '6px' }}>{educationCourse || "-"}</div>
+                    </div>
+                    <div style={{ flex: '1 1 180px' }}>
+                      <span style={{ fontSize: '12px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Specialization</span>
+                      <div style={{ fontSize: '16px', fontWeight: '600', color: '#1e293b', marginTop: '6px' }}>{specialization || "-"}</div>
+                    </div>
+                  </div>
+
+                  <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px 20px', display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', border: '1px solid #f1f5f9' }}>
                     {[
-                      {
-                        label: "Qualification",
-                        value: qualificaton,
-                        icon: <MdOutlineSchool />,
-                      },
-                      {
-                        label: "Course",
-                        value: educationCourse,
-                        icon: <MdMenuBook />,
-                      },
-                      {
-                        label: "Specialization",
-                        value: specialization,
-                        icon: <MdStarOutline />,
-                      },
-
-                      {
-                        label: "College/University",
-                        value: educationCollege,
-                        icon: <MdLocationCity />,
-                      },
-                      {
-                        label: "Start Year",
-                        value: educationStartDate,
-                        icon: <MdDateRange />,
-                      },
-                      {
-                        label: "End Year",
-                        value: educationEndDate,
-                        icon: <MdEventAvailable />,
-                      },
-                      {
-                        label: "Course Type",
-                        value: courseType,
-                        icon: <MdCategory />,
-                      },
-                      {
-                        label: "Percentage",
-                        value: percentage || "N/A",
-                        icon: <MdPercent />,
-                      },
-                      {
-                        label: "CGPA",
-                        value: cgpa || "N/A",
-                        icon: <MdOutlineCalculate />,
-                      },
-                      {
-                        label: "Roll Number",
-                        value: rollNumber || "N/A",
-                        icon: <MdConfirmationNumber />,
-                      },
-                      {
-                        label: "Lateral Entry",
-                        value: lateral || "N/A",
-                        icon: <MdSwapHoriz />,
-                      },
+                      { label: "Course Type", value: courseType, icon: <MdCategory size={16} /> },
+                      { label: "Percentage", value: percentage || "N/A", icon: <MdPercent size={16} /> },
+                      { label: "CGPA", value: cgpa || "N/A", icon: <MdOutlineCalculate size={16} /> },
+                      { label: "Roll No", value: rollNumber || "N/A", icon: <MdConfirmationNumber size={16} /> },
+                      { label: "Lateral Entry", value: lateral || "N/A", icon: <MdSwapHoriz size={16} /> },
                     ].map((item, index) => (
-                      <Col xs={24} sm={12} key={index}>
-                        <div className="education-detail-item">
-                          <div className="detail-icons">{item.icon}</div>
-                          <div className="detail-content">
-                            <div className="detail-label">{item.label}</div>
-                            <div className="detail-value">
-                              {item.value || "-"}
-                            </div>
-                          </div>
-                        </div>
-                      </Col>
+                      <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#ffffff', padding: '6px 14px', borderRadius: '20px', border: '1px solid #e2e8f0', fontSize: '13px', color: '#475569', boxShadow: '0 1px 2px rgba(15,23,42,0.02)' }}>
+                        <span style={{ color: '#5f2eea', display: 'flex', opacity: 0.8 }}>{item.icon}</span>
+                        <span style={{ color: '#64748b', fontWeight: 500 }}>{item.label}:</span>
+                        <span style={{ color: '#0f172a', fontWeight: '700' }}>{item.value}</span>
+                      </div>
                     ))}
-                  </Row>
-                </div>
-
-                {/* Premium footer */}
-                <div className="education-footer">
-                  <Popconfirm
-                    title="Are you sure you want to delete your Education?"
-                    onConfirm={handleDeleteEducation}
-                    okText="Yes"
-                    cancelText="No"
-                  >
-                    <Button
-                      type="primary"
-                      danger
-                      icon={<MdDeleteForever className="button-icon" />}
-                      className="delete-button"
-                    >
-                      Delete Education
-                    </Button>
-                  </Popconfirm>
-
-                  <Button
-                    type="primary"
-                    icon={<MdEdit className="button-icon" />}
-                    onClick={() => {
-                      setShowEducationForm(true);
-                    }}
-                    className="edit-button"
-                  >
-                    Edit Education
-                  </Button>
+                  </div>
                 </div>
               </div>
             )}
@@ -3226,30 +3409,29 @@ export default function MainProfile() {
                     (company, index) =>
                       (editingCompanyId === null ||
                         company.id === editingCompanyId) && (
-                        <div key={company.id} className="add-company-section">
-                          <div className="form-group">
-                            <CommonInputField
-                              label="Company name"
-                              mandatory={true}
-                              placeholder="Tech Corp Inc."
-                              value={company.workingCompanyName}
-                              error={company.workingCompanyNameError}
-                              onChange={(e) => {
-                                const updatedCompanies = [...companies];
-                                updatedCompanies[index].workingCompanyName =
-                                  e.target.value;
-                                updatedCompanies[
-                                  index
-                                ].workingCompanyNameError = nameValidator(
-                                  e.target.value
-                                );
-                                setCompanies(updatedCompanies);
-                              }}
-                            />
-                          </div>
+                        <div key={company.id} style={{ background: '#ffffff', borderRadius: '16px', padding: '32px', border: '1px solid rgba(226, 220, 255, 0.6)', boxShadow: '0 4px 20px rgba(95, 46, 234, 0.05)', marginBottom: '24px' }}>
+                          <h4 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: '0 0 24px 0', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                            {company.isNew ? "Add Work Experience" : "Edit Work Experience"}
+                          </h4>
 
-                          <div className="form-row">
-                            <div className="form-group">
+                          <Row gutter={[24, 24]}>
+                            <Col xs={24}>
+                              <CommonInputField
+                                label="Company Name"
+                                mandatory={true}
+                                placeholder="Tech Corp Inc."
+                                value={company.workingCompanyName}
+                                error={company.workingCompanyNameError}
+                                onChange={(e) => {
+                                  const updatedCompanies = [...companies];
+                                  updatedCompanies[index].workingCompanyName = e.target.value;
+                                  updatedCompanies[index].workingCompanyNameError = nameValidator(e.target.value);
+                                  setCompanies(updatedCompanies);
+                                }}
+                              />
+                            </Col>
+
+                            <Col xs={24} md={12}>
                               <CommonInputField
                                 label="Job Title"
                                 mandatory={true}
@@ -3258,15 +3440,13 @@ export default function MainProfile() {
                                 error={company.jobTitleError}
                                 onChange={(e) => {
                                   const updatedCompanies = [...companies];
-                                  updatedCompanies[index].jobTitle =
-                                    e.target.value;
-                                  updatedCompanies[index].jobTitleError =
-                                    nameValidator(e.target.value);
+                                  updatedCompanies[index].jobTitle = e.target.value;
+                                  updatedCompanies[index].jobTitleError = nameValidator(e.target.value);
                                   setCompanies(updatedCompanies);
                                 }}
                               />
-                            </div>
-                            <div className="form-group">
+                            </Col>
+                            <Col xs={24} md={12}>
                               <CommonInputField
                                 label="Designation"
                                 mandatory={true}
@@ -3275,18 +3455,14 @@ export default function MainProfile() {
                                 error={company.designationError}
                                 onChange={(e) => {
                                   const updatedCompanies = [...companies];
-                                  updatedCompanies[index].designation =
-                                    e.target.value;
-                                  updatedCompanies[index].designationError =
-                                    nameValidator(e.target.value);
+                                  updatedCompanies[index].designation = e.target.value;
+                                  updatedCompanies[index].designationError = nameValidator(e.target.value);
                                   setCompanies(updatedCompanies);
                                 }}
                               />
-                            </div>
-                          </div>
+                            </Col>
 
-                          <div className="form-row">
-                            <div className="form-group">
+                            <Col xs={24} md={12}>
                               <CommonSelectField
                                 label="Start Year"
                                 name="startYear"
@@ -3297,89 +3473,69 @@ export default function MainProfile() {
                                 error={company.workingStartDateError}
                                 onChange={(value) => {
                                   const updatedCompanies = [...companies];
-                                  updatedCompanies[index].workingStartDate =
-                                    value;
-                                  updatedCompanies[
-                                    index
-                                  ].workingStartDateError =
-                                    selectValidator(value);
+                                  updatedCompanies[index].workingStartDate = value;
+                                  updatedCompanies[index].workingStartDateError = selectValidator(value);
                                   setCompanies(updatedCompanies);
                                 }}
                               />
-                            </div>
-                            <div className="form-group">
+                            </Col>
+                            <Col xs={24} md={12}>
                               <CommonSelectField
                                 label="End Year"
                                 name="endYear"
                                 placeholder="Select End Year"
-                                mandatory={true}
+                                mandatory={!company.currentlyWorking}
                                 value={company.workingEndDate}
                                 options={workingEndDateOptions}
                                 error={company.workingEndDateError}
                                 onChange={(value) => {
                                   const updatedCompanies = [...companies];
-                                  updatedCompanies[index].workingEndDate =
-                                    value;
-                                  updatedCompanies[index].workingEndDateError =
-                                    selectValidator(value);
+                                  updatedCompanies[index].workingEndDate = value;
+                                  updatedCompanies[index].workingEndDateError = selectValidator(value);
                                   setCompanies(updatedCompanies);
                                 }}
                                 disabled={company.currentlyWorking}
                               />
-                            </div>
-                          </div>
+                            </Col>
 
-                          <div className="form-row">
-                            <Checkbox
-                              checked={company.currentlyWorking}
-                              onChange={(e) => {
-                                const updatedCompanies = [...companies];
-                                updatedCompanies[index].currentlyWorking =
-                                  e.target.checked;
-                                if (e.target.checked) {
-                                  updatedCompanies[index].workingEndDate = "";
-                                  updatedCompanies[index].workingEndDateError =
-                                    "";
-                                }
-                                setCompanies(updatedCompanies);
-                              }}
-                            >
-                              Currently Working Here
-                            </Checkbox>
-                          </div>
+                            <Col xs={24}>
+                              <Checkbox
+                                checked={company.currentlyWorking}
+                                onChange={(e) => {
+                                  const updatedCompanies = [...companies];
+                                  updatedCompanies[index].currentlyWorking = e.target.checked;
+                                  if (e.target.checked) {
+                                    updatedCompanies[index].workingEndDate = "";
+                                    updatedCompanies[index].workingEndDateError = "";
+                                  }
+                                  setCompanies(updatedCompanies);
+                                }}
+                                style={{ fontWeight: 500, color: '#475569' }}
+                              >
+                                Currently Working Here
+                              </Checkbox>
+                            </Col>
+                          </Row>
 
-                          <div
-                            style={{ marginTop: 15, marginBottom: 20 }}
-                            className="form-row"
-                          >
-                            <div
-                              style={{ textAlign: "left" }}
-                              className="save_btn"
+                          <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #f1f5f9', display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Button
+                              type="default"
+                              size="large"
+                              onClick={handleWorkDiscard}
+                              style={{ borderRadius: '8px', fontWeight: 600, color: '#64748b', borderColor: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '6px' }}
                             >
-                              <Button
-                                type="danger"
-                                size="large"
-                                onClick={handleWorkDiscard}
-                                className="nav-btn discard-btn"
-                              >
-                                Discard
-                                <HiMiniXMark style={{ fontSize: 22 }} />
-                              </Button>
-                            </div>
-                            <div
-                              style={{ textAlign: "-webkit-right" }}
-                              className="save_btn"
+                              <HiMiniXMark size={18} /> Discard
+                            </Button>
+
+                            <Button
+                              type="primary"
+                              size="large"
+                              onClick={handleWorkExpSave}
+                              style={{ borderRadius: "8px", fontWeight: 600, padding: "0 28px", display: 'flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg, #7f5af0 0%, #5f2eea 100%)', border: 'none' }}
                             >
-                              <Button
-                                type="primary"
-                                size="large"
-                                onClick={handleWorkExpSave}
-                                className="nav-btn next-btn"
-                              >
-                                {company.isNew ? "Save" : "Update"}
-                                <MdFileDownloadDone style={{ fontSize: 22 }} />
-                              </Button>
-                            </div>
+                              <MdFileDownloadDone size={20} />
+                              {company.isNew ? "Save Details" : "Update Details"}
+                            </Button>
                           </div>
                         </div>
                       )
@@ -3520,7 +3676,7 @@ export default function MainProfile() {
                               okText="Yes"
                               cancelText="No"
                             >
-                              <button className="icon-btn delete-btn">
+                              <button style={{ color: "#dc2626" }} className="icon-btn delete-btn">
                                 <MdDeleteForever size={18} />
                               </button>
                             </Popconfirm>
@@ -3638,8 +3794,7 @@ export default function MainProfile() {
                                 <button
                                   className="icon-btn edit-btn"
                                   onClick={() => {
-                                    setProjectData(proj);
-                                    setShowForm(true);
+                                    handleEditProjectItem(proj);
                                   }}
                                 >
                                   <FiEdit size={16} />
@@ -3861,20 +4016,46 @@ export default function MainProfile() {
                               error={projectDescriptionError}
                             />
                           </div>
-                          <div className="form-row">
-                            <div
-                              style={{ textAlign: "left" }}
-                              className="save_btn"
-                            >
+                          <div className="form-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 24 }}>
+                            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                               <Button
-                                type="danger"
+                                type="default"
                                 size="large"
                                 onClick={handleProjectDiscard}
                                 className="nav-btn discard-btn"
                               >
                                 Discard
-                                <HiMiniXMark style={{ fontSize: 22 }} />
+                                <HiMiniXMark style={{ fontSize: 20, marginLeft: 4 }} />
                               </Button>
+
+                              {projectData?.id && (
+                                <Popconfirm
+                                  title="Are you sure you want to remove this project?"
+                                  description="This will permanently delete this project from your profile."
+                                  onConfirm={() => handleDeleteCompany(projectData.id)}
+                                  okText="Yes, Remove"
+                                  cancelText="Cancel"
+                                  okButtonProps={{ danger: true }}
+                                >
+                                  <Button
+                                    danger
+                                    size="large"
+                                    className="nav-btn"
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 6,
+                                      borderColor: "#ef4444",
+                                      color: "#ef4444",
+                                      borderRadius: "8px",
+                                      fontWeight: 600
+                                    }}
+                                  >
+                                    <MdDeleteForever size={20} />
+                                    Remove
+                                  </Button>
+                                </Popconfirm>
+                              )}
                             </div>
                             <div
                               style={{ textAlign: "-webkit-right" }}
@@ -3917,1115 +4098,2423 @@ export default function MainProfile() {
           <Skeleton active />
         ) : (
           <div>
-            <div style={{ alignItems: "end" }} className="form-row">
-              <div className="form-group">
-                <CommonInputField
-                  name="Linkedin"
-                  label="Linkedin"
-                  placeholder="Add link"
-                  type="text"
-                  value={socialLinks.Linkedin}
-                  onChange={(e) =>
-                    handleSocialLinksSave("Linkedin", e.target.value)
-                  }
-                  error={socialLinkErrors.Linkedin}
-                />
-              </div>
-              <div className="form-group">
-                <CommonInputField
-                  name="Facebook"
-                  label="Facebook"
-                  placeholder="Add link"
-                  type="text"
-                  value={socialLinks.Facebook}
-                  onChange={(e) =>
-                    handleSocialLinksSave("Facebook", e.target.value)
-                  }
-                  error={socialLinkErrors.Facebook}
-                />
-              </div>
+            <div style={{ marginBottom: 24 }}>
+              <Title level={4} style={{ margin: 0 }}>Social Links</Title>
+              <Text type="secondary" style={{ fontSize: 15 }}>
+                Connect your social profiles to let employers know more about you.
+              </Text>
             </div>
 
-            <div
-              style={{ alignItems: "end", marginTop: 20 }}
-              className="form-row"
-            >
-              <div className="form-group">
-                <CommonInputField
-                  name="Instagram"
-                  label="Instagram"
-                  placeholder="Add link"
-                  type="text"
-                  value={socialLinks.Instagram}
-                  onChange={(e) =>
-                    handleSocialLinksSave("Instagram", e.target.value)
-                  }
-                  error={socialLinkErrors.Instagram}
-                />
-              </div>
-              <div className="form-group">
-                <CommonInputField
-                  name="Twitter"
-                  label="Twitter"
-                  placeholder="Add link"
-                  type="text"
-                  value={socialLinks.Twitter}
-                  error={socialLinkErrors.Twitter}
-                  onChange={(e) =>
-                    handleSocialLinksSave("Twitter", e.target.value)
-                  }
-                />
-              </div>
-            </div>
+            <div style={{ background: "#ffffff", borderRadius: 16, padding: "32px", border: "1px solid #e8e8e8", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}>
+              <Row gutter={24}>
+                <Col xs={24} md={12} style={{ marginBottom: 20 }}>
+                  <CommonInputField name="Linkedin" label="Linkedin" placeholder="Add link" type="text" value={socialLinks.Linkedin} onChange={(e) => handleSocialLinksSave("Linkedin", e.target.value)} error={socialLinkErrors.Linkedin} />
+                </Col>
+                <Col xs={24} md={12} style={{ marginBottom: 20 }}>
+                  <CommonInputField name="Facebook" label="Facebook" placeholder="Add link" type="text" value={socialLinks.Facebook} onChange={(e) => handleSocialLinksSave("Facebook", e.target.value)} error={socialLinkErrors.Facebook} />
+                </Col>
+              </Row>
+              <Row gutter={24}>
+                <Col xs={24} md={12} style={{ marginBottom: 20 }}>
+                  <CommonInputField name="Instagram" label="Instagram" placeholder="Add link" type="text" value={socialLinks.Instagram} onChange={(e) => handleSocialLinksSave("Instagram", e.target.value)} error={socialLinkErrors.Instagram} />
+                </Col>
+                <Col xs={24} md={12} style={{ marginBottom: 20 }}>
+                  <CommonInputField name="Twitter" label="Twitter" placeholder="Add link" type="text" value={socialLinks.Twitter} onChange={(e) => handleSocialLinksSave("Twitter", e.target.value)} error={socialLinkErrors.Twitter} />
+                </Col>
+              </Row>
+              <Row gutter={24}>
+                <Col xs={24} md={12} style={{ marginBottom: 20 }}>
+                  <CommonInputField name="Dribbble" label="Dribbble" placeholder="Add link" type="text" value={socialLinks.Dribbble} onChange={(e) => handleSocialLinksSave("Dribbble", e.target.value)} error={socialLinkErrors.Dribbble} />
+                </Col>
+                <Col xs={24} md={12} style={{ marginBottom: 20 }}>
+                  <CommonInputField name="Behance" label="Behance" placeholder="Add link" type="text" value={socialLinks.Behance} onChange={(e) => handleSocialLinksSave("Behance", e.target.value)} error={socialLinkErrors.Behance} />
+                </Col>
+              </Row>
 
-            <div
-              style={{ alignItems: "end", marginTop: 20 }}
-              className="form-row"
-            >
-              <div className="form-group">
-                <CommonInputField
-                  name="Dribbble"
-                  label="Dribbble"
-                  placeholder="Add link"
-                  type="text"
-                  value={socialLinks.Dribbble}
-                  error={socialLinkErrors.Dribbble}
-                  onChange={(e) =>
-                    handleSocialLinksSave("Dribbble", e.target.value)
-                  }
-                />
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12, paddingTop: 24, borderTop: "1px solid #f0f0f0" }}>
+                <Button type="primary" size="large" onClick={handleAddSocialLinks} style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)" }}>Save Links</Button>
               </div>
-              <div className="form-group">
-                <CommonInputField
-                  name="Behance"
-                  label="Behance"
-                  placeholder="Add link"
-                  type="text"
-                  value={socialLinks.Behance}
-                  error={socialLinkErrors.Behance}
-                  onChange={(e) =>
-                    handleSocialLinksSave("Behance", e.target.value)
-                  }
-                />
-              </div>
-            </div>
-
-            <div
-              style={{ textAlign: "-webkit-right", marginTop: 20 }}
-              className="save_btn"
-            >
-              <Button
-                type="primary"
-                size="large"
-                className="nav-btn next-btn"
-                onClick={handleAddSocialLinks}
-              >
-                Save Links
-              </Button>
             </div>
           </div>
         )}
       </>
     ),
-  };
-  //////////////////////////////////////////////////
-  return (
-    <>
-      <div
-        className="profile-banner"
-        style={{
-          ...bannerStyle,
-          position: 'relative',
-          borderRadius: "16px",
-          background: "linear-gradient(135deg, #4c11f7 0%, #764cff 100%)",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "32px 40px",
-          marginBottom: "24px",
-          overflow: "hidden"
-        }}
-      >
-        {/* Background Decorative Circles */}
-        <div style={{ position: "absolute", right: "-10%", top: "-50%", width: "400px", height: "400px", borderRadius: "50%", background: "#6e1bff" }}></div>
-        <div style={{ position: "absolute", right: "15%", bottom: "-40%", width: "250px", height: "250px", borderRadius: "50%", background: "rgba(255,255,255,0.08)" }}></div>
 
-        {/* Edit Background trigger */}
-        <div style={{ position: "absolute", top: "16px", right: "16px", zIndex: 10 }}>
-          <Dropdown
-            menu={{
-              items: menuItems,
-              onClick: handleMenuClick,
-              style: { borderRadius: "12px", minWidth: "220px" },
-            }}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
-            <Button
-              shape="circle"
-              icon={<EditOutlined style={{ color: "#fff" }} />}
-              style={{ background: "rgba(255,255,255,0.2)", border: "none" }}
-            />
-          </Dropdown>
-        </div>
+    certifications: () => (
+      <div>
+        <Title level={4}>Certifications & Licenses</Title>
+        <Text type="secondary">
+          Add industry certifications, licenses, and verified online course completions.
+        </Text>
+        <Divider style={{ margin: "16px 0" }} />
 
-        {/* Modals from original */}
-        <Modal
-          style={{ zIndex: 1999 }}
-          title={<span style={{ fontWeight: 500 }}>Customize Background Color</span>}
-          open={isColorModalVisible}
-          onOk={async () => {
-            const payload = { user_id: loginUserId, banner_color: tempColor, banner_image: null };
-            try { await updateBanner(payload); setBannerStyle({ backgroundColor: tempColor, backgroundImage: "none" }); setColorModalVisible(false); } catch (e) { }
-          }}
-          onCancel={() => setColorModalVisible(false)}
-        >
-          <input type="color" value={tempColor} onChange={(e) => setTempColor(e.target.value)} />
-        </Modal>
-
-        <Modal
-          title={<span style={{ fontWeight: 500 }}>Upload Background Image</span>}
-          open={isImageModalVisible}
-          onOk={async () => {
-            if (tempImage) {
-              const payload = { user_id: loginUserId, banner_color: null, banner_image: tempImage };
-              try { await updateBanner(payload); setBannerStyle({ backgroundImage: `url(${tempImage})`, backgroundColor: "transparent" }); setImageModalVisible(false); } catch (e) { }
-            }
-          }}
-          onCancel={() => { setTempImage(null); setImageModalVisible(false); }}
-        >
-          <Upload.Dragger accept="image/*" beforeUpload={(f) => { const r = new FileReader(); r.onload = (e) => setTempImage(e.target.result); r.readAsDataURL(f); return false; }}>
-            Click or drag file to this area
-          </Upload.Dragger>
-        </Modal>
-
-        {/* Profile Info */}
-        <div style={{ display: "flex", alignItems: "center", gap: "24px", zIndex: 1 }}>
-          <div style={{ position: "relative" }}>
-            <Avatar size={120} src={profileImage || defaultAvatar} style={{ border: "4px solid rgba(255,255,255,0.2)", background: "#fff" }} />
-            <Upload showUploadList={false} beforeUpload={() => false} onChange={handleUpload}>
-              <Button icon={<UploadOutlined />} size="small" style={{ position: "absolute", bottom: 4, right: 4, borderRadius: "50%" }} />
-            </Upload>
-          </div>
-          <div>
-            <h2 style={{ color: "#fff", margin: "0 0 4px 0", fontSize: "28px", display: "flex", alignItems: "center", gap: "8px" }}>
-              {fname} {lname}
-              <CheckCircleFilled style={{ color: "#fff", fontSize: "20px" }} />
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.9)", margin: "0 0 10px 0", fontSize: "15px" }}>{email}</p>
-            <div style={{ display: "flex", gap: "24px", color: "#d8d8d8ff", fontSize: "14px" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><IoLocationSharp size={18} /> {location || "Chennai, India"}</span>
-              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><CalendarOutlined size={18} /> Member since {createdAt ? new Date(createdAt).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }) : "Sep 2024"}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Button */}
-        <div style={{ zIndex: 1 }}>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => { setActiveTab("basic"); showDrawer(); setLoading(true); setTimeout(() => setLoading(false), 700); }}
-            style={{
-              background: "#fff",
-              color: "#5f2eea",
-              border: "none",
-              borderRadius: "24px",
-              padding: "8px 24px",
-              fontWeight: 600,
-              height: "40px"
-            }}
-          >
-            Edit Profile
-          </Button>
-        </div>
-      </div>
-
-      <Content className="profile-main-content">
-        <div className="profile-page-details">
-          <div
-            className="hide-scrollbar profile-grid-layout"
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              height: "100vh",
-              gap: "24px"
-            }}
-          >
-            {/* Left Column */}
-            <div className="profile-left-column" style={{ flex: "0 0 63%" }}>
-              <div className="profile-sections">
-                <Card
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="section-icon-container"><FaUserPen /></div>
-                      <span>About Me</span>
-                    </div>
-                  }
-                  extra={
-                    <Button onClick={() => { setActiveTab("about"); showDrawer(); setLoading(true); setTimeout(() => setLoading(false), 700); }} className="update-action-btn">
-                      <FiEdit /> {isAbout ? 'Update About' : 'Add About'}
-                    </Button>
-                  }
-                  className="profile-section-card-updated" styles={{ header: { borderBottom: 'none' }, body: { paddingTop: 0 } }}>
-                  {userProfileLoading ? (
-                    <Skeleton active />
-                  ) : (
-                    <>
-                      <p style={{ color: '#64748b', margin: 0, fontSize: "13px", marginBottom: "16px" }}>
-                        An introduction to who I am and what I bring to the table!
-                      </p>
-                      {isAbout && (
-                        <>
-                          <p style={{ display: "-webkit-box", WebkitLineClamp: expanded ? "unset" : 4, WebkitBoxOrient: "vertical", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "pre-line", marginBottom: 0, color: '#64748b' }}>
-                            {isAbout}
-                          </p>
-                          <Button type="link" onClick={() => setExpanded(!expanded)} style={{ paddingLeft: 0, color: "#5f2eea", textDecoration: "none", fontSize: "13px", marginTop: "8px" }}>
-                            {expanded ? "Show Less ∧" : "Show More ∨"}
-                          </Button>
-                        </>
-                      )}
-                    </>
-                  )}
-                </Card>
-              </div>
-
-              {/* Resume upload Sections */}
-              <div className="profile-sections">
-                <Card
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="section-icon-container"><FileText size={16} /></div>
-                      <span>Resume</span>
-                    </div>
-                  }
-                  extra={
-                    <Button onClick={() => { setActiveTab("resume"); showDrawer(); setLoading(true); setTimeout(() => setLoading(false), 700); }} style={{ background: '#5f2eea', color: '#fff', border: 'none', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <PlusOutlined /> {isResume ? 'Replace Resume' : 'Add Resume'}
-                    </Button>
-                  }
-                  className="profile-section-card-updated" styles={{ header: { borderBottom: 'none' }, body: { paddingTop: 0 } }}>
-                  <p style={{ color: '#64748b', margin: 0, fontSize: "13px" }}>
-                    Adding your Resume helps you to tell who you are and what makes you different to employers and recruiters.
-                  </p>
-
-                  {userProfileLoading ? (
-                    <Skeleton active paragraph={{ rows: 1 }} />
-                  ) : (
-                    <>
-                      {isResume && (
-                        <div style={{ border: "1px solid #f0f0f0", borderRadius: 8, padding: "12px 16px", marginTop: 16, backgroundColor: "#fafafa", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div style={{ display: "flex", alignItems: "center" }}>
-                            <FileText style={{ color: "#5f2eea", fontSize: 24, marginRight: 12 }} />
-                            <div>
-                              <Text strong>Current Resume</Text>
-                              <br />
-                              <Text type="secondary" style={{ fontSize: 12 }}>Uploaded resume is ready for employers to view</Text>
-                            </div>
-                          </div>
-                          <Button style={{ background: "#f3efff", color: "#5f2eea", border: "none" }} size="small" onClick={() => {
-                            if (isResume.startsWith("http")) { window.open(isResume, "_blank"); } else if (isResume.startsWith("data:application/pdf")) { const win = window.open("", "_blank"); win.document.write(`<iframe width="100%" height="100%" src="${isResume}" frameborder="0"></iframe>`); } else { const a = document.createElement("a"); a.href = isResume; a.download = "resume.pdf"; document.body.appendChild(a); a.click(); document.body.removeChild(a); }
-                          }}>
-                            View Resume
-                          </Button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </Card>
-              </div>
-
-              {/* Skills Sections */}
-              <div className="profile-sections">
-                <Card
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="section-icon-container" style={{ fontWeight: 'bold', fontFamily: 'monospace' }}>&lt;/&gt;</div>
-                      <span>Skills</span>
-                    </div>
-                  }
-                  extra={
-                    <Button onClick={() => { setActiveTab("skills"); showDrawer(); setLoading(true); setTimeout(() => setLoading(false), 700); }} className="update-action-btn">
-                      <FiEdit /> {isSkills && isSkills.length > 0 ? 'Update Skills' : 'Add Skills'}
-                    </Button>
-                  }
-                  className="profile-section-card-updated" styles={{ header: { borderBottom: 'none' }, body: { paddingTop: 0 } }}>
-                  <p style={{ color: '#64748b', margin: 0, fontSize: "13px" }}>
-                    Craft an engaging story in your bio and make meaningful connections!
-                  </p>
-                  {userProfileLoading ? (
-                    <Skeleton active />
-                  ) : (
-                    <div style={{ marginTop: 12 }}>
-                      {isSkills && isSkills.length > 0 && (
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                          {isSkills.slice(0, 5).map((skill, index) => (
-                            <Tag key={index} style={{ color: "#5f2eea", background: "#f3efff", border: "none", fontSize: 13, fontWeight: "500", padding: "4px 12px", borderRadius: "16px", margin: 0 }}>
-                              {skill}
-                            </Tag>
-                          ))}
-                          {isSkills.length > 5 && (
-                            <Tag style={{ color: "#5f2eea", background: "#f3efff", border: "none", fontSize: 13, fontWeight: "500", padding: "4px 12px", borderRadius: "16px", margin: 0 }}>
-                              +{isSkills.length - 5} more
-                            </Tag>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              </div>
-
-              {/* Work Experience Sections */}
-              <div className="profile-sections">
-                <Card
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="section-icon-container"><FiBriefcase size={16} /></div>
-                      <span>Work Experience</span>
-                    </div>
-                  }
-                  extra={
-                    <Button onClick={() => { setActiveTab("experience"); showDrawer(); setLoading(true); setTimeout(() => setLoading(false), 700); }} style={{ background: '#5f2eea', color: '#fff', border: 'none', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <PlusOutlined /> Add Experience
-                    </Button>
-                  }
-                  className="profile-section-card-updated" styles={{ header: { borderBottom: 'none' }, body: { paddingTop: 0 } }}>
-                  <p style={{ color: '#64748b', margin: 0, fontSize: "13px" }}>
-                    Narrate your professional journey and fast-track your way to new career heights!
-                  </p>
-                  {userProfileLoading ? (
-                    <Skeleton active />
-                  ) : (
-                    <div className="work-experience-section" style={{ marginTop: 16 }}>
-                      {companies.length > 0 && isWorkExp ? (
-                        <div className="experience-timeline">
-                          {companies.map((company, index) => (
-                            <div key={company.id || index} className="experience-card" style={{ padding: "16px", border: "1px solid #f0f0f0", borderRadius: "8px", marginBottom: "12px", background: "#fafafa" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                <div>
-                                  <h3 style={{ margin: "0 0 4px", fontSize: "15px", fontWeight: "600", color: "#1e293b" }}>
-                                    {company.workingCompanyName || "Not specified"}
-                                  </h3>
-                                  <p style={{ margin: "0 0 8px", fontSize: "13px", color: "#64748b" }}>
-                                    {company.jobTitle || "Not specified"}
-                                  </p>
-                                  <div style={{ fontSize: "12px", color: "#64748b", display: "flex", gap: "16px" }}>
-                                    <span>{company.workingStartDate || "Not specified"} - {company.workingEndDate || "Present"}</span>
-                                  </div>
-                                </div>
-                                <div style={{ width: 40, height: 40, borderRadius: "8px", background: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", color: "#64748b" }}>
-                                  {company.workingCompanyName?.charAt(0).toUpperCase() || "C"}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ padding: "16px", border: "1px dashed #d9d9d9", borderRadius: "8px", background: "#fafafa", marginTop: "16px" }}>
-                          <h4 style={{ margin: "0 0 4px", fontSize: "14px", color: "#1e293b" }}>Not specified</h4>
-                          <p style={{ margin: 0, fontSize: "13px", color: "#64748b" }}>Add your work experience to highlight your professional background.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </Card>
-              </div>
-
-              {/* Profile Sections */}
-              <div style={{ marginTop: 25 }} className="profile-sections">
-                {/* Education Section */}
-
-                <Card
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="section-icon-container"><LuGraduationCap size={16} /></div>
-                      <span>Education</span>
-                    </div>
-                  }
-                  extra={
-                    <Button onClick={() => { setActiveTab("education"); showDrawer(); setLoading(true); setTimeout(() => setLoading(false), 700); }} style={{ background: '#5f2eea', color: '#fff', border: 'none', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <PlusOutlined /> Add Education
-                    </Button>
-                  }
-                  className="profile-section-card-updated" styles={{ header: { borderBottom: 'none' }, body: { paddingTop: 0 } }}>
-                  <p style={{ color: '#64748b', margin: 0, fontSize: "13px", marginBottom: "16px" }}>
-                    Showcase your academic journey and open doors to your dream career opportunities!
-                  </p>
-                      {userProfileLoading ? (
-                        <Skeleton active />
-                      ) : (
-                        <>
-                          {isEducation && isEducation.length > 0 ? (
-                            <div className="education-section">
-                              <div className="education-grid">
-                                {isEducation.map((edu, index) => (
-                                  <div key={index} className="education-card" style={{ position: "relative" }}>
-                                    <button
-                                      className="icon-btn edit-btn"
-                                      style={{ position: "absolute", top: 16, right: 16 }}
-                                      onClick={() => {
-                                        setActiveTab("education");
-                                        showDrawer();
-                                        setEducationData(edu);
-                                      }}
-                                    >
-                                      <FiEdit size={16} />
-                                    </button>
-                                    <div className="education-header1">
-                                      <div className="education-icon">
-                                        <svg
-                                          width="24"
-                                          height="24"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                          <path
-                                            d="M22 10V16M22 10L12 5L2 10L12 15L22 10Z"
-                                            stroke="#5f2eea"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          />
-                                          <path
-                                            d="M6 12V16C6 16.8 6.93333 17.6 8 18L12 20L16 18C17.0667 17.6 18 16.8 18 16V12"
-                                            stroke="#5f2eea"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          />
-                                        </svg>
-                                      </div>
-                                      <div className="education-titles">
-                                        <h3 className="education-degree">
-                                          {edu.qualification || "Not specified"}
-                                          <br></br>
-                                          {edu.specialization && (
-                                            <span className="education-specialization">
-                                              {edu.specialization}
-                                            </span>
-                                          )}
-                                        </h3>
-                                        <p className="education-institution">
-                                          {edu.college || "Not specified"}
-                                        </p>
-                                      </div>
-                                    </div>
-
-                                    <div className="education-details">
-                                      <div className="detail-row">
-                                        <svg
-                                          className="detail-icon"
-                                          width="16"
-                                          height="16"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          xmlns="http://www.w3.org/2000/svg"
-                                        >
-                                          <path
-                                            d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                                            stroke="#5f2eea"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          />
-                                          <path
-                                            d="M12 6V12L16 14"
-                                            stroke="#5f2eea"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                          />
-                                        </svg>
-                                        <span>
-                                          {educationStartDate || "Not specified"}{" "}
-                                          - {educationEndDate || "Present"}
-                                        </span>
-                                      </div>
-
-                                      {edu.course && (
-                                        <div className="detail-row">
-                                          <svg
-                                            className="detail-icon"
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                          >
-                                            <path
-                                              d="M19 21V5C19 3.89543 18.1046 3 17 3H7C5.89543 3 5 3.89543 5 5V21M19 21L21 21M19 21H14M5 21L3 21M5 21H10M9 6.99998H10M9 11H10M14 6.99998H15M14 11H15"
-                                              stroke="#5f2eea"
-                                              strokeWidth="2"
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                            />
-                                          </svg>
-                                          <span>{edu.course}</span>
-                                        </div>
-                                      )}
-
-                                      {edu.grade && (
-                                        <div className="detail-row">
-                                          <svg
-                                            className="detail-icon"
-                                            width="16"
-                                            height="16"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                          >
-                                            <path
-                                              d="M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z"
-                                              stroke="#5f2eea"
-                                              strokeWidth="2"
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                            />
-                                            <path
-                                              d="M12 14C8.13401 14 5 17.134 5 21H19C19 17.134 15.866 14 12 14Z"
-                                              stroke="#5f2eea"
-                                              strokeWidth="2"
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                            />
-                                          </svg>
-                                          <span>Grade: {edu.grade}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-
-                            </div>
-                          ) : (
-                            <div className="empty-state education-empty">
-                              <div className="empty-illustration">
-                                <svg
-                                  width="120"
-                                  height="120"
-                                  viewBox="0 0 200 200"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M50 75L100 50L150 75V125L100 150L50 125V75Z"
-                                    stroke="#5f2eea"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                  <path
-                                    d="M50 75L100 100L150 75M100 100V150"
-                                    stroke="#5f2eea"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                  <path
-                                    d="M75 62.5L100 75L125 62.5"
-                                    stroke="#5f2eea"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                              </div>
-                              <h3 className="empty-title">
-                                No Education Added Yet
-                              </h3>
-                              <p className="empty-description">
-                                Showcase your academic achievements by adding your
-                                education history. This helps employers understand
-                                your qualifications.
-                              </p>
-                            </div>
-                          )}
-                        </>
-                      )}
-                </Card>
-              </div>
-
-              <div style={{ marginTop: 25 }} className="profile-sections">
-                {/* Projects Section */}
-
-                <Card
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div className="section-icon-container"><FiFolder size={16} /></div>
-                      <span>Projects</span>
-                    </div>
-                  }
-                  extra={
-                    <Button onClick={() => { setActiveTab("projects"); showDrawer(); setLoading(true); setTimeout(() => setLoading(false), 700); }} style={{ background: '#5f2eea', color: '#fff', border: 'none', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <PlusOutlined /> Add Project
-                    </Button>
-                  }
-                  className="profile-section-card-updated profile_result" styles={{ header: { borderBottom: 'none' }, body: { paddingTop: 0 } }}>
-                  <p style={{ color: '#64748b', margin: 0, fontSize: "13px", marginBottom: "16px" }}>
-                    Unveil your projects to the world and pave your path to professional greatness!
-                  </p>
-                      {userProfileLoading ? (
-                        <Skeleton active />
-                      ) : (
-                        <>
-                          {isProjects && isProjects.length > 0 ? (
-                            <div className="projects-section">
-                              <div className="projects-grid">
-                                {isProjects.map((projects, index) => (
-                                  <motion.div
-                                    key={index}
-                                    className="project-card"
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{
-                                      duration: 0.3,
-                                      delay: index * 0.1,
-                                    }}
-                                  >
-                                    <button
-                                      className="icon-btn edit-btn"
-                                      style={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}
-                                      onClick={() => {
-                                        setActiveTab("projects");
-                                        showDrawer();
-                                        setProjectData(projects);
-                                      }}
-                                    >
-                                      <FiEdit size={16} />
-                                    </button>
-                                    <div className="project-header">
-                                      <div className="project-icon">
-                                        <svg
-                                          width="24"
-                                          height="24"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                        >
-                                          <path
-                                            d="M3 9L12 3L21 9V19L12 23L3 19V9Z"
-                                            stroke="#5f2eea"
-                                            strokeWidth="2"
-                                          />
-                                          <path
-                                            d="M3 9L12 13L21 9M12 13V23"
-                                            stroke="#5f2eea"
-                                            strokeWidth="2"
-                                          />
-                                        </svg>
-                                      </div>
-                                      <h3 className="project-title">
-                                        {projects.project_title ||
-                                          "Untitled Project"}
-                                        <span className="project-status-badge">
-                                          {projects.current
-                                            ? "Ongoing"
-                                            : "Completed"}
-                                        </span>
-                                      </h3>
-                                    </div>
-
-                                    <div className="project-meta">
-                                      <div className="project-date">
-                                        <CalendarOutlined
-                                          style={{ color: "#5f2eea" }}
-                                        />
-                                        <span>
-                                          {projects.start_date || "Not specified"}{" "}
-                                          - {projects.end_date || "Present"}
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <p className="project-description">
-                                      {projects.description ||
-                                        "No description provided."}
-                                    </p>
-                                  </motion.div>
-                                ))}
-                              </div>
-
-                            </div>
-                          ) : (
-                            <motion.div
-                              className="empty-state projects-empty"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              transition={{ duration: 0.5 }}
-                            >
-                              <div className="empty-illustration">
-                                <svg
-                                  width="100"
-                                  height="100"
-                                  viewBox="0 0 200 200"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <defs>
-                                    <linearGradient
-                                      id="projectGradient"
-                                      x1="0%"
-                                      y1="0%"
-                                      x2="100%"
-                                      y2="100%"
-                                    >
-                                      <stop offset="0%" stopColor="#5f2eea" />
-                                      <stop offset="100%" stopColor="#8a63f7" />
-                                    </linearGradient>
-                                  </defs>
-                                  <path
-                                    d="M50 75L100 50L150 75V125L100 150L50 125V75Z"
-                                    stroke="url(#projectGradient)"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                  <path
-                                    d="M50 75L100 100L150 75M100 100V150"
-                                    stroke="url(#projectGradient)"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                  <path
-                                    d="M75 62.5L100 75L125 62.5"
-                                    stroke="url(#projectGradient)"
-                                    strokeWidth="8"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                              </div>
-                              <h3 className="empty-title">
-                                Your Project Showcase Awaits
-                              </h3>
-                              <p className="empty-description">
-                                Transform your portfolio with stunning project
-                                displays. Highlight your work with rich details,
-                                technologies used, and impressive visuals to
-                                captivate your audience.
-                              </p>
-                            </motion.div>
-                          )}
-                        </>
-                      )}
-                </Card>
-              </div>
-
-              <div style={{ marginTop: 25 }} className="profile-sections">
-                {/* Social Links Section */}
-                <div className="profile-section-card userprofile_cards">
-                  <div className="skills_card">
-                    <div style={{ textAlign: "left" }}>
-                      <h3>Social Links</h3>
-                    </div>
-                  </div>
-                  {userProfileLoading ? (
-                    <Skeleton active />
-                  ) : (
-                    <>
-                      <div className="userprofile_social">
-                        {socialIcons.map(({ key, icon, color }) => {
-                          const link = isSocialLinks?.[key] || null;
-
-                          return link ? (
-                            <a
-                              key={key}
-                              href={link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="social-icon active"
-                              style={{ backgroundColor: color }}
-                            >
-                              {icon}
-                            </a>
-                          ) : (
-                            <Tooltip key={key} title="Not yet added">
-                              <div className="social-icon inactive">{icon}</div>
-                            </Tooltip>
-                          );
-                        })}
-                      </div>
-                      <Button
-                        onClick={() => {
-                          setActiveTab("sociallinks");
-                          showDrawer();
-                          setLoading(true);
-                          const timer = setTimeout(() => {
-                            setLoading(false);
-                          }, 700);
-
-                          return () => clearTimeout(timer);
-                        }}
-                        style={{
-                          color: "#5f2eea",
-                          paddingLeft: 0,
-                          paddingTop: 10,
-                        }}
-                        type="link"
-                      >
-                        <PlusOutlined />
-                        Update Links
-                      </Button>
-                    </>
-                  )}
-
-                  <Divider />
-                </div>
-              </div>
-
-            </div> {/* End of Left Column */}
-
-            {/* Right Column */}
-            <div className="profile-right-column" style={{ flex: "0 0 37%", display: "flex", flexDirection: "column", gap: "24px", position: "sticky", top: "0px", alignSelf: "flex-start" }}>
-              {/* Profile Overview */}
-              <div
-                className="profile-section-card-updated"
-                style={{
-                  background: "#fff",
-                  padding: "24px",
-                }}
-              >
-                <h3 style={{ margin: "0 0 20px 0", fontSize: "18px", fontWeight: 700, color: "#1e293b" }}>Profile Overview</h3>
-
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                    <Award size={16} color="#40c463" />
-                    <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>Profile Completion</span>
-                  </div>
-                  <Progress percent={profileStats.completionPercentage} strokeColor="#40c463" showInfo={false} size="small" />
-                  <span style={{ fontSize: "0.8rem", color: "#40c463", fontWeight: 500 }}>{profileStats.completionPercentage}% complete</span>
-                </div>
-
-                <div style={{ marginBottom: "20px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                    <Clock size={16} color="#5f2eea" />
-                    <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>Last Updated</span>
-                  </div>
-                  <span style={{ fontSize: "0.85rem", color: "#666", paddingLeft: "24px" }}>{createdAt ? new Date(createdAt).toLocaleDateString('en-GB') : "02/09/2026"}</span>
-                </div>
-
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#5f2eea" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="#5f2eea" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span style={{ fontSize: "0.9rem", fontWeight: 600 }}>User Details</span>
-                  </div>
-                  <div style={{ fontSize: "0.85rem", color: "#666", paddingLeft: "24px", display: "flex", flexDirection: "column", gap: "4px" }}>
-                    <div style={{ display: "flex", gap: "4px" }}><Check size={14} color="#5f2eea" /> Experience: {totalYearsExperience ? `${totalYearsExperience} Years ${totalMonthsExperience} Months` : "Fresher"}</div>
-                    <div style={{ display: "flex", gap: "4px" }}><Check size={14} color="#5f2eea" /> Location: {location || "Not specified"}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Activity Streak Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="streak-container profile-section-card-updated"
-                style={{
-                  background: "#fff",
-                  padding: "24px",
-                  marginBottom: "32px",
-                }}
-              >
-                {/* Header */}
+        {/* Existing Certifications */}
+        {certifications && certifications.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <Text strong style={{ display: "block", marginBottom: 12 }}>
+              Your Certifications ({certifications.length})
+            </Text>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {certifications.map((cert, idx) => (
                 <div
+                  key={idx}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "16px",
+                    padding: "12px 16px",
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 8,
                   }}
                 >
-                  <h3
-                    style={{
-                      margin: 0,
-                      fontSize: "16px",
-                      fontWeight: 600,
-                      color: "#1e293b",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                    }}
-                  >
-                    <span>🔥</span>
-                    Activity Streak
-                  </h3>
-                </div>
-
-                {/* Heatmap */}
-                {isLoading ? (
-                  <div
-                    style={{
-                      height: "160px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div className="loading-pulse" />
+                  <div>
+                    <div style={{ fontWeight: 600, color: "#1e293b", fontSize: 14 }}>
+                      {cert.title}
+                    </div>
+                    <div style={{ fontSize: 12, color: "#64748b" }}>
+                      {cert.issuer} {cert.issue_year ? `• ${cert.issue_year}` : ""}
+                    </div>
+                    {cert.url && (
+                      <a
+                        href={cert.url.startsWith("http") ? cert.url : `https://${cert.url}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ fontSize: 12, color: "#6800ad" }}
+                      >
+                        View Credential
+                      </a>
+                    )}
                   </div>
-                ) : (
-                  <motion.div
-                    className="streak-values"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    style={{ marginBottom: "16px" }}
-                  >
-                    <CalendarHeatmap
-                      startDate={subDays(today, 365)}
-                      endDate={today}
-                      values={streakData}
-                      classForValue={getClassForValue}
-                      showWeekdayLabels={true}
-                      gutterSize={2}
-                      monthLabels={[
-                        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-                      ]}
-                      weekdayLabels={[
-                        "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
-                      ]}
-                      titleForValue={(value) => {
-                        if (!value || !value.date) return "No activities";
-
-                        const date = format(
-                          parseISO(value.date),
-                          "MMMM d, yyyy"
-                        );
-                        const streakText = value.streak
-                          ? `${value.streak} Day${value.streak > 0 ? "s" : ""
-                          } Streak`
-                          : "No Streak";
-
-                        return `${date} | ${streakText}`;
-                      }}
-                    />
-                  </motion.div>
-                )}
-
-                {/* Legend */}
-                <div style={{ display: "flex", gap: "16px", marginBottom: "24px", paddingLeft: "4px" }}>
-                  <LegendBox color="#5f2eea" label="Active days" />
-                  <LegendBox color="#ebedf0" label="No activity" />
+                  <Button
+                    danger
+                    type="text"
+                    icon={<Trash2 size={15} />}
+                    onClick={() => {
+                      const updated = certifications.filter((_, i) => i !== idx);
+                      handleSaveCertifications(updated);
+                    }}
+                  />
                 </div>
+              ))}
+            </div>
+            <Divider style={{ margin: "20px 0" }} />
+          </div>
+        )}
 
-                {/* Streak Info */}
+        {/* Add New Certification Form */}
+        <div style={{ background: "#ffffff", borderRadius: 16, padding: "32px", border: "1px solid #e8e8e8", boxShadow: "0 8px 24px rgba(0,0,0,0.04)", marginTop: 24 }}>
+          <div style={{ marginBottom: 32, paddingBottom: 20, borderBottom: "1px solid #f0f0f0" }}>
+            <Title level={4} style={{ margin: 0, color: "#1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ background: "rgba(95, 46, 234, 0.1)", padding: 8, borderRadius: 8, display: "flex" }}>
+                <Award size={20} style={{ color: "#5f2eea" }} />
+              </div>
+              Add New Certification
+            </Title>
+            <Text type="secondary" style={{ fontSize: 14, marginTop: 8, display: "block" }}>
+              Include industry certifications, licenses, and verified online courses to boost your profile.
+            </Text>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <CommonInputField
+                label="Certificate Name / Title"
+                value={newCertTitle}
+                placeholder="e.g. AWS Certified Solutions Architect, React Developer"
+                onChange={(e) => setNewCertTitle(e.target.value)}
+              />
+            </div>
+
+            <Row gutter={24}>
+              <Col xs={24} md={12}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <CommonInputField
+                    label="Issuing Organization"
+                    value={newCertIssuer}
+                    placeholder="e.g. Amazon Web Services, Meta, Coursera"
+                    onChange={(e) => setNewCertIssuer(e.target.value)}
+                  />
+                </div>
+              </Col>
+              <Col xs={24} md={12}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <CommonInputField
+                    label="Issue Year / Date"
+                    value={newCertYear}
+                    placeholder="e.g. 2024"
+                    onChange={(e) => setNewCertYear(e.target.value)}
+                  />
+                </div>
+              </Col>
+            </Row>
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <CommonInputField
+                label="Credential URL (Optional)"
+                value={newCertUrl}
+                placeholder="https://..."
+                onChange={(e) => setNewCertUrl(e.target.value)}
+              />
+            </div>
+
+            <div style={{ marginTop: 8, display: "flex", justifyContent: "flex-end" }}>
+              <Button
+                type="primary"
+                size="large"
+                style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)", display: "flex", alignItems: "center", gap: 8 }}
+                onClick={() => {
+                  if (!newCertTitle.trim()) {
+                    message.warning("Please enter a certification title");
+                    return;
+                  }
+                  const newEntry = {
+                    id: Date.now(),
+                    title: newCertTitle.trim(),
+                    issuer: newCertIssuer.trim(),
+                    issue_year: newCertYear.trim(),
+                    url: newCertUrl.trim(),
+                  };
+                  const updated = [...certifications, newEntry];
+                  handleSaveCertifications(updated);
+                  setNewCertTitle("");
+                  setNewCertIssuer("");
+                  setNewCertYear("");
+                  setNewCertUrl("");
+                }}
+              >
+                <Plus size={18} /> Add to Profile
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    ),
+
+    accomplishments: () => (
+      <div>
+        <Title level={4}>Accomplishments & Awards</Title>
+        <Text type="secondary">
+          Add key milestones, awards, achievements, or notable contributions.
+        </Text>
+        <Divider style={{ margin: "16px 0" }} />
+
+        {/* Existing Accomplishments */}
+        {accomplishments && accomplishments.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <Text strong style={{ display: "block", marginBottom: 12 }}>
+              Your Accomplishments ({accomplishments.length})
+            </Text>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {accomplishments.map((acc, idx) => (
                 <div
+                  key={idx}
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
-                    gap: "16px",
+                    alignItems: "center",
+                    padding: "12px 16px",
+                    background: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 8,
                   }}
                 >
-                  <div style={{ flex: 1 }}>
-                    <StreakBox
-                      label="Current Streak"
-                      value={currentStreak}
-                      color="#5f2eea"
-                    />
+                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 18 }}>{acc.icon || "🏆"}</span>
+                    <span style={{ fontSize: 13, color: "#1e293b", fontWeight: 500 }}>
+                      {typeof acc === "string" ? acc : acc.title || acc.description}
+                    </span>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <StreakBox
-                      label="Max Streak"
-                      value={maxStreak}
-                      color="#5f2eea"
-                    />
+                  <Button
+                    danger
+                    type="text"
+                    icon={<Trash2 size={15} />}
+                    onClick={() => {
+                      const updated = accomplishments.filter((_, i) => i !== idx);
+                      handleSaveAccomplishments(updated);
+                    }}
+                  />
+                </div>
+              ))}
+            </div>
+            <Divider style={{ margin: "20px 0" }} />
+          </div>
+        )}
+
+        {/* Add New Accomplishment Form */}
+        <div style={{ background: "#ffffff", borderRadius: 16, padding: "32px", border: "1px solid #e8e8e8", boxShadow: "0 8px 24px rgba(0,0,0,0.04)", marginTop: 24 }}>
+          <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: "1px solid #f0f0f0" }}>
+            <Title level={5} style={{ margin: 0, color: "#1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ background: "rgba(95, 46, 234, 0.1)", padding: 8, borderRadius: 8, display: "flex" }}>
+                <Trophy size={18} style={{ color: "#5f2eea" }} />
+              </div>
+              Add Accomplishment
+            </Title>
+          </div>
+          <Row gutter={24}>
+            <Col xs={24} md={8}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <CommonSelectField
+                  label="Icon"
+                  value={newAccIcon}
+                  options={[
+                    { value: "🏆", label: "🏆 Trophy" },
+                    { value: "⭐", label: "⭐ Star" },
+                    { value: "⚡", label: "⚡ Lightning" },
+                    { value: "🥇", label: "🥇 First" },
+                    { value: "🎯", label: "🎯 Target" },
+                    { value: "🚀", label: "🚀 Rocket" },
+                  ]}
+                  onChange={(val) => setNewAccIcon(val)}
+                />
+              </div>
+            </Col>
+            <Col xs={24} md={16}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <CommonInputField
+                  label="Description"
+                  value={newAccTitle}
+                  placeholder="e.g. Delivered 5+ client applications on time with 99.9% uptime"
+                  onChange={(e) => setNewAccTitle(e.target.value)}
+                />
+              </div>
+            </Col>
+          </Row>
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => {
+                if (!newAccTitle.trim()) {
+                  message.warning("Please enter an accomplishment description");
+                  return;
+                }
+                const newEntry = {
+                  id: Date.now(),
+                  icon: newAccIcon,
+                  title: newAccTitle.trim(),
+                };
+                const updated = [...accomplishments, newEntry];
+                handleSaveAccomplishments(updated);
+                setNewAccTitle("");
+              }}
+              style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)", display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <Plus size={18} /> Add Accomplishment
+            </Button>
+          </div>
+        </div>
+      </div>
+    ),
+
+    languages: () => (
+      <div>
+        <Title level={4}>Languages</Title>
+        <Text type="secondary">
+          Highlight the languages you can speak, read, and write in professional settings.
+        </Text>
+        <Divider style={{ margin: "16px 0" }} />
+
+        {/* Existing Languages */}
+        {languages && languages.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <Text strong style={{ display: "block", marginBottom: 12 }}>
+              Added Languages
+            </Text>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {languages.map((lang, idx) => {
+                const label = typeof lang === "string" ? lang : `${lang.name} (${lang.proficiency})`;
+                return (
+                  <Tag
+                    key={idx}
+                    closable
+                    onClose={() => {
+                      const updated = languages.filter((_, i) => i !== idx);
+                      handleSaveLanguages(updated);
+                    }}
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: 13,
+                      borderRadius: 16,
+                      background: "#f1f5f9",
+                      border: "1px solid #cbd5e1",
+                      color: "#1e293b",
+                    }}
+                  >
+                    {label}
+                  </Tag>
+                );
+              })}
+            </div>
+            <Divider style={{ margin: "20px 0" }} />
+          </div>
+        )}
+
+        {/* Add Language Form */}
+        <div style={{ background: "#ffffff", borderRadius: 16, padding: "32px", border: "1px solid #e8e8e8", boxShadow: "0 8px 24px rgba(0,0,0,0.04)", marginTop: 24 }}>
+          <div style={{ marginBottom: 24, paddingBottom: 16, borderBottom: "1px solid #f0f0f0" }}>
+            <Title level={5} style={{ margin: 0, color: "#1a1a1a", display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ background: "rgba(95, 46, 234, 0.1)", padding: 8, borderRadius: 8, display: "flex" }}>
+                <Globe size={18} style={{ color: "#5f2eea" }} />
+              </div>
+              Add Language
+            </Title>
+          </div>
+          <Row gutter={24}>
+            <Col xs={24} md={12}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <CommonInputField
+                  label="Language"
+                  value={newLangName}
+                  placeholder="e.g. English, French, Hindi, Spanish"
+                  onChange={(e) => setNewLangName(e.target.value)}
+                />
+              </div>
+            </Col>
+            <Col xs={24} md={12}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <CommonSelectField
+                  label="Proficiency"
+                  value={newLangProf}
+                  options={[
+                    { value: "Native", label: "Native / Bilingual" },
+                    { value: "Fluent", label: "Fluent" },
+                    { value: "Professional", label: "Professional Working" },
+                    { value: "Basic", label: "Elementary / Basic" },
+                  ]}
+                  onChange={(val) => setNewLangProf(val)}
+                />
+              </div>
+            </Col>
+          </Row>
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              type="primary"
+              size="large"
+              onClick={() => {
+                if (!newLangName.trim()) {
+                  message.warning("Please enter a language name");
+                  return;
+                }
+                const entry = `${newLangName.trim()} (${newLangProf})`;
+                const updated = [...languages, entry];
+                handleSaveLanguages(updated);
+                setNewLangName("");
+              }}
+              style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)", display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <Plus size={18} /> Add Language
+            </Button>
+          </div>
+        </div>
+      </div>
+    ),
+
+    additional: () => (
+      <div>
+        <Title level={4}>Additional Information</Title>
+        <Text type="secondary">
+          Customize your key strengths, personal interests, and extra notes about yourself.
+        </Text>
+        <Divider style={{ margin: "16px 0" }} />
+
+        <div style={{ background: "#ffffff", borderRadius: 16, padding: "32px", border: "1px solid #e8e8e8", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}>
+          {/* Key Strengths */}
+          <div style={{ marginBottom: 32 }}>
+            <Text strong style={{ display: "block", marginBottom: 12, fontSize: 15, color: "#1a1a1a" }}>
+              Key Strengths
+            </Text>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+              {additionalInfo?.strengths?.map((str, idx) => (
+                <Tag
+                  key={idx}
+                  closable
+                  onClose={() => {
+                    const updatedStr = additionalInfo.strengths.filter((_, i) => i !== idx);
+                    handleSaveAdditionalInfo({ ...additionalInfo, strengths: updatedStr });
+                  }}
+                  style={{ padding: "6px 12px", borderRadius: 14, fontSize: 13, background: "#f1f5f9", border: "1px solid #cbd5e1", color: "#1e293b" }}
+                >
+                  {str}
+                </Tag>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <CommonInputField
+                  value={newStrength}
+                  placeholder="Add a strength (e.g. Critical Thinking)"
+                  onChange={(e) => setNewStrength(e.target.value)}
+                />
+              </div>
+              <Button
+                type="primary"
+                size="large"
+                style={{ background: "#5f2eea", borderRadius: 8, fontWeight: 500 }}
+                onClick={() => {
+                  if (!newStrength.trim()) return;
+                  const updatedStr = [...(additionalInfo?.strengths || []), newStrength.trim()];
+                  handleSaveAdditionalInfo({ ...additionalInfo, strengths: updatedStr });
+                  setNewStrength("");
+                }}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+
+          {/* Interests */}
+          <div style={{ marginBottom: 32 }}>
+            <Text strong style={{ display: "block", marginBottom: 12, fontSize: 15, color: "#1a1a1a" }}>
+              Interests & Passions
+            </Text>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+              {additionalInfo?.interests?.map((int, idx) => (
+                <Tag
+                  key={idx}
+                  closable
+                  onClose={() => {
+                    const updatedInt = additionalInfo.interests.filter((_, i) => i !== idx);
+                    handleSaveAdditionalInfo({ ...additionalInfo, interests: updatedInt });
+                  }}
+                  style={{ padding: "6px 12px", borderRadius: 14, fontSize: 13, background: "#f1f5f9", border: "1px solid #cbd5e1", color: "#1e293b" }}
+                >
+                  {int}
+                </Tag>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <CommonInputField
+                  value={newInterest}
+                  placeholder="Add an interest (e.g. Open Source, Cloud Architecture)"
+                  onChange={(e) => setNewInterest(e.target.value)}
+                />
+              </div>
+              <Button
+                type="primary"
+                size="large"
+                style={{ background: "#5f2eea", borderRadius: 8, fontWeight: 500 }}
+                onClick={() => {
+                  if (!newInterest.trim()) return;
+                  const updatedInt = [...(additionalInfo?.interests || []), newInterest.trim()];
+                  handleSaveAdditionalInfo({ ...additionalInfo, interests: updatedInt });
+                  setNewInterest("");
+                }}
+              >
+                Add
+              </Button>
+            </div>
+          </div>
+
+          {/* About Me */}
+          <div>
+            <Text strong style={{ display: "block", marginBottom: 12, fontSize: 15, color: "#1a1a1a" }}>
+              About Me Notes
+            </Text>
+            <CommonTextArea
+              value={additionalInfo?.about_me || ""}
+              placeholder="Tell recruiters a bit about yourself, hobbies, or what drives you..."
+              onChange={(e) => {
+                setAdditionalInfo({ ...additionalInfo, about_me: e.target.value });
+              }}
+              rows={4}
+            />
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 24, paddingTop: 24, borderTop: "1px solid #f0f0f0" }}>
+            <Button
+              type="primary"
+              size="large"
+              style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)" }}
+              onClick={() => handleSaveAdditionalInfo(additionalInfo)}
+            >
+              Save Additional Info
+            </Button>
+          </div>
+        </div>
+      </div>
+    ),
+  };
+  //////////////////////////////////////////////////
+
+  // Resume handlers
+  const dataURItoBlob = (dataURI) => {
+    const commaIndex = dataURI.indexOf(',');
+    if (commaIndex === -1) {
+      console.error("Invalid data URI format");
+      return new Blob([], { type: "application/octet-stream" });
+    }
+
+    const metadata = dataURI.substring(0, commaIndex);
+    let payload = dataURI.substring(commaIndex + 1);
+
+    let mimeString = "application/octet-stream";
+    const mimeMatch = metadata.match(/^data:([^;]+)/);
+    if (mimeMatch && mimeMatch[1]) {
+      mimeString = mimeMatch[1];
+    }
+
+    const isBase64 = metadata.indexOf('base64') !== -1;
+    let byteString;
+
+    if (isBase64) {
+      // Decode URL encoding and completely strip all non-base64 characters
+      payload = decodeURIComponent(payload);
+      payload = payload.replace(/[^A-Za-z0-9+/=]/g, '');
+
+      try {
+        byteString = atob(payload);
+      } catch (e) {
+        // Fix missing padding if any
+        const padding = '='.repeat((4 - payload.length % 4) % 4);
+        try {
+          byteString = atob(payload + padding);
+        } catch (err) {
+          console.error("Base64 decoding failed completely", err);
+          return new Blob([], { type: mimeString });
+        }
+      }
+    } else {
+      byteString = decodeURI(payload);
+    }
+
+    const ia = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ia], { type: mimeString });
+  };
+
+  const handleViewResume = () => {
+    if (!isResume) return;
+    if (isResume.startsWith("http")) {
+      window.open(isResume, "_blank");
+    } else if (isResume.startsWith("data:")) {
+      try {
+        const blob = dataURItoBlob(isResume);
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, "_blank");
+      } catch (err) {
+        console.error("Failed to process view resume:", err);
+      }
+    } else {
+      handleDownloadResume();
+    }
+  };
+
+  const handleDownloadResume = () => {
+    if (!isResume) return;
+
+    const downloadBlobOrUrl = (url, revoke = false) => {
+      const a = document.createElement("a");
+      a.href = url;
+      const isDoc = typeof isResume === "string" && (isResume.includes("wordprocessingml") || isResume.includes("msword") || isResume.endsWith(".docx") || isResume.endsWith(".doc"));
+      a.download = `${fname || "candidate"}_resume.${isDoc ? "docx" : "pdf"}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      if (revoke) window.URL.revokeObjectURL(url);
+    };
+
+    if (isResume.startsWith("data:")) {
+      try {
+        const blob = dataURItoBlob(isResume);
+        const url = window.URL.createObjectURL(blob);
+        downloadBlobOrUrl(url, true);
+      } catch (err) {
+        console.error("Failed to process download resume:", err);
+      }
+    } else {
+      downloadBlobOrUrl(isResume, false);
+    }
+  };
+
+  // Candidate headline
+  const candidateHeadline =
+    companies && companies.length > 0 && companies[0]?.jobTitle
+      ? companies[0].jobTitle
+      : userType === "Experienced"
+        ? "Experienced Professional"
+        : userType === "Fresher"
+          ? "Graduate / Fresher"
+          : "Professional Candidate";
+
+  // Profile strength rating
+  const completionPct = profileStats?.completionPercentage || 0;
+  const strengthBadgeText =
+    completionPct >= 80 ? "All-Star Profile ⭐" : completionPct >= 50 ? "Intermediate 🚀" : "Getting Started 🎯";
+  const strengthBadgeColor =
+    completionPct >= 80 ? "#10b981" : completionPct >= 50 ? "#4f46e5" : "#f59e0b";
+
+  // Naukri UI states & helpers
+  const [militaryStatus, setMilitaryStatus] = useState("Never served");
+  const [expandedDesc, setExpandedDesc] = useState({});
+
+  const displayCandidateRole =
+    companies?.find((c) => !c.isNew && c.jobTitle)?.jobTitle ||
+    userType ||
+    (preferredRoles ? preferredRoles.split(",")[0].trim() : "");
+
+  const displayCurrentCompany =
+    companies?.find((c) => !c.isNew && c.workingCompanyName)?.workingCompanyName || "";
+
+  const displayAbout =
+    (typeof aboutText === "string" && aboutText.trim())
+      ? aboutText
+      : (typeof aboutTextNew === "string" && aboutTextNew.trim())
+        ? aboutTextNew
+        : (typeof isAbout === "string" && isAbout.trim())
+          ? isAbout
+          : "";
+
+  const getSocialLink = (platform) => {
+    if (!socialLinks) return "";
+    return socialLinks[platform] || socialLinks[platform.toLowerCase()] || "";
+  };
+
+  const completenessChecks = [
+    { key: "basic", label: "Basic information", done: Boolean(fname && email && phoneNumber) },
+    { key: "about", label: "Add profile summary", done: Boolean(displayAbout) },
+    { key: "resume", label: "Upload resume", done: Boolean(isResume) },
+    { key: "skills", label: "Add key skills", done: Boolean(isSkills && isSkills.length > 0) },
+    { key: "experience", label: "Add work experience", done: Boolean(companies && companies.some((c) => !c.isNew && (c.workingCompanyName || c.jobTitle))) },
+    { key: "education", label: "Add education", done: Boolean(isEducation && isEducation.length > 0) },
+    { key: "projects", label: "Add projects", done: Boolean(isProjects && isProjects.length > 0) },
+    { key: "certifications", label: "Add certifications", done: Boolean(certifications && certifications.length > 0) },
+  ];
+  const completedChecksCount = completenessChecks.filter((c) => c.done).length;
+  const profileCompletionPercentage = Math.round((completedChecksCount / completenessChecks.length) * 100);
+  const profileDonutOffset = 150.8 - (150.8 * profileCompletionPercentage) / 100;
+
+  if (userProfileLoading || isLoading) {
+    return (
+      <div className="candidate-profile-page-wrapper">
+        {/* TOP PROFILE HEADER CARD SKELETON */}
+        <div className="profile-hero-card" style={{ padding: "32px", minHeight: "260px" }}>
+          <div style={{ display: "flex", gap: "32px" }}>
+            <Skeleton.Avatar active size={130} shape="circle" />
+            <div style={{ flex: 1, paddingTop: 16 }}>
+              <Skeleton active paragraph={{ rows: 2, width: ["30%", "20%"] }} title={{ width: "40%" }} />
+              <div style={{ display: "flex", gap: "16px", marginTop: "32px" }}>
+                <Skeleton.Button active size="small" shape="round" style={{ width: 100 }} />
+                <Skeleton.Button active size="small" shape="round" style={{ width: 100 }} />
+                <Skeleton.Button active size="small" shape="round" style={{ width: 100 }} />
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: "12px", paddingTop: 16 }}>
+              <Skeleton.Button active size="default" shape="circle" />
+              <Skeleton.Button active size="default" shape="round" style={{ width: 130 }} />
+              <Skeleton.Button active size="default" shape="round" style={{ width: 130 }} />
+            </div>
+          </div>
+        </div>
+
+        {/* TWO COLUMN GRID SKELETON */}
+        <div className="profile-grid-container">
+          <div className="profile-col-left">
+            <div className="section-card" style={{ padding: "32px", marginBottom: "24px" }}>
+              <Skeleton active paragraph={{ rows: 4 }} title={{ width: "40%" }} />
+            </div>
+            <div className="section-card" style={{ padding: "32px", marginBottom: "24px" }}>
+              <Skeleton active paragraph={{ rows: 3 }} title={{ width: "30%" }} />
+            </div>
+          </div>
+
+          <div className="profile-col-right">
+            <div className="section-card" style={{ padding: "32px", marginBottom: "24px" }}>
+              <Skeleton active paragraph={{ rows: 6 }} title={{ width: "35%" }} />
+            </div>
+            <div className="section-card" style={{ padding: "32px", marginBottom: "24px" }}>
+              <Skeleton active paragraph={{ rows: 5 }} title={{ width: "45%" }} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="candidate-profile-page-wrapper">
+        {/* TOP PROFILE HEADER CARD */}
+        <div className="profile-hero-card">
+          {/* Subtle Decorative Ambient Background Glows */}
+          <div className="profile-hero-ambient-1" />
+          <div className="profile-hero-ambient-2" />
+
+          {/* Upper Main Section */}
+          <div className="profile-hero-main">
+            <div className="profile-hero-left">
+              {/* Avatar with Online Status Dot */}
+              {/* Avatar with Profile Upload & Progress Ring */}
+              <div
+                className="custom-avatar-upload"
+                onClick={() => {
+                  const input = document.getElementById("profile-upload-input");
+                  if (input) input.click();
+                }}
+                style={{
+                  position: "relative",
+                  width: "116px",
+                  height: "116px",
+                  marginRight: "24px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                {/* SVG Progress Ring */}
+                <svg width="116" height="116" viewBox="0 0 116 116" style={{ transform: "rotate(-90deg)", position: "absolute", top: 0, left: 0 }}>
+                  <circle cx="58" cy="58" r="54" fill="none" stroke="#e2e8f0" strokeWidth="4" />
+                  <circle
+                    cx="58" cy="58" r="54" fill="none"
+                    stroke={profileCompletionPercentage === 100 ? "#22c55e" : "#5f2eea"}
+                    strokeWidth="4" strokeDasharray="339.29"
+                    strokeDashoffset={339.29 - (339.29 * profileCompletionPercentage) / 100}
+                    strokeLinecap="round" style={{ transition: "stroke-dashoffset 1s ease-in-out" }}
+                  />
+                </svg>
+
+                {/* Avatar Container */}
+                <div style={{
+                  width: "92px", height: "92px", borderRadius: "50%",
+                  backgroundColor: "#f1f5f9", display: "flex", alignItems: "center",
+                  justifyContent: "center", position: "relative", overflow: "hidden",
+                  color: "#64748b", fontSize: "32px", fontWeight: "bold"
+                }}>
+                  {profileImage ? (
+                    <img src={profileImage} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span>{fname ? `${fname[0]}${lname ? lname[0] : ""}`.toUpperCase() : "U"}</span>
+                  )}
+                  
+                  {/* Hover Overlay */}
+                  <div 
+                    style={{
+                      position: "absolute", inset: 0,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center",
+                      opacity: 0, transition: "opacity 0.2s ease",
+                      color: "#ffffff"
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                  >
+                    <div style={{ background: "#ffffff", borderRadius: "50%", padding: "4px", display: "flex", marginBottom: "2px" }}>
+                      <MdEdit size={14} color="#5f2eea" />
+                    </div>
+                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#ffffff", lineHeight: 1.2 }}>Replace</span>
+                    <span style={{ fontSize: "11px", fontWeight: 600, color: "#ffffff", lineHeight: 1.2 }}>photo</span>
                   </div>
                 </div>
-              </motion.div>
+                
+                {/* Completion Badge */}
+                <div style={{
+                  position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)",
+                  background: "#fff", padding: "2px 10px", borderRadius: "12px",
+                  fontSize: "11px", fontWeight: 700, 
+                  color: profileCompletionPercentage === 100 ? "#22c55e" : "#5f2eea",
+                  border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  whiteSpace: "nowrap"
+                }}>
+                  {profileCompletionPercentage}%
+                </div>
 
-            </div> {/* End of Right Column */}
+                {/* Hidden File Input */}
+                <input
+                  type="file" id="profile-upload-input" style={{ display: "none" }}
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleProfileImageUpload}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
 
-          </div> {/* End of profile-grid-layout */}
+              {/* Candidate Info Details */}
+              <div className="profile-hero-details">
+                {/* Line 1: Name, Verified Badge & Active Pill */}
+                <div className="profile-name-row">
+                  <h1 className="profile-candidate-name">
+                    {fname ? `${fname} ${lname || ""}` : "Candidate Profile"}
+                  </h1>
+                  <span className="profile-verified-badge" title="Verified Candidate">
+                    <CheckCircle2 size={16} fill="#6800ad" color="#ffffff" />
+                  </span>
+                  <span className="profile-status-badge">
+                    <span className="profile-status-dot" />
+                    Active
+                  </span>
+                </div>
 
-          {/* Drawer */}
-          <Drawer
-            title={null}
-            placement="right"
-            onClose={resetFormFields}
-            open={open}
-            width={1100}
-            className="user_details_drawer"
-          >
-            {loading ? (
-              <Skeleton active />
-            ) : (
-              <>
-                <div style={{ display: "flex", gap: 0 }}>
-                  {/* Sidebar */}
-                  <div
-                    style={{
-                      width: 340,
-                      background: "#f9f9f9",
-                      padding: 20,
-                      borderRight: "1px solid #eee",
+                {/* Line 2: Role / Level */}
+                <div className="profile-candidate-title">
+                  {displayCandidateRole || "Professional"}
+                  {displayCurrentCompany && (
+                    <span className="profile-candidate-company"> at {displayCurrentCompany}</span>
+                  )}
+                </div>
+
+                {/* Line 3: Location, Phone, Email with Dividers */}
+                <div className="profile-meta-row">
+                  <span className="profile-meta-item">
+                    <MapPin size={13} />
+                    <span>{location && location !== "N/A" ? location : "Location not set"}</span>
+                  </span>
+                  <span className="profile-meta-divider">|</span>
+                  <span className="profile-meta-item">
+                    <Phone size={13} />
+                    <span>{phoneNumber || "Phone not set"}</span>
+                  </span>
+                  <span className="profile-meta-divider">|</span>
+                  <span className="profile-meta-item">
+                    <Mail size={13} />
+                    <span>{email || "Email not set"}</span>
+                  </span>
+                </div>
+
+                {/* Line 4: Social Links */}
+                <div className="profile-social-row">
+                  {(() => {
+                    const lIn = getSocialLink("Linkedin");
+                    const gHub = getSocialLink("Github");
+                    const pFolio = getSocialLink("Portfolio");
+
+                    if (!lIn && !gHub && !pFolio) {
+                      return (
+                        <button
+                          type="button"
+                          className="profile-social-item-add"
+                          onClick={() => {
+                            setActiveTab("sociallinks");
+                            showDrawer();
+                          }}
+                        >
+                          <Plus size={12} />
+                          <span>Add Social Links</span>
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <>
+                        {lIn && (
+                          <a
+                            href={lIn.startsWith("http") ? lIn : `https://${lIn}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="profile-social-item linkedin"
+                          >
+                            <FaLinkedinIn size={13} />
+                            <span>LinkedIn</span>
+                          </a>
+                        )}
+                        {gHub && (
+                          <>
+                            {lIn && <span className="profile-meta-divider">|</span>}
+                            <a
+                              href={gHub.startsWith("http") ? gHub : `https://${gHub}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="profile-social-item github"
+                            >
+                              <FaGithub size={13} />
+                              <span>GitHub</span>
+                            </a>
+                          </>
+                        )}
+                        {pFolio && (
+                          <>
+                            {(lIn || gHub) && <span className="profile-meta-divider">|</span>}
+                            <a
+                              href={pFolio.startsWith("http") ? pFolio : `https://${pFolio}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="profile-social-item portfolio"
+                            >
+                              <Globe size={13} />
+                              <span>Portfolio</span>
+                            </a>
+                          </>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Side: Action Buttons */}
+            <div className="profile-hero-actions">
+              <button
+                type="button"
+                className="profile-btn-icon"
+                title="Share Profile"
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({
+                      title: 'Candidate Profile',
+                      url: window.location.href
+                    }).catch(console.error);
+                  } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+                    navigator.clipboard.writeText(window.location.href);
+                    message.success("Profile link copied to clipboard!");
+                  } else {
+                    message.info("Profile link copied!");
+                  }
+                }}
+              >
+                <Share2 size={15} />
+              </button>
+
+              <button
+                type="button"
+                className="profile-btn-download"
+                onClick={handleDownloadResume}
+                title="Download CV"
+              >
+                <Download size={14} />
+                <span>Download CV</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-edit-profile"
+                onClick={() => {
+                  setActiveTab("basic");
+                  showDrawer();
+                }}
+              >
+                <MdEdit size={14} />
+                <span>Edit Profile</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Lower Bottom Section: Skills + 3 Key Metrics */}
+          <div className="profile-hero-bottom">
+            {/* Left: Skill Chips */}
+            <div className="profile-hero-skills">
+              {isSkills && isSkills.length > 0 ? (
+                <>
+                  {isSkills.slice(0, 6).map((skill, idx) => {
+                    const skillName = typeof skill === "object" ? (skill.skill_name || skill.name) : skill;
+                    return (
+                      <span
+                        key={idx}
+                        className="hero-skill-chip"
+                        onClick={() => {
+                          setActiveTab("skills");
+                          showDrawer();
+                        }}
+                      >
+                        {skillName}
+                      </span>
+                    );
+                  })}
+                  {isSkills.length > 6 && (
+                    <span
+                      className="hero-skill-chip plus-chip"
+                      onClick={() => {
+                        setActiveTab("skills");
+                        showDrawer();
+                      }}
+                    >
+                      +{isSkills.length - 6}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span
+                  className="hero-skill-chip plus-chip"
+                  onClick={() => {
+                    setActiveTab("skills");
+                    showDrawer();
+                  }}
+                >
+                  <Plus size={12} style={{ marginRight: 4, display: "inline-block" }} /> Add Key Skills
+                </span>
+              )}
+            </div>
+
+            {/* Right: 3 Summary Metrics */}
+            <div className="profile-hero-metrics">
+              <div className="hero-metric-item">
+                <div className="hero-metric-icon">
+                  <Briefcase size={16} />
+                </div>
+                <div className="hero-metric-info">
+                  <div className="hero-metric-value">
+                    {totalYearsExperience
+                      ? `${totalYearsExperience}${totalMonthsExperience ? ` ${totalMonthsExperience}` : ""}`
+                      : (userType === "Fresher" ? "Fresher" : "0+ Years")}
+                  </div>
+                  <div className="hero-metric-label">Experience</div>
+                </div>
+              </div>
+
+              <div className="hero-metric-divider" />
+
+              <div className="hero-metric-item">
+                <div className="hero-metric-icon">
+                  <GraduationCap size={16} />
+                </div>
+                <div className="hero-metric-info">
+                  <div className="hero-metric-value">{userType || "Fresher"}</div>
+                  <div className="hero-metric-label">Career Level</div>
+                </div>
+              </div>
+
+              <div className="hero-metric-divider" />
+
+              <div className="hero-metric-item">
+                <div className="hero-metric-icon green">
+                  <Clock size={16} />
+                </div>
+                <div className="hero-metric-info">
+                  <div className="hero-metric-value green">{noticePeriod || "Open to Work"}</div>
+                  <div className="hero-metric-label">Notice Period</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* TWO COLUMN GRID CONTAINER */}
+        <div className="profile-grid-container">
+          {/* ================= LEFT COLUMN ================= */}
+          <div className="profile-col-left">
+
+            {/* 1. Professional Summary Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <Sparkles size={16} className="section-header-icon" />
+                  <h3 className="section-title">Professional Summary</h3>
+                  <span
+                    className="section-edit-pencil"
+                    onClick={() => {
+                      setActiveTab("about");
+                      showDrawer();
+                    }}
+                    title="Edit Summary"
+                  >
+                    <MdEdit size={14} />
+                  </span>
+                </div>
+              </div>
+              {displayAbout && displayAbout.trim() ? (
+                <>
+                  <p className="summary-text">{displayAbout}</p>
+                  {displayAbout.length > 200 && (
+                    <span
+                      className="read-more-link"
+                      onClick={() => {
+                        setActiveTab("about");
+                        showDrawer();
+                      }}
+                    >
+                      Read more
+                    </span>
+                  )}
+                </>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">
+                    Add a professional summary highlighting your key qualifications, achievements, and career goals.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={() => {
+                      setActiveTab("about");
+                      showDrawer();
                     }}
                   >
-                    <div style={{ marginBottom: 24 }}>
-                      <Text strong>Enhance your Profile</Text>
-                      <Text
-                        type="secondary"
-                        style={{ display: "block", marginTop: 4 }}
-                      >
-                        Stay ahead of the competition by regularly
-                        updating your profile.
-                      </Text>
-                      <Progress
-                        percent={78}
-                        size="small"
-                        style={{ marginTop: 8 }}
-                      />
-                    </div>
-                    <Menu
-                      mode="vertical"
-                      selectedKeys={[activeTab]}
-                      onClick={(e) => {
-                        setActiveTab(e.key);
-                        setDetailsLoading(true);
-                        const timer = setTimeout(() => {
-                          setDetailsLoading(false);
-                        }, 700);
+                    <Plus size={13} /> Add Summary
+                  </button>
+                </div>
+              )}
+            </div>
 
-                        return () => clearTimeout(timer);
-                      }}
-                      items={items}
-                    />
+            {/* 2. Resume Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <FileText size={16} className="section-header-icon" />
+                  <h3 className="section-title">Resume</h3>
+                </div>
+                <button
+                  type="button"
+                  className="btn-section-action"
+                  onClick={() => {
+                    setActiveTab("resume");
+                    showDrawer();
+                  }}
+                >
+                  {isResume ? "Update Resume" : "Upload Resume"}
+                </button>
+              </div>
+              {isResume ? (
+                <>
+                  <div className="resume-subtitle">Active resume uploaded and attached to profile</div>
+                  <div className="resume-file-box">
+                    <div className="resume-file-left">
+                      <span className="pdf-badge">
+                        {typeof isResume === "string" && (isResume.toLowerCase().endsWith(".docx") || isResume.toLowerCase().endsWith(".doc") || isResume.includes("wordprocessingml") || isResume.includes("msword")) ? "DOC" : "PDF"}
+                      </span>
+                      <div>
+                        <div className="resume-file-name">
+                          {typeof isResume === "string" && !isResume.startsWith("data:")
+                            ? isResume.split("/").pop().split("\\").pop()
+                            : `${fname || "Candidate"}_Resume.${(typeof isResume === "string" && (isResume.includes("wordprocessingml") || isResume.includes("msword"))) ? "docx" : "pdf"}`}
+                        </div>
+                        <div className="resume-file-size">Resume document</div>
+                      </div>
+                    </div>
+                    <div className="resume-actions-right">
+                      <button
+                        type="button"
+                        className="resume-action-btn"
+                        title="Download Resume"
+                        onClick={handleDownloadResume}
+                      >
+                        <Download size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="resume-action-btn"
+                        title="View Resume"
+                        onClick={handleViewResume}
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="resume-action-btn delete"
+                        title="Update Resume"
+                        onClick={() => {
+                          setActiveTab("resume");
+                          showDrawer();
+                        }}
+                      >
+                        <MdEdit size={15} />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">
+                    Upload your latest resume (PDF or DOC) to get noticed by top recruiters.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={() => {
+                      setActiveTab("resume");
+                      showDrawer();
+                    }}
+                  >
+                    <UploadCloud size={13} /> Upload Resume
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 3. Key Skills Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <Code2 size={16} className="section-header-icon" />
+                  <h3 className="section-title">Key Skills</h3>
+                  <span
+                    className="section-edit-pencil"
+                    onClick={() => {
+                      setActiveTab("skills");
+                      showDrawer();
+                    }}
+                    title="Edit Skills"
+                  >
+                    <MdEdit size={14} />
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-section-action"
+                  onClick={() => {
+                    setActiveTab("skills");
+                    showDrawer();
+                  }}
+                >
+                  <Plus size={13} /> Add Skill
+                </button>
+              </div>
+              {isSkills && isSkills.length > 0 ? (
+                <div className="skills-pills-wrap">
+                  {isSkills.map((skill, idx) => {
+                    const skillName = typeof skill === "object" ? (skill.skill_name || skill.name) : skill;
+                    return (
+                      <span key={idx} className="skill-pill">
+                        {skillName}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">No skills added yet. Add your core technical and professional skills.</p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={() => {
+                      setActiveTab("skills");
+                      showDrawer();
+                    }}
+                  >
+                    <Plus size={13} /> Add Skills
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 4. Work Experience Card */}
+            {(() => {
+              const validCompanies = companies && companies.filter(
+                (c) => !c.isNew && (c.workingCompanyName || c.jobTitle)
+              );
+
+              return (
+                <div className="section-card">
+                  <div className="section-card-header">
+                    <div className="section-title-wrap">
+                      <Briefcase size={16} className="section-header-icon" />
+                      <h3 className="section-title">Work Experience</h3>
+                      <span
+                        className="section-edit-pencil"
+                        onClick={() => {
+                          if (validCompanies && validCompanies.length > 0) {
+                            handleEditCompany(validCompanies[0]);
+                          } else {
+                            handleAddNewExperience();
+                          }
+                        }}
+                        title="Edit Experience"
+                      >
+                        <MdEdit size={14} />
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-section-action"
+                      onClick={handleAddNewExperience}
+                    >
+                      <Plus size={13} /> Add Experience
+                    </button>
                   </div>
 
-                  {/* Dynamic Content */}
-                  <div
-                    style={{
-                      flex: 1,
-                      padding: 30,
-                      height: 700,
-                      overflowY: "scroll",
-                      scrollbarWidth: "none",
-                      msOverflowStyle: "none",
+                  {validCompanies && validCompanies.length > 0 ? (
+                    <div className="experience-timeline">
+                      {validCompanies.map((comp, idx) => {
+                        const role = comp.jobTitle || comp.designation || "Role";
+                        const companyName = comp.workingCompanyName || comp.companyName || "Company";
+                        const dateRange = `${comp.workingFrom || comp.workingStartDate || "Start"} - ${comp.currentlyWorking ? "Present" : (comp.workingTill || comp.workingEndDate || "End")}`;
+                        const compLocation = comp.companyLocation || comp.location || location || "India";
+                        const desc = comp.jobDescription || comp.roleDescription || "";
+
+                        return (
+                          <div key={comp.id || comp.company_id || idx} className="experience-item">
+                            <div className="experience-node-dot" />
+                            <div className="experience-header-row">
+                              <div className="experience-title-company">
+                                <div
+                                  className="experience-company-logo"
+                                  style={{
+                                    background: idx % 3 === 0 ? "#6800ad" : idx % 3 === 1 ? "#10b981" : "#f97316",
+                                    color: "#ffffff"
+                                  }}
+                                >
+                                  <Building2 size={15} />
+                                </div>
+                                <h4 className="experience-role">{role}</h4>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                {comp.totalExperience && (
+                                  <span className="experience-duration-badge">{comp.totalExperience}</span>
+                                )}
+                                <span
+                                  className="section-edit-pencil"
+                                  style={{ opacity: 0.8, cursor: "pointer" }}
+                                  onClick={() => handleEditCompany(comp)}
+                                  title="Edit this experience"
+                                >
+                                  <MdEdit size={13} />
+                                </span>
+                                <Popconfirm
+                                  title="Are you sure you want to remove this experience?"
+                                  description="This will permanently delete this experience entry."
+                                  onConfirm={() => handleDeleteCompanyWork(comp.id)}
+                                  okText="Yes, Remove"
+                                  cancelText="Cancel"
+                                  okButtonProps={{ danger: true }}
+                                >
+                                  <span
+                                    className="section-edit-pencil"
+                                    style={{ opacity: 0.8, cursor: "pointer", color: "#ef4444" }}
+                                    title="Remove this experience"
+                                  >
+                                    <Trash2 size={13} />
+                                  </span>
+                                </Popconfirm>
+                              </div>
+                            </div>
+                            <div className="experience-company-name">{companyName}</div>
+                            <div className="experience-meta-row">
+                              <div className="experience-meta-item">
+                                <Calendar size={12} />
+                                <span>{dateRange}</span>
+                              </div>
+                              <div className="experience-meta-item">
+                                <MapPin size={12} />
+                                <span>{compLocation}</span>
+                              </div>
+                            </div>
+                            {desc && (
+                              <p className="experience-desc-text" style={{ fontSize: 13, color: "#475569", marginTop: 8, lineHeight: 1.5 }}>
+                                {desc}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="empty-profile-section">
+                      <p className="empty-section-text">No work experience added yet. Add past or current job roles to showcase your experience.</p>
+                      <button
+                        type="button"
+                        className="btn-section-action"
+                        onClick={handleAddNewExperience}
+                      >
+                        <Plus size={13} /> Add Experience
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* 5. Education Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <GraduationCap size={16} className="section-header-icon" />
+                  <h3 className="section-title">Education</h3>
+                  <span
+                    className="section-edit-pencil"
+                    onClick={() => {
+                      if (isEducation && isEducation.length > 0) {
+                        handleEditEducationItem(isEducation[0]);
+                      } else {
+                        handleAddNewEducation();
+                      }
                     }}
-                    className="hide-scrollbar"
+                    title="Edit Education"
                   >
-                    {TabContent[activeTab] ? (
-                      TabContent[activeTab]()
+                    <MdEdit size={14} />
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-section-action"
+                  onClick={handleAddNewEducation}
+                >
+                  <Plus size={13} /> Add Education
+                </button>
+              </div>
+
+              {isEducation && isEducation.length > 0 ? (
+                <div className="education-list-wrap">
+                  {isEducation.map((edu, idx) => {
+                    const degree = edu.qualification || edu.course || edu.educationType || "Education";
+                    const institute = edu.college || edu.institute || edu.university || edu.school || "Institution";
+                    const year = (edu.start_date || edu.startYear)
+                      ? `${edu.start_date || edu.startYear}${edu.end_date || edu.endYear ? ` - ${edu.end_date || edu.endYear}` : ""}`
+                      : (edu.passingYear || edu.yearOfPassing || (edu.educationStartDate ? `${edu.educationStartDate} - ${edu.educationEndDate || ""}` : ""));
+                    const grade = edu.cgpa
+                      ? `${edu.percentage ? `${edu.percentage} | ` : ""}CGPA: ${edu.cgpa}`
+                      : (edu.percentage || edu.grade);
+
+                    return (
+                      <div key={edu.id || edu.education_id || idx} className="education-item">
+                        <div className="education-left">
+                          <div className="education-icon-box">
+                            <GraduationCap size={18} />
+                          </div>
+                          <div>
+                            <h4 className="education-degree">{degree}</h4>
+                            <div className="education-college">{institute}</div>
+                            {year && <div className="education-year">{year}</div>}
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          {grade && <span className="education-badge">CGPA/Marks: {grade}</span>}
+                          <span
+                            className="section-edit-pencil"
+                            style={{ opacity: 0.8, cursor: "pointer" }}
+                            onClick={() => handleEditEducationItem(edu)}
+                            title="Edit this education"
+                          >
+                            <MdEdit size={13} />
+                          </span>
+                          <Popconfirm
+                            title="Are you sure you want to remove this education?"
+                            description="This will permanently delete this education entry."
+                            onConfirm={() => handleDeleteEducation(edu.id)}
+                            okText="Yes, Remove"
+                            cancelText="Cancel"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <span
+                              className="section-edit-pencil"
+                              style={{ opacity: 0.8, cursor: "pointer", color: "#ef4444" }}
+                              title="Remove this education"
+                            >
+                              <Trash2 size={13} />
+                            </span>
+                          </Popconfirm>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">No education details added yet. Add your degrees, diplomas, or qualifications.</p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={handleAddNewEducation}
+                  >
+                    <Plus size={13} /> Add Education
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 6. Projects Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <FolderGit2 size={16} className="section-header-icon" />
+                  <h3 className="section-title">Projects</h3>
+                  <span
+                    className="section-edit-pencil"
+                    onClick={() => {
+                      if (isProjects && isProjects.length > 0) {
+                        handleEditProjectItem(isProjects[0]);
+                      } else {
+                        handleAddNewProject();
+                      }
+                    }}
+                    title="Edit Projects"
+                  >
+                    <MdEdit size={14} />
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-section-action"
+                  onClick={handleAddNewProject}
+                >
+                  <Plus size={13} /> Add Project
+                </button>
+              </div>
+
+              {isProjects && isProjects.length > 0 ? (
+                <div className="projects-list-wrap">
+                  {isProjects.map((proj, idx) => {
+                    const title = proj.project_title || proj.projectTitle || proj.title || "Project";
+                    const client = proj.company_name || proj.projectClient || proj.client || "";
+                    const pType = (proj.project_type || proj.projectType) ? ` (${proj.project_type || proj.projectType})` : "";
+                    const dates = proj.start_date
+                      ? `${String(proj.start_date).slice(0, 10)} - ${proj.end_date ? String(proj.end_date).slice(0, 10) : "Present"}`
+                      : (proj.projectWorkingFrom ? `${proj.projectWorkingFrom} - ${proj.projectWorkingTill || "Present"}` : (proj.projectStartDate ? `${proj.projectStartDate} - ${proj.projectEndDate || "Present"}` : ""));
+                    const desc = proj.description || proj.projectDescription || "";
+                    const link = proj.projectUrl || proj.link;
+                    const skills = proj.skillsUsed ? (Array.isArray(proj.skillsUsed) ? proj.skillsUsed : proj.skillsUsed.split(",")) : [];
+
+                    return (
+                      <div key={proj.id || proj.project_id || idx} className="project-item">
+                        <div className="project-info" style={{ width: "100%" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                            <div>
+                              <h4 className="project-title">{title}{client ? ` - ${client}` : ""}{pType}</h4>
+                              {skills.length > 0 && (
+                                <div className="project-tags">
+                                  {skills.map((s, sIdx) => (
+                                    <span key={sIdx} className="project-tag">{typeof s === "string" ? s.trim() : s}</span>
+                                  ))}
+                                </div>
+                              )}
+                              {dates && (
+                                <div className="project-date">
+                                  <Calendar size={11} />
+                                  <span>{dates}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span
+                                className="section-edit-pencil"
+                                style={{ opacity: 0.8, cursor: "pointer" }}
+                                onClick={() => handleEditProjectItem(proj)}
+                                title="Edit this project"
+                              >
+                                <MdEdit size={13} />
+                              </span>
+                              <Popconfirm
+                                title="Are you sure you want to remove this project?"
+                                description="This will permanently delete this project."
+                                onConfirm={() => handleDeleteCompany(proj.id)}
+                                okText="Yes, Remove"
+                                cancelText="Cancel"
+                                okButtonProps={{ danger: true }}
+                              >
+                                <span
+                                  className="section-edit-pencil"
+                                  style={{ opacity: 0.8, cursor: "pointer", color: "#ef4444" }}
+                                  title="Remove this project"
+                                >
+                                  <Trash2 size={13} />
+                                </span>
+                              </Popconfirm>
+                            </div>
+                          </div>
+                          {desc && <p className="project-desc">{desc}</p>}
+                          {link && (
+                            <a href={link.startsWith("http") ? link : `https://${link}`} target="_blank" rel="noreferrer" className="project-link">
+                              View Project <ExternalLink size={12} />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">No projects added yet. Showcase personal or work projects to demonstrate your practical skills.</p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={handleAddNewProject}
+                  >
+                    <Plus size={13} /> Add Project
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 7. Certifications Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <Award size={16} className="section-header-icon" />
+                  <h3 className="section-title">Certifications</h3>
+                  <span
+                    className="section-edit-pencil"
+                    onClick={() => {
+                      setActiveTab("certifications");
+                      showDrawer();
+                    }}
+                    title="Manage Certifications"
+                  >
+                    <MdEdit size={14} />
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-section-action"
+                  onClick={() => {
+                    setActiveTab("certifications");
+                    showDrawer();
+                  }}
+                >
+                  <Plus size={13} /> Add Certification
+                </button>
+              </div>
+
+              {certifications && certifications.length > 0 ? (
+                <div className="cert-list-wrap">
+                  {certifications.map((cert, idx) => (
+                    <div key={idx} className="cert-item">
+                      <div className="cert-left">
+                        <div
+                          className="cert-icon-box"
+                          style={{
+                            background: idx % 3 === 0 ? "#ecfeff" : idx % 3 === 1 ? "#fefce8" : "#faf5ff",
+                            color: idx % 3 === 0 ? "#06b6d4" : idx % 3 === 1 ? "#ca8a04" : "#9333ea"
+                          }}
+                        >
+                          <Award size={18} />
+                        </div>
+                        <div>
+                          <h4 className="cert-title">{cert.title || cert.name}</h4>
+                          <div className="cert-issued">
+                            {cert.issuer ? `Issued by ${cert.issuer}` : ""}{cert.year ? `, ${cert.year}` : ""}
+                          </div>
+                        </div>
+                      </div>
+                      {cert.url && (
+                        <a
+                          href={cert.url.startsWith("http") ? cert.url : `https://${cert.url}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn-section-action"
+                          style={{ textDecoration: "none" }}
+                        >
+                          View Credential
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">No certifications added yet. Add your professional licenses, courses, and certifications.</p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={() => {
+                      setActiveTab("certifications");
+                      showDrawer();
+                    }}
+                  >
+                    <Plus size={13} /> Add Certification
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 8. Accomplishments Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <Trophy size={16} className="section-header-icon" />
+                  <h3 className="section-title">Accomplishments</h3>
+                  <span
+                    className="section-edit-pencil"
+                    onClick={() => {
+                      setActiveTab("accomplishments");
+                      showDrawer();
+                    }}
+                    title="Manage Accomplishments"
+                  >
+                    <MdEdit size={14} />
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-section-action"
+                  onClick={() => {
+                    setActiveTab("accomplishments");
+                    showDrawer();
+                  }}
+                >
+                  <Plus size={13} /> Add
+                </button>
+              </div>
+
+              {accomplishments && accomplishments.length > 0 ? (
+                <div className="accomplishments-list-wrap">
+                  {accomplishments.map((acc, idx) => {
+                    const text = typeof acc === "string" ? acc : acc.title || acc.description || "";
+                    const icon = typeof acc === "object" && acc.icon ? acc.icon : "🏆";
+                    return (
+                      <div key={idx} className="accomplishment-item">
+                        <span className="accomplishment-icon">{icon}</span>
+                        <span>{text}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">No accomplishments added yet. Highlight milestones, awards, or key achievements.</p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={() => {
+                      setActiveTab("accomplishments");
+                      showDrawer();
+                    }}
+                  >
+                    <Plus size={13} /> Add Accomplishment
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* 9. Languages Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <Globe size={16} className="section-header-icon" />
+                  <h3 className="section-title">Languages</h3>
+                  <span
+                    className="section-edit-pencil"
+                    onClick={() => {
+                      setActiveTab("languages");
+                      showDrawer();
+                    }}
+                    title="Manage Languages"
+                  >
+                    <MdEdit size={14} />
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="btn-section-action"
+                  onClick={() => {
+                    setActiveTab("languages");
+                    showDrawer();
+                  }}
+                >
+                  <Plus size={13} /> Add Language
+                </button>
+              </div>
+
+              {languages && languages.length > 0 ? (
+                <div className="languages-wrap">
+                  {languages.map((item, idx) => {
+                    const langName = typeof item === "string" ? item : item.language;
+                    const prof = typeof item === "object" && item.proficiency ? ` (${item.proficiency})` : "";
+                    return (
+                      <span key={idx} className="language-pill">
+                        {langName}{prof}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-profile-section">
+                  <p className="empty-section-text">No languages added yet. Add languages you can read, write, or speak.</p>
+                  <button
+                    type="button"
+                    className="btn-section-action"
+                    onClick={() => {
+                      setActiveTab("languages");
+                      showDrawer();
+                    }}
+                  >
+                    <Plus size={13} /> Add Language
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          {/* ================= RIGHT COLUMN ================= */}
+          <div className="profile-col-right">
+
+            {/* 1. Profile Completeness Card */}
+            <div className="section-card">
+              <div className="completeness-top">
+                <div className="donut-chart-wrap">
+                  <svg className="donut-svg" viewBox="0 0 60 60">
+                    <circle className="donut-track" cx="30" cy="30" r="24" />
+                    <circle
+                      className="donut-bar"
+                      cx="30"
+                      cy="30"
+                      r="24"
+                      style={{ strokeDashoffset: profileDonutOffset }}
+                    />
+                  </svg>
+                  <div className="donut-center-text">{profileCompletionPercentage}%</div>
+                </div>
+                <div className="completeness-header-text">
+                  <h4>Profile completeness</h4>
+                  <span>
+                    {profileCompletionPercentage === 100
+                      ? "All completed!"
+                      : profileCompletionPercentage >= 70
+                        ? "Great progress!"
+                        : "Complete your profile"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="checklist-list">
+                {completenessChecks.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="checklist-item"
+                    style={{ cursor: "pointer" }}
+                    onClick={() => {
+                      setActiveTab(item.key);
+                      showDrawer();
+                    }}
+                    title={`Click to update ${item.label}`}
+                  >
+                    {item.done ? (
+                      <CheckCircle2 size={15} className="check-done-icon" />
                     ) : (
-                      <p>Section not found</p>
+                      <div className="check-todo-dot" />
+                    )}
+                    <span style={{ color: item.done ? "#1e293b" : "#64748b" }}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="btn-improve-profile"
+                onClick={() => {
+                  const firstIncomplete = completenessChecks.find((c) => !c.done);
+                  setActiveTab(firstIncomplete ? firstIncomplete.key : "basic");
+                  showDrawer();
+                }}
+              >
+                {profileCompletionPercentage === 100 ? "Update Profile" : "Improve Profile"}
+              </button>
+            </div>
+
+            {/* 2. Personal Details Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <User size={16} className="section-header-icon" />
+                  <h3 className="section-title">Personal Details</h3>
+                </div>
+                <span
+                  className="section-edit-pencil"
+                  onClick={() => {
+                    setActiveTab("basic");
+                    showDrawer();
+                  }}
+                  title="Edit Personal Details"
+                >
+                  <MdEdit size={14} />
+                </span>
+              </div>
+
+              <div className="detail-list">
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <User size={13} />
+                    <span>Full Name</span>
+                  </div>
+                  <div className="detail-value">
+                    {fname ? `${fname} ${lname || ""}` : <span className="empty-placeholder-text">Not specified</span>}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Calendar size={13} />
+                    <span>Date of Birth</span>
+                  </div>
+                  <div className="detail-value">
+                    {dob ? (
+                      dob.includes("T") ? dob.split("T")[0] : dob
+                    ) : (
+                      <span className="empty-placeholder-text">Not specified</span>
                     )}
                   </div>
                 </div>
-              </>
-            )}
-          </Drawer>
 
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <User size={13} />
+                    <span>Gender</span>
+                  </div>
+                  <div className="detail-value">
+                    {gender || <span className="empty-placeholder-text">Not specified</span>}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Award size={13} />
+                    <span>Marital Status</span>
+                  </div>
+                  <div className="detail-value">
+                    {maritalStatus || <span className="empty-placeholder-text">Not specified</span>}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <MapPin size={13} />
+                    <span>Location</span>
+                  </div>
+                  <div className="detail-value">
+                    {location && location !== "N/A" ? location : <span className="empty-placeholder-text">Not specified</span>}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* 3. Career Preferences Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <Briefcase size={16} className="section-header-icon" />
+                  <h3 className="section-title">Career Preferences</h3>
+                </div>
+                <span
+                  className="section-edit-pencil"
+                  onClick={() => {
+                    setActiveTab("preferences");
+                    showDrawer();
+                  }}
+                  title="Edit Career Preferences"
+                >
+                  <MdEdit size={14} />
+                </span>
+              </div>
+
+              <div className="detail-list">
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Briefcase size={13} />
+                    <span>Job Roles</span>
+                  </div>
+                  <div className="detail-value" title={preferredRoles || "Not specified"}>
+                    {preferredRoles || <span className="empty-placeholder-text">Not specified</span>}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Globe size={13} />
+                    <span>Job Type</span>
+                  </div>
+                  <div className="detail-value">
+                    {Array.isArray(preferredJobType) && preferredJobType.length > 0 ? (
+                      preferredJobType.join(", ")
+                    ) : preferredJobType && typeof preferredJobType === "string" ? (
+                      preferredJobType
+                    ) : (
+                      <span className="empty-placeholder-text">Not specified</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <MapPin size={13} />
+                    <span>Preferred Location</span>
+                  </div>
+                  <div className="detail-value">
+                    {preferredLocations || <span className="empty-placeholder-text">Not specified</span>}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <TrendingUp size={13} />
+                    <span>Willing to Relocate</span>
+                  </div>
+                  <div className="detail-value">
+                    {willingToRelocate || <span className="empty-placeholder-text">Not specified</span>}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Wallet size={13} />
+                    <span>Expected Salary</span>
+                  </div>
+                  <div className="detail-value">
+                    {expectedSalary ? (
+                      expectedSalary.startsWith("₹") ? expectedSalary : `₹${expectedSalary}`
+                    ) : (
+                      <span className="empty-placeholder-text">Not specified</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Wallet size={13} />
+                    <span>Current Salary</span>
+                  </div>
+                  <div className="detail-value">
+                    {currentSalary ? (
+                      currentSalary.startsWith("₹") ? currentSalary : `₹${currentSalary}`
+                    ) : (
+                      <span className="empty-placeholder-text">Not specified</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Social Links Card */}
+            {(() => {
+              const lIn = getSocialLink("Linkedin");
+              const gHub = getSocialLink("Github");
+              const pFolio = getSocialLink("Portfolio");
+              const tw = getSocialLink("Twitter");
+              const insta = getSocialLink("Instagram");
+              const fb = getSocialLink("Facebook");
+              const drb = getSocialLink("Dribbble");
+              const beh = getSocialLink("Behance");
+
+              const hasAnySocial = lIn || gHub || pFolio || tw || insta || fb || drb || beh;
+
+              return (
+                <div className="section-card">
+                  <div className="section-card-header">
+                    <div className="section-title-wrap">
+                      <Share2 size={16} className="section-header-icon" />
+                      <h3 className="section-title">Social Links</h3>
+                    </div>
+                    <span
+                      className="section-edit-pencil"
+                      onClick={() => {
+                        setActiveTab("sociallinks");
+                        showDrawer();
+                      }}
+                      title="Edit Social Links"
+                    >
+                      <MdEdit size={14} />
+                    </span>
+                  </div>
+
+                  {hasAnySocial ? (
+                    <div className="social-links-list">
+                      {lIn && (
+                        <a
+                          href={lIn.startsWith("http") ? lIn : `https://${lIn}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="social-link-item"
+                        >
+                          <div className="social-left-part">
+                            <FaLinkedinIn size={14} color="#0077b5" />
+                            <span>{lIn.replace(/^https?:\/\//, "")}</span>
+                          </div>
+                          <ExternalLink size={13} />
+                        </a>
+                      )}
+                      {gHub && (
+                        <a
+                          href={gHub.startsWith("http") ? gHub : `https://${gHub}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="social-link-item"
+                        >
+                          <div className="social-left-part">
+                            <FaGithub size={14} color="#0f172a" />
+                            <span>{gHub.replace(/^https?:\/\//, "")}</span>
+                          </div>
+                          <ExternalLink size={13} />
+                        </a>
+                      )}
+                      {pFolio && (
+                        <a
+                          href={pFolio.startsWith("http") ? pFolio : `https://${pFolio}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="social-link-item"
+                        >
+                          <div className="social-left-part">
+                            <Globe size={14} color="#10b981" />
+                            <span>{pFolio.replace(/^https?:\/\//, "")}</span>
+                          </div>
+                          <ExternalLink size={13} />
+                        </a>
+                      )}
+                      {tw && (
+                        <a
+                          href={tw.startsWith("http") ? tw : `https://${tw}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="social-link-item"
+                        >
+                          <div className="social-left-part">
+                            <FaTwitter size={14} color="#1da1f2" />
+                            <span>{tw.replace(/^https?:\/\//, "")}</span>
+                          </div>
+                          <ExternalLink size={13} />
+                        </a>
+                      )}
+                      {insta && (
+                        <a
+                          href={insta.startsWith("http") ? insta : `https://${insta}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="social-link-item"
+                        >
+                          <div className="social-left-part">
+                            <FaInstagram size={14} color="#e1306c" />
+                            <span>{insta.replace(/^https?:\/\//, "")}</span>
+                          </div>
+                          <ExternalLink size={13} />
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="empty-profile-section">
+                      <p className="empty-section-text">Add your LinkedIn, GitHub, or Portfolio links so recruiters can learn more about you.</p>
+                      <button
+                        type="button"
+                        className="btn-section-action"
+                        onClick={() => {
+                          setActiveTab("sociallinks");
+                          showDrawer();
+                        }}
+                      >
+                        <Plus size={13} /> Add Social Links
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* 5. Additional Information Card */}
+            {(() => {
+              const strengths = additionalInfo?.strengths
+                ? (Array.isArray(additionalInfo.strengths) ? additionalInfo.strengths : additionalInfo.strengths.split(","))
+                : [];
+              const interests = additionalInfo?.interests
+                ? (Array.isArray(additionalInfo.interests) ? additionalInfo.interests : additionalInfo.interests.split(","))
+                : [];
+              const aboutMe = additionalInfo?.about_me || "";
+              const hasInfo = strengths.length > 0 || interests.length > 0 || Boolean(aboutMe);
+
+              return (
+                <div className="section-card">
+                  <div className="section-card-header">
+                    <div className="section-title-wrap">
+                      <Sparkles size={16} className="section-header-icon" />
+                      <h3 className="section-title">Additional Information</h3>
+                    </div>
+                    <span
+                      className="section-edit-pencil"
+                      onClick={() => {
+                        setActiveTab("additional");
+                        showDrawer();
+                      }}
+                      title="Edit Additional Information"
+                    >
+                      <MdEdit size={14} />
+                    </span>
+                  </div>
+
+                  {hasInfo ? (
+                    <>
+                      {strengths.length > 0 && (
+                        <>
+                          <div className="info-subheading">Key Strengths</div>
+                          <div className="info-pills-wrap">
+                            {strengths.map((item, idx) => (
+                              <span key={idx} className="info-pill">
+                                {typeof item === "string" ? item.trim() : item}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {interests.length > 0 && (
+                        <>
+                          <div className="info-subheading" style={{ marginTop: strengths.length > 0 ? 12 : 0 }}>Interests</div>
+                          <div className="info-pills-wrap">
+                            {interests.map((item, idx) => (
+                              <span key={idx} className="info-pill">
+                                {typeof item === "string" ? item.trim() : item}
+                              </span>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {aboutMe && (
+                        <>
+                          <div className="info-subheading" style={{ marginTop: 12 }}>About me</div>
+                          <p className="info-about-text">{aboutMe}</p>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <div className="empty-profile-section">
+                      <p className="empty-section-text">Add your key strengths, personal interests, and a short bio.</p>
+                      <button
+                        type="button"
+                        className="btn-section-action"
+                        onClick={() => {
+                          setActiveTab("additional");
+                          showDrawer();
+                        }}
+                      >
+                        <Plus size={13} /> Add Information
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
+            {/* 6. Availability Card */}
+            <div className="section-card">
+              <div className="section-card-header">
+                <div className="section-title-wrap">
+                  <Clock size={16} className="section-header-icon" />
+                  <h3 className="section-title">Availability</h3>
+                </div>
+                <span
+                  className="section-edit-pencil"
+                  onClick={() => {
+                    setActiveTab("preferences");
+                    showDrawer();
+                  }}
+                  title="Edit Availability"
+                >
+                  <MdEdit size={14} />
+                </span>
+              </div>
+
+              <div className="detail-list">
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Clock size={13} />
+                    <span>Notice Period</span>
+                  </div>
+                  <div className="detail-value">
+                    {noticePeriod || <span className="empty-placeholder-text">Immediate / Not set</span>}
+                  </div>
+                </div>
+                <div className="detail-item">
+                  <div className="detail-label">
+                    <Calendar size={13} />
+                    <span>Available From</span>
+                  </div>
+                  <div className="detail-value">
+                    {availableFrom ? (
+                      availableFrom.includes("T") ? availableFrom.split("T")[0] : availableFrom
+                    ) : (
+                      <span className="empty-placeholder-text">Immediate / Not set</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
-      </Content>
+      </div>
+
+      {/* Drawer */}
+      <Drawer
+        title={null}
+        placement="right"
+        onClose={resetFormFields}
+        open={open}
+        width={"min(1100px, 85vw)"}
+        zIndex={1060}
+        closable={false}
+        className="user_details_drawer"
+        rootClassName="user_details_drawer"
+        styles={{
+          header: { display: "none" },
+          body: { padding: 0, height: "100%" },
+          wrapper: { zIndex: 1060 },
+          mask: { zIndex: 1059 },
+        }}
+      >
+        {loading ? (
+          <div style={{ padding: 40 }}><Skeleton active paragraph={{ rows: 8 }} /></div>
+        ) : (
+          <div style={{ display: "flex", height: "100vh", background: "#fff" }}>
+            {/* ── LEFT SIDEBAR ── */}
+            <div className="drawer-sidebar">
+              {/* Drawer Header */}
+              <div className="drawer-sidebar-header">
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div className="drawer-sidebar-logo">
+                    <MdEdit size={16} color="#fff" />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: "#0f172a" }}>Edit Profile</div>
+                    <div style={{ fontSize: 12, color: "#94a3b8" }}>Update your details</div>
+                  </div>
+                </div>
+                <button className="drawer-close-btn" onClick={resetFormFields}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Progress */}
+              <div className="drawer-progress-block">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#475569" }}>Profile Completion</span>
+                  <span style={{
+                    fontSize: 12, fontWeight: 700,
+                    color: profileCompletionPercentage >= 80 ? "#22c55e" : profileCompletionPercentage >= 50 ? "#5f2eea" : "#f59e0b"
+                  }}>{profileCompletionPercentage}%</span>
+                </div>
+                <Progress
+                  percent={profileCompletionPercentage}
+                  size="small"
+                  showInfo={false}
+                  strokeColor={profileCompletionPercentage >= 80 ? "#22c55e" : "#5f2eea"}
+                  trailColor="#f1f5f9"
+                />
+              </div>
+
+              {/* Navigation Items */}
+              <nav className="drawer-nav">
+                {items.map((item) => {
+                  const isActive = activeTab === item.key;
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      className={`drawer-nav-item ${isActive ? "active" : ""}`}
+                      onClick={() => {
+                        setActiveTab(item.key);
+                        setDetailsLoading(true);
+                        setTimeout(() => setDetailsLoading(false), 700);
+                      }}
+                    >
+                      <span className="drawer-nav-label">{item.label}</span>
+                      {isActive && <div className="drawer-nav-indicator" />}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* ── RIGHT CONTENT ── */}
+            <div className="drawer-content-area">
+              {/* Content Header */}
+              <div className="drawer-content-header">
+                <h2 className="drawer-content-title">
+                  {items.find(i => i.key === activeTab)?.label || "Profile Section"}
+                </h2>
+              </div>
+
+              {/* Content Body */}
+              <div className="drawer-content-body hide-scrollbar">
+                {TabContent[activeTab] ? (
+                  TabContent[activeTab]()
+                ) : (
+                  <p>Section not found</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
     </>
   );
 }

@@ -1,25 +1,32 @@
 'use client';
 import React, { useState } from "react";
-import {
-  Button,
-  Typography,
-  Col,
-  Row,
-} from "antd";
+import { Checkbox, Input } from "antd";
 import { CommonToaster } from "../Common/CommonToaster";
 import {
   MailOutlined,
   UserOutlined,
   PhoneOutlined,
   ArrowRightOutlined,
-  ArrowLeftOutlined,
   LockOutlined,
-  CheckCircleFilled,
-  ThunderboltFilled,
+  EyeOutlined,
+  EyeInvisibleOutlined,
 } from "@ant-design/icons";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowLeft,
+  Sparkles,
+  ShieldCheck,
+  BadgeCheck,
+  Zap,
+  Briefcase,
+  TrendingUp,
+  CheckCircle2,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import "../css/RegisterPage.css";
-import loginImage from "../images/hire-fresher.png";
+import logo from "../images/careerfastlogofinal.png";
+import avatar1 from "../images/priya.jpg";
+import avatar2 from "../images/rahul.jpg";
+import avatar3 from "../images/sneha.jpg";
 import { useNavigate } from "@/routing-shim";
 import {
   nameValidator,
@@ -29,11 +36,7 @@ import {
   confirmPasswordValidation,
 } from "../Common/Validation";
 import { getImageUrl } from "../utils/getImageUrl";
-import CommonInputField from "../Common/CommonInputField";
-import CommonPasswordField from "../Common/CommonPasswordField";
 import { register } from "../ApiService/action";
-
-const { Title, Text } = Typography;
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -49,43 +52,57 @@ const RegisterPage = () => {
   });
 
   const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(1);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (field, value, validator) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     if (validator) {
-      setErrors(prev => ({ ...prev, [field]: validator(value) }));
+      setErrors((prev) => ({ ...prev, [field]: validator(value) }));
+    } else {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const validateStep = (step) => {
-    let stepErrors = {};
-    if (step === 1) {
-      stepErrors.fname = nameValidator(formData.fname);
-      stepErrors.lname = nameValidator(formData.lname);
-      stepErrors.phone = phoneValidation(formData.phone);
-    } else if (step === 2) {
-      stepErrors.email = emailValidator(formData.email);
-    } else if (step === 3) {
-      stepErrors.password = passwordValidator(formData.password);
-      stepErrors.confirmPassword = confirmPasswordValidation(formData.password, formData.confirmPassword);
+  const handleSubmit = async (e) => {
+    if (e && typeof e.preventDefault === "function") {
+      e.preventDefault();
     }
 
-    setErrors(prev => ({ ...prev, ...stepErrors }));
-    return !Object.values(stepErrors).some(error => error !== "");
-  };
+    const fnameErr = nameValidator(formData.fname);
+    const lnameErr = nameValidator(formData.lname);
+    const phoneErr = phoneValidation(formData.phone);
+    const emailErr = emailValidator(formData.email);
+    const passErr = passwordValidator(formData.password);
+    const confirmPassErr = confirmPasswordValidation(
+      formData.password,
+      formData.confirmPassword
+    );
 
-  const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => prev + 1);
+    if (
+      fnameErr ||
+      lnameErr ||
+      phoneErr ||
+      emailErr ||
+      passErr ||
+      confirmPassErr
+    ) {
+      setErrors({
+        fname: fnameErr,
+        lname: lnameErr,
+        phone: phoneErr,
+        email: emailErr,
+        password: passErr,
+        confirmPassword: confirmPassErr,
+      });
+      CommonToaster("Please fill in all required fields correctly.", "error");
+      return;
     }
-  };
 
-  const prevStep = () => setCurrentStep(prev => prev - 1);
-
-  const handleSubmit = async () => {
-    if (!validateStep(3)) return;
+    if (!agreeTerms) {
+      CommonToaster("Please agree to the Terms of Service to proceed.", "error");
+      return;
+    }
 
     const registerload = {
       first_name: formData.fname,
@@ -105,248 +122,459 @@ const RegisterPage = () => {
 
       setTimeout(() => {
         setIsLoading(false);
-        CommonToaster("Candidate registered successfully!", "success");
+        CommonToaster("Candidate registered successfully! Please sign in.", "success");
         navigate("/login");
-      }, 1000);
+      }, 800);
     } catch (error) {
       setIsLoading(false);
-      const errorMsg = error.response?.data?.details || error.response?.data?.message || error.message || "Registration failed.";
+      const errorMsg =
+        error.response?.data?.details ||
+        error.response?.data?.message ||
+        error.message ||
+        "Registration failed. Please try again.";
       CommonToaster(errorMsg, "error");
     }
   };
 
-  const steps = [
-    { title: "Basic Info", icon: <UserOutlined /> },
-    { title: "Account", icon: <MailOutlined /> },
-    { title: "Security", icon: <LockOutlined /> },
-  ];
-
   return (
-    <div className="register-page-wrapper">
-      <div className="background-shapes">
-        <div className="shape shape-1"></div>
-        <div className="shape shape-2"></div>
-        <div className="shape shape-3"></div>
-      </div>
+    <div className="cf-register-wrapper">
+      {/* Background Subtle Gradient & Technical Grid */}
+      <div className="cf-bg-ambient-light"></div>
+      <div className="cf-bg-grid-overlay"></div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="register-main-container"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="cf-register-card"
       >
-        <Row>
-          <Col xs={24} lg={13}>
-            <div className="register-form-side">
-              {/* Header */}
-              <div className="register-header">
-                <Title level={1} className="premium-title">Join CareerFast</Title>
-                <Text className="premium-subtitle">Experience a smarter way to get hired.</Text>
-              </div>
-
-              {/* Step Progress */}
-              <div className="step-progress-bar">
-                {steps.map((step, idx) => (
-                  <React.Fragment key={idx}>
-                    <div className={`step-item ${currentStep > idx + 1 ? "completed" : currentStep === idx + 1 ? "active" : ""}`}>
-                      <div className="step-icon-circle">
-                        {currentStep > idx + 1 ? <CheckCircleFilled /> : step.icon}
-                      </div>
-                      <span className="step-label">{step.title}</span>
-                    </div>
-                    {idx < steps.length - 1 && <div className={`step-line ${currentStep > idx + 1 ? "filled" : ""}`}></div>}
-                  </React.Fragment>
-                ))}
-              </div>
-
-              <div className="form-content-area">
-                <AnimatePresence mode="wait">
-                  {currentStep === 1 && (
-                    <motion.div
-                      key="step1"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="form-step-container"
-                    >
-                      <div className="form-grid">
-                        <CommonInputField
-                          label="First Name"
-                          mandatory={true}
-                          placeholder="John"
-                          prefix={<UserOutlined />}
-                          value={formData.fname}
-                          onChange={(e) => handleInputChange("fname", e.target.value, nameValidator)}
-                          error={errors.fname}
-                        />
-                        <CommonInputField
-                          label="Last Name"
-                          mandatory={true}
-                          placeholder="Doe"
-                          prefix={<UserOutlined />}
-                          value={formData.lname}
-                          onChange={(e) => handleInputChange("lname", e.target.value, nameValidator)}
-                          error={errors.lname}
-                        />
-                        <div className="full-width">
-                          <CommonInputField
-                            label="Phone Number"
-                            mandatory={true}
-                            placeholder="9876543210"
-                            prefix={<PhoneOutlined />}
-                            value={formData.phone}
-                            onChange={(e) => handleInputChange("phone", e.target.value, phoneValidation)}
-                            error={errors.phone}
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {currentStep === 2 && (
-                    <motion.div
-                      key="step2"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="form-step-container"
-                    >
-                      <div className="full-width">
-                        <CommonInputField
-                          label="Email Address"
-                          mandatory={true}
-                          placeholder="john@example.com"
-                          prefix={<MailOutlined />}
-                          value={formData.email}
-                          onChange={(e) => handleInputChange("email", e.target.value, emailValidator)}
-                          error={errors.email}
-                        />
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {currentStep === 3 && (
-                    <motion.div
-                      key="step3"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="form-step-container"
-                    >
-                      <div className="form-grid">
-                        <div className="full-width">
-                          <CommonPasswordField
-                            label="Password"
-                            mandatory={true}
-                            placeholder="••••••••"
-                            value={formData.password}
-                            onChange={(e) => handleInputChange("password", e.target.value, passwordValidator)}
-                            error={errors.password}
-                          />
-                        </div>
-                        <div className="full-width">
-                          <CommonPasswordField
-                            label="Confirm Password"
-                            mandatory={true}
-                            placeholder="••••••••"
-                            value={formData.confirmPassword}
-                            onChange={(e) => handleInputChange("confirmPassword", e.target.value, (val) => confirmPasswordValidation(formData.password, val))}
-                            error={errors.confirmPassword}
-                          />
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="register-footer-btns">
-                {currentStep > 1 && (
-                  <Button
-                    className="prev-btn"
-                    icon={<ArrowLeftOutlined />}
-                    onClick={prevStep}
-                  >
-                    Back
-                  </Button>
-                )}
-
-                {currentStep < 3 ? (
-                  <Button
-                    type="primary"
-                    className="next-btn"
-                    onClick={nextStep}
-                  >
-                    Continue <ArrowRightOutlined />
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    className="submit-btn"
-                    loading={isLoading}
-                    onClick={handleSubmit}
-                  >
-                    {isLoading ? "Creating Account..." : "Complete Registration"}
-                  </Button>
-                )}
-              </div>
+        {/* ================= LEFT SIDE: REGISTRATION FORM ================= */}
+        <div className="cf-register-form-column">
+          {/* Top Navigation Row */}
+          <div className="cf-top-nav-row">
+            <button
+              type="button"
+              className="cf-back-link"
+              onClick={() => navigate("/")}
+              title="Return to Homepage"
+            >
+              <ArrowLeft size={15} />
+              <span>Back to Home</span>
+            </button>
+            <div className="cf-portal-badge">
+              <span className="cf-portal-dot"></span>
+              <span>Candidate Portal</span>
             </div>
-          </Col>
+          </div>
 
-          <Col xs={0} lg={11}>
-            <div className="register-visual-side">
-              <div className="visual-overlay"></div>
+          <div className="cf-form-main-content">
+            {/* Brand Header */}
+            <div className="cf-brand-header">
+              <img
+                src={getImageUrl(logo)}
+                alt="CareerFast"
+                className="cf-brand-logo"
+              />
+            </div>
 
-              <div className="visual-content-new">
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="visual-header"
-                >
-                  <div className="mini-badge">
-                    <ThunderboltFilled /> <span>The Future of Hiring</span>
+            {/* Heading */}
+            <div className="cf-heading-block">
+              <h1 className="cf-title">Create your account</h1>
+              <p className="cf-subtitle">
+                Join thousands of tech professionals landing roles at top companies.
+              </p>
+            </div>
+
+            {/* Registration Form */}
+            <form className="cf-auth-form" onSubmit={handleSubmit} noValidate>
+              {/* Row 1: First Name & Last Name */}
+              <div className="cf-grid-row">
+                <div className="cf-field-group">
+                  <label className="cf-label" htmlFor="fname-input">
+                    First Name
+                  </label>
+                  <div
+                    className={`cf-input-box ${
+                      errors.fname ? "cf-has-error" : ""
+                    }`}
+                  >
+                    <UserOutlined className="cf-field-icon" />
+                    <input
+                      id="fname-input"
+                      type="text"
+                      name="fname"
+                      className="cf-native-input"
+                      placeholder="e.g. Rahul"
+                      value={formData.fname}
+                      onChange={(e) =>
+                        handleInputChange("fname", e.target.value, nameValidator)
+                      }
+                      autoComplete="given-name"
+                    />
                   </div>
-                  <Title level={2} style={{ color: 'white', margin: '12px 0 10px', fontSize: '32px', fontWeight: '600' }}>
-                    Join the Elite Network of Professionals
-                  </Title>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px', display: 'block', maxWidth: '380px', lineHeight: '1.6' }}>
-                    Connect with top companies and accelerate your career growth with our AI-driven job platform.
-                  </Text>
-                </motion.div>
-
-                <div className="illustration-wrapper">
-                  <img src={getImageUrl(loginImage)} alt="Illustration" className="main-illustration" />
+                  {errors.fname && (
+                    <span className="cf-error-msg">{errors.fname}</span>
+                  )}
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="visual-footer-stats"
-                >
-                  <div className="stat-item">
-                    <span className="stat-value">10k+</span>
-                    <span className="stat-label">Jobs Posted</span>
+                <div className="cf-field-group">
+                  <label className="cf-label" htmlFor="lname-input">
+                    Last Name
+                  </label>
+                  <div
+                    className={`cf-input-box ${
+                      errors.lname ? "cf-has-error" : ""
+                    }`}
+                  >
+                    <UserOutlined className="cf-field-icon" />
+                    <input
+                      id="lname-input"
+                      type="text"
+                      name="lname"
+                      className="cf-native-input"
+                      placeholder="e.g. Sharma"
+                      value={formData.lname}
+                      onChange={(e) =>
+                        handleInputChange("lname", e.target.value, nameValidator)
+                      }
+                      autoComplete="family-name"
+                    />
                   </div>
-                  <div className="stat-divider"></div>
-                  <div className="stat-item">
-                    <span className="stat-value">500+</span>
-                    <span className="stat-label">Companies</span>
+                  {errors.lname && (
+                    <span className="cf-error-msg">{errors.lname}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 2: Email & Phone */}
+              <div className="cf-grid-row">
+                <div className="cf-field-group">
+                  <label className="cf-label" htmlFor="email-input">
+                    Email Address
+                  </label>
+                  <div
+                    className={`cf-input-box ${
+                      errors.email ? "cf-has-error" : ""
+                    }`}
+                  >
+                    <MailOutlined className="cf-field-icon" />
+                    <input
+                      id="email-input"
+                      type="email"
+                      name="email"
+                      className="cf-native-input"
+                      placeholder="name@example.com"
+                      value={formData.email}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value, emailValidator)
+                      }
+                      autoComplete="email"
+                    />
                   </div>
-                  <div className="stat-divider"></div>
-                  <div className="stat-item">
-                    <div className="avatar-group-small">
-                      <img src="https://i.pravatar.cc/150?u=1" alt="u1" />
-                      <img src="https://i.pravatar.cc/150?u=2" alt="u2" />
-                      <div className="avatar-more-small">+5k</div>
-                    </div>
+                  {errors.email && (
+                    <span className="cf-error-msg">{errors.email}</span>
+                  )}
+                </div>
+
+                <div className="cf-field-group">
+                  <label className="cf-label" htmlFor="phone-input">
+                    Phone Number
+                  </label>
+                  <div
+                    className={`cf-input-box ${
+                      errors.phone ? "cf-has-error" : ""
+                    }`}
+                  >
+                    <PhoneOutlined className="cf-field-icon" />
+                    <span className="cf-phone-prefix">+91</span>
+                    <input
+                      id="phone-input"
+                      type="tel"
+                      name="phone"
+                      className="cf-native-input"
+                      placeholder="9876543210"
+                      maxLength={10}
+                      value={formData.phone}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value, phoneValidation)
+                      }
+                      autoComplete="tel"
+                    />
                   </div>
-                </motion.div>
+                  {errors.phone && (
+                    <span className="cf-error-msg">{errors.phone}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 3: Password & Confirm Password */}
+              <div className="cf-grid-row">
+                <div className="cf-field-group">
+                  <label className="cf-label" htmlFor="password-input">
+                    Password
+                  </label>
+                  <div
+                    className={`cf-input-box ${
+                      errors.password ? "cf-has-error" : ""
+                    }`}
+                  >
+                    <LockOutlined className="cf-field-icon" />
+                    <Input.Password
+                      id="password-input"
+                      name="password"
+                      placeholder="Min. 8 characters"
+                      value={formData.password}
+                      onChange={(e) =>
+                        handleInputChange(
+                          "password",
+                          e.target.value,
+                          passwordValidator
+                        )
+                      }
+                      className="cf-antd-pass"
+                      variant="borderless"
+                      iconRender={(visible) =>
+                        visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
+                      }
+                    />
+                  </div>
+                  {errors.password && (
+                    <span className="cf-error-msg">{errors.password}</span>
+                  )}
+                </div>
+
+                <div className="cf-field-group">
+                  <label className="cf-label" htmlFor="confirm-password-input">
+                    Confirm Password
+                  </label>
+                  <div
+                    className={`cf-input-box ${
+                      errors.confirmPassword ? "cf-has-error" : ""
+                    }`}
+                  >
+                    <LockOutlined className="cf-field-icon" />
+                    <Input.Password
+                      id="confirm-password-input"
+                      name="confirmPassword"
+                      placeholder="Re-enter password"
+                      value={formData.confirmPassword}
+                      onChange={(e) =>
+                        handleInputChange("confirmPassword", e.target.value, (val) =>
+                          confirmPasswordValidation(formData.password, val)
+                        )
+                      }
+                      className="cf-antd-pass"
+                      variant="borderless"
+                      iconRender={(visible) =>
+                        visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
+                      }
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <span className="cf-error-msg">{errors.confirmPassword}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Terms Checkbox */}
+              <div className="cf-terms-row">
+                <label className="cf-terms-label">
+                  <Checkbox
+                    checked={agreeTerms}
+                    onChange={(e) => setAgreeTerms(e.target.checked)}
+                    className="cf-custom-checkbox"
+                  />
+                  <span className="cf-terms-text">
+                    I agree to the{" "}
+                    <button
+                      type="button"
+                      className="cf-link-btn"
+                      onClick={() => navigate("/termsofuse")}
+                    >
+                      Terms of Service
+                    </button>{" "}
+                    and{" "}
+                    <button
+                      type="button"
+                      className="cf-link-btn"
+                      onClick={() => navigate("/privacypolicy")}
+                    >
+                      Privacy Policy
+                    </button>
+                  </span>
+                </label>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="cf-submit-btn"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="cf-loading-text">
+                    <span className="cf-spinner"></span>
+                    Creating Account...
+                  </span>
+                ) : (
+                  <>
+                    <span>Create Candidate Account</span>
+                    <ArrowRightOutlined className="cf-btn-arrow" />
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Form Footer */}
+          <div className="cf-form-bottom">
+            <div className="cf-signup-footer">
+              <span>Already have an account?</span>
+              <button
+                type="button"
+                className="cf-signup-link"
+                onClick={() => navigate("/login")}
+              >
+                Sign in
+              </button>
+            </div>
+            <div className="cf-security-guarantee">
+              <ShieldCheck size={13} className="cf-shield-icon" />
+              <span>Encrypted 256-bit candidate data protection</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= RIGHT SIDE: HERO VISUAL ================= */}
+        <div className="cf-hero-column">
+          {/* Subtle Ambient Glow Overlays */}
+          <div className="cf-hero-glow cf-glow-1"></div>
+          <div className="cf-hero-glow cf-glow-2"></div>
+          <div className="cf-hero-grid-pattern"></div>
+
+          {/* Top Header */}
+          <div className="cf-hero-top">
+            <div className="cf-hero-tag">
+              <Sparkles size={12} className="cf-sparkle-icon" />
+              <span>Fast-Track Your Tech Career</span>
+            </div>
+            <h2 className="cf-hero-heading">
+              Get discovered by verified hiring teams
+            </h2>
+            <p className="cf-hero-desc">
+              Join 50,000+ candidates who skip recruitment black holes and connect directly with engineering leaders.
+            </p>
+          </div>
+
+          {/* Centerpiece: Platform Benefits Showcase Card */}
+          <div className="cf-showcase-stage">
+            <div className="cf-preview-card">
+              <div className="cf-preview-card-header">
+                <div className="cf-preview-company-badge">
+                  <div className="cf-benefit-icon-badge">
+                    <Zap size={18} className="cf-bolt-icon" />
+                  </div>
+                  <div>
+                    <div className="cf-preview-company-name">CareerFast Talent Pass</div>
+                    <div className="cf-preview-location">Active Profile Status</div>
+                  </div>
+                </div>
+                <div className="cf-preview-match-pill">
+                  <span className="cf-pulse-dot"></span>
+                  <span>Fast-Track</span>
+                </div>
+              </div>
+
+              {/* Benefits Checklist */}
+              <div className="cf-benefits-list">
+                <div className="cf-benefit-item">
+                  <CheckCircle2 size={16} className="cf-benefit-check" />
+                  <span>Direct recruiter outreach from Google, Amazon & top startups</span>
+                </div>
+                <div className="cf-benefit-item">
+                  <CheckCircle2 size={16} className="cf-benefit-check" />
+                  <span>Transparent compensation insights from ₹18L to ₹60L PA</span>
+                </div>
+                <div className="cf-benefit-item">
+                  <CheckCircle2 size={16} className="cf-benefit-check" />
+                  <span>Priority interview shortlisting with verified partner badges</span>
+                </div>
+              </div>
+
+              <div className="cf-preview-footer">
+                <div className="cf-preview-recruiter">
+                  <Briefcase size={13} className="cf-briefcase-icon" />
+                  <span>10,000+ Active tech openings available today</span>
+                </div>
+                <span className="cf-preview-verified-badge">
+                  <BadgeCheck size={14} />
+                  Verified
+                </span>
               </div>
             </div>
-          </Col>
-        </Row>
+
+            {/* Candidate Testimonial Proof Strip */}
+            <div className="cf-placement-badge">
+              <div className="cf-avatar-stack">
+                <img
+                  src={getImageUrl(avatar1)}
+                  alt="Candidate Priya"
+                  className="cf-avatar-img"
+                />
+                <img
+                  src={getImageUrl(avatar2)}
+                  alt="Candidate Rahul"
+                  className="cf-avatar-img"
+                />
+                <img
+                  src={getImageUrl(avatar3)}
+                  alt="Candidate Sneha"
+                  className="cf-avatar-img"
+                />
+                <span className="cf-avatar-count">+50k</span>
+              </div>
+              <div className="cf-placement-text">
+                <span className="cf-placement-bold">
+                  "Got 3 interview calls in my first week"
+                </span>
+                <span className="cf-placement-sub">
+                  Rahul V. landed an SDE role with a 75% salary hike
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Stats & Trust Strip */}
+          <div className="cf-hero-bottom">
+            <div className="cf-hero-stats-row">
+              <div className="cf-stat-cell">
+                <span className="cf-stat-number">10,000+</span>
+                <span className="cf-stat-title">Verified Jobs</span>
+              </div>
+              <div className="cf-stat-sep"></div>
+              <div className="cf-stat-cell">
+                <span className="cf-stat-number">500+</span>
+                <span className="cf-stat-title">Top Companies</span>
+              </div>
+              <div className="cf-stat-sep"></div>
+              <div className="cf-stat-cell">
+                <span className="cf-stat-number">₹18.5L</span>
+                <span className="cf-stat-title">Avg. Placed CTC</span>
+              </div>
+            </div>
+
+            <div className="cf-trusted-by">
+              <span className="cf-trusted-label">Trusted by engineers at</span>
+              <div className="cf-trusted-logos">
+                <span>Google</span>
+                <span>Microsoft</span>
+                <span>Amazon</span>
+                <span>TCS</span>
+                <span>Zoho</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

@@ -1,84 +1,97 @@
 'use client';
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "@/routing-shim";
-import { Layout, Menu, Progress, Avatar, Modal, Badge, Button } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import { Modal, message } from "antd";
 import "../css/Profile.css";
-import { FaUserPen } from "react-icons/fa6";
-import { FaRegHeart } from "react-icons/fa";
-import { FaListOl } from "react-icons/fa";
-import { FcApproval } from "react-icons/fc";
-import { FiEdit } from "react-icons/fi";
+import "../css/ModernCandidateProfile.css";
+import {
+  LayoutDashboard,
+  User,
+  FileCheck,
+  Bookmark,
+  Bell,
+  Award,
+  MessageSquare,
+  Briefcase,
+  Settings as SettingsIcon,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
 import WatchList from "./WatchList";
 import RecentlyViewed from "./RecentlyViewed";
 import MainProfile from "./MainProfile";
 import Settings from "./Settings";
-import "react-calendar-heatmap/dist/styles.css";
 import ProSubscription from "./ProSubscription";
 import BookMark from "./BookMark";
 import AppliedJobs from "./AppliedJobs";
 import AccountSettings from "./AccountSettings";
-import {
-  getUserProfile,
-} from "../ApiService/action";
-import { GrUserSettings } from "react-icons/gr";
-import logo from "../images/careerfastlogofinal.png";
-
-const { Sider } = Layout;
-
-const siderStyle = {
-  overflow: "auto",
-  height: "100vh",
-  position: "sticky",
-  insetInlineStart: 0,
-  top: 0,
-  bottom: 0,
-  WebkitOverflowScrolling: "touch",
-  scrollbarWidth: "none",
-  msOverflowStyle: "none",
-};
+import { getUserProfile } from "../ApiService/action";
+import Header from "@/Header/Header";
 
 export default function UserProfile() {
   const { activeTab } = useParams();
   const navigate = useNavigate();
-  const [collapsed, setCollapsed] = useState(false);
   const [sideBar, setSideBar] = useState(activeTab || "mainprofile");
   const [loginUserId, setLoginUserId] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [roleId, setRoleId] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const menuItems = [
-    { key: "mainprofile", icon: <FaUserPen />, label: "Your profile" },
-    { key: "wishlist", icon: <FaRegHeart />, label: "Wishlist" },
-    { key: "applied", icon: <FaListOl />, label: "Applied Jobs" },
-
+  const sidebarNavItems = [
     {
-      key: "accountsettings",
-      icon: <GrUserSettings />,
-      label: "Account Settings",
+      key: "dashboard",
+      icon: <LayoutDashboard size={18} />,
+      label: "Dashboard",
+      isRoute: true,
+      path: "/",
     },
-    { key: "settings", icon: <SettingOutlined />, label: "Settings" },
+    {
+      key: "mainprofile",
+      icon: <User size={18} />,
+      label: "My Profile",
+    },
+    {
+      key: "applied",
+      icon: <FileCheck size={18} />,
+      label: "Applied Jobs",
+    },
+    {
+      key: "wishlist",
+      icon: <Bookmark size={18} />,
+      label: "Saved Jobs",
+    },
+    {
+      key: "jobalerts",
+      icon: <Bell size={18} />,
+      label: "Job Alerts",
+    },
+    {
+      key: "assessments",
+      icon: <Award size={18} />,
+      label: "Assessments",
+    },
+    {
+      key: "messages",
+      icon: <MessageSquare size={18} />,
+      label: "Messages",
+      badge: 5,
+    },
     {
       key: "prosubscription",
-      icon: <FcApproval />,
-      label: (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <span>Pro Subscription</span>
-        </div>
-      ),
+      icon: <Briefcase size={18} />,
+      label: "Career Services",
+    },
+    {
+      key: "settings",
+      icon: <SettingsIcon size={18} />,
+      label: "Settings",
     },
   ];
-
-  // Simulate data loading
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     try {
@@ -86,8 +99,6 @@ export default function UserProfile() {
       if (stored) {
         const loginDetails = JSON.parse(stored);
 
-        // Let candidates (roleId === 2) and superadmin (roleId === 1) access this profile page.
-        // Recruiters (roleId === 3) should be redirected or handled elsewhere, but for now we'll allow roleId 1 and 2.
         if (loginDetails.role_id === 3) {
           if (typeof window !== 'undefined') window.location.href = "/";
           return;
@@ -123,7 +134,6 @@ export default function UserProfile() {
   }, [activeTab]);
 
   useEffect(() => {
-    console.log("loginUserId updated", loginUserId);
     if (loginUserId !== null && loginUserId !== undefined) {
       getUserProfileData();
     }
@@ -136,7 +146,6 @@ export default function UserProfile() {
 
     try {
       const response = await getUserProfile(payload);
-      console.log("getUserProfile", response);
       if (response?.data?.data) {
         const profile = response.data.data;
         const image = profile.profile_image || null;
@@ -147,74 +156,181 @@ export default function UserProfile() {
         localStorage.setItem("profileImage", image || "");
       }
     } catch (error) {
-      console.log("getuserprofile errorddd", error);
+      console.log("getuserprofile error", error);
+    }
+  };
+
+  const handleNavClick = (item) => {
+    setMobileMenuOpen(false);
+    if (item.isRoute) {
+      navigate(item.path);
+    } else {
+      setSideBar(item.key);
+      navigate(`/candidate-profile/${item.key}`);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("loginDetails");
+    localStorage.removeItem("profileImage");
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
     }
   };
 
   return (
-    <Layout className="profile-layout">
-      {/* Sidebar */}
-      <Sider
-        style={siderStyle}
-        collapsible
-        collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        width={240}
-        className="profile-sider"
-        breakpoint="lg"
-      >
-        <div className="profile-card-sidebar">
-          <div className="sidebar-logo-container" onClick={() => navigate("/")}>
-            <img src={typeof logo === 'string' ? logo : logo?.src} alt="CareerFast Logo" className="sidebar-logo" />
+    <>
+      <Header />
+      <div className="candidate-dashboard-layout">
+        {/* Mobile Header Bar */}
+        <div
+          style={{
+            display: "none",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "12px 18px",
+            background: "#ffffff",
+            borderBottom: "1px solid #eef2f6",
+            width: "100%",
+          }}
+          className="candidate-mobile-header"
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                color: "#334155",
+              }}
+            >
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+            <span style={{ fontWeight: 700, fontSize: 16, color: "#0f172a" }}>
+              CareerFast
+            </span>
           </div>
-          <div className="avatar-wrapper">
-            <Avatar
-              size={84}
-              src={avatarUrl}
-              onClick={() => setIsImageModalOpen(true)}
-              className="profile-avatar"
-            />
-            <div className="active-status-dot"></div>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #6800ad 0%, #ff7300 100%)",
+              color: "#ffffff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: 12,
+            }}
+          >
+            {fname ? `${fname[0]}${lname ? lname[0] : ""}` : "SK"}
           </div>
-          <h3 className="profile-name">
-            {fname} {lname}
-          </h3>
-          <p className="profile-email">{email}</p>
         </div>
 
-        <Menu
-          theme="light"
-          mode="inline"
-          defaultSelectedKeys={["1"]}
-          items={menuItems}
-          selectedKeys={[sideBar]}
-          onClick={(e) => navigate(`/candidate-profile/${e.key}`)}
-          className="profile-menu"
-        />
-      </Sider>
+        {/* Left Sidebar Navigation */}
+        {/*
+        <aside
+          className={`candidate-sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}
+        >
+          <ul className="candidate-sidebar-menu">
+            {sidebarNavItems.map((item) => {
+              const isActive = sideBar === item.key;
+              return (
+                <li key={item.key}>
+                  <button
+                    type="button"
+                    className={`candidate-nav-item ${isActive ? "active" : ""}`}
+                    onClick={() => handleNavClick(item)}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                    {item.badge && (
+                      <span className="candidate-nav-badge">{item.badge}</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
 
-      <Layout style={{ background: "none" }} className="profile-content-layout">
-        <div style={{ flex: 1, padding: "24px" }}>
+          <div style={{ marginTop: "auto", paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+            <button
+              type="button"
+              className="candidate-nav-item"
+              onClick={handleLogout}
+              style={{ color: "#ef4444" }}
+            >
+              <LogOut size={17} color="#ef4444" />
+              <span>Log Out</span>
+            </button>
+          </div>
+        </aside>
+        */}
+
+        {/* Main Content Area */}
+        <main className="candidate-main-content">
           {sideBar === "mainprofile" ? (
             <MainProfile />
-          ) : sideBar === "wishlist" ? (
-            <WatchList />
-          ) : sideBar === "bookmarked" ? (
-            <BookMark />
-          ) : sideBar === "viewed" ? (
-            <RecentlyViewed />
-          ) : sideBar === "settings" ? (
-            <Settings />
-          ) : sideBar === "accountsettings" ? (
-            <AccountSettings />
-          ) : sideBar === "prosubscription" ? (
-            <ProSubscription />
-          ) : sideBar === "applied" ? (
-            <AppliedJobs />
           ) : (
-            ""
+            <div
+              style={{
+                background: "#ffffff",
+                borderRadius: "14px",
+                border: "1px solid #e2e8f0",
+                padding: "24px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+              }}
+            >
+              {sideBar === "wishlist" ? (
+                <WatchList />
+              ) : sideBar === "bookmarked" ? (
+                <BookMark />
+              ) : sideBar === "viewed" ? (
+                <RecentlyViewed />
+              ) : sideBar === "settings" ? (
+                <Settings />
+              ) : sideBar === "accountsettings" ? (
+                <AccountSettings />
+              ) : sideBar === "prosubscription" ? (
+                <ProSubscription />
+              ) : sideBar === "applied" ? (
+                <AppliedJobs />
+              ) : sideBar === "jobalerts" ? (
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
+                    Job Alerts
+                  </h3>
+                  <p style={{ color: "#64748b", fontSize: 13 }}>
+                    You currently have no new alerts configured. Matching job notifications will appear here.
+                  </p>
+                </div>
+              ) : sideBar === "assessments" ? (
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
+                    Assessments & Tests
+                  </h3>
+                  <p style={{ color: "#64748b", fontSize: 13 }}>
+                    Take skill tests to earn badges and showcase verified skills to prospective employers.
+                  </p>
+                </div>
+              ) : sideBar === "messages" ? (
+                <div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>
+                    Recruiter Messages
+                  </h3>
+                  <p style={{ color: "#64748b", fontSize: 13 }}>
+                    You have 5 unread messages from recruiters.
+                  </p>
+                </div>
+              ) : (
+                ""
+              )}
+            </div>
           )}
-        </div>
+        </main>
 
         {/* Modal for image preview */}
         <Modal
@@ -236,7 +352,8 @@ export default function UserProfile() {
             />
           )}
         </Modal>
-      </Layout>
-    </Layout>
+      </div>
+    </>
+
   );
 }

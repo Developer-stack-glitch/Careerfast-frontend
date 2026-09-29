@@ -7,6 +7,7 @@ import { getBlogs } from "../ApiService/action";
 import { Card, Col, Row, Skeleton, Input, Tag, Empty, Pagination } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "../Header/Header";
+import CommonLoader from "../Common/CommonLoader";
 import { useNavigate } from "@/routing-shim";
 import { SearchOutlined, ClockCircleOutlined, ArrowRightOutlined, TagOutlined } from "@ant-design/icons";
 import "../css/Blogs.css";
@@ -76,6 +77,10 @@ export default function Blogs() {
         hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0 }
     };
+
+    if (loading) {
+        return <CommonLoader text="Loading Career Articles" />;
+    }
 
     return (
         <div className="blogs-page-wrapper">

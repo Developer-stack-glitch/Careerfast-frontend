@@ -5,6 +5,7 @@ import "../css/Header.css";
 import "../css/LandingPage.css";
 import "../css/LoginPage.css";
 import "../css/Footer.css";
+import "../css/CommonLoader.css";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Providers } from "./providers";

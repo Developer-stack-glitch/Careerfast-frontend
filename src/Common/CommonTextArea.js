@@ -41,7 +41,7 @@ export default function CommonTextArea({
           error ? "show-premium-input-error" : "hide-premium-input-error"
         }
       >
-        <p style={{ color: "red" }}>{label + error}</p>
+        {error && <p style={{ color: "red" }}>{`${label || ""} ${error}`.trim()}</p>}
       </div>
     </div>
   );

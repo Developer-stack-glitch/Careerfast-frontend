@@ -1,0 +1,75 @@
+{
+  "unwantedFiles": [
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\careerfastlogofinal.png",
+      "size": 142804
+    }
+  ],
+  "emptyFolders": [
+    "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\app\\admin\\candidates"
+  ],
+  "largeFiles": [
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\course_thumbnails.png",
+      "size": 707923
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\hero_illustration.png",
+      "size": 764055
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\namaste.png",
+      "size": 1058865
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\offer_banner.png",
+      "size": 546848
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\project-thumbs\\finance.jpg",
+      "size": 566239
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\project-thumbs\\hrms.jpg",
+      "size": 513484
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\project-thumbs\\rental.jpg",
+      "size": 784877
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\public\\recruiter_hero.jpg",
+      "size": 669848
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\blogs_hero.png",
+      "size": 707672
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\candidate_login_hero.png",
+      "size": 1406955
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\hrportal_logo1.png",
+      "size": 692806
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\Hyderabad.jpg",
+      "size": 939387
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\login_bg.png",
+      "size": 1851641
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\login_image.png",
+      "size": 2509658
+    },
+    {
+      "path": "c:\\Users\\dell\\Documents\\Careerfast\\careerfast-frontend\\src\\images\\recruiter_hero.jpg",
+      "size": 681569
+    }
+  ],
+  "duplicateComponents": [],
+  "unusedFiles": []
+}

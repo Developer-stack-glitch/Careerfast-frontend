@@ -1,46 +1,52 @@
 /* Premium Common Input Styles */
 
 .input-label-row {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .input-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1a202c;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
   margin: 0;
+  letter-spacing: 0.2px;
 }
 
 .required-mark {
-  color: #ff4d4f;
+  color: #ef4444;
   margin-right: 4px;
 }
 
 .premium-input {
   width: 100% !important;
-  min-height: 42px !important;
+  min-height: 44px !important;
   height: auto !important;
-  border-radius: 12px !important;
-  border: 1.5px solid #e2e8f0 !important;
-  background: #fff !important;
-  transition: all 0.3s ease !important;
-  font-size: 15px !important;
+  border-radius: 8px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  font-size: 14.5px !important;
+  color: #1e293b !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 
 .premium-input:hover {
-  border-color: #7f5af0 !important;
+  border-color: #a78bfa !important;
+  background: #fafaf9 !important;
 }
 
 .premium-input:focus,
-.ant-input-affix-wrapper-focused {
-  border-color: #5f2eea !important;
-  box-shadow: 0 0 0 4px rgba(95, 46, 234, 0.1) !important;
+.ant-input-affix-wrapper-focused,
+.premium-input.ant-input-focused {
+  border-color: #6800ad !important;
+  box-shadow: 0 0 0 4px rgba(104, 0, 173, 0.1) !important;
+  background: #ffffff !important;
 }
 
 .show-premium-input-error {
   min-height: 20px;
   margin-top: 6px;
-  animation: slideInError 0.3s ease-out;
+  animation: slideInError 0.25s ease-out;
 }
 
 .hide-premium-input-error {
@@ -48,8 +54,8 @@
 }
 
 .premium-error-text {
-  color: #ff4d4f;
-  font-size: 13px;
+  color: #ef4444;
+  font-size: 12.5px;
   font-weight: 500;
   margin: 0;
 }
@@ -78,6 +84,13 @@
   padding: 0 !important;
 }
 
-.ant-select.premium-input .ant-select-selection-placeholder {
-  line-height: 40px !important;
+.ant-select.premium-input .ant-select-selection-placeholder,
+.ant-select.premium-input .ant-select-selection-item {
+  line-height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.ant-select.premium-input .ant-select-selection-search-input {
+  height: 42px !important;
 }

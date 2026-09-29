@@ -1,0 +1,1504 @@
+/* ==========================================================================
+   CareerFast Modern Candidate Profile Styles
+   Tailored with CareerFast Official Logo Palette:
+   - Primary Signature Purple: #6800ad (Hover: #55008f, Tint: #f5effc)
+   - Energetic Accent Orange:  #ff7300 (Hover: #e66700, Tint: #fff4eb)
+   - Warm Peach Accent:       #ffd8bb
+   ========================================================================== */
+
+:root {
+  --cf-purple: #6800ad;
+  --cf-purple-hover: #55008f;
+  --cf-purple-light: #f5effc;
+  --cf-purple-subtle: rgba(104, 0, 173, 0.08);
+  --cf-purple-shadow: rgba(104, 0, 173, 0.25);
+  --cf-orange: #ff7300;
+  --cf-orange-hover: #e66700;
+  --cf-orange-light: #fff4eb;
+  --cf-orange-subtle: rgba(255, 115, 0, 0.08);
+  --cf-orange-shadow: rgba(255, 115, 0, 0.25);
+  --cf-peach: #ffd8bb;
+  --cf-primary: #6800ad;
+  --cf-primary-hover: #55008f;
+  --cf-accent: #ff7300;
+  --cf-accent-hover: #e66700;
+}
+
+.candidate-dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   Left Sidebar Navigation
+   ========================================================================== */
+.candidate-sidebar {
+  width: 220px;
+  background-color: #ffffff;
+  border-right: 1px solid #eef2f6;
+  padding: 24px 14px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+  z-index: 50;
+  scrollbar-width: none;
+}
+
+.candidate-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.candidate-sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.candidate-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #475569;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  text-decoration: none;
+}
+
+.candidate-nav-item:hover {
+  background-color: #f8fafc;
+  color: #6800ad;
+}
+
+.candidate-nav-item.active {
+  background-color: #f5effc;
+  color: #6800ad;
+  font-weight: 600;
+  border-left: 3px solid #6800ad;
+}
+
+.candidate-nav-item.active svg {
+  color: #6800ad;
+}
+
+.candidate-nav-badge {
+  background-color: #ff7300;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9999px;
+  padding: 1px 7px;
+  margin-left: auto;
+  line-height: 1.4;
+  box-shadow: 0 1px 4px rgba(255, 115, 0, 0.3);
+}
+
+/* ==========================================================================
+   Main Content Area
+   ========================================================================== */
+.candidate-main-content {
+  flex: 1;
+  padding: 20px 24px 48px;
+  max-width: 1280px;
+  margin: 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.candidate-profile-page-wrapper {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Top Header Profile Card (Exact Replica of Reference Design)
+   ========================================================================== */
+.profile-hero-card {
+  background-color: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #eef2f6;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}
+
+/* Decorative Translucent Ambient Background Shapes */
+.profile-hero-ambient-1 {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(104, 0, 173, 0.06) 0%, transparent 70%);
+  top: -30px;
+  right: 20px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.profile-hero-ambient-2 {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 115, 0, 0.05) 0%, transparent 70%);
+  bottom: 10px;
+  right: 70px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Upper Main Section */
+.profile-hero-main {
+  position: relative;
+  z-index: 1;
+  padding: 26px 28px 18px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.profile-hero-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  min-width: 0;
+}
+
+/* Avatar Wrapper with Status Dot */
+.profile-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.profile-avatar-circle {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 2.5px solid rgba(104, 0, 173, 0.22);
+  box-shadow: 0 4px 14px rgba(104, 0, 173, 0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+
+.profile-avatar-circle span {
+  font-size: 26px;
+  font-weight: 700;
+  color: #6800ad;
+  background: #f5effc;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-online-dot {
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #10b981;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.3);
+  z-index: 2;
+}
+
+/* Candidate Information */
+.profile-hero-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.profile-candidate-name {
+  font-size: 24px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+
+.profile-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.profile-status-badge {
+  background-color: #ecfdf5;
+  color: #10b981;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  padding: 2.5px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.2;
+}
+
+.profile-status-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #10b981;
+  border-radius: 50%;
+}
+
+.profile-candidate-title {
+  font-size: 13.5px;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 5px;
+}
+
+.profile-candidate-company {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+/* Meta Details Row (Location | Phone | Email) */
+.profile-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: #64748b;
+}
+
+.profile-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+}
+
+.profile-meta-item svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.profile-meta-divider {
+  color: #cbd5e1;
+  font-size: 12px;
+  user-select: none;
+  margin: 0 1px;
+}
+
+/* Social Links Row */
+.profile-social-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 12.5px;
+}
+
+.profile-social-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.profile-social-item:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.profile-social-item.linkedin {
+  color: #0a66c2;
+}
+
+.profile-social-item.portfolio {
+  color: #6800ad;
+}
+
+/* Right Side Actions */
+.profile-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.profile-btn-icon {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-btn-icon:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.profile-btn-download {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-btn-download:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.btn-edit-profile {
+  background-color: #6800ad;
+  color: #ffffff;
+  border-radius: 8px;
+  height: 36px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.btn-edit-profile:hover {
+  background-color: #55008f;
+}
+
+/* Lower Bottom Section: Skills + 3 Key Metrics */
+.profile-hero-bottom {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid #f1f5f9;
+  padding: 14px 28px 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.profile-hero-skills {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-skill-chip {
+  background-color: #f5effc;
+  color: #6800ad;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 20px;
+  padding: 4px 12px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.hero-skill-chip:hover {
+  background-color: #ebe0f7;
+  color: #55008f;
+}
+
+.hero-skill-chip.plus-chip {
+  background-color: #f5effc;
+  color: #6800ad;
+  font-weight: 700;
+}
+
+.profile-hero-metrics {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.hero-metric-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f5effc;
+  color: #6800ad;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hero-metric-icon.green {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.hero-metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-metric-value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.hero-metric-value.green {
+  color: #10b981;
+}
+
+.hero-metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.hero-metric-divider {
+  width: 1px;
+  height: 26px;
+  background-color: #e2e8f0;
+}
+
+/* ==========================================================================
+   Two Column Grid Layout
+   ========================================================================== */
+.profile-grid-container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 20px;
+  align-items: start;
+}
+
+.profile-col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.profile-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* ==========================================================================
+   Reusable Card Styles
+   ========================================================================== */
+.section-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.section-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-header-icon {
+  color: #6800ad;
+}
+
+.section-edit-pencil {
+  color: #64748b;
+  cursor: pointer;
+  font-size: 13.5px;
+  transition: color 0.15s;
+}
+
+.section-edit-pencil:hover {
+  color: #ff7300;
+}
+
+.btn-section-action {
+  background-color: #ffffff;
+  border: 1px solid #6800ad;
+  color: #6800ad;
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-section-action:hover {
+  background-color: #f5effc;
+  border-color: #55008f;
+  color: #55008f;
+}
+
+/* ==========================================================================
+   Professional Summary
+   ========================================================================== */
+.summary-text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: #475569;
+  margin: 0;
+}
+
+.read-more-link {
+  color: #6800ad;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  display: inline-block;
+  transition: color 0.15s;
+}
+
+.read-more-link:hover {
+  color: #ff7300;
+}
+
+/* ==========================================================================
+   Resume Card
+   ========================================================================== */
+.resume-subtitle {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: -6px;
+  margin-bottom: 12px;
+}
+
+.resume-file-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resume-file-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdf-badge {
+  background-color: #ef4444;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 10px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.resume-file-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.resume-file-size {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.resume-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.resume-action-btn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.resume-action-btn:hover {
+  color: #6800ad;
+}
+
+.resume-action-btn.delete:hover {
+  color: #ef4444;
+}
+
+/* ==========================================================================
+   Key Skills Card
+   ========================================================================== */
+.skills-pills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.skill-pill {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #334155;
+  transition: all 0.15s;
+}
+
+.skill-pill:hover {
+  border-color: rgba(104, 0, 173, 0.4);
+  background-color: #f5effc;
+  color: #6800ad;
+}
+
+/* ==========================================================================
+   Work Experience Card & Timeline
+   ========================================================================== */
+.experience-timeline {
+  position: relative;
+  padding-left: 24px;
+}
+
+.experience-timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 14px;
+  bottom: 28px;
+  width: 2px;
+  background: linear-gradient(180deg, #6800ad 0%, #ff7300 100%);
+  opacity: 0.35;
+}
+
+.experience-item {
+  position: relative;
+  margin-bottom: 24px;
+  padding-left: 15px;
+}
+
+.experience-item:last-child {
+  margin-bottom: 0;
+}
+
+.experience-node-dot {
+  position: absolute;
+  left: -24px;
+  top: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #6800ad;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 2px rgba(104, 0, 173, 0.22);
+  z-index: 2;
+}
+
+.experience-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.experience-title-company {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.experience-company-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.experience-role {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.experience-duration-badge {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.experience-company-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-top: 4px;
+  margin-left: 38px;
+}
+
+.experience-meta-row {
+  font-size: 11.5px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  margin-left: 38px;
+}
+
+.experience-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.experience-bullets {
+  margin: 0 0 0 38px;
+  padding-left: 16px;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ==========================================================================
+   Education Card
+   ========================================================================== */
+.education-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.education-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.education-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.education-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #f5effc;
+  color: #6800ad;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.education-degree {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.education-college {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+.education-year {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.education-badge {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Projects Card
+   ========================================================================== */
+.project-item {
+  display: flex;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+  align-items: flex-start;
+}
+
+.project-item:last-child {
+  border-bottom: none;
+}
+
+.project-thumb-img {
+  width: 140px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+}
+
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.project-tag {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.project-date {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.project-desc {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 6px 0;
+}
+
+.project-link {
+  color: #ff7300;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+
+.project-link:hover {
+  color: #e66700;
+  text-decoration: underline;
+}
+
+.view-all-projects-link {
+  display: block;
+  text-align: center;
+  color: #6800ad;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-top: 14px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.view-all-projects-link:hover {
+  color: #ff7300;
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Certifications Card
+   ========================================================================== */
+.cert-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cert-item:last-child {
+  border-bottom: none;
+}
+
+.cert-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cert-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.cert-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.cert-issued {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   Accomplishments Card
+   ========================================================================== */
+.accomplishment-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.accomplishment-item:last-child {
+  margin-bottom: 0;
+}
+
+.accomplishment-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Languages Card
+   ========================================================================== */
+.languages-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.language-pill {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #334155;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Right Column: Profile Completeness
+   ========================================================================== */
+.completeness-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.donut-chart-wrap {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.donut-svg {
+  width: 60px;
+  height: 60px;
+  transform: rotate(-90deg);
+}
+
+.donut-track {
+  fill: none;
+  stroke: #f1f5f9;
+  stroke-width: 5;
+}
+
+.donut-bar {
+  fill: none;
+  stroke: #ff7300;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 150.8;
+  stroke-dashoffset: 22.6;
+  /* 85% */
+}
+
+.donut-center-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.completeness-header-text h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.completeness-header-text span {
+  font-size: 12px;
+  color: #ff7300;
+  font-weight: 600;
+}
+
+.checklist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #334155;
+}
+
+.check-done-icon {
+  color: #6800ad;
+  flex-shrink: 0;
+}
+
+.check-todo-icon {
+  color: #cbd5e1;
+  flex-shrink: 0;
+}
+
+.btn-improve-profile {
+  background: linear-gradient(135deg, #ff7300 0%, #ff8c2b 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 13px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(255, 115, 0, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-improve-profile:hover {
+  background: linear-gradient(135deg, #e66700 0%, #ff7300 100%);
+  box-shadow: 0 4px 12px rgba(255, 115, 0, 0.35);
+}
+
+/* ==========================================================================
+   Right Column: Key-Value Lists (Personal, Career, Availability)
+   ========================================================================== */
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.detail-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize !important;
+  letter-spacing: normal !important;
+}
+
+.detail-label svg {
+  color: #94a3b8;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #1e293b;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  line-height: 1.5;
+  width: 100%;
+  margin-left: 23px;
+  /* Aligns text with the label, bypassing the icon */
+  word-break: break-word;
+}
+
+/* ==========================================================================
+   Right Column: Social Links
+   ========================================================================== */
+.social-link-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #6800ad;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  transition: all 0.15s;
+}
+
+.social-link-item:hover {
+  background-color: #f5effc;
+  border-color: rgba(104, 0, 173, 0.3);
+  color: #ff7300;
+}
+
+.social-left-part {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+}
+
+/* ==========================================================================
+   Right Column: Additional Information
+   ========================================================================== */
+.info-subheading {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 14px 0 8px 0;
+}
+
+.info-subheading:first-child {
+  margin-top: 0;
+}
+
+.info-pills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.info-pill {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 3px 10px;
+  font-size: 11.5px;
+  color: #334155;
+  transition: all 0.15s;
+}
+
+.info-pill:hover {
+  border-color: rgba(104, 0, 173, 0.3);
+  background-color: #f5effc;
+  color: #6800ad;
+}
+
+.info-about-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #475569;
+  margin: 0;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .profile-grid-container {
+    grid-template-columns: 1fr;
+  }
+
+  .candidate-sidebar {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .candidate-dashboard-layout {
+    flex-direction: column;
+  }
+
+  .candidate-sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid #eef2f6;
+    padding: 12px;
+  }
+
+  .candidate-sidebar-menu {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .candidate-main-content {
+    padding: 16px;
+  }
+
+  .profile-hero-main {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .profile-hero-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .profile-hero-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 14px 20px 16px 20px;
+  }
+
+  .profile-hero-metrics {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-hero-metrics {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .hero-metric-divider {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Dynamic Profile Helpers & Empty States
+   ========================================================================== */
+.empty-profile-section {
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.empty-section-text {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.empty-placeholder-text {
+  font-size: 13px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.check-todo-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  flex-shrink: 0;
+}
+
+.profile-social-item.github {
+  color: #0f172a;
+}
+
+.profile-social-item.portfolio {
+  color: #10b981;
+}
+
+.profile-social-item.twitter {
+  color: #1da1f2;
+}
+
+.profile-social-item.instagram {
+  color: #e1306c;
+}
+
+.profile-social-item-add {
+  background: none;
+  border: 1px dashed #6800ad;
+  border-radius: 16px;
+  color: #6800ad;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.profile-social-item-add:hover {
+  background: #f3e8ff;
+}

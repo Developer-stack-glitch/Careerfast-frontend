@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useProfile } from '../ProfileContext';
 import StepNavigation from '../StepNavigation';
 import { Form, Input, Select, Upload, DatePicker, Row, Col, Modal, Button, App } from 'antd';
@@ -30,22 +30,46 @@ const BasicInformationStep = () => {
   const [countdown, setCountdown] = useState(0);
   const [timerActive, setTimerActive] = useState(false);
 
+  const isInitializedRef = useRef(false);
+
   useEffect(() => {
+    // If the form has already been edited by the user, do not clobber their input
+    if (isInitializedRef.current && form.isFieldsTouched()) {
+      return;
+    }
+
+    const currentValues = form.getFieldsValue();
     form.setFieldsValue({
-      firstName: profileData.basic.firstName || '',
-      lastName: profileData.basic.lastName || '',
-      email: profileData.basic.email || '',
-      mobile: profileData.basic.mobile || '',
-      city: profileData.basic.city || '',
-      state: profileData.basic.state || '',
-      dob: profileData.basic.dob ? dayjs(profileData.basic.dob) : null,
-      gender: profileData.basic.gender || undefined,
+      firstName: currentValues.firstName !== undefined && currentValues.firstName !== '' ? currentValues.firstName : (profileData.basic.firstName || ''),
+      lastName: currentValues.lastName !== undefined && currentValues.lastName !== '' ? currentValues.lastName : (profileData.basic.lastName || ''),
+      email: currentValues.email !== undefined && currentValues.email !== '' ? currentValues.email : (profileData.basic.email || ''),
+      mobile: currentValues.mobile !== undefined && currentValues.mobile !== '' ? currentValues.mobile : (profileData.basic.mobile || ''),
+      city: currentValues.city !== undefined && currentValues.city !== '' ? currentValues.city : (profileData.basic.city || ''),
+      state: currentValues.state !== undefined && currentValues.state !== '' ? currentValues.state : (profileData.basic.state || ''),
+      dob: currentValues.dob ? currentValues.dob : (profileData.basic.dob ? dayjs(profileData.basic.dob) : null),
+      gender: currentValues.gender !== undefined ? currentValues.gender : (profileData.basic.gender || undefined),
     });
 
+    if (profileData.basic.firstName || profileData.basic.email || profileData.basic.city) {
+      isInitializedRef.current = true;
+    }
+  }, [
+    profileData.basic.firstName,
+    profileData.basic.lastName,
+    profileData.basic.email,
+    profileData.basic.mobile,
+    profileData.basic.city,
+    profileData.basic.state,
+    profileData.basic.dob,
+    profileData.basic.gender,
+    form,
+  ]);
+
+  useEffect(() => {
     if (profileData.basic.isEmailVerified !== undefined) {
       setIsEmailVerified(Boolean(profileData.basic.isEmailVerified));
     }
-  }, [profileData.basic, form]);
+  }, [profileData.basic.isEmailVerified]);
 
   // Resend countdown timer
   useEffect(() => {
@@ -117,8 +141,21 @@ const BasicInformationStep = () => {
         setIsEmailVerified(true);
         setIsOtpModalOpen(false);
 
-        // Update profile context
+        // Clear any email validation errors
+        form.setFields([
+          {
+            name: 'email',
+            errors: [],
+          },
+        ]);
+
+        // Update profile context while preserving currently filled fields
+        const currentFormValues = form.getFieldsValue();
         updateProfileSection('basic', {
+          ...currentFormValues,
+          dob: currentFormValues.dob && dayjs.isDayjs(currentFormValues.dob)
+            ? currentFormValues.dob.format('YYYY-MM-DD')
+            : (currentFormValues.dob || null),
           isEmailVerified: true,
           email: currentEmail,
         });
@@ -145,12 +182,25 @@ const BasicInformationStep = () => {
   const handleValidate = async () => {
     try {
       const values = await form.validateFields();
+
+      if (!isEmailVerified) {
+        message.error('Please verify your email with OTP before proceeding to the next step.');
+        form.setFields([
+          {
+            name: 'email',
+            errors: ['Please verify your email with OTP before proceeding to the next step.'],
+          },
+        ]);
+        form.scrollToField('email');
+        return false;
+      }
+
       setIsSaving(true);
 
       const newBasicData = {
         ...values,
-        dob: values.dob ? values.dob.format('YYYY-MM-DD') : null,
-        isEmailVerified,
+        dob: values.dob ? (dayjs.isDayjs(values.dob) ? values.dob.format('YYYY-MM-DD') : values.dob) : null,
+        isEmailVerified: true,
       };
 
       updateProfileSection('basic', newBasicData);
@@ -167,6 +217,7 @@ const BasicInformationStep = () => {
         location: [values.city, values.state].filter(Boolean).join(', '),
         dob: newBasicData.dob,
         gender: values.gender,
+        is_email_verified: 1,
         user_id: userId,
       };
 
@@ -217,7 +268,14 @@ const BasicInformationStep = () => {
         const res = await updateProfileImage(formData);
         if (res && res.status === 200) {
           message.success('Profile photo updated successfully');
-          updateProfileSection('basic', { profilePhoto: URL.createObjectURL(info.file.originFileObj) });
+          const currentFormValues = form.getFieldsValue();
+          updateProfileSection('basic', {
+            ...currentFormValues,
+            dob: currentFormValues.dob && dayjs.isDayjs(currentFormValues.dob)
+              ? currentFormValues.dob.format('YYYY-MM-DD')
+              : (currentFormValues.dob || null),
+            profilePhoto: URL.createObjectURL(info.file.originFileObj),
+          });
         }
       } catch (err) {
         message.error('Failed to upload profile photo');

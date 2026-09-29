@@ -17,6 +17,7 @@ import {
   Upload,
   DatePicker,
   Select,
+  AutoComplete,
 } from "antd";
 import {
   UserOutlined,
@@ -32,6 +33,7 @@ import { IoMdAdd } from "react-icons/io";
 import { Country, State, City } from "country-state-city";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
+import { searchWorldwideJobRoles } from "../Common/worldwideDataService";
 import "../css/ProfileDetailsPage.css";
 import { MdDeleteForever } from "react-icons/md";
 import CommonInputField from "../Common/CommonInputField";
@@ -141,6 +143,17 @@ const ProfileDetails = () => {
   const [totalMonthsExperience, setTotalMonthsExperience] = useState("");
   const [totalMonthsExperienceError, setTotalMonthsExperienceError] =
     useState("");
+  const [jobTitleOptions, setJobTitleOptions] = useState([]);
+
+  const handleJobTitleSearch = async (value) => {
+    if (value && value.length >= 2) {
+      const results = await searchWorldwideJobRoles(value);
+      setJobTitleOptions(results.map((role) => ({ value: role })));
+    } else {
+      setJobTitleOptions([]);
+    }
+  };
+
   const [jobTitle, setJobTitle] = useState("");
   const [jobTitleError, setJobTitleError] = useState("");
 
@@ -162,6 +175,7 @@ const ProfileDetails = () => {
   const [preferredJobType, setPreferredJobType] = useState([]);
   const [dob, setDob] = useState(null);
   const [companyHeadcount, setCompanyHeadcount] = useState(null);
+  const [currentSalary, setCurrentSalary] = useState("");
 
   // add company
   const [companies, setCompanies] = useState([
@@ -290,6 +304,11 @@ const ProfileDetails = () => {
         setLname(loginDetails.last_name);
         setEmail(loginDetails.email);
         setNumber(loginDetails.phone);
+        if (loginDetails.is_email_verified === 1) {
+          setEmailVerified("Verified");
+        } else {
+          setEmailVerified("Not Verified");
+        }
       }
     } catch (error) {
       console.error("Invalid JSON in localStorage", error);
@@ -297,47 +316,33 @@ const ProfileDetails = () => {
   }, []);
 
   useEffect(() => {
-    getUserTypeDataType();
+    const fetchInitialOptions = async () => {
+      try {
+        const [userTypeRes, genderRes, courseRes] = await Promise.allSettled([
+          getUserTypeData(),
+          getGenderData(),
+          getCourses()
+        ]);
+
+        if (userTypeRes.status === 'fulfilled') {
+          setUserTypeData(userTypeRes.value?.data?.data || []);
+        }
+        if (genderRes.status === 'fulfilled') {
+          setGenderOptions(genderRes.value?.data?.data || []);
+        }
+        if (courseRes.status === 'fulfilled') {
+          const courses = courseRes.value?.data?.data || [];
+          setCourseOptions(courses);
+          setFresherCourse(courses);
+          setFresherCourseOptions(courses);
+        }
+      } catch (error) {
+        console.error("Error loading profile options", error);
+      }
+    };
+
+    fetchInitialOptions();
   }, []);
-
-  const getUserTypeDataType = async () => {
-    try {
-      const response = await getUserTypeData();
-      setUserTypeData(response?.data?.data || []);
-      console.log("getUserTypeData", response);
-    } catch (error) {
-      console.log("getUserTypeData", error);
-    } finally {
-      setTimeout(() => {
-        getGenderDataType();
-      }, 300);
-    }
-  };
-
-  const getGenderDataType = async () => {
-    try {
-      const response = await getGenderData();
-      setGenderOptions(response?.data?.data || []);
-      console.log("gender", response);
-    } catch (error) {
-      console.log("gender error", error);
-    } finally {
-      setTimeout(() => {
-        getCourseData();
-      }, 300);
-    }
-  };
-
-  const getCourseData = async () => {
-    try {
-      const response = await getCourses();
-      setCourseOptions(response?.data?.data || []);
-      setFresherCourse(response?.data?.data || []);
-      setFresherCourseOptions(response?.data?.data || []);
-    } catch (error) {
-      console.log("getCourses", error);
-    }
-  };
 
   const handleCountryChange = (countryCode) => {
     const country = countryList.find((c) => c.isoCode === countryCode);
@@ -559,6 +564,10 @@ const ProfileDetails = () => {
       message.error("Please fill all fields correctly before proceeding.");
       return;
     } else {
+      if (emailVerified !== "Verified") {
+        message.error("Please verify your email before proceeding to the next step.");
+        return;
+      }
       setCurrentStep(1);
       setProgress(25);
     }
@@ -718,6 +727,7 @@ const ProfileDetails = () => {
       preferred_job_type: preferredJobType.length > 0 ? preferredJobType : null,
       dob: dob ? dob.format("YYYY-MM-DD") : null,
       company_headcount: companyHeadcount,
+      current_salary: currentSalary,
     };
 
     try {
@@ -1575,6 +1585,22 @@ const ProfileDetails = () => {
                 </div>
               </div>
 
+              <div className="form-row">
+                <div className="form-group">
+                  <CommonInputField
+                    name="currentSalary"
+                    label="Current Salary"
+                    value={currentSalary}
+                    placeholder="e.g. ₹3,50,000 / Year or 10 LPA"
+                    type="text"
+                    onChange={(e) => setCurrentSalary(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  {/* Empty group for spacing */}
+                </div>
+              </div>
+
               <div className="form-group">
                 <CommonTextArea
                   label={"Address"}
@@ -1782,22 +1808,29 @@ const ProfileDetails = () => {
                       </div>
 
                       <div className="form-group">
-                        <CommonInputField
-                          name={"Job title"}
-                          label="Job Title"
-                          mandatory={true}
-                          value={company.jobTitle}
-                          placeholder={"Software Engineer"}
-                          type={"text"}
-                          onChange={(e) =>
-                            handleCompanyFields(
-                              index,
-                              "jobTitle",
-                              e.target.value
-                            )
-                          }
-                          error={company.jobTitleError}
-                        />
+                        <div className="commoninputfield">
+                          <div className="input-label-row">
+                            <p className="input-label">
+                              <span className="required-mark">*</span>Job Title
+                            </p>
+                          </div>
+                          <AutoComplete
+                            options={jobTitleOptions}
+                            onSearch={handleJobTitleSearch}
+                            onSelect={(val) => handleCompanyFields(index, "jobTitle", val)}
+                            value={company.jobTitle}
+                            onChange={(val) => handleCompanyFields(index, "jobTitle", val)}
+                            style={{ width: "100%" }}
+                          >
+                            <Input
+                              placeholder="Software Engineer"
+                              className="premium-input"
+                            />
+                          </AutoComplete>
+                          <div className={company.jobTitleError ? "show-premium-input-error" : "hide-premium-input-error"}>
+                            {company.jobTitleError && <p className="premium-error-text">{company.jobTitleError}</p>}
+                          </div>
+                        </div>
                       </div>
                       <div className="form-row">
                         <div className="form-group">

@@ -24,7 +24,7 @@ const ReactQuill = dynamic(() => import("react-quill-new"), { ssr: false });
 import "react-quill-new/dist/quill.snow.css";
 import { Upload } from "lucide-react";
 import logo from "../images/careerfastlogofinal.png";
-import Loader from "../Components/Loader";
+import CommonLoader from "../Common/CommonLoader";
 
 export default function BlogSingle({ initialData, serverSlug }) {
     const { slug: clientSlug } = useParams();
@@ -259,7 +259,7 @@ export default function BlogSingle({ initialData, serverSlug }) {
     };
 
     if (loading) {
-        return <Loader />;
+        return <CommonLoader text="Loading Article" />;
     }
     if (!blog) return <div className="singleblog-notfound">Blog not found</div>;
 

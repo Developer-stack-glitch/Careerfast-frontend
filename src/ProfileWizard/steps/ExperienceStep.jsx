@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useProfile } from '../ProfileContext';
 import StepNavigation from '../StepNavigation';
 import StepHeaderIllustration from '../StepHeaderIllustration';
-import { Form, Input, Select, Button, DatePicker, Checkbox, Row, Col, message, Modal, Popconfirm } from 'antd';
+import { Form, Input, Select, Button, DatePicker, Checkbox, Row, Col, message, Modal, Popconfirm, AutoComplete, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { insertExperience, updateExperience, deleteExperience, updateBasicDetails } from '../../ApiService/action';
+import { fetchWorldwideJobRoles, getInitialJobRoles } from '../../Common/worldwideDataService';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -26,6 +27,60 @@ const ExperienceStep = () => {
   const [form] = Form.useForm();
   const [isSaving, setIsSaving] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const formatJobRoleOption = (role) => ({
+    value: role,
+    label: (
+      <div className="flex items-center justify-between py-1 px-1">
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400 text-xs">💼</span>
+          <span className="text-sm font-medium text-gray-800">{role}</span>
+        </div>
+        <span className="text-[10px] uppercase tracking-wider text-[#6B21A8] bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full font-semibold">
+          Worldwide
+        </span>
+      </div>
+    ),
+  });
+
+  const [jobTitleOptions, setJobTitleOptions] = useState(() =>
+    getInitialJobRoles().slice(0, 30).map(formatJobRoleOption)
+  );
+  const [loadingJobTitles, setLoadingJobTitles] = useState(false);
+  const jobTitleSearchTimer = useRef(null);
+
+  const handleSearchJobTitles = useCallback((searchText) => {
+    if (jobTitleSearchTimer.current) {
+      clearTimeout(jobTitleSearchTimer.current);
+    }
+
+    const trimmed = (searchText || '').trim();
+    if (!trimmed) {
+      setJobTitleOptions(getInitialJobRoles().slice(0, 30).map(formatJobRoleOption));
+      setLoadingJobTitles(false);
+      return;
+    }
+
+    const initialList = getInitialJobRoles();
+    const localFiltered = initialList.filter(role =>
+      role.toLowerCase().includes(trimmed.toLowerCase())
+    );
+    if (localFiltered.length > 0) {
+      setJobTitleOptions(localFiltered.map(formatJobRoleOption));
+    }
+
+    setLoadingJobTitles(true);
+    jobTitleSearchTimer.current = setTimeout(async () => {
+      try {
+        const results = await fetchWorldwideJobRoles(trimmed);
+        setJobTitleOptions(results.map(formatJobRoleOption));
+      } catch (err) {
+        console.error('Error fetching worldwide job titles:', err);
+      } finally {
+        setLoadingJobTitles(false);
+      }
+    }, 200);
+  }, []);
 
   useEffect(() => {
     const isF =
@@ -72,18 +127,19 @@ const ExperienceStep = () => {
   const openEditModal = (index) => {
     const exp = experiences[index];
     setEditingIndex(index);
-    setCurrentlyWorking(exp.currentlyWorking || false);
+    const isWorking = exp.currentlyWorking || exp.currently_working === 1 || exp.currently_working === true || false;
+    setCurrentlyWorking(isWorking);
 
     form.setFieldsValue({
       jobTitle: exp.job_title || exp.jobTitle,
       company: exp.company_name || exp.company,
-      employmentType: exp.employment_type || exp.employmentType,
+      employmentType: exp.designation || exp.employment_type || exp.employmentType,
       startDate: exp.start_date || exp.startDate ? dayjs(exp.start_date || exp.startDate) : null,
-      endDate: exp.end_date || exp.endDate ? dayjs(exp.end_date || exp.endDate) : null,
-      currentlyWorking: exp.currentlyWorking || false,
+      endDate: isWorking ? null : (exp.end_date || exp.endDate ? dayjs(exp.end_date || exp.endDate) : null),
+      currentlyWorking: isWorking,
       location: exp.location,
       description: exp.description || exp.jobDescription,
-      skills: exp.skills,
+      skills: Array.isArray(exp.skills) ? exp.skills.join(" | ") : (typeof exp.skills === 'string' && exp.skills.startsWith('[') ? JSON.parse(exp.skills).join(" | ") : exp.skills),
     });
 
     setIsModalOpen(true);
@@ -442,10 +498,26 @@ const ExperienceStep = () => {
                 }
                 rules={[{ required: true, message: isFresher ? 'Please enter role or project title' : 'Please enter job title' }]}
               >
-                <Input
-                  placeholder={isFresher ? "e.g. Web Development Intern, Capstone Project Lead" : "e.g. Full Stack Developer"}
-                  className="h-11 rounded-xl text-sm border-gray-200"
-                />
+                <AutoComplete
+                  options={jobTitleOptions}
+                  onSearch={handleSearchJobTitles}
+                  onSelect={(val) => form.setFieldsValue({ jobTitle: val })}
+                  popupMatchSelectWidth={true}
+                  filterOption={false}
+                  className="w-full"
+                >
+                  <Input
+                    placeholder={isFresher ? "e.g. Web Development Intern, Capstone Project Lead" : "e.g. Full Stack Developer"}
+                    className="h-11 rounded-xl text-sm border-gray-200"
+                    suffix={
+                      loadingJobTitles ? (
+                        <Spin size="small" />
+                      ) : (
+                        <span className="text-[11px] text-gray-400 font-medium">Worldwide</span>
+                      )
+                    }
+                  />
+                </AutoComplete>
               </Form.Item>
             </Col>
             <Col xs={24} sm={12}>

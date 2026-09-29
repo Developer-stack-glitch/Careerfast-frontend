@@ -1,12 +1,54 @@
 import React from 'react';
 import { cn } from "../lib/utils";
-import { MoveRight, Star } from "lucide-react";
+import { Calendar, Clock, ArrowRight } from "lucide-react";
+
+const getCategoryBadgeClass = (category) => {
+  const cat = (category || "").toLowerCase();
+  if (cat.includes("devops") || cat.includes("cloud") || cat.includes("tool") || cat.includes("docker") || cat.includes("kubern")) {
+    return "badge-blue";
+  }
+  if (cat.includes("career") || cat.includes("advice") || cat.includes("analyt") || cat.includes("business")) {
+    return "badge-green";
+  }
+  // Default to primary theme color (AI & Learning, Tech, etc.)
+  return "badge-theme";
+};
+
+const formatBlogDate = (dateStr) => {
+  if (!dateStr) return "Sep 21, 2026";
+  try {
+    const safeStr = typeof dateStr === 'string' ? dateStr.replace(' ', 'T') : dateStr;
+    const d = new Date(safeStr);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric"
+      });
+    }
+  } catch (e) {
+    // fallback
+  }
+  return "Sep 21, 2026";
+};
+
+const formatReadTime = (readingTime) => {
+  if (!readingTime) return "8 min read";
+  const num = parseInt(readingTime, 10);
+  if (!isNaN(num)) {
+    return `${num} min read`;
+  }
+  if (typeof readingTime === 'string') {
+    return readingTime.replace(/mins?$/i, '').trim() + ' min read';
+  }
+  return "8 min read";
+};
 
 const GridBlogSection = ({
   title,
   description,
   backgroundLabel,
-  backgroundPosition = "left",
+  backgroundPosition = "right",
   posts = [],
   className,
   onPostClick,
@@ -14,7 +56,7 @@ const GridBlogSection = ({
   return (
     <section className={cn("hp-grid-section", className)}>
       <div className="hp-grid-header">
-        <h1 className="hp-grid-title">{title}</h1>
+        <h2 className="hp-grid-title">{title}</h2>
         {backgroundLabel && (
           <span className={cn(
             "hp-grid-bg-label",
@@ -23,52 +65,74 @@ const GridBlogSection = ({
             {backgroundLabel}
           </span>
         )}
-        <p className="hp-grid-description">{description}</p>
+        {description && <p className="hp-grid-description">{description}</p>}
       </div>
 
-      <div className="hp-grid-layout">
+      <div className="hp-cards-grid">
         {posts.map((post, index) => {
-          const isPrimary = index === 0;
+          const categoryClass = getCategoryBadgeClass(post.category);
+          const formattedDate = formatBlogDate(post.createdDate);
+          const readTimeStr = formatReadTime(post.readTime);
+
           return (
-            <div
+            <article
               key={post.id || index}
-              style={{ backgroundImage: `url(${post.imageUrl})` }}
-              className={cn(
-                "hp-grid-post-card",
-                isPrimary && "is-primary"
-              )}
+              className="hp-modern-blog-card"
               onClick={() => onPostClick?.(post)}
             >
-              <div className="hp-grid-post-overlay" />
-              
-              <article className="hp-grid-post-content">
-                <div className="hp-grid-post-info">
-                  <h2 className="hp-grid-post-title">{post.title}</h2>
-                  <div className="hp-grid-post-details">
-                    <span className="hp-grid-post-category">{post.category}</span>
-                    <div className="hp-grid-post-stats">
-                      <div className="hp-grid-post-rating">
-                        {Array.from({ length: 5 }).map((_, idx) => (
-                          <Star
-                            key={idx}
-                            size={16}
-                            fill={idx < (post.rating || 4) ? "#ffa534" : "rgba(185, 184, 184, 0.6)"}
-                            stroke={idx < (post.rating || 4) ? "#ffa534" : "rgba(185, 184, 184, 0.6)"}
-                          />
-                        ))}
-                      </div>
-                      <span className="hp-grid-post-views">({post.views} Views)</span>
-                    </div>
-                    {post.readTime && (
-                      <div className="hp-grid-post-readtime">
-                        {post.readTime} min read
-                      </div>
-                    )}
+              {/* Image & Category Badge */}
+              <div className="hp-blog-thumb-wrap">
+                {post.imageUrl ? (
+                  <img
+                    src={post.imageUrl}
+                    alt={post.title}
+                    className="hp-blog-thumb-img"
+                    loading="lazy"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop";
+                    }}
+                  />
+                ) : (
+                  <div className="hp-blog-thumb-placeholder" />
+                )}
+                <span className={cn("hp-blog-badge", categoryClass)}>
+                  {post.category || "Career Advice"}
+                </span>
+              </div>
+
+              {/* Card Body */}
+              <div className="hp-blog-card-body">
+                {/* Meta info: Date & Read Time */}
+                <div className="hp-blog-meta-row">
+                  <div className="hp-blog-meta-item">
+                    <Calendar size={14} className="hp-blog-meta-icon" />
+                    <span>{formattedDate}</span>
+                  </div>
+                  <div className="hp-blog-meta-item">
+                    <Clock size={14} className="hp-blog-meta-icon" />
+                    <span>{readTimeStr}</span>
                   </div>
                 </div>
-                <MoveRight className="hp-grid-post-arrow" size={32} />
-              </article>
-            </div>
+
+                {/* Blog Title */}
+                <h3 className="hp-blog-card-title" title={post.title}>
+                  {post.title}
+                </h3>
+
+                {/* Excerpt / Overview */}
+                <p className="hp-blog-card-excerpt">
+                  {post.overview || post.description || "Discover how in-demand skills and expert insights can give you a competitive edge in your career."}
+                </p>
+
+                {/* Read More Link */}
+                <div className="hp-blog-card-action">
+                  <span className="hp-blog-read-more">
+                    Read More <ArrowRight size={15} className="hp-blog-arrow-icon" />
+                  </span>
+                </div>
+              </div>
+            </article>
           );
         })}
       </div>
