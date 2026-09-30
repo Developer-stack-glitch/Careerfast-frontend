@@ -35,10 +35,24 @@ import {
     FaChevronRight
 } from "react-icons/fa";
 import {
-    SiAmazonwebservices, SiGooglecloud, SiTerraform, SiKubernetes,
-    SiAnsible, SiJenkins, SiChef, SiVmware, SiDigitalocean, SiAlibabacloud,
-    SiGit, SiGithub, SiPostman, SiReact, SiNodedotjs,
-    SiMongodb, SiExpress, SiTailwindcss, SiJest
+    SiGooglecloud,
+    SiTerraform,
+    SiKubernetes,
+    SiAnsible,
+    SiJenkins,
+    SiChef,
+    SiVmware,
+    SiDigitalocean,
+    SiAlibabacloud,
+    SiGit,
+    SiGithub,
+    SiPostman,
+    SiReact,
+    SiNodedotjs,
+    SiMongodb,
+    SiExpress,
+    SiTailwindcss,
+    SiJest
 } from "react-icons/si";
 import { VscCode } from "react-icons/vsc";
 import { useParams } from "next/navigation";
@@ -1005,7 +1019,7 @@ export default function CourseSingle() {
                                             if (toolLogo) {
                                                 icon = <img src={toolLogo} alt={toolName} className="tool-logo-icon" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />;
                                             } else {
-                                                if (name.includes('amazon') || name.includes('aws')) icon = <SiAmazonwebservices className="tool-logo-icon" style={{ color: '#FF9900' }} />;
+                                                if (name.includes('amazon') || name.includes('aws')) icon = <SiGooglecloud className="tool-logo-icon" style={{ color: '#FF9900' }} />;
                                                 else if (name.includes('google') || name.includes('gcp')) icon = <SiGooglecloud className="tool-logo-icon" style={{ color: '#4285F4' }} />;
                                                 else if (name.includes('azure') || name.includes('microsoft')) icon = <FaMicrosoft className="tool-logo-icon" style={{ color: '#00A4EF' }} />;
                                                 else if (name.includes('terraform')) icon = <SiTerraform className="tool-logo-icon" style={{ color: '#7B42BC' }} />;
