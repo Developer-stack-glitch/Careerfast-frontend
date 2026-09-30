@@ -696,3 +696,12 @@
     align-items: center;
     gap: 4px;
 }
+
+@media (max-width: 768px) {
+    .njd-action-btns {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 10px !important;
+        margin-top: 15px;
+    }
+}

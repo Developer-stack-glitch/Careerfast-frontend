@@ -82,11 +82,6 @@ export default function UserProfile() {
       badge: 5,
     },
     {
-      key: "prosubscription",
-      icon: <Briefcase size={18} />,
-      label: "Career Services",
-    },
-    {
       key: "settings",
       icon: <SettingsIcon size={18} />,
       label: "Settings",
@@ -274,19 +269,12 @@ export default function UserProfile() {
         <main className="candidate-main-content">
           {sideBar === "mainprofile" ? (
             <MainProfile />
+          ) : sideBar === "wishlist" ? (
+            <WatchList />
           ) : (
             <div
-              style={{
-                background: "#ffffff",
-                borderRadius: "14px",
-                border: "1px solid #e2e8f0",
-                padding: "24px",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
-              }}
             >
-              {sideBar === "wishlist" ? (
-                <WatchList />
-              ) : sideBar === "bookmarked" ? (
+              {sideBar === "bookmarked" ? (
                 <BookMark />
               ) : sideBar === "viewed" ? (
                 <RecentlyViewed />
@@ -294,8 +282,6 @@ export default function UserProfile() {
                 <Settings />
               ) : sideBar === "accountsettings" ? (
                 <AccountSettings />
-              ) : sideBar === "prosubscription" ? (
-                <ProSubscription />
               ) : sideBar === "applied" ? (
                 <AppliedJobs />
               ) : sideBar === "jobalerts" ? (

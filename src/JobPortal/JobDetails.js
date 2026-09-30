@@ -268,12 +268,32 @@ export default function JobDetails({ initialData, serverSlug }) {
     }
   }, []);
 
+  const currentJob = postDetails.length > 0 ? postDetails[0] : null;
+  const currentCategoryId = currentJob?.job_category;
+  const currentJobType = currentJob?.type;
+
   useEffect(() => {
     async function fetchSidebarData() {
       setSidebarLoading(true);
       try {
+        let params = {};
+        if (currentCategoryId) {
+          let parsedCategory = currentCategoryId;
+          if (typeof currentCategoryId === 'string') {
+            try {
+              parsedCategory = JSON.parse(currentCategoryId);
+            } catch (e) {
+              parsedCategory = currentCategoryId;
+            }
+          }
+          params.job_categories = Array.isArray(parsedCategory) ? parsedCategory : [parsedCategory];
+        }
+        if (currentJobType) {
+          params.job_nature = currentJobType;
+        }
+
         const [jobsRes, coursesRes] = await Promise.all([
-          getJobPosts({}),
+          getJobPosts(params),
           getAllCourses()
         ]);
 
@@ -294,8 +314,11 @@ export default function JobDetails({ initialData, serverSlug }) {
         setSidebarLoading(false);
       }
     }
-    fetchSidebarData();
-  }, [jobId]);
+
+    if (currentJob || !jobId) {
+      fetchSidebarData();
+    }
+  }, [jobId, currentCategoryId, currentJobType]);
 
   useEffect(() => {
     localStorage.setItem("appliedDates", JSON.stringify(appliedDates));
@@ -888,17 +911,17 @@ export default function JobDetails({ initialData, serverSlug }) {
                     <h3 className="njd-sidebar-title">Recommended Courses</h3>
                     <div className="njd-related-list">
                       {courses.map((course, idx) => {
-                        const courseLink = `/courses-details/${generateSlug(course.course_title)}-${course.id}`;
+                        const courseLink = `/courses/${course.slug || generateSlug(course.title) + '-' + course.id}`;
                         return (
                           <a href={courseLink} key={idx} className="njd-related-item njd-course-item">
-                            {course.cover_image ? (
-                              <img src={getImageUrl(course.cover_image)} alt={course.course_title} className="njd-course-img" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
+                            {course.image ? (
+                              <img src={getImageUrl(course.image)} alt={course.title} className="njd-course-img" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
                             ) : (
                               <div className="njd-course-img-placeholder"><MdOutlineWorkOutline /></div>
                             )}
                             <div className="njd-related-info">
-                              <h4 className="njd-related-title" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{course.course_title}</h4>
-                              {course.level && <div className="njd-related-company">{course.level}</div>}
+                              <h4 className="njd-related-title" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{course.title}</h4>
+                              {course.category && <div className="njd-related-company">{course.category}</div>}
                               <div className="njd-related-loc" style={{ color: '#5f2eea', fontWeight: 600 }}>Explore Course &rarr;</div>
                             </div>
                           </a>

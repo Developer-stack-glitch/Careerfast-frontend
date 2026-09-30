@@ -1499,6 +1499,26 @@ export const getUniqueCompanies = async () => {
   }
 };
 
+export const getTopCompanies = async (params = {}) => {
+  try {
+    const response = await api.get("/api/getTopCompanies", { params });
+    return response;
+  } catch (error) {
+    console.error("❌ Error fetching top companies:", error);
+    throw error;
+  }
+};
+
+export const getSearchSuggestions = async (params = {}) => {
+  try {
+    const response = await api.get("/api/getSearchSuggestions", { params });
+    return response;
+  } catch (error) {
+    console.error("❌ Error fetching suggestions:", error);
+    throw error;
+  }
+};
+
 export const getSuperAdminDashboardStats = async (timeFilter, extraParams = {}) => {
   try {
     const response = await cachedGet("/api/superadmin/dashboard-stats", {

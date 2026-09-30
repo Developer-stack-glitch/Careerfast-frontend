@@ -707,4 +707,21 @@
   .naukri-location-grid {
     grid-template-columns: repeat(1, 1fr);
   }
+
+  .naukri-layout-container {
+    padding: 40px 0;
+  }
+
+  .naukri-content-wrapper {
+    padding: 0px 16px !important;
+  }
+  
+  .mobile-filter-btn {
+    display: flex !important;
+    align-items: center;
+  }
+  
+  .desktop-sidebar-col {
+    display: none !important;
+  }
 }

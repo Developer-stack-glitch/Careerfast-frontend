@@ -77,6 +77,7 @@ export default function ClientRouteHandler({ children }) {
   useEffect(() => {
     const AccessToken = localStorage.getItem("AccessToken");
     const pathSegments = pathname.split("/").filter(Boolean);
+    const pathName = pathSegments[0] || "";
     if (pathname.startsWith('/admin') || pathname.startsWith('/superadmin')) {
       return;
     }

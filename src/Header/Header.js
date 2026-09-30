@@ -75,6 +75,7 @@ export default function Header({ noSticky = false }) {
   const [searchText, setSearchText] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
   const [headerProgress, setHeaderProgress] = useState(0);
   const [megaTab, setMegaTab] = useState("locations");
@@ -93,6 +94,7 @@ export default function Header({ noSticky = false }) {
   };
 
   useEffect(() => {
+    setMounted(true);
     const saved = localStorage.getItem("profileProgress");
     if (saved) {
       setHeaderProgress(parseInt(saved));
@@ -523,15 +525,15 @@ export default function Header({ noSticky = false }) {
     </div>
   );
   const employerItems = [
-    { 
-      key: '1', 
+    {
+      key: '1',
       label: <div className="employer-menu-item">Buy online</div>,
-      onClick: () => smartNavigate("/employers")
+      onClick: () => smartNavigate("https://recruit.careerfast.in/checkout")
     },
-    { 
-      key: '2', 
+    {
+      key: '2',
       label: <div className="employer-menu-item">Employer Login</div>,
-      onClick: () => smartNavigate("/login")
+      onClick: () => smartNavigate("https://recruit.careerfast.in/login")
     }
   ];
 
@@ -665,7 +667,7 @@ export default function Header({ noSticky = false }) {
 
             {/* User Actions */}
             <div className="d-flex align-items-center gap-4">
-              {isLoggedIn === true ? (
+              {mounted && isLoggedIn === true ? (
                 <>
                   <div
                     className="d-flex rounded-circle border-2 border-[#22c55e] align-items-center gap-1 user-dropdown"
@@ -884,14 +886,13 @@ export default function Header({ noSticky = false }) {
                   ]
                   : roleId === 2
                     ? [
-                      { title: "Dashboard", path: "/candidate-profile/dashboard", icon: <LayoutDashboard size={18} /> },
+                      { title: "Dashboard", path: "/candidate-profile/mainprofile", icon: <LayoutDashboard size={18} /> },
                       { title: "Wishlist", path: "/candidate-profile/wishlist", icon: <HeartOutlined /> },
                       { title: "Account Settings", path: "/candidate-profile/accountsettings", icon: <SettingOutlined /> },
-                      { title: "Pro Subscription", path: "/candidate-profile/prosubscription", icon: <FcApproval /> },
                       { title: "Applied Jobs", path: "/candidate-profile/applied", icon: <UserAddOutlined />, showArrow: true },
                     ]
                     : [
-                      { title: "Dashboard", path: "/candidate-profile/dashboard", icon: <LayoutDashboard size={18} /> },
+                      { title: "Dashboard", path: "/candidate-profile/mainprofile", icon: <LayoutDashboard size={18} /> },
                       { title: "Manage Listings", path: "/candidate-profile/listing", icon: <AppstoreOutlined />, onClick: () => localStorage.setItem("listingOrder", "topBottom") },
                       { title: "Account Settings", path: "/candidate-profile/accountsettings", icon: <SettingOutlined /> },
                     ]

@@ -23,6 +23,7 @@ import {
   FileTextOutlined,
   SyncOutlined,
   LeftOutlined,
+  FilterOutlined,
   RightOutlined,
   CodeOutlined,
   DesktopOutlined,
@@ -1209,7 +1210,7 @@ export default function JobFilter() {
           <div className="naukri-content-wrapper" style={{ maxWidth: '1500px', margin: '0 auto', padding: '0 40px' }}>
             <Row gutter={[40, 24]}>
               {/* Left Sidebar */}
-              <Col xs={0} md={7} lg={6} xl={5}>
+              <Col xs={0} md={7} lg={6} xl={5} className="desktop-sidebar-col">
                 <div className="naukri-sidebar-sticky">
                   {FilterSidebar}
                 </div>
@@ -1223,11 +1224,19 @@ export default function JobFilter() {
 
                 {/* Top Results Header */}
                 <div className="naukri-results-info">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: '16px' }}>
-                    <h2 className="naukri-results-count">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+                    <h2 className="naukri-results-count" style={{ margin: 0 }}>
                       {`${totalJobs} ${getFilterTitle()}`}
                     </h2>
-                    <div className="naukri-sort-container" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div className="naukri-sort-container" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <Button
+                        className="mobile-filter-btn"
+                        icon={<FilterOutlined />}
+                        onClick={() => setMobileFilterOpen(true)}
+                        style={{ display: 'none', borderRadius: '20px', border: '1px solid #e2e8f0', color: '#475569', fontWeight: 500 }}
+                      >
+                        Filters
+                      </Button>
                       <span style={{ fontSize: '13px', color: 'var(--naukri-text-tertiary)' }}>Sort by:</span>
                       <Button
                         type="text"
