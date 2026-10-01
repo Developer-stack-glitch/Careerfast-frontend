@@ -1,17 +1,16 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-    Building, Users, Search, Filter, Plus,
+    Building, Users, Search, Plus,
     Eye, CreditCard, Clock, CheckCircle2, XCircle,
-    KeyRound, RefreshCw, AlertCircle, Shield,
-    ChevronRight, Loader2, Sparkles, X, Mail,
-    Briefcase, AlertTriangle, ArrowUpRight
+    KeyRound, RefreshCw, Shield, X, AlertTriangle, MoreVertical
 } from 'lucide-react';
 import {
     getAdminRecruiters,
     getAdminPlans,
-    updateAdminRecruiterStatus
+    updateAdminRecruiterStatus,
+    toggleAdminRecruiterAutoApprove
 } from '../ApiService/action';
 import ChangePlanModal from './ChangePlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
@@ -38,11 +37,53 @@ const getCompanyAvatarGradient = (name = '') => {
     return gradients[index];
 };
 
+const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setExtendRecruiter, setResetPassRecruiter, handleToggleStatus, handleToggleAutoApprove, onClose, isBottom }) => {
+    const ref = useRef(null);
+
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) onClose();
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [onClose]);
+
+    return (
+        <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-lg border border-slate-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
+            <button onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                <Eye className="w-3.5 h-3.5" /> View Details
+            </button>
+            <button onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+                <Users className="w-3.5 h-3.5" /> Manage Team
+            </button>
+            <button onClick={() => { setChangePlanRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">
+                <CreditCard className="w-3.5 h-3.5" /> Change Plan
+            </button>
+            <button onClick={() => { setExtendRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                <Clock className="w-3.5 h-3.5" /> Extend Plan
+            </button>
+            <button onClick={() => { setResetPassRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors">
+                <KeyRound className="w-3.5 h-3.5" /> Reset Password
+            </button>
+            <button onClick={() => { handleToggleAutoApprove(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                {rec.auto_approve ? <XCircle className="w-3.5 h-3.5 text-rose-600" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                {rec.auto_approve ? 'Disable Auto Approve' : 'Enable Auto Approve'}
+            </button>
+            <div className="my-1 border-t border-slate-100"></div>
+            <button onClick={() => { handleToggleStatus(rec); onClose(); }} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] transition-colors ${rec.user_active ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
+                {rec.user_active ? <XCircle className="w-3.5 h-3.5 text-rose-600" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                {rec.user_active ? 'Suspend Account' : 'Activate Account'}
+            </button>
+        </div>
+    );
+};
+
 export default function RecruitersList() {
     const router = useRouter();
     const [recruiters, setRecruiters] = useState([]);
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [openDropdown, setOpenDropdown] = useState(null);
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
@@ -115,6 +156,22 @@ export default function RecruitersList() {
         } catch (err) {
             console.error(err);
             toast.error("Failed to update status.");
+        }
+    };
+
+    const handleToggleAutoApprove = async (rec) => {
+        try {
+            const newStatus = rec.auto_approve ? 0 : 1;
+            const res = await toggleAdminRecruiterAutoApprove(rec.recruiter_id, { auto_approve: newStatus });
+            if (res.data?.success) {
+                toast.success(res.data.message || `Auto approve ${newStatus ? 'enabled' : 'disabled'} successfully.`);
+                setRecruiters(recruiters.map(r => r.recruiter_id === rec.recruiter_id ? { ...r, auto_approve: newStatus } : r));
+            } else {
+                toast.error(res.data?.message || "Failed to update auto approve status.");
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to update auto approve status.");
         }
     };
 
@@ -294,6 +351,7 @@ export default function RecruitersList() {
                         <option value="">All Accounts</option>
                         <option value="Active">Active Only</option>
                         <option value="Suspended">Suspended Only</option>
+                        <option value="AutoApprove">Auto Approve Only</option>
                     </select>
 
                     {/* Subscription Status Filter */}
@@ -445,7 +503,8 @@ export default function RecruitersList() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {recruiters.map((rec) => {
+                                {recruiters.map((rec, idx) => {
+                                    const isBottom = idx >= recruiters.length - 2 && recruiters.length > 3;
                                     const recruiterName = rec.recruiter_name?.trim() || `${rec.first_name || ''} ${rec.last_name || ''}`.trim() || 'Recruiter';
                                     const companyName = rec.company_name || 'Individual Recruiter';
                                     const hasPlan = Boolean(rec.plan_name && rec.plan_name !== 'No Plan');
@@ -513,8 +572,13 @@ export default function RecruitersList() {
                                                         >
                                                             {companyName}
                                                         </div>
-                                                        <div className="text-[11px] text-slate-400 truncate max-w-[160px]">
+                                                        <div className="text-[11px] text-slate-400 truncate max-w-[160px] flex items-center gap-1">
                                                             {rec.industry_type || 'Corporate'}
+                                                            {rec.auto_approve === 1 && (
+                                                                <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FF73001A] text-[#FF7300] border-1 border-[#FF7300]" title="Auto Approve Enabled">
+                                                                    Auto Approve
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -667,63 +731,26 @@ export default function RecruitersList() {
 
                                             {/* Actions */}
                                             <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                                <div className="flex items-center justify-end gap-1">
-                                                    {/* View Profile */}
+                                                <div className="relative inline-block text-left">
                                                     <button
-                                                        onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}
-                                                        title="View Recruiter Profile"
-                                                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50/80 border border-transparent hover:border-blue-100 rounded-lg transition-all"
+                                                        onClick={() => setOpenDropdown(openDropdown === rec.recruiter_id ? null : rec.recruiter_id)}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 transition-all"
                                                     >
-                                                        <Eye className="w-4 h-4" />
+                                                        <MoreVertical className="w-4 h-4" />
                                                     </button>
-
-                                                    {/* Manage Sub-Recruiter Team */}
-                                                    <button
-                                                        onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}
-                                                        title="Manage Sub-Recruiter Team"
-                                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50/80 border border-transparent hover:border-indigo-100 rounded-lg transition-all"
-                                                    >
-                                                        <Users className="w-4 h-4" />
-                                                    </button>
-
-                                                    {/* Change Plan */}
-                                                    <button
-                                                        onClick={() => setChangePlanRecruiter(rec)}
-                                                        title="Change Subscription Plan"
-                                                        className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50/80 border border-transparent hover:border-purple-100 rounded-lg transition-all"
-                                                    >
-                                                        <CreditCard className="w-4 h-4" />
-                                                    </button>
-
-                                                    {/* Extend Subscription */}
-                                                    <button
-                                                        onClick={() => setExtendRecruiter(rec)}
-                                                        title="Extend Subscription"
-                                                        className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/80 border border-transparent hover:border-emerald-100 rounded-lg transition-all"
-                                                    >
-                                                        <Clock className="w-4 h-4" />
-                                                    </button>
-
-                                                    {/* Reset Password */}
-                                                    <button
-                                                        onClick={() => setResetPassRecruiter(rec)}
-                                                        title="Reset Recruiter Password"
-                                                        className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50/80 border border-transparent hover:border-amber-100 rounded-lg transition-all"
-                                                    >
-                                                        <KeyRound className="w-4 h-4" />
-                                                    </button>
-
-                                                    {/* Toggle Status (Active / Suspended) */}
-                                                    <button
-                                                        onClick={() => handleToggleStatus(rec)}
-                                                        title={rec.user_active ? 'Suspend Recruiter Login' : 'Activate Recruiter Login'}
-                                                        className={`p-1.5 rounded-lg border border-transparent transition-all ${rec.user_active
-                                                            ? 'text-slate-400 hover:text-rose-600 hover:bg-rose-50/80 hover:border-rose-100'
-                                                            : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50/80 hover:border-emerald-100'
-                                                            }`}
-                                                    >
-                                                        {rec.user_active ? <XCircle className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
-                                                    </button>
+                                                    {openDropdown === rec.recruiter_id && (
+                                                        <ActionsDropdown
+                                                            rec={rec}
+                                                            router={router}
+                                                            setChangePlanRecruiter={setChangePlanRecruiter}
+                                                            setExtendRecruiter={setExtendRecruiter}
+                                                            setResetPassRecruiter={setResetPassRecruiter}
+                                                            handleToggleStatus={handleToggleStatus}
+                                                            handleToggleAutoApprove={handleToggleAutoApprove}
+                                                            onClose={() => setOpenDropdown(null)}
+                                                            isBottom={isBottom}
+                                                        />
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>

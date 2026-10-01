@@ -111,11 +111,27 @@ const PendingJobs = () => {
 
     const totalPages = Math.ceil(total / limit) || 1;
 
-    // Filter by search term locally if backend doesn't support search on this endpoint yet
-    const filteredJobs = jobs.filter(job =>
-        job.job_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filter by search term and date locally if backend doesn't support search/date on this endpoint yet
+    const filteredJobs = jobs.filter(job => {
+        const term = searchTerm.toLowerCase();
+        const matchesSearch = !term || 
+            job.job_title?.toLowerCase().includes(term) ||
+            job.company_name?.toLowerCase().includes(term);
+        
+        let matchesDate = true;
+        if (dateFilter?.startDate && dateFilter?.endDate) {
+            const d = new Date(job.created_at);
+            if (!isNaN(d.getTime())) {
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const jobDateStr = `${year}-${month}-${day}`;
+                matchesDate = jobDateStr >= dateFilter.startDate && jobDateStr <= dateFilter.endDate;
+            }
+        }
+
+        return matchesSearch && matchesDate;
+    });
 
     return (
         <div className="min-h-screen">
@@ -234,17 +250,17 @@ const PendingJobs = () => {
                                 <tr className="border-b border-slate-100 bg-gray-50">
                                     <th className="py-3 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                         <div className="flex items-center gap-1.5 cursor-pointer hover:text-slate-700 w-fit">
-                                            JOB DETAILS <ArrowUpDown className="w-3.5 h-3.5" />
+                                            JOB DETAILS
                                         </div>
                                     </th>
                                     <th className="py-3 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                         <div className="flex items-center gap-1.5 cursor-pointer hover:text-slate-700 w-fit">
-                                            TYPE / LOCATION <ArrowUpDown className="w-3.5 h-3.5" />
+                                            TYPE / LOCATION
                                         </div>
                                     </th>
                                     <th className="py-3 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                         <div className="flex items-center gap-1.5 cursor-pointer hover:text-slate-700 w-fit">
-                                            POSTED DATE <ArrowUpDown className="w-3.5 h-3.5" />
+                                            POSTED DATE
                                         </div>
                                     </th>
                                     <th className="py-3 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">ACTIONS</th>

@@ -1947,6 +1947,15 @@ export const resetAdminRecruiterPassword = async (id, payload) => {
   }
 };
 
+export const toggleAdminRecruiterAutoApprove = async (id, payload) => {
+  try {
+    const response = await api.put(`/api/admin/recruiters/${id}/auto-approve`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAdminSubscriptions = async (params = {}) => {
   try {
     const response = await api.get("/api/admin/subscriptions", { params });
