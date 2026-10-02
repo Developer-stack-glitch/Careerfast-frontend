@@ -65,7 +65,7 @@ export default function ResetPasswordModal({ recruiter, isOpen = true, onClose }
 
                 <form onSubmit={handleSubmit} className="space-y-3 my-3">
                     <div>
-                        <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">
                             New Password <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -88,7 +88,7 @@ export default function ResetPasswordModal({ recruiter, isOpen = true, onClose }
                     </div>
 
                     <div>
-                        <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        <label className="block text-[14px] font-semibold text-gray-700 mb-1.5">
                             Confirm New Password <span className="text-red-500">*</span>
                         </label>
                         <input

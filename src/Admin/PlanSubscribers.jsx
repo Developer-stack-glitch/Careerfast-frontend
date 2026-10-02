@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import {
     Users, ArrowLeft, Search,
     RefreshCw, Loader2, CreditCard, Calendar,
-    Clock, CheckCircle2,
+    Clock, CheckCircle2, Sliders,
     ArrowUpDown, Download, ExternalLink,
     Check, X, ArrowUpRight, Zap,
     BarChart3, UserCheck, UserX, ChevronLeft, ChevronRight
@@ -16,6 +16,7 @@ import {
     updateAdminRecruiterStatus
 } from '../ApiService/action';
 import ChangePlanModal from './ChangePlanModal';
+import CustomPlanModal from './CustomPlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
 import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
@@ -58,6 +59,7 @@ export default function PlanSubscribers({ planId = null }) {
 
     // Active Action Modals
     const [changePlanRecruiter, setChangePlanRecruiter] = useState(null);
+    const [customPlanRecruiter, setCustomPlanRecruiter] = useState(null);
     const [extendRecruiter, setExtendRecruiter] = useState(null);
 
     // Initial Data Fetch
@@ -838,6 +840,20 @@ export default function PlanSubscribers({ planId = null }) {
                                                         <CreditCard className="w-3.5 h-3.5 text-slate-600" />
                                                     </button>
 
+                                                    {/* Custom Plan Button */}
+                                                    <button
+                                                        onClick={() => setCustomPlanRecruiter({
+                                                            ...sub,
+                                                            id: sub.recruiter_id || sub.user_id || sub.id,
+                                                            current_plan_id: sub.plan_id,
+                                                            subscription_expiry: sub.expiry_date
+                                                        })}
+                                                        className="p-1.5 bg-white hover:bg-cyan-50 text-cyan-700 border border-slate-200 hover:border-cyan-300 rounded-lg text-xs transition-colors"
+                                                        title="Custom Plan Limits"
+                                                    >
+                                                        <Sliders className="w-3.5 h-3.5 text-cyan-600" />
+                                                    </button>
+
                                                     {/* Extend Subscription */}
                                                     <button
                                                         onClick={() => setExtendRecruiter({
@@ -963,6 +979,23 @@ export default function PlanSubscribers({ planId = null }) {
                     onClose={() => setChangePlanRecruiter(null)}
                     onSuccess={() => {
                         setChangePlanRecruiter(null);
+                        loadData();
+                    }}
+                    onOpenCustomPlan={(rec) => {
+                        setChangePlanRecruiter(null);
+                        setCustomPlanRecruiter(rec);
+                    }}
+                />
+            )}
+
+            {/* Custom Plan Modal */}
+            {customPlanRecruiter && (
+                <CustomPlanModal
+                    recruiter={customPlanRecruiter}
+                    isOpen={Boolean(customPlanRecruiter)}
+                    onClose={() => setCustomPlanRecruiter(null)}
+                    onSuccess={() => {
+                        setCustomPlanRecruiter(null);
                         loadData();
                     }}
                 />

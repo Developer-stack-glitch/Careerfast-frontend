@@ -138,15 +138,14 @@ export default function AdminDateFilter({
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-[13px] font-medium transition-all shadow-xs outline-none select-none ${
-                    isFiltered
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all outline-none select-none ${isFiltered
                         ? 'bg-blue-50/80 border-blue-200 text-blue-700 hover:bg-blue-100/70 hover:border-blue-300'
-                        : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
-                }`}
+                        : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-white hover:border-blue-500'
+                    }`}
             >
                 <Calendar className={`w-4 h-4 shrink-0 ${isFiltered ? 'text-blue-600' : 'text-gray-400'}`} />
                 <span className="truncate max-w-[170px]">{value.label || 'Date Filter'}</span>
-                
+
                 {isFiltered ? (
                     <span
                         onClick={handleClear}
@@ -162,7 +161,7 @@ export default function AdminDateFilter({
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute right-0 sm:right-auto sm:left-0 mt-1.5 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-1.5 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-3.5 py-1.5 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                         Filter by Date
                     </div>
@@ -175,11 +174,10 @@ export default function AdminDateFilter({
                                     key={preset}
                                     type="button"
                                     onClick={() => handleSelectPreset(preset)}
-                                    className={`w-full flex items-center justify-between px-3.5 py-2 text-[13px] text-left transition-colors ${
-                                        isSelected
+                                    className={`w-full flex items-center justify-between px-3.5 py-2 text-[13px] text-left transition-colors ${isSelected
                                             ? 'bg-blue-50/80 text-blue-700 font-semibold'
                                             : 'text-gray-700 hover:bg-gray-50'
-                                    }`}
+                                        }`}
                                 >
                                     <span>{preset}</span>
                                     {isSelected && <Check className="w-4 h-4 text-blue-600" />}

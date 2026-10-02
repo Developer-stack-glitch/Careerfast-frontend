@@ -4,59 +4,48 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
     Search, Settings,
-    Plug, LineChart, Sparkles, Users, CreditCard,
-    Rocket, ChevronRight, Bell, PanelLeftClose, PanelLeftOpen, X, Command,
-    Building, Briefcase, FileCheck, MessageSquare,
-    TimerReset, LogOut, UserPlus, Layers, PlusCircle, Users2
+    Plug, LineChart, Sparkles, Users,
+    Rocket, ChevronRight, Bell, PanelLeftClose, PanelLeftOpen, Command,
+    Building2, Briefcase, MessageSquare, Clock, FileText, CreditCard,
+    LogOut, Layers, LayoutDashboard
 } from 'lucide-react';
 import defaultLogo from '../images/careerfastlogofinal.png';
 import { getImageUrl } from '../utils/getImageUrl';
 
 const mockNavGroups = [
     {
-        heading: 'Overview',
+        heading: 'Overview & Insights',
         items: [
-            { id: 'dashboard', title: 'Dashboard', icon: LineChart, href: '/admin' },
+            { id: 'dashboard', title: 'Executive Dashboard', icon: LayoutDashboard, href: '/admin' },
             { id: 'analytics', title: 'Analytics & Reports', icon: Sparkles, href: '/admin/analytics' },
         ]
     },
     {
-        heading: 'Recruiters',
+        heading: 'Recruiter Management',
         items: [
-            { id: 'all-recruiters', title: 'All Recruiters', icon: Building, href: '/admin/recruiters' },
-            { id: 'add-recruiter', title: 'Add Recruiter', icon: UserPlus, href: '/admin/recruiters/create' },
-            { id: 'recruiter-subscriptions', title: 'Recruiter Subscriptions', icon: CreditCard, href: '/admin/recruiters/subscriptions' },
+            { id: 'all-plans', title: 'Subscription Plans', icon: Layers, href: '/admin/plans' },
+            { id: 'all-recruiters', title: 'Recruiters & Companies', icon: Building2, href: '/admin/recruiters' },
+            { id: 'job-post', title: 'Job Listings', icon: Briefcase, href: '/admin/job-post' },
         ]
     },
     {
-        heading: 'Plans',
+        heading: 'Talent Pool',
         items: [
-            { id: 'all-plans', title: 'All Plans', icon: Layers, href: '/admin/plans' },
-            { id: 'add-plan', title: 'Add Plan', icon: PlusCircle, href: '/admin/plans/create' },
-            { id: 'plan-subscribers', title: 'Plan Subscribers', icon: Users2, href: '/admin/plans/subscribers' },
+            { id: 'job-seekers', title: 'Job Seekers Directory', icon: Users, href: '/admin/job-seekers' },
         ]
     },
     {
-        heading: 'Jobs & Candidates',
+        heading: 'System & Platform',
         items: [
-            { id: 'job-post', title: 'Job Postings', icon: Briefcase, href: '/admin/job-post' },
-            { id: 'applications', title: 'Applications', icon: FileCheck, href: '/admin/applications' },
-            { id: 'pending-jobs', title: 'Approval Pending Jobs', icon: TimerReset, href: '/admin/pending-jobs' },
-            { id: 'job-seekers', title: 'Job Seekers', icon: Users, href: '/admin/job-seekers' },
-        ]
-    },
-    {
-        heading: 'Platform',
-        items: [
-            { id: 'support', title: 'Support Tickets', icon: MessageSquare, href: '/admin/support' },
-            { id: 'general', title: 'General Settings', icon: Settings, href: '/admin/general' },
-            { id: 'integrations', title: 'Integrations', icon: Plug, href: '/admin/integrations' },
+            { id: 'support', title: 'Support & Help Desk', icon: MessageSquare, href: '/admin/support' },
+            { id: 'integrations', title: 'Integrations & APIs', icon: Plug, href: '/admin/integrations' },
+            { id: 'general', title: 'Platform Settings', icon: Settings, href: '/admin/general' },
         ]
     }
 ];
 
 const mockBottomItems = [
-    { id: 'logout', title: 'Logout', icon: LogOut },
+    { id: 'logout', title: 'Sign Out', icon: LogOut },
 ];
 
 const allItems = [
@@ -221,11 +210,11 @@ export default function AdminLayout({ children }) {
                             {isOpen ? <PanelLeftClose className="w-[18px] h-[18px]" /> : <PanelLeftOpen className="w-[18px] h-[18px]" />}
                         </button>
                         <div className="flex items-center text-[13px] text-gray-500">
-                            <Link href="/admin" className="cursor-pointer hover:text-gray-900 text-gray-500 no-underline">
-                                Dashboard
+                            <Link href="/admin" className="cursor-pointer hover:text-gray-900 text-gray-500 no-underline font-medium">
+                                Superadmin
                             </Link>
                             <ChevronRight className="w-3.5 h-3.5 mx-2 text-gray-300" />
-                            <span className="font-medium text-gray-900">{activeTitle}</span>
+                            <span className="font-semibold text-gray-900">{activeTitle}</span>
                         </div>
                     </div>
 

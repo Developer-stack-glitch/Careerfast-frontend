@@ -508,8 +508,11 @@ export const getJobPostByUserId = async (payload) => {
 
 export const deleteJobPost = async (payload) => {
   try {
+    const token = localStorage.getItem("AccessToken") || localStorage.getItem("token");
     const response = await api.delete("/api/deleteJobPost", {
       params: payload,
+      data: payload,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return response;
   } catch (error) {
@@ -519,10 +522,9 @@ export const deleteJobPost = async (payload) => {
 
 export const expireJobPost = async (payload) => {
   try {
+    const token = localStorage.getItem("AccessToken") || localStorage.getItem("token");
     const response = await api.put("/api/registrationClose", payload, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return response;
   } catch (error) {
@@ -533,14 +535,22 @@ export const expireJobPost = async (payload) => {
 
 export const makeJobActive = async (payload) => {
   try {
+    const token = localStorage.getItem("AccessToken") || localStorage.getItem("token");
     const response = await api.put("/api/makeJobActive", payload, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     return response;
   } catch (error) {
     console.error("❌ Error making job active:", error);
+    throw error;
+  }
+};
+
+export const recordCandidateWhatsAppAPI = async (payload = { count: 1 }) => {
+  try {
+    const response = await api.post("/api/recruiter/candidates/record-whatsapp", payload);
+    return response.data;
+  } catch (error) {
     throw error;
   }
 };
@@ -1929,6 +1939,10 @@ export const extendAdminRecruiterSubscription = async (id, payload) => {
   }
 };
 
+export const updateAdminRecruiterCustomPlan = async (id, payload) => {
+    return await api.post(`/api/admin/recruiters/${id}/custom-plan`, payload);
+};
+
 export const updateAdminRecruiterStatus = async (id, payload) => {
   try {
     const response = await api.put(`/api/admin/recruiters/${id}/status`, payload);
@@ -2040,7 +2054,6 @@ export const createAdminSubRecruiter = async (recruiterId, payload) => {
     throw error;
   }
 };
-
 
 // Worldwide Job Roles & Locations & Skills & Companies Third-Party APIs
 export {

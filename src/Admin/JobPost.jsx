@@ -1,14 +1,25 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Briefcase, Building2, MapPin, Search,
-    MoreVertical, CheckCircle2, XCircle, FileText, Download,
+    MoreVertical, CheckCircle2, CheckCircle, XCircle, FileText, Download,
     Eye, Trash2, ExternalLink, ChevronLeft, ChevronRight, SlidersHorizontal, Clock,
-    ChevronsUpDown, Folder, GraduationCap, ClipboardList, Users
+    ChevronsUpDown, Folder, GraduationCap, ClipboardList, Users, User, Calendar
 } from 'lucide-react';
-import { getJobPosts, deleteJobPost, expireJobPost, makeJobActive } from '../ApiService/action';
+import {
+    getJobPosts,
+    deleteJobPost,
+    expireJobPost,
+    makeJobActive,
+    approveJobPost,
+    rejectJobPost,
+    approveAllPendingJobs
+} from '../ApiService/action';
 import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
+import { formatDistanceToNow } from 'date-fns';
+import { Modal } from 'antd';
+import Link from 'next/link';
 
 // Consistent color gradient generator for company logos/initials
 const getCompanyAvatarGradient = (name = '') => {
@@ -45,8 +56,8 @@ const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
     </div>
 );
 
-// ── Actions Dropdown ──
-const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, isBottom }) => {
+// ── Actions Dropdown (for Standard Table) ──
+const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, onReject, isBottom }) => {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -58,22 +69,48 @@ const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, isBottom }) =
     }, [onClose]);
 
     const isActive = job.is_closed === 0;
+    const isPending = job.approval_status === 'pending' || !job.approval_status;
 
     return (
-        <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-44 bg-white rounded-xl shadow-lg border border-gray-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
-            <button onClick={() => { window.open(`/job-details/${job.id}`, '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                <Eye className="w-3.5 h-3.5" /> View Details
+        <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-lg border border-gray-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
+            <button onClick={() => { window.open(`/job-details/${job.id}?preview=true`, '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                <Eye className="w-3.5 h-3.5 text-blue-500" /> View / Preview
             </button>
             <button onClick={() => { window.location.href = `/admin/applications?search=${encodeURIComponent(job.job_title || '')}`; onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                 <Users className="w-3.5 h-3.5 text-indigo-500" /> View Applied ({job.applicants_count || 0})
             </button>
             <button onClick={() => { window.open(job.apply_link || `/job-details/${job.id}`, '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                <ExternalLink className="w-3.5 h-3.5" /> Open Link
+                <ExternalLink className="w-3.5 h-3.5" /> Open Apply Link
             </button>
+
+            {isPending && (
+                <>
+                    <div className="my-1 border-t border-gray-100"></div>
+                    <button
+                        onClick={() => {
+                            onApprove(job);
+                            onClose();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-emerald-600 hover:bg-emerald-50 transition-colors"
+                    >
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Approve Job
+                    </button>
+                    <button
+                        onClick={() => {
+                            onReject(job);
+                            onClose();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-amber-600 hover:bg-amber-50 transition-colors"
+                    >
+                        <XCircle className="w-3.5 h-3.5 text-amber-500" /> Reject Job
+                    </button>
+                </>
+            )}
+
             <div className="my-1 border-t border-gray-100"></div>
             <button onClick={() => { onToggleStatus(job.id, isActive); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-gray-100 transition-colors">
                 {isActive ? <XCircle className="w-3.5 h-3.5 text-gray-500" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
-                {isActive ? 'Make Inactive' : 'Make Active'}
+                {isActive ? 'Close Job' : 'Open Job'}
             </button>
             <div className="my-1 border-t border-gray-100"></div>
             <button onClick={() => { onDelete(job.id); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors">
@@ -92,12 +129,18 @@ export default function JobPost() {
     const [currentPage, setCurrentPage] = useState(1);
     const [matchedJobs, setMatchedJobs] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
-    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, closed: 0, companies: 0 });
+    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, closed: 0, approved: 0, autoApproved: 0, pending: 0, companies: 0 });
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [jobToDelete, setJobToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
-    const itemsPerPage = 10;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+
+    // Approval action modals
+    const [actionModal, setActionModal] = useState({ isOpen: false, type: '', id: null, title: '' });
+    const [rejectReason, setRejectReason] = useState('');
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -108,7 +151,7 @@ export default function JobPost() {
 
     useEffect(() => {
         fetchJobs();
-    }, [currentPage, debouncedSearch, activeFilter, dateFilter]);
+    }, [currentPage, itemsPerPage, debouncedSearch, activeFilter, dateFilter, sortConfig]);
 
     const fetchJobs = async () => {
         try {
@@ -119,10 +162,28 @@ export default function JobPost() {
                 include_stats: true,
             };
             if (debouncedSearch) payload.searchTerm = debouncedSearch;
-            if (activeFilter === 'Active') payload.is_closed = 0;
-            if (activeFilter === 'Closed') payload.is_closed = 1;
+            if (activeFilter === 'Active') {
+                payload.is_closed = 0;
+                payload.approval_status = 'all';
+            } else if (activeFilter === 'Closed') {
+                payload.is_closed = 1;
+                payload.approval_status = 'all';
+            } else if (activeFilter === 'Approved') {
+                payload.approval_status = 'approved';
+            } else if (activeFilter === 'Auto Approved') {
+                payload.approval_status = 'auto_approved';
+            } else if (activeFilter === 'Pending') {
+                payload.approval_status = 'pending';
+            } else {
+                payload.approval_status = 'all';
+            }
+
             if (dateFilter.startDate) payload.start_date = dateFilter.startDate;
             if (dateFilter.endDate) payload.end_date = dateFilter.endDate;
+            if (sortConfig.key) {
+                payload.sort_key = sortConfig.key;
+                payload.sort_direction = sortConfig.direction || 'asc';
+            }
 
             const response = await getJobPosts(payload);
             const responseData = response?.data?.data || response?.data || {};
@@ -135,15 +196,19 @@ export default function JobPost() {
                 setMatchedJobs(meta.total || 0);
                 if (meta.stats) {
                     setGlobalStats({
-                        total: meta.stats.totalJobs || 0,
-                        active: meta.stats.activeJobs || 0,
-                        closed: meta.stats.closedJobs || 0,
-                        companies: meta.stats.uniqueCompanies || 0
+                        total: Number(meta.stats.totalJobs || 0),
+                        active: Number(meta.stats.activeJobs || 0),
+                        closed: Number(meta.stats.closedJobs || 0),
+                        approved: Number(meta.stats.approvedJobs || 0),
+                        autoApproved: Number(meta.stats.autoApprovedJobs || 0),
+                        pending: Number(meta.stats.pendingJobs || 0),
+                        companies: Number(meta.stats.uniqueCompanies || 0)
                     });
                 }
             }
         } catch (error) {
             console.error("Failed to fetch jobs:", error);
+            toast.error("Failed to load jobs data");
         } finally {
             setLoading(false);
         }
@@ -172,6 +237,38 @@ export default function JobPost() {
         }
     };
 
+    const openModal = (type, id = null, title = '') => {
+        setActionModal({ isOpen: true, type, id, title });
+    };
+
+    const handleConfirmAction = async () => {
+        const { type, id } = actionModal;
+        if (type === 'reject' && !rejectReason.trim()) {
+            toast.error("Please provide a reason for rejection.");
+            return;
+        }
+        try {
+            if (type === 'approve') {
+                const res = await approveJobPost(id);
+                toast.success(res?.data?.message || "Job approved successfully!");
+            } else if (type === 'reject') {
+                const res = await rejectJobPost(id, rejectReason);
+                toast.success(res?.data?.message || "Job rejected.");
+            } else if (type === 'approveAll') {
+                const res = await approveAllPendingJobs();
+                toast.success(res?.data?.message || "All pending jobs approved successfully!", { duration: 5000 });
+            }
+            fetchJobs();
+        } catch (error) {
+            console.error(`${type} error:`, error);
+            const errMsg = error.response?.data?.details || error.response?.data?.message || `Failed to ${type} job.`;
+            toast.error(errMsg, { duration: 6000 });
+        } finally {
+            setActionModal({ isOpen: false, type: '', id: null, title: '' });
+            setRejectReason('');
+        }
+    };
+
     const handleExport = async () => {
         try {
             const toastId = toast.loading('Generating export...');
@@ -182,6 +279,8 @@ export default function JobPost() {
             if (searchTerm) payload.searchTerm = searchTerm;
             if (activeFilter === 'Active') payload.is_closed = 0;
             if (activeFilter === 'Closed') payload.is_closed = 1;
+            if (activeFilter === 'Approved') payload.approval_status = 'approved';
+            if (activeFilter === 'Pending') payload.approval_status = 'pending';
 
             const response = await getJobPosts(payload);
             const responseData = response?.data?.data || response?.data || {};
@@ -193,16 +292,17 @@ export default function JobPost() {
             }
 
             const csvRows = [];
-            csvRows.push(['Job Title', 'Company', 'Type', 'Location', 'Date Posted', 'Status']);
+            csvRows.push(['Job Title', 'Company', 'Type', 'Location', 'Date Posted', 'Date Approved', 'Status']);
 
             exportJobs.forEach(job => {
                 const title = `"${(job.job_title || '').replace(/"/g, '""')}"`;
                 const company = `"${(job.company_name || '').replace(/"/g, '""')}"`;
                 const type = `"${Array.isArray(job.job_category) ? job.job_category.join(', ') : (job.job_category || 'General')}"`;
                 const location = `"${Array.isArray(job.work_location) ? job.work_location.join(', ') : (job.work_location || 'Remote')}"`;
-                const date = `"${new Date(job.created_at || new Date()).toLocaleDateString()}"`;
+                const datePosted = `"${new Date(job.created_at || new Date()).toLocaleDateString()}"`;
+                const dateApproved = `"${job.approved_at ? new Date(job.approved_at).toLocaleDateString() : 'Pending'}"`;
                 const status = job.is_closed === 0 ? 'Active' : 'Closed';
-                csvRows.push([title, company, type, location, date, status]);
+                csvRows.push([title, company, type, location, datePosted, dateApproved, status]);
             });
 
             const csvContent = csvRows.map(e => e.join(",")).join("\n");
@@ -224,13 +324,20 @@ export default function JobPost() {
     };
 
     const handleToggleStatus = async (jobId, currentIsActive) => {
+        // Optimistic UI update immediately
+        const newIsClosed = currentIsActive ? 1 : 0;
+        setJobs(prev => prev.map(j => (j.id === jobId || j._id === jobId) ? { ...j, is_closed: newIsClosed } : j));
+        setGlobalStats(prev => ({
+            ...prev,
+            active: currentIsActive ? Math.max(0, prev.active - 1) : prev.active + 1,
+            closed: currentIsActive ? prev.closed + 1 : Math.max(0, prev.closed - 1)
+        }));
+
         try {
             if (currentIsActive) {
-                // If currently active (is_closed=0), make it inactive (closed)
                 await expireJobPost({ id: jobId });
-                toast.success("Job post marked as inactive.");
+                toast.success("Job post marked as closed.");
             } else {
-                // If currently inactive (is_closed=1), make it active
                 await makeJobActive({ id: jobId });
                 toast.success("Job post marked as active.");
             }
@@ -238,21 +345,19 @@ export default function JobPost() {
         } catch (error) {
             console.error("Failed to change job status", error);
             toast.error("Failed to update job status.");
+            fetchJobs();
         }
     };
 
-    const [sortApplied, setSortApplied] = useState(null); // null | 'desc' | 'asc'
-
-    const displayedJobs = useMemo(() => {
-        if (!sortApplied) return jobs;
-        return [...jobs].sort((a, b) => {
-            const countA = Number(a.applicants_count) || 0;
-            const countB = Number(b.applicants_count) || 0;
-            return sortApplied === 'asc' ? countA - countB : countB - countA;
+    const handleSort = (key) => {
+        setSortConfig(prev => {
+            if (prev.key !== key) return { key, direction: 'asc' };
+            if (prev.direction === 'asc') return { key, direction: 'desc' };
+            return { key: null, direction: null };
         });
-    }, [jobs, sortApplied]);
+    };
 
-    const paginatedJobs = displayedJobs;
+    const paginatedJobs = jobs;
 
     // Reset page when filters change
     useEffect(() => {
@@ -265,19 +370,16 @@ export default function JobPost() {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
-    const getRelativeTime = (dateString) => {
+    const formatRelativeTime = (dateString) => {
         if (!dateString) return '';
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-        if (diffDays === 0) return 'Today';
-        if (diffDays === 1) return 'Yesterday';
-        if (diffDays < 7) return `${diffDays}d ago`;
-        if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
-        return `${Math.floor(diffDays / 30)}mo ago`;
+        try {
+            return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+        } catch (e) {
+            return '';
+        }
     };
 
-    // Stats
+    // Filter tabs definition
     const filterTabs = [
         {
             label: 'All',
@@ -288,6 +390,21 @@ export default function JobPost() {
             label: 'Active',
             count: globalStats.active,
             color: { text: 'text-emerald-600', border: 'border-emerald-600', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-700' }
+        },
+        {
+            label: 'Approved',
+            count: globalStats.approved,
+            color: { text: 'text-indigo-600', border: 'border-indigo-600', badgeBg: 'bg-indigo-100', badgeText: 'text-indigo-700' }
+        },
+        {
+            label: 'Auto Approved',
+            count: globalStats.autoApproved,
+            color: { text: 'text-violet-600', border: 'border-violet-600', badgeBg: 'bg-violet-100', badgeText: 'text-violet-700' }
+        },
+        {
+            label: 'Pending',
+            count: globalStats.pending,
+            color: { text: 'text-amber-600', border: 'border-amber-600', badgeBg: 'bg-amber-100', badgeText: 'text-amber-700' }
         },
         {
             label: 'Closed',
@@ -309,37 +426,39 @@ export default function JobPost() {
         return { bg: 'bg-indigo-50', text: 'text-indigo-600', icon: Briefcase };
     };
 
-    // Get company initials with a deterministic color
-    const getCompanyColor = (name) => {
-        const colors = [
-            { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100/50' },
-            { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100/50' },
-            { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100/50' },
-            { bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-100/50' },
-            { bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'border-cyan-100/50' },
-            { bg: 'bg-fuchsia-50', text: 'text-fuchsia-600', border: 'border-fuchsia-100/50' },
-            { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100/50' },
-        ];
-        const hash = (name || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        return colors[hash % colors.length];
-    };
-
     return (
         <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 tracking-tight mb-0">Job Postings</h1>
-                    <p className="text-[13px] text-gray-500 mt-0.5 mb-0">Manage all jobs posted by recruiters across the platform.</p>
+                    <h1 className="text-xl font-bold text-gray-900 tracking-tight mb-0">
+                        {activeFilter === 'Pending' ? 'Approval Pending Jobs' : 'Job Postings'}
+                    </h1>
+                    <p className="text-[13px] text-gray-500 mt-0.5 mb-0">
+                        {activeFilter === 'Pending'
+                            ? 'Review and approve job postings submitted by recruiters.'
+                            : 'Manage all jobs posted by recruiters across the platform.'}
+                    </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    {/* Approve All button when in Pending tab */}
+                    {activeFilter === 'Pending' && (globalStats.pending > 0 || paginatedJobs.length > 0) && (
+                        <button
+                            onClick={() => openModal('approveAll')}
+                            className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-600/20 flex items-center justify-center gap-2 shrink-0 active:scale-[0.98]"
+                        >
+                            <CheckCircle className="w-4 h-4" />
+                            Approve All
+                        </button>
+                    )}
+
                     <div className="relative w-full sm:w-72">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                             <Search className="h-4 w-4 text-gray-400" />
                         </div>
                         <input
                             type="text"
-                            placeholder="Search jobs, companies, locations..."
+                            placeholder="Search jobs or companies..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-[13px] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white outline-none transition-all placeholder:text-gray-400"
@@ -354,7 +473,7 @@ export default function JobPost() {
                     />
                     <button
                         onClick={handleExport}
-                        className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all flex items-center gap-2 shrink-0 active:scale-[0.98]"
+                        className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all flex items-center justify-center gap-2 shrink-0 active:scale-[0.98]"
                     >
                         <Download className="w-4 h-4" />
                         Export
@@ -363,7 +482,7 @@ export default function JobPost() {
             </div>
 
             {/* KPI Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                 <StatCard
                     title="Total Postings"
                     value={globalStats.total.toLocaleString()}
@@ -381,6 +500,22 @@ export default function JobPost() {
                     accent="ring-emerald-100"
                 />
                 <StatCard
+                    title="Auto Approved"
+                    value={globalStats.autoApproved.toLocaleString()}
+                    icon={CheckCircle2}
+                    color="text-violet-600"
+                    bg="bg-violet-50"
+                    accent="ring-violet-100"
+                />
+                <StatCard
+                    title="Approval Pending"
+                    value={globalStats.pending.toLocaleString()}
+                    icon={Clock}
+                    color="text-amber-600"
+                    bg="bg-amber-50"
+                    accent="ring-amber-100"
+                />
+                <StatCard
                     title="Closed Jobs"
                     value={globalStats.closed.toLocaleString()}
                     icon={XCircle}
@@ -388,26 +523,18 @@ export default function JobPost() {
                     bg="bg-rose-50"
                     accent="ring-rose-100"
                 />
-                <StatCard
-                    title="Companies"
-                    value={globalStats.companies.toLocaleString()}
-                    icon={Building2}
-                    color="text-violet-600"
-                    bg="bg-violet-50"
-                    accent="ring-violet-100"
-                />
             </div>
 
             {/* Content Area */}
-            <div className="bg-white rounded-xl">
+            <div className="bg-white rounded-xl shadow-xs overflow-hidden">
                 {/* Filter Tabs */}
                 <div className="px-6 pt-2 border-b border-gray-100 flex items-center justify-between mb-0">
-                    <div className="flex gap-12 -mb-px">
+                    <div className="flex gap-8 sm:gap-12 -mb-px overflow-x-auto">
                         {filterTabs.map((tab) => (
                             <button
                                 key={tab.label}
                                 onClick={() => setActiveFilter(tab.label)}
-                                className={`py-4 text-[14px] font-semibold transition-all border-b-2 group ${activeFilter === tab.label
+                                className={`py-4 text-[14px] font-semibold transition-all border-b-2 shrink-0 group ${activeFilter === tab.label
                                     ? `${tab.color.border} ${tab.color.text}`
                                     : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
                                     }`}
@@ -424,116 +551,93 @@ export default function JobPost() {
                             </button>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2 py-2">
-                        <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                            <SlidersHorizontal className="w-4 h-4" />
-                        </button>
-                    </div>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto pb-1 min-h-[280px] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-gray-50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-gray-100">
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">JOB TITLE <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
-                                </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">COMPANY <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
-                                </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">TYPE <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
-                                </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">LOCATION <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
-                                </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">DATE POSTED <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
-                                </th>
-                                <th
-                                    onClick={() => setSortApplied(prev => prev === 'desc' ? 'asc' : prev === 'asc' ? null : 'desc')}
-                                    className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-gray-900 select-none transition-colors"
-                                    title="Click to sort by applied candidates count"
-                                >
-                                    <div className="flex items-center gap-1.5">
-                                        <span>APPLIED CANDIDATES</span>
-                                        <ChevronsUpDown className={`w-3.5 h-3.5 ${sortApplied ? 'text-indigo-600 font-bold' : 'opacity-50'}`} />
-                                    </div>
-                                </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">STATUS <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
-                                </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white text-center">ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                            {loading ? (
-                                // Loading Skeleton
-                                [...Array(6)].map((_, i) => (
-                                    <tr key={i} className="animate-pulse bg-white">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-gray-100"></div>
-                                                <div>
-                                                    <div className="h-4 bg-gray-100 rounded-lg w-36 mb-2"></div>
-                                                    <div className="h-3 bg-gray-50 rounded-lg w-24"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded-lg w-28"></div></td>
-                                        <td className="px-6 py-4"><div className="h-6 bg-gray-100 rounded-full w-20"></div></td>
-                                        <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded-lg w-24"></div></td>
-                                        <td className="px-6 py-4"><div className="h-4 bg-gray-100 rounded-lg w-20"></div></td>
-                                        <td className="px-6 py-4"><div className="h-6 bg-gray-100 rounded-full w-20"></div></td>
-                                        <td className="px-6 py-4"><div className="h-6 bg-gray-100 rounded-full w-16"></div></td>
-                                        <td className="px-6 py-4 text-center"><div className="h-8 w-8 bg-gray-100 rounded-lg inline-block"></div></td>
+                {/* ── CONDITIONAL TABLE: PENDING VIEW vs STANDARD VIEW ── */}
+                {activeFilter === 'Pending' ? (
+                    /* ─── PENDING JOBS VIEW (Matches Approval Pending Jobs page) ─── */
+                    <div className="overflow-x-auto pb-1 min-h-[280px]">
+                        {loading ? (
+                            <table className="w-full text-left border-collapse min-w-[900px]">
+                                <thead>
+                                    <tr className="border-b border-gray-100 bg-gray-50/70">
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">JOB DETAILS</th>
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">TYPE / LOCATION</th>
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">POSTED DATE</th>
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-right">ACTIONS</th>
                                     </tr>
-                                ))
-                            ) : paginatedJobs.length === 0 ? (
-                                // Empty State
-                                <tr>
-                                    <td colSpan="8" className="px-6 py-16 text-center bg-white">
-                                        <div className="flex flex-col items-center justify-center text-gray-500">
-                                            <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 border border-gray-100">
-                                                <Briefcase className="w-7 h-7 text-gray-300" />
-                                            </div>
-                                            <h3 className="text-sm font-semibold text-gray-900 mb-1">No job postings found</h3>
-                                            <p className="text-[13px] text-gray-500 max-w-sm">
-                                                {searchTerm
-                                                    ? `No results for "${searchTerm}". Try adjusting your search or filters.`
-                                                    : 'There are currently no jobs matching your criteria.'
-                                                }
-                                            </p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                // Data Rows
-                                paginatedJobs.map((job, index) => {
-                                    const badgeStyle = getJobNatureBadge(job.job_nature);
-                                    const companyColor = getCompanyColor(job.company_name);
-                                    const isActive = job.is_closed === 0;
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 animate-pulse">
+                                    {[...Array(5)].map((_, i) => (
+                                        <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="py-3.5 px-6">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-12 h-12 rounded-xl bg-gray-200 shrink-0"></div>
+                                                    <div className="flex flex-col gap-2 w-full mt-1">
+                                                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                                                        <div className="h-3 bg-gray-200 rounded w-1/2 mt-0.5"></div>
+                                                        <div className="h-3 bg-gray-200 rounded w-1/3 mt-1.5"></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-6">
+                                                <div className="flex flex-col gap-2.5 mt-1">
+                                                    <div className="h-6 w-20 bg-gray-200 rounded-md"></div>
+                                                    <div className="h-3.5 w-32 bg-gray-200 rounded mt-0.5"></div>
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-6">
+                                                <div className="flex flex-col gap-2.5 mt-1">
+                                                    <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                                                    <div className="h-3.5 w-20 bg-gray-200 rounded mt-0.5"></div>
+                                                </div>
+                                            </td>
+                                            <td className="py-3.5 px-6 text-right align-middle">
+                                                <div className="flex items-center justify-end gap-3 mt-1">
+                                                    <div className="h-8 w-20 bg-gray-200 rounded-lg"></div>
+                                                    <div className="h-8 w-20 bg-gray-200 rounded-lg"></div>
+                                                    <div className="h-8 w-20 bg-gray-200 rounded-lg"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : paginatedJobs.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+                                <div className="w-20 h-20 mb-5 rounded-full bg-emerald-50 flex items-center justify-center relative shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+                                    <div className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping" style={{ animationDuration: '2s' }}></div>
+                                    <CheckCircle className="w-10 h-10 text-emerald-500 relative z-10" />
+                                </div>
+                                <h3 className="text-base font-bold text-gray-900 mb-1.5">No pending jobs</h3>
+                                <p className="text-gray-500 text-sm max-w-sm leading-relaxed mb-0">
+                                    You're all caught up! There are currently no job postings waiting for approval.
+                                </p>
+                            </div>
+                        ) : (
+                            <table className="w-full text-left border-collapse min-w-[900px]">
+                                <thead>
+                                    <tr className="border-b border-gray-100 bg-gray-50/70">
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">JOB DETAILS</th>
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">TYPE / LOCATION</th>
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">POSTED DATE</th>
+                                        <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-right">ACTIONS</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {paginatedJobs.map((job) => {
+                                        const logoSrc = job.company_logo || job.logo;
+                                        const compName = job.company_name || 'Company';
+                                        const grad = getCompanyAvatarGradient(compName);
+                                        const badgeStyle = getJobNatureBadge(job.job_nature);
 
-                                    const jobTitleText = job.job_title || 'Untitled Role';
-                                    const companyNameText = job.company_name || '-';
-                                    const jobCategoryText = Array.isArray(job.job_category) && job.job_category.length > 0 ? job.job_category.join(', ') : (job.job_category || 'General');
-                                    const workLocationText = Array.isArray(job.work_location) && job.work_location.length > 0 ? job.work_location.join(', ') : (job.work_location || 'Remote');
-
-                                    return (
-                                        <tr
-                                            key={job.id || job._id}
-                                            className="hover:bg-gray-50/50 transition-all duration-200 group bg-white"
-                                        >
-                                            {/* Job Role */}
-                                            <td className="px-4 py-3 max-w-[280px]">
-                                                <div className="flex items-center gap-3.5">
-                                                    {(() => {
-                                                        const logoSrc = job.company_logo || job.logo;
-                                                        const compName = job.company_name || 'Company';
-                                                        const grad = getCompanyAvatarGradient(compName);
-                                                        return logoSrc ? (
-                                                            <div className="w-12 h-12 p-0.5 rounded-xl bg-white shadow-md flex items-center justify-center shrink-0 overflow-hidden">
+                                        return (
+                                            <tr key={job.id || job._id} className="hover:bg-slate-50/60 transition-colors group">
+                                                {/* 1. Job Details */}
+                                                <td className="py-3.5 px-6 max-w-[420px]">
+                                                    <div className="flex items-start gap-4">
+                                                        {logoSrc ? (
+                                                            <div className="w-12 h-12 rounded-xl bg-white shadow-xs border border-gray-100 flex items-center justify-center p-1 shrink-0 overflow-hidden">
                                                                 <img
                                                                     src={getImageUrl(logoSrc)}
                                                                     alt={compName}
@@ -550,142 +654,370 @@ export default function JobPost() {
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${grad} text-white shadow-2xs flex items-center justify-center font-bold text-base uppercase shrink-0`}>
+                                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${grad} text-white shadow-xs flex items-center justify-center font-bold text-base uppercase shrink-0`}>
                                                                 {compName.slice(0, 2)}
                                                             </div>
-                                                        );
-                                                    })()}
-                                                    <div className="min-w-0 flex flex-col justify-center">
-                                                        <div className="relative group/title inline-block min-w-0">
-                                                            <h3 className="text-[14px] font-bold text-blue-950 group-hover:text-blue-600 transition-colors truncate mb-0">
-                                                                {jobTitleText}
+                                                        )}
+                                                        <div className="flex flex-col gap-0.5 min-w-0">
+                                                            <h3 className="text-[15px] font-bold text-blue-950 group-hover:text-blue-600 transition-colors line-clamp-1 mb-0">
+                                                                {job.job_title}
                                                             </h3>
-                                                            <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/title:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
-                                                                {jobTitleText}
-                                                                <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                                            <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                                                                <p className="text-sm font-semibold text-gray-700 mb-0">{compName}</p>
                                                             </div>
-                                                        </div>
-                                                        <div className="text-[13px] text-gray-500 mt-1 flex items-center gap-1.5 relative group/cat min-w-0">
-                                                            <Folder className="w-3.5 h-3.5 shrink-0 text-gray-400" />
-                                                            <span className="truncate">{jobCategoryText}</span>
-                                                            <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/cat:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
-                                                                {jobCategoryText}
-                                                                <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                                            <div className="flex items-center gap-1.5 text-xs text-gray-400 mt-1 font-medium">
+                                                                <User className="w-3.5 h-3.5" />
+                                                                <span>{job.recruiter_name ? `Posted by ${job.recruiter_name}` : 'Posted by Recruiter'}</span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </td>
+                                                </td>
 
-                                            {/* Company */}
-                                            <td className="px-4 py-3 max-w-[200px]">
-                                                <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium relative group/comp min-w-0">
-                                                    <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
-                                                    <span className="truncate">{companyNameText}</span>
-                                                    <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/comp:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
-                                                        {companyNameText}
-                                                        <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                                {/* 2. Type / Location */}
+                                                <td className="py-3.5 px-6">
+                                                    <div className="flex flex-col gap-2">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[12.5px] font-semibold ${badgeStyle.bg} ${badgeStyle.text} w-fit`}>
+                                                            <Briefcase className="w-3.5 h-3.5" />
+                                                            {job.job_nature || job.employment_type || 'Job'}
+                                                        </span>
+                                                        <div className="flex items-center gap-1.5 text-[13px] text-gray-500 font-medium">
+                                                            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                                            <span className="truncate max-w-[200px]">
+                                                                {(() => {
+                                                                    try {
+                                                                        const locs = typeof job.work_location === 'string' ? JSON.parse(job.work_location) : job.work_location;
+                                                                        return Array.isArray(locs) ? locs.join(', ') : (locs || 'Not Specified');
+                                                                    } catch (e) {
+                                                                        return job.work_location || 'Not Specified';
+                                                                    }
+                                                                })()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* 3. Posted Date */}
+                                                <td className="py-3.5 px-6">
+                                                    <div className="flex flex-col gap-1.5 text-[12.5px] text-gray-800 font-semibold">
+                                                        <div className="flex items-center gap-2">
+                                                            <Calendar className="w-4 h-4 text-gray-400" />
+                                                            {formatDate(job.created_at || job.createdAt)}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-gray-400 text-[12px] font-medium">
+                                                            <Clock className="w-3.5 h-3.5" />
+                                                            {formatRelativeTime(job.created_at || job.createdAt)}
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* 4. Actions */}
+                                                <td className="py-3.5 px-6 text-right align-middle">
+                                                    <div className="flex items-center justify-end gap-2.5">
+                                                        <Link prefetch={false} target="_blank" href={`/job-details/${job.id}?preview=true`} className="no-underline hover:no-underline">
+                                                            <button className="flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors active:scale-95">
+                                                                <Eye className="w-3.5 h-3.5" /> Preview
+                                                            </button>
+                                                        </Link>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (job.recruiter_can_approve === false) {
+                                                                    toast.error(
+                                                                        `Cannot approve: Recruiter "${job.company_name || 'Recruiter'}" has reached their ${job.recruiter_plan_name || 'plan'} active limit (${job.recruiter_active_count}/${job.recruiter_active_limit} slots used). The recruiter must upgrade their plan or close an active job first.`,
+                                                                        { duration: 6000 }
+                                                                    );
+                                                                    return;
+                                                                }
+                                                                openModal('approve', job.id, job.job_title);
+                                                            }}
+                                                            className={`flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold rounded-lg transition-colors active:scale-95 ${job.recruiter_can_approve === false
+                                                                ? 'text-gray-400 bg-gray-100 hover:bg-gray-200 cursor-not-allowed'
+                                                                : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                                                                }`}
+                                                            title={job.recruiter_can_approve === false ? `Active limit reached (${job.recruiter_active_count}/${job.recruiter_active_limit})` : "Approve job post"}
+                                                        >
+                                                            <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Approve
+                                                        </button>
+                                                        <button
+                                                            onClick={() => openModal('reject', job.id, job.job_title)}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors active:scale-95"
+                                                        >
+                                                            <XCircle className="w-3.5 h-3.5 text-rose-500" /> Reject
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        )}
+                    </div>
+                ) : (
+                    /* ─── STANDARD TABLE VIEW (All, Active, Approved, Closed) ─── */
+                    <div className="overflow-x-auto pb-1 min-h-[280px]">
+                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                            <thead>
+                                <tr className="border-b border-gray-100 bg-gray-50/70">
+                                    <th onClick={() => handleSort('job_title')} className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors">
+                                        <div className="flex items-center gap-2">JOB TITLE <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'job_title' ? 'text-blue-600' : 'opacity-50'}`} /></div>
+                                    </th>
+                                    <th onClick={() => handleSort('company_name')} className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors">
+                                        <div className="flex items-center gap-2">COMPANY <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'company_name' ? 'text-blue-600' : 'opacity-50'}`} /></div>
+                                    </th>
+                                    <th onClick={() => handleSort('job_nature')} className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors">
+                                        <div className="flex items-center gap-2">TYPE <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'job_nature' ? 'text-blue-600' : 'opacity-50'}`} /></div>
+                                    </th>
+                                    <th onClick={() => handleSort('job_location')} className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors">
+                                        <div className="flex items-center gap-2">LOCATION <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'job_location' ? 'text-blue-600' : 'opacity-50'}`} /></div>
+                                    </th>
+                                    <th onClick={() => handleSort('created_at')} className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors">
+                                        <div className="flex items-center gap-2">DATE POSTED <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'created_at' ? 'text-blue-600' : 'opacity-50'}`} /></div>
+                                    </th>
+                                    <th onClick={() => handleSort('approved_at')} className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors">
+                                        <div className="flex items-center gap-2">DATE APPROVED <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'approved_at' ? 'text-blue-600' : 'opacity-50'}`} /></div>
+                                    </th>
+                                    <th
+                                        onClick={() => handleSort('applicants_count')}
+                                        className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors"
+                                        title="Click to sort by applied candidates count"
+                                    >
+                                        <div className="flex items-center gap-1.5">
+                                            <span>APPLIED CANDIDATES</span>
+                                            <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'applicants_count' ? 'text-blue-600' : 'opacity-50'}`} />
+                                        </div>
+                                    </th>
+                                    <th onClick={() => handleSort('is_closed')} className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-900 select-none transition-colors">
+                                        <div className="flex items-center gap-2">STATUS <ChevronsUpDown className={`w-3.5 h-3.5 ${sortConfig.key === 'is_closed' ? 'text-blue-600' : 'opacity-50'}`} /></div>
+                                    </th>
+                                    <th className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {loading ? (
+                                    [...Array(6)].map((_, i) => (
+                                        <tr key={i} className="animate-pulse bg-white">
+                                            <td className="px-4 py-3.5">
+                                                <div className="flex items-center gap-3.5">
+                                                    <div className="w-12 h-12 rounded-xl bg-gray-100"></div>
+                                                    <div>
+                                                        <div className="h-4 bg-gray-100 rounded-lg w-36 mb-2"></div>
+                                                        <div className="h-3 bg-gray-50 rounded-lg w-24"></div>
                                                     </div>
                                                 </div>
                                             </td>
-
-                                            {/* Type Badge */}
-                                            <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full ${badgeStyle.bg} ${badgeStyle.text}`}>
-                                                    <badgeStyle.icon className="w-3.5 h-3.5" />
-                                                    {job.job_nature || 'Job'}
-                                                </span>
-                                            </td>
-
-                                            {/* Location */}
-                                            <td className="px-4 py-3 max-w-[200px]">
-                                                <div className="flex items-center gap-2 text-[13px] text-gray-600 relative group/loc min-w-0">
-                                                    <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
-                                                    <span className="truncate">{workLocationText}</span>
-                                                    <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/loc:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
-                                                        {workLocationText}
-                                                        <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Date Posted */}
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <div className="flex flex-col justify-center">
-                                                    <span className="text-[13px] text-gray-900 font-bold">
-                                                        {formatDate(job.created_at || job.createdAt)}
-                                                    </span>
-                                                    <span className="text-[13px] text-gray-500 mt-1 flex items-center gap-1.5">
-                                                        <Clock className="w-3.5 h-3.5 text-gray-400" />
-                                                        {getRelativeTime(job.created_at || job.createdAt)}
-                                                    </span>
-                                                </div>
-                                            </td>
-
-                                            {/* Applied Candidates Count */}
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <a
-                                                    href={`/admin/applications?search=${encodeURIComponent(jobTitleText)}`}
-                                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${(Number(job.applicants_count) > 0)
-                                                        ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200/80 shadow-2xs'
-                                                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200/60'
-                                                        }`}
-                                                    title={`View ${job.applicants_count || 0} applied candidates`}
-                                                >
-                                                    <Users className={`w-3.5 h-3.5 ${Number(job.applicants_count) > 0 ? 'text-indigo-600' : 'text-gray-400'}`} />
-                                                    <span>{job.applicants_count || 0}</span>
-                                                    <span className="text-[11px] font-medium opacity-80">
-                                                        {Number(job.applicants_count) === 1 ? 'Applied' : 'Applied'}
-                                                    </span>
-                                                </a>
-                                            </td>
-
-                                            {/* Status */}
-                                            <td className="px-4 py-3 whitespace-nowrap">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-full ${isActive
-                                                    ? 'bg-emerald-50 text-emerald-600'
-                                                    : 'bg-gray-100 text-gray-500'
-                                                    }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
-                                                    {isActive ? 'Active' : 'Closed'}
-                                                </span>
-                                            </td>
-
-                                            {/* Actions */}
-                                            <td className="px-4 py-3 whitespace-nowrap text-center">
-                                                <div className="relative inline-block text-left">
-                                                    <button
-                                                        onClick={() => setOpenDropdown(openDropdown === (job.id || job._id) ? null : (job.id || job._id))}
-                                                        className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all focus:outline-none"
-                                                    >
-                                                        <MoreVertical className="w-5 h-5" />
-                                                    </button>
-                                                    {openDropdown === (job.id || job._id) && (
-                                                        <ActionsDropdown
-                                                            job={job}
-                                                            onClose={() => setOpenDropdown(null)}
-                                                            onDelete={handleDeleteJob}
-                                                            onToggleStatus={handleToggleStatus}
-                                                            isBottom={index >= paginatedJobs.length - 2 && paginatedJobs.length > 2}
-                                                        />
-                                                    )}
-                                                </div>
-                                            </td>
+                                            <td className="px-4 py-3.5"><div className="h-4 bg-gray-100 rounded-lg w-28"></div></td>
+                                            <td className="px-4 py-3.5"><div className="h-6 bg-gray-100 rounded-full w-20"></div></td>
+                                            <td className="px-4 py-3.5"><div className="h-4 bg-gray-100 rounded-lg w-24"></div></td>
+                                            <td className="px-4 py-3.5"><div className="h-4 bg-gray-100 rounded-lg w-20"></div></td>
+                                            <td className="px-4 py-3.5"><div className="h-4 bg-gray-100 rounded-lg w-20"></div></td>
+                                            <td className="px-4 py-3.5"><div className="h-6 bg-gray-100 rounded-full w-20"></div></td>
+                                            <td className="px-4 py-3.5"><div className="h-6 bg-gray-100 rounded-full w-16"></div></td>
+                                            <td className="px-4 py-3.5 text-center"><div className="h-8 w-8 bg-gray-100 rounded-lg inline-block"></div></td>
                                         </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                    ))
+                                ) : paginatedJobs.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="9" className="px-6 py-16 text-center bg-white">
+                                            <div className="flex flex-col items-center justify-center text-gray-500">
+                                                <div className="w-16 h-16 rounded-2xl bg-gray-50 flex items-center justify-center mb-4 border border-gray-100">
+                                                    <Briefcase className="w-7 h-7 text-gray-300" />
+                                                </div>
+                                                <h3 className="text-sm font-semibold text-gray-900 mb-1">No job postings found</h3>
+                                                <p className="text-[13px] text-gray-500 max-w-sm mb-0">
+                                                    {searchTerm
+                                                        ? `No results for "${searchTerm}". Try adjusting your search or filters.`
+                                                        : 'There are currently no jobs matching your criteria.'
+                                                    }
+                                                </p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    paginatedJobs.map((job, index) => {
+                                        const badgeStyle = getJobNatureBadge(job.job_nature);
+                                        const isActive = job.is_closed === 0;
+                                        const jobTitleText = job.job_title || 'Untitled Role';
+                                        const companyNameText = job.company_name || '-';
+                                        const jobCategoryText = Array.isArray(job.job_category) && job.job_category.length > 0 ? job.job_category.join(', ') : (job.job_category || 'General');
+                                        const workLocationText = Array.isArray(job.work_location) && job.work_location.length > 0 ? job.work_location.join(', ') : (job.work_location || 'Remote');
+                                        const logoSrc = job.company_logo || job.logo;
+                                        const grad = getCompanyAvatarGradient(companyNameText);
+
+                                        return (
+                                            <tr
+                                                key={job.id || job._id}
+                                                className="hover:bg-gray-50/60 transition-all duration-200 group bg-white"
+                                            >
+                                                {/* Job Role */}
+                                                <td className="px-4 py-3.5 max-w-[280px]">
+                                                    <div className="flex items-center gap-3.5">
+                                                        {logoSrc ? (
+                                                            <div className="w-12 h-12 p-1 rounded-xl bg-white shadow-xs border border-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                                                                <img
+                                                                    src={getImageUrl(logoSrc)}
+                                                                    alt={companyNameText}
+                                                                    className="w-full h-full object-contain"
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.style.display = 'none';
+                                                                        if (e.currentTarget.nextElementSibling) {
+                                                                            e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <div className={`w-full h-full rounded-lg bg-gradient-to-br ${grad} text-white hidden items-center justify-center font-bold text-base uppercase`}>
+                                                                    {companyNameText.slice(0, 2)}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${grad} text-white shadow-xs flex items-center justify-center font-bold text-base uppercase shrink-0`}>
+                                                                {companyNameText.slice(0, 2)}
+                                                            </div>
+                                                        )}
+                                                        <div className="min-w-0 flex flex-col justify-center">
+                                                            <div className="relative group/title inline-block min-w-0">
+                                                                <h3 className="text-[14px] font-bold text-blue-950 group-hover:text-blue-600 transition-colors truncate mb-0">
+                                                                    {jobTitleText}
+                                                                </h3>
+                                                                <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/title:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
+                                                                    {jobTitleText}
+                                                                    <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-[13px] text-gray-500 mt-1 flex items-center gap-1.5 relative group/cat min-w-0">
+                                                                <Folder className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                                                                <span className="truncate">{jobCategoryText}</span>
+                                                                <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/cat:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
+                                                                    {jobCategoryText}
+                                                                    <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Company */}
+                                                <td className="px-4 py-3.5 max-w-[200px]">
+                                                    <div className="flex items-center gap-2 text-[13px] text-gray-600 font-medium relative group/comp min-w-0">
+                                                        <Building2 className="w-4 h-4 text-gray-400 shrink-0" />
+                                                        <span className="truncate">{companyNameText}</span>
+                                                        <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/comp:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
+                                                            {companyNameText}
+                                                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Type Badge */}
+                                                <td className="px-4 py-3.5">
+                                                    <span className={`inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full ${badgeStyle.bg} ${badgeStyle.text}`}>
+                                                        <badgeStyle.icon className="w-3.5 h-3.5" />
+                                                        {job.job_nature || 'Job'}
+                                                    </span>
+                                                </td>
+
+                                                {/* Location */}
+                                                <td className="px-4 py-3.5 max-w-[200px]">
+                                                    <div className="flex items-center gap-2 text-[13px] text-gray-600 relative group/loc min-w-0">
+                                                        <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
+                                                        <span className="truncate">{workLocationText}</span>
+                                                        <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/loc:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
+                                                            {workLocationText}
+                                                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                {/* Date Posted */}
+                                                <td className="px-4 py-3.5 whitespace-nowrap">
+                                                    <div className="flex flex-col justify-center">
+                                                        <span className="text-[13px] text-gray-900 font-bold">
+                                                            {formatDate(job.created_at || job.createdAt)}
+                                                        </span>
+                                                    </div>
+                                                </td>
+
+                                                {/* Date Approved */}
+                                                <td className="px-4 py-3.5 whitespace-nowrap">
+                                                    {(job.approved_at || job.approval_status === 'approved') ? (
+                                                        <div className="flex flex-col justify-center">
+                                                            <span className="text-[13px] text-gray-900 font-bold">
+                                                                {formatDate(job.approved_at || job.created_at || job.createdAt)}
+                                                            </span>
+                                                        </div>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[12px] font-semibold text-amber-700 bg-amber-50 rounded-full border-1 border-amber-200/60">
+                                                            Pending
+                                                        </span>
+                                                    )}
+                                                </td>
+
+                                                {/* Applied Candidates Count */}
+                                                <td className="px-4 py-3.5 whitespace-nowrap">
+                                                    <a
+                                                        href={`/admin/applications?search=${encodeURIComponent(jobTitleText)}`}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${(Number(job.applicants_count) > 0)
+                                                            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200/80 shadow-2xs'
+                                                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200/60'
+                                                            }`}
+                                                        title={`View ${job.applicants_count || 0} applied candidates`}
+                                                    >
+                                                        <Users className={`w-3.5 h-3.5 ${Number(job.applicants_count) > 0 ? 'text-indigo-600' : 'text-gray-400'}`} />
+                                                        <span>{job.applicants_count || 0}</span>
+                                                        <span className="text-[11px] font-medium opacity-80">
+                                                            Applied
+                                                        </span>
+                                                    </a>
+                                                </td>
+
+                                                {/* Status */}
+                                                <td className="px-4 py-3.5 whitespace-nowrap">
+                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold rounded-full ${isActive
+                                                        ? 'bg-emerald-50 text-emerald-600'
+                                                        : 'bg-gray-100 text-gray-500'
+                                                        }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                                                        {isActive ? 'Active' : 'Closed'}
+                                                    </span>
+                                                </td>
+
+                                                {/* Actions */}
+                                                <td className="px-4 py-3.5 whitespace-nowrap text-center">
+                                                    <div className="relative inline-block text-left">
+                                                        <button
+                                                            onClick={() => setOpenDropdown(openDropdown === (job.id || job._id) ? null : (job.id || job._id))}
+                                                            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all focus:outline-none"
+                                                        >
+                                                            <MoreVertical className="w-5 h-5" />
+                                                        </button>
+                                                        {openDropdown === (job.id || job._id) && (
+                                                            <ActionsDropdown
+                                                                job={job}
+                                                                onClose={() => setOpenDropdown(null)}
+                                                                onDelete={handleDeleteJob}
+                                                                onToggleStatus={handleToggleStatus}
+                                                                onApprove={(j) => openModal('approve', j.id, j.job_title)}
+                                                                onReject={(j) => openModal('reject', j.id, j.job_title)}
+                                                                isBottom={index >= paginatedJobs.length - 2 && paginatedJobs.length > 2}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
                 {/* Pagination */}
                 {!loading && matchedJobs > 0 && (
-                    <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
-                        <div className="text-[13px] text-gray-500 w-1/3">
-                            Showing {Math.min((currentPage - 1) * itemsPerPage + 1, matchedJobs)} to {Math.min(currentPage * itemsPerPage, matchedJobs)} of {matchedJobs.toLocaleString()} jobs
+                    <div className="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between bg-white gap-4">
+                        <div className="text-[13px] text-gray-500 sm:w-1/3">
+                            Showing {Math.min((currentPage - 1) * itemsPerPage + 1, matchedJobs)} to {Math.min(currentPage * itemsPerPage, matchedJobs)} of {matchedJobs.toLocaleString()} {activeFilter === 'Pending' ? 'pending jobs' : 'jobs'}
                         </div>
-                        <div className="flex items-center justify-center gap-1.5 w-1/3">
+                        <div className="flex items-center justify-center gap-1.5 sm:w-1/3">
                             <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
@@ -709,7 +1041,7 @@ export default function JobPost() {
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
                                         className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all ${currentPage === pageNum
-                                            ? 'text-indigo-600 border border-indigo-200 bg-indigo-50'
+                                            ? 'text-indigo-600 border border-indigo-200 bg-indigo-50 font-bold'
                                             : 'text-gray-600 hover:bg-gray-50'
                                             }`}
                                     >
@@ -736,22 +1068,26 @@ export default function JobPost() {
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="flex items-center justify-end gap-2 text-[13px] text-gray-500 w-1/3">
+                        <div className="flex items-center justify-end gap-2 text-[13px] text-gray-500 sm:w-1/3">
                             <span>Rows per page:</span>
-                            <div className="relative">
-                                <select className="appearance-none border-none bg-transparent pr-4 font-medium text-gray-700 outline-none cursor-pointer">
-                                    <option value="10">10</option>
-                                    <option value="20">20</option>
-                                    <option value="50">50</option>
-                                </select>
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
-                                    <ChevronRight className="w-3.5 h-3.5 rotate-90 text-gray-500" />
-                                </div>
-                            </div>
+                            <select
+                                value={itemsPerPage}
+                                onChange={(e) => {
+                                    setItemsPerPage(Number(e.target.value));
+                                    setCurrentPage(1);
+                                }}
+                                className="border border-gray-200 rounded-lg px-2 py-1 font-medium text-gray-700 outline-none bg-white cursor-pointer hover:border-gray-300 transition-colors"
+                            >
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
                         </div>
                     </div>
                 )}
             </div>
+
             {/* Delete Confirmation Modal */}
             {deleteModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -794,6 +1130,50 @@ export default function JobPost() {
                     </div>
                 </div>
             )}
+
+            {/* Approval / Rejection Modal */}
+            <Modal
+                title={actionModal.type === 'approveAll' ? 'Approve All Pending Jobs' : (actionModal.type === 'approve' ? 'Approve Job Post' : 'Reject Job Post')}
+                open={actionModal.isOpen}
+                centered
+                onOk={handleConfirmAction}
+                onCancel={() => {
+                    setActionModal({ isOpen: false, type: '', id: null, title: '' });
+                    setRejectReason('');
+                }}
+                okText={actionModal.type === 'approveAll' ? 'Yes, Approve All' : (actionModal.type === 'approve' ? 'Yes, Approve' : 'Yes, Reject')}
+                okButtonProps={{
+                    className: (actionModal.type === 'approve' || actionModal.type === 'approveAll')
+                        ? '!bg-emerald-600 hover:!bg-emerald-700 !border-emerald-600 hover:!border-emerald-700 !text-white'
+                        : '!bg-red-600 hover:!bg-red-700 !border-red-600 hover:!border-red-700 !text-white',
+                    style: { boxShadow: 'none' }
+                }}
+                cancelButtonProps={{
+                    className: 'hover:!border-slate-400 hover:!text-slate-700 !text-slate-600 !border-slate-300',
+                    style: { boxShadow: 'none' }
+                }}
+            >
+                <div className="py-2">
+                    <p className="mb-4 text-slate-600">
+                        {actionModal.type === 'approveAll'
+                            ? `Are you sure you want to approve all ${globalStats.pending} pending jobs? They will become active and public immediately.`
+                            : (actionModal.type === 'approve'
+                                ? `Are you sure you want to approve "${actionModal.title}"? It will become public immediately.`
+                                : `Are you sure you want to reject "${actionModal.title}"? Please provide a reason.`)}
+                    </p>
+
+                    {actionModal.type === 'reject' && (
+                        <textarea
+                            className="w-full p-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-sm resize-none"
+                            rows={3}
+                            placeholder="Enter rejection reason here... (Required)"
+                            value={rejectReason}
+                            onChange={(e) => setRejectReason(e.target.value)}
+                            required
+                        ></textarea>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

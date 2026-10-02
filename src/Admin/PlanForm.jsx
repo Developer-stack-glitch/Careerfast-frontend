@@ -42,6 +42,9 @@ export default function PlanForm({ planId = null }) {
         // Candidate / Resume Limits
         resume_view_limit: 50,
         resume_download_limit: 10,
+        email_limit: 50,
+        whatsapp_limit: 50,
+        excel_download_limit: 50,
 
         // Feature Privileges (Toggles)
         candidate_search: false,
@@ -85,6 +88,9 @@ export default function PlanForm({ planId = null }) {
 
                     resume_view_limit: p.resume_view_limit ?? 50,
                     resume_download_limit: p.resume_download_limit ?? 10,
+                    email_limit: p.email_limit ?? 50,
+                    whatsapp_limit: p.whatsapp_limit ?? 50,
+                    excel_download_limit: p.excel_download_limit ?? 50,
 
                     candidate_search: Boolean(p.candidate_search),
                     candidate_contact: Boolean(p.candidate_contact),
@@ -106,8 +112,69 @@ export default function PlanForm({ planId = null }) {
         }
     };
 
+    const getValidityHelper = (days) => {
+        const num = Number(days);
+        if (!num || num <= 0) return 'Enter number of validity days';
+        if (num === 30) return 'Standard 1 Month cycle (30 days)';
+        if (num === 365) return 'Standard 1 Year cycle (365 days)';
+        if (num === 366) return 'Leap Year cycle (366 days)';
+        if (num === 90) return 'Quarterly cycle (3 months / 90 days)';
+        if (num === 180) return 'Half-Yearly cycle (6 months / 180 days)';
+        if (num % 365 === 0) {
+            const y = num / 365;
+            return `${y} Year${y > 1 ? 's' : ''} (${num} days)`;
+        }
+        if (num % 30 === 0) {
+            const m = num / 30;
+            return `Approx. ${m} Months (${num} days)`;
+        }
+        if (num < 30) return `${num} Days custom period`;
+        const m = Math.floor(num / 30);
+        const rem = num % 30;
+        return `Approx. ${m} mo${rem > 0 ? ` & ${rem}d` : ''} (${num} days)`;
+    };
+
+    const handlePlanTypeChange = (newType) => {
+        let days = formData.validity_days;
+        if (newType === 'monthly') {
+            days = 30;
+        } else if (newType === 'yearly') {
+            days = 365;
+        }
+        setFormData(prev => ({
+            ...prev,
+            plan_type: newType,
+            validity_days: days
+        }));
+    };
+
+    const handleValidityDaysChange = (val) => {
+        const num = val === '' ? '' : Math.max(1, parseInt(val, 10) || 0);
+        let derivedType = formData.plan_type;
+        if (num === 30) {
+            derivedType = 'monthly';
+        } else if (num === 365) {
+            derivedType = 'yearly';
+        } else if (num > 0) {
+            derivedType = 'custom';
+        }
+        setFormData(prev => ({
+            ...prev,
+            validity_days: num,
+            plan_type: derivedType
+        }));
+    };
+
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        if (name === 'plan_type') {
+            handlePlanTypeChange(value);
+            return;
+        }
+        if (name === 'validity_days') {
+            handleValidityDaysChange(value);
+            return;
+        }
         setFormData(prev => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
@@ -144,8 +211,12 @@ export default function PlanForm({ planId = null }) {
                 active_job_limit: Number(formData.active_job_limit),
                 featured_job_limit: Number(formData.featured_job_limit),
                 urgent_job_limit: Number(formData.urgent_job_limit),
+                sub_recruiter_limit: Number(formData.sub_recruiter_limit),
                 resume_view_limit: Number(formData.resume_view_limit),
                 resume_download_limit: Number(formData.resume_download_limit),
+                email_limit: Number(formData.email_limit || 0),
+                whatsapp_limit: Number(formData.whatsapp_limit || 0),
+                excel_download_limit: Number(formData.excel_download_limit || 0),
             };
 
             if (isEdit) {
@@ -218,7 +289,7 @@ export default function PlanForm({ planId = null }) {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Plan Name */}
                         <div className="md:col-span-2">
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Plan Name <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -234,7 +305,7 @@ export default function PlanForm({ planId = null }) {
 
                         {/* Plan Description */}
                         <div className="md:col-span-2">
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Plan Description
                             </label>
                             <textarea
@@ -247,41 +318,146 @@ export default function PlanForm({ planId = null }) {
                             />
                         </div>
 
-                        {/* Plan Type / Billing Cycle */}
-                        <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Plan Type / Billing Cycle
-                            </label>
-                            <select
-                                name="plan_type"
-                                value={formData.plan_type}
-                                onChange={handleChange}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
-                            >
-                                <option value="monthly">Monthly</option>
-                                <option value="yearly">Yearly</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
+                        {/* Plan Type & Validity Section */}
+                        <div className="md:col-span-2 bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200/80">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-800 mb-0">
+                                        Plan Type / Billing Cycle & Validity <span className="text-red-500">*</span>
+                                    </label>
+                                    <p className="text-[11px] text-slate-400 mt-0.5 mb-0">
+                                        Select standard billing cycle or specify custom duration days.
+                                    </p>
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border-1 border-blue-200/60 text-blue-700 text-xs font-semibold self-start sm:self-auto">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                                    {getValidityHelper(formData.validity_days)}
+                                </div>
+                            </div>
 
-                        {/* Validity in Days */}
-                        <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                                Validity (in Days)
-                            </label>
-                            <input
-                                type="number"
-                                name="validity_days"
-                                value={formData.validity_days}
-                                onChange={handleChange}
-                                min={1}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
-                            />
+                            {/* Cycle Selector Cards */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => handlePlanTypeChange('monthly')}
+                                    className={`relative p-3.5 rounded-xl border text-left transition-all ${formData.plan_type === 'monthly' && Number(formData.validity_days) === 30
+                                        ? 'bg-white border-blue-600 ring-2 ring-blue-600/10 shadow-sm'
+                                        : 'bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white'
+                                        }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className={`text-[13px] font-bold ${formData.plan_type === 'monthly' && Number(formData.validity_days) === 30 ? 'text-blue-700' : 'text-slate-800'}`}>
+                                            Monthly
+                                        </span>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.plan_type === 'monthly' && Number(formData.validity_days) === 30
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-slate-100 text-slate-600'
+                                            }`}>
+                                            30 Days
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 mb-0">Standard 1 Month billing cycle</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handlePlanTypeChange('yearly')}
+                                    className={`relative p-3.5 rounded-xl border text-left transition-all ${formData.plan_type === 'yearly' && Number(formData.validity_days) === 365
+                                        ? 'bg-white border-blue-600 ring-2 ring-blue-600/10 shadow-sm'
+                                        : 'bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white'
+                                        }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className={`text-[13px] font-bold ${formData.plan_type === 'yearly' && Number(formData.validity_days) === 365 ? 'text-blue-700' : 'text-slate-800'}`}>
+                                            Yearly
+                                        </span>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.plan_type === 'yearly' && Number(formData.validity_days) === 365
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/60'
+                                            }`}>
+                                            365 Days
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 mb-0">Full 1 Year annual cycle</p>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handlePlanTypeChange('custom')}
+                                    className={`relative p-3.5 rounded-xl border text-left transition-all ${formData.plan_type === 'custom' || (Number(formData.validity_days) !== 30 && Number(formData.validity_days) !== 365)
+                                        ? 'bg-white border-blue-600 ring-2 ring-blue-600/10 shadow-sm'
+                                        : 'bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white'
+                                        }`}
+                                >
+                                    <div className="flex items-center justify-between mb-1">
+                                        <span className={`text-[13px] font-bold ${formData.plan_type === 'custom' || (Number(formData.validity_days) !== 30 && Number(formData.validity_days) !== 365) ? 'text-blue-700' : 'text-slate-800'}`}>
+                                            Custom
+                                        </span>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.plan_type === 'custom' || (Number(formData.validity_days) !== 30 && Number(formData.validity_days) !== 365)
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-slate-100 text-slate-600'
+                                            }`}>
+                                            Flexible
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 mb-0">Custom day-based validity</p>
+                                </button>
+                            </div>
+
+                            {/* Synchronized Days Input & Quick Presets */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200/70">
+                                <div className="flex items-center gap-2.5">
+                                    <label className="text-[12px] font-semibold text-slate-600 whitespace-nowrap mb-0">
+                                        Validity in Days:
+                                    </label>
+                                    <div className="relative inline-block">
+                                        <input
+                                            type="number"
+                                            name="validity_days"
+                                            value={formData.validity_days}
+                                            onChange={(e) => handleValidityDaysChange(e.target.value)}
+                                            min={1}
+                                            className="w-24 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 text-center"
+                                        />
+                                    </div>
+                                    <span className="text-xs text-slate-500 font-medium">Days</span>
+                                </div>
+
+                                {/* Preset Pills */}
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="text-[11px] text-slate-400 font-medium mr-1">Presets:</span>
+                                    {[
+                                        { label: '15 Days', days: 15 },
+                                        { label: '30 Days (1M)', days: 30, type: 'monthly' },
+                                        { label: '90 Days (3M)', days: 90 },
+                                        { label: '180 Days (6M)', days: 180 },
+                                        { label: '365 Days (1Y)', days: 365, type: 'yearly' },
+                                    ].map(preset => (
+                                        <button
+                                            key={preset.days}
+                                            type="button"
+                                            onClick={() => {
+                                                if (preset.type) {
+                                                    handlePlanTypeChange(preset.type);
+                                                } else {
+                                                    handleValidityDaysChange(preset.days);
+                                                }
+                                            }}
+                                            className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all ${Number(formData.validity_days) === preset.days
+                                                ? 'bg-blue-600 border-blue-600 text-white font-semibold shadow-xs'
+                                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                                                }`}
+                                        >
+                                            {preset.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Price */}
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Price (₹) <span className="text-red-500">*</span>
                             </label>
                             <input
@@ -298,7 +474,7 @@ export default function PlanForm({ planId = null }) {
 
                         {/* Status */}
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Status
                             </label>
                             <select
@@ -326,7 +502,7 @@ export default function PlanForm({ planId = null }) {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Monthly Job Posts
                             </label>
                             <input
@@ -341,7 +517,7 @@ export default function PlanForm({ planId = null }) {
                         </div>
 
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Max Active Jobs
                             </label>
                             <input
@@ -356,7 +532,7 @@ export default function PlanForm({ planId = null }) {
                         </div>
 
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Featured Job Posts
                             </label>
                             <input
@@ -371,7 +547,7 @@ export default function PlanForm({ planId = null }) {
                         </div>
 
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Urgent Job Posts
                             </label>
                             <input
@@ -397,9 +573,9 @@ export default function PlanForm({ planId = null }) {
                         Quantitative limits for inspecting and downloading candidate profiles.
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Resume Views
                             </label>
                             <input
@@ -414,7 +590,7 @@ export default function PlanForm({ planId = null }) {
                         </div>
 
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Resume Downloads
                             </label>
                             <input
@@ -429,7 +605,7 @@ export default function PlanForm({ planId = null }) {
                         </div>
 
                         <div>
-                            <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2 flex items-center justify-between">
                                 <span>Sub-Recruiter Seats</span>
                                 <span className="text-[10px] text-indigo-600 bg-indigo-50 font-semibold px-1.5 py-0.5 rounded">Team</span>
                             </label>
@@ -442,6 +618,51 @@ export default function PlanForm({ planId = null }) {
                                 className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 font-semibold text-slate-800"
                             />
                             <span className="text-[11px] text-gray-400 mt-1 block">Max sub-recruiters main recruiter can create</span>
+                        </div>
+
+                        <div>
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                Email Sent Count
+                            </label>
+                            <input
+                                type="number"
+                                name="email_limit"
+                                value={formData.email_limit}
+                                onChange={handleChange}
+                                min={0}
+                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
+                            />
+                            <span className="text-[11px] text-gray-400 mt-1 block">Max candidate emails sendable per cycle</span>
+                        </div>
+
+                        <div>
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                WhatsApp Sent Count
+                            </label>
+                            <input
+                                type="number"
+                                name="whatsapp_limit"
+                                value={formData.whatsapp_limit}
+                                onChange={handleChange}
+                                min={0}
+                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
+                            />
+                            <span className="text-[11px] text-gray-400 mt-1 block">Max candidate WhatsApp messages sendable per cycle</span>
+                        </div>
+
+                        <div>
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                Excel Download Count
+                            </label>
+                            <input
+                                type="number"
+                                name="excel_download_limit"
+                                value={formData.excel_download_limit}
+                                onChange={handleChange}
+                                min={0}
+                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
+                            />
+                            <span className="text-[11px] text-gray-400 mt-1 block">Max candidate profiles exportable to Excel per cycle</span>
                         </div>
                     </div>
                 </div>
@@ -466,15 +687,13 @@ export default function PlanForm({ planId = null }) {
                             { key: 'shortlisting', title: 'Candidate Shortlisting', desc: 'Tag, rate and shortlist applicants' },
                             { key: 'company_profile', title: 'Company Profile Page', desc: 'Custom branding & company details' },
                             { key: 'recruiter_dashboard', title: 'Recruiter Dashboard', desc: 'Full HR dashboard & metric graphs' },
-                            { key: 'email_notifications', title: 'Email Notifications', desc: 'Instant alerts on applicant submissions' },
-                            { key: 'company_branding', title: 'Company Branding', desc: 'Custom logo, header badges on listings' },
                         ].map((item) => {
                             const isChecked = Boolean(formData[item.key]);
                             return (
                                 <div
                                     key={item.key}
                                     onClick={() => handleToggle(item.key)}
-                                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${isChecked
+                                    className={`p-3.5 rounded-xl border-1 transition-all cursor-pointer flex items-center justify-between ${isChecked
                                         ? 'bg-blue-50/40 border-blue-200 text-blue-900'
                                         : 'bg-gray-50/60 border-gray-200/70 text-gray-600 hover:bg-gray-100/60'
                                         }`}

@@ -4,14 +4,19 @@ import { useRouter } from 'next/navigation';
 import {
     Building, Users, Search, Plus,
     Eye, CreditCard, Clock, CheckCircle2, XCircle,
-    KeyRound, RefreshCw, Shield, X, AlertTriangle, MoreVertical
+    KeyRound, RefreshCw, X, MoreVertical, Edit3, Sliders,
+    ArrowUpDown, AlertTriangle, Check, Mail, MessageSquare, FileSpreadsheet
 } from 'lucide-react';
 import {
     getAdminRecruiters,
     getAdminPlans,
     updateAdminRecruiterStatus,
-    toggleAdminRecruiterAutoApprove
+    toggleAdminRecruiterAutoApprove,
+    changeAdminRecruiterPlan
 } from '../ApiService/action';
+import AdminDateFilter from './AdminDateFilter';
+import AdminSelect from './AdminSelect';
+import CustomPlanModal from './CustomPlanModal';
 import ChangePlanModal from './ChangePlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
 import ResetPasswordModal from './ResetPasswordModal';
@@ -37,8 +42,19 @@ const getCompanyAvatarGradient = (name = '') => {
     return gradients[index];
 };
 
-const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setExtendRecruiter, setResetPassRecruiter, handleToggleStatus, handleToggleAutoApprove, onClose, isBottom }) => {
+const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setCustomPlanRecruiter, setExtendRecruiter, setResetPassRecruiter, handleToggleStatus, handleToggleAutoApprove, onClose, isBottom }) => {
     const ref = useRef(null);
+    const [openUp, setOpenUp] = useState(isBottom);
+
+    React.useLayoutEffect(() => {
+        if (ref.current) {
+            const rect = ref.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            if (spaceBelow < 20 || isBottom) {
+                setOpenUp(true);
+            }
+        }
+    }, [isBottom]);
 
     useEffect(() => {
         const handler = (e) => {
@@ -49,28 +65,34 @@ const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setExtendRecruit
     }, [onClose]);
 
     return (
-        <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-lg border border-slate-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
-            <button onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                <Eye className="w-3.5 h-3.5" /> View Details
+        <div
+            ref={ref}
+            className={`absolute right-0 ${openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-52 bg-white rounded-xl shadow-2xl border border-slate-200/90 py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-150`}
+        >
+            <button onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+                <Eye className="w-3.5 h-3.5 text-blue-600" /> View Details
             </button>
-            <button onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
-                <Users className="w-3.5 h-3.5" /> Manage Team
+            <button onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+                <Users className="w-3.5 h-3.5 text-indigo-600" /> Manage Team
             </button>
-            <button onClick={() => { setChangePlanRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">
-                <CreditCard className="w-3.5 h-3.5" /> Change Plan
+            <button onClick={() => { setChangePlanRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors">
+                <CreditCard className="w-3.5 h-3.5 text-purple-600" /> Change Plan
             </button>
-            <button onClick={() => { setExtendRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
-                <Clock className="w-3.5 h-3.5" /> Extend Plan
+            <button onClick={() => { setCustomPlanRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors">
+                <Sliders className="w-3.5 h-3.5 text-cyan-600" /> Custom Plan
             </button>
-            <button onClick={() => { setResetPassRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors">
-                <KeyRound className="w-3.5 h-3.5" /> Reset Password
+            <button onClick={() => { setExtendRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                <Clock className="w-3.5 h-3.5 text-emerald-600" /> Extend Plan
             </button>
-            <button onClick={() => { handleToggleAutoApprove(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <button onClick={() => { setResetPassRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors">
+                <KeyRound className="w-3.5 h-3.5 text-amber-600" /> Reset Password
+            </button>
+            <button onClick={() => { handleToggleAutoApprove(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 {rec.auto_approve ? <XCircle className="w-3.5 h-3.5 text-rose-600" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                 {rec.auto_approve ? 'Disable Auto Approve' : 'Enable Auto Approve'}
             </button>
             <div className="my-1 border-t border-slate-100"></div>
-            <button onClick={() => { handleToggleStatus(rec); onClose(); }} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] transition-colors ${rec.user_active ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
+            <button onClick={() => { handleToggleStatus(rec); onClose(); }} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium transition-colors ${rec.user_active ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
                 {rec.user_active ? <XCircle className="w-3.5 h-3.5 text-rose-600" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
                 {rec.user_active ? 'Suspend Account' : 'Activate Account'}
             </button>
@@ -84,21 +106,25 @@ export default function RecruitersList() {
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openDropdown, setOpenDropdown] = useState(null);
+    const [openPlanDropdown, setOpenPlanDropdown] = useState(null);
+    const [sortConfig, setSortConfig] = useState({ key: 'start_date', direction: 'desc' });
 
     // Filters
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedPlanId, setSelectedPlanId] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState('');
+    const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
     // Modals
     const [changePlanRecruiter, setChangePlanRecruiter] = useState(null);
     const [extendRecruiter, setExtendRecruiter] = useState(null);
     const [resetPassRecruiter, setResetPassRecruiter] = useState(null);
+    const [customPlanRecruiter, setCustomPlanRecruiter] = useState(null);
 
     useEffect(() => {
         loadData();
-    }, [selectedPlanId, statusFilter, subscriptionStatusFilter]);
+    }, [selectedPlanId, statusFilter, subscriptionStatusFilter, dateFilter.startDate, dateFilter.endDate]);
 
     const loadData = async () => {
         try {
@@ -108,7 +134,9 @@ export default function RecruitersList() {
                     search: searchTerm,
                     planId: selectedPlanId,
                     status: statusFilter,
-                    subscriptionStatus: subscriptionStatusFilter
+                    subscriptionStatus: subscriptionStatusFilter,
+                    startDate: dateFilter.startDate,
+                    endDate: dateFilter.endDate
                 })
             ];
             if (plans.length === 0) {
@@ -131,6 +159,19 @@ export default function RecruitersList() {
         }
     };
 
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (!e.target.closest('.plan-dropdown-container')) {
+                setOpenPlanDropdown(null);
+            }
+            if (!e.target.closest('.action-dropdown-container')) {
+                setOpenDropdown(null);
+            }
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
     const handleSearchSubmit = (e) => {
         e?.preventDefault();
         loadData();
@@ -141,9 +182,69 @@ export default function RecruitersList() {
         setSelectedPlanId('');
         setStatusFilter('');
         setSubscriptionStatusFilter('');
+        setDateFilter({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
     };
 
-    const hasActiveFilters = Boolean(searchTerm || selectedPlanId || statusFilter || subscriptionStatusFilter);
+    const hasActiveFilters = Boolean(searchTerm || selectedPlanId || statusFilter || subscriptionStatusFilter || dateFilter.startDate || dateFilter.endDate);
+
+    const sortedRecruiters = React.useMemo(() => {
+        let sortable = [...recruiters];
+        if (sortConfig.key) {
+            sortable.sort((a, b) => {
+                let aValue, bValue;
+                switch (sortConfig.key) {
+                    case 'company':
+                        aValue = (a.company_name || 'Individual Recruiter').toLowerCase();
+                        bValue = (b.company_name || 'Individual Recruiter').toLowerCase();
+                        break;
+                    case 'recruiter':
+                        aValue = (a.recruiter_name || a.first_name || '').toLowerCase();
+                        bValue = (b.recruiter_name || b.first_name || '').toLowerCase();
+                        break;
+                    case 'plan':
+                        aValue = (a.plan_name || 'No Plan').toLowerCase();
+                        bValue = (b.plan_name || 'No Plan').toLowerCase();
+                        break;
+                    case 'job_post':
+                        aValue = Number(a.job_post_limit || 0);
+                        bValue = Number(b.job_post_limit || 0);
+                        break;
+                    case 'resume_views':
+                        aValue = Number(a.resume_view_limit || 0);
+                        bValue = Number(b.resume_view_limit || 0);
+                        break;
+                    case 'sub_recruiters':
+                        aValue = Number(a.sub_recruiter_limit || 0);
+                        bValue = Number(b.sub_recruiter_limit || 0);
+                        break;
+                    case 'outreach':
+                        aValue = Number(a.emails_used || 0) + Number(a.whatsapp_used || 0);
+                        bValue = Number(b.emails_used || 0) + Number(b.whatsapp_used || 0);
+                        break;
+                    case 'excel':
+                        aValue = Number(a.excel_downloads_used || 0);
+                        bValue = Number(b.excel_downloads_used || 0);
+                        break;
+                    case 'start_date':
+                        aValue = a.subscription_start ? new Date(a.subscription_start).getTime() : 0;
+                        bValue = b.subscription_start ? new Date(b.subscription_start).getTime() : 0;
+                        break;
+                    case 'expiry_date':
+                        aValue = a.subscription_expiry ? new Date(a.subscription_expiry).getTime() : 0;
+                        bValue = b.subscription_expiry ? new Date(b.subscription_expiry).getTime() : 0;
+                        break;
+                    default:
+                        aValue = '';
+                        bValue = '';
+                }
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return sortable;
+    }, [recruiters, sortConfig]);
 
     const handleToggleStatus = async (recruiter) => {
         try {
@@ -172,6 +273,23 @@ export default function RecruitersList() {
         } catch (err) {
             console.error(err);
             toast.error("Failed to update auto approve status.");
+        }
+    };
+
+    const handleQuickChangePlan = async (rec, planId) => {
+        try {
+            const res = await changeAdminRecruiterPlan(rec.recruiter_id, {
+                new_plan_id: planId,
+                effective_type: 'immediately',
+                reason: 'Quick plan change via table dropdown'
+            });
+            if (res?.data?.success) {
+                toast.success(res.data.message || "Plan updated successfully!");
+                loadData();
+            }
+        } catch (err) {
+            console.error(err);
+            toast.error(err?.response?.data?.message || "Failed to change plan.");
         }
     };
 
@@ -213,13 +331,6 @@ export default function RecruitersList() {
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                    <button
-                        onClick={() => router.push('/admin/recruiters/subscriptions')}
-                        className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold transition-all flex items-center gap-2"
-                    >
-                        <Shield className="w-4 h-4 text-slate-500" />
-                        <span>Subscriptions</span>
-                    </button>
                     <button
                         onClick={() => router.push('/admin/recruiters/create')}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white rounded-xl text-sm font-medium transition-all shadow-sm shadow-blue-500/20 flex items-center gap-1.5"
@@ -313,7 +424,7 @@ export default function RecruitersList() {
                         placeholder="Search company, recruiter name, or email..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition-all"
+                        className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition-all"
                     />
                     {searchTerm && (
                         <button
@@ -331,41 +442,46 @@ export default function RecruitersList() {
 
                 <div className="flex flex-wrap items-center gap-2.5">
                     {/* Plan Filter */}
-                    <select
+                    <AdminSelect
                         value={selectedPlanId}
-                        onChange={(e) => setSelectedPlanId(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500"
-                    >
-                        <option value="">All Plans</option>
-                        {plans.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
-                        ))}
-                    </select>
+                        onChange={setSelectedPlanId}
+                        options={[
+                            { value: '', label: 'All Plans' },
+                            ...plans.filter(p => p.plan_type !== 'Custom' && !p.name.toLowerCase().includes('custom')).map(p => ({ value: p.id, label: p.name })),
+                            { value: 'custom', label: 'Custom' }
+                        ]}
+                        placeholder="All Plans"
+                    />
 
                     {/* Recruiter Login Status */}
-                    <select
+                    <AdminSelect
                         value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500"
-                    >
-                        <option value="">All Accounts</option>
-                        <option value="Active">Active Only</option>
-                        <option value="Suspended">Suspended Only</option>
-                        <option value="AutoApprove">Auto Approve Only</option>
-                    </select>
+                        onChange={setStatusFilter}
+                        options={[
+                            { value: '', label: 'All Accounts' },
+                            { value: 'Active', label: 'Active Only' },
+                            { value: 'Suspended', label: 'Suspended Only' },
+                            { value: 'AutoApprove', label: 'Auto Approve Only' }
+                        ]}
+                        placeholder="All Accounts"
+                    />
 
                     {/* Subscription Status Filter */}
-                    <select
+                    <AdminSelect
                         value={subscriptionStatusFilter}
-                        onChange={(e) => setSubscriptionStatusFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200/90 rounded-xl text-xs font-medium text-slate-700 focus:outline-none focus:bg-white focus:border-blue-500"
-                    >
-                        <option value="">All Subscriptions</option>
-                        <option value="Active">Active</option>
-                        <option value="Trial">Trial</option>
-                        <option value="Expired">Expired</option>
-                        <option value="Suspended">Suspended</option>
-                    </select>
+                        onChange={setSubscriptionStatusFilter}
+                        options={[
+                            { value: '', label: 'All Subscriptions' },
+                            { value: 'Active', label: 'Active' },
+                            { value: 'Trial', label: 'Trial' },
+                            { value: 'Expired', label: 'Expired' },
+                            { value: 'Suspended', label: 'Suspended' }
+                        ]}
+                        placeholder="All Subscriptions"
+                    />
+
+                    {/* Date Filter */}
+                    <AdminDateFilter value={dateFilter} onChange={setDateFilter} />
 
                     {hasActiveFilters && (
                         <button
@@ -392,19 +508,21 @@ export default function RecruitersList() {
             <div className="bg-white rounded-2xl overflow-hidden">
                 {loading ? (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[1240px]">
+                        <table className="w-full text-left border-collapse min-w-[1580px]">
                             <thead>
                                 <tr className="border-b border-slate-200/80 bg-slate-50/90 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
-                                    <th className="py-3.5 px-4 w-[210px]">Company</th>
-                                    <th className="py-3.5 px-4 w-[200px]">Recruiter</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Plan & Cycle</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Job Post</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Resume Views</th>
-                                    <th className="py-3.5 px-4 w-[130px]">Sub-Recruiters</th>
-                                    <th className="py-3.5 px-4 w-[110px]">Start Date</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Expiry Date</th>
-                                    <th className="py-3.5 px-4 w-[110px]">Status</th>
-                                    <th className="py-3.5 px-4 text-right w-[170px]">Actions</th>
+                                    <th className="py-3.5 px-4 w-[200px]">Company</th>
+                                    <th className="py-3.5 px-4 w-[180px]">Recruiter</th>
+                                    <th className="py-3.5 px-4 w-[110px]">Plan & Cycle</th>
+                                    <th className="py-3.5 px-4 w-[140px]">Job Posts</th>
+                                    <th className="py-3.5 px-4 w-[135px]">Resume Access</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Sub-Recruiters</th>
+                                    <th className="py-3.5 px-4 w-[140px]">Email & WhatsApp</th>
+                                    <th className="py-3.5 px-4 w-[130px]">Excel Export</th>
+                                    <th className="py-3.5 px-4 w-[105px]">Start Date</th>
+                                    <th className="py-3.5 px-4 w-[115px]">Expiry Date</th>
+                                    <th className="py-3.5 px-4 w-[100px]">Status</th>
+                                    <th className="py-3.5 px-4 text-right w-[60px]">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -438,6 +556,14 @@ export default function RecruitersList() {
                                             <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
                                             <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
                                         </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
                                         <td className="py-4 px-4">
                                             <div className="h-3.5 w-18 bg-slate-200 rounded"></div>
                                         </td>
@@ -448,10 +574,7 @@ export default function RecruitersList() {
                                             <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
                                         </td>
                                         <td className="py-4 px-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-200"></div>
-                                                <div className="w-8 h-8 rounded-lg bg-slate-200"></div>
-                                            </div>
+                                            <div className="w-8 h-8 rounded-lg bg-slate-200 ml-auto"></div>
                                         </td>
                                     </tr>
                                 ))}
@@ -486,25 +609,47 @@ export default function RecruitersList() {
                         )}
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[1240px]">
+                    <div className="overflow-x-auto min-h-[420px] pb-3">
+                        <table className="w-full text-left border-collapse min-w-[1580px]">
                             <thead>
-                                <tr className="border-b border-slate-200/80 bg-slate-50/90 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
-                                    <th className="py-3.5 px-4 w-[210px]">Company</th>
-                                    <th className="py-3.5 px-4 w-[200px]">Recruiter</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Plan & Cycle</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Job Post</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Resume Views</th>
-                                    <th className="py-3.5 px-4 w-[130px]">Sub-Recruiters</th>
-                                    <th className="py-3.5 px-4 w-[110px]">Start Date</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Expiry Date</th>
-                                    <th className="py-3.5 px-4 w-[110px]">Status</th>
-                                    <th className="py-3.5 px-4 text-right w-[170px] whitespace-nowrap">Actions</th>
+                                <tr className="border-b border-slate-200/80 bg-slate-50/90 text-slate-600 text-[11px] font-bold uppercase tracking-wider select-none">
+                                    <th className="py-3.5 px-4 w-[200px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'company', direction: sortConfig.key === 'company' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Company <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[180px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'recruiter', direction: sortConfig.key === 'recruiter' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Recruiter <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[110px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'plan', direction: sortConfig.key === 'plan' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Plan & Cycle <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[140px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'job_post', direction: sortConfig.key === 'job_post' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Job Posts <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[135px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'resume_views', direction: sortConfig.key === 'resume_views' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Resume Access <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[120px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'sub_recruiters', direction: sortConfig.key === 'sub_recruiters' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Sub-Recruiters <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[140px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'outreach', direction: sortConfig.key === 'outreach' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Email & WhatsApp <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[130px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'excel', direction: sortConfig.key === 'excel' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Excel Export <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[105px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'start_date', direction: sortConfig.key === 'start_date' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Start Date <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'expiry_date', direction: sortConfig.key === 'expiry_date' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Expiry Date <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[100px]">Status</th>
+                                    <th className="py-3.5 px-4 text-right w-[60px] whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {recruiters.map((rec, idx) => {
-                                    const isBottom = idx >= recruiters.length - 2 && recruiters.length > 3;
+                                {sortedRecruiters.map((rec, idx) => {
+                                    const isBottom = idx >= Math.max(1, sortedRecruiters.length - 4) || (sortedRecruiters.length <= 6 && idx >= 2);
                                     const recruiterName = rec.recruiter_name?.trim() || `${rec.first_name || ''} ${rec.last_name || ''}`.trim() || 'Recruiter';
                                     const companyName = rec.company_name || 'Individual Recruiter';
                                     const hasPlan = Boolean(rec.plan_name && rec.plan_name !== 'No Plan');
@@ -513,14 +658,32 @@ export default function RecruitersList() {
                                     const jobPostsUsed = Number(rec.job_posts_used || 0);
                                     const jobPostLimit = Number(rec.job_post_limit || 0);
                                     const jobPercent = jobPostLimit > 0 ? Math.round((jobPostsUsed / jobPostLimit) * 100) : 0;
+                                    const activeJobsCount = Number(rec.active_jobs_count || 0);
+                                    const activeJobLimit = Number(rec.active_job_limit || 0);
 
                                     const resumeUsed = Number(rec.resume_views_used || 0);
                                     const resumeLimit = Number(rec.resume_view_limit || 0);
                                     const resumePercent = resumeLimit > 0 ? Math.round((resumeUsed / resumeLimit) * 100) : 0;
 
+                                    const resumeDownloadsUsed = Number(rec.resume_downloads_used || 0);
+                                    const resumeDownloadLimit = Number(rec.resume_download_limit || 0);
+
                                     const subRecruitersCount = Number(rec.sub_recruiters_count || 0);
                                     const subRecruiterLimit = hasPlan ? Number(rec.sub_recruiter_limit || 1) : 0;
                                     const subPercent = subRecruiterLimit > 0 ? Math.round((subRecruitersCount / subRecruiterLimit) * 100) : 0;
+
+                                    const emailsUsed = Number(rec.emails_used || 0);
+                                    const emailLimit = Number(rec.email_limit || 0);
+                                    const emailPercent = emailLimit > 0 ? Math.round((emailsUsed / emailLimit) * 100) : 0;
+
+                                    const whatsappUsed = Number(rec.whatsapp_used || 0);
+                                    const whatsappLimit = Number(rec.whatsapp_limit || 0);
+                                    const whatsappPercent = whatsappLimit > 0 ? Math.round((whatsappUsed / whatsappLimit) * 100) : 0;
+
+                                    const excelUsed = Number(rec.excel_downloads_used || 0);
+                                    const excelLimit = Number(rec.excel_download_limit || 0);
+                                    const excelPercent = excelLimit > 0 ? Math.round((excelUsed / excelLimit) * 100) : 0;
+                                    const excelLeft = Math.max(0, excelLimit - excelUsed);
 
                                     const isSubActive = rec.subscription_status === 'Active';
                                     const isSubExpired = rec.subscription_status === 'Expired';
@@ -532,6 +695,8 @@ export default function RecruitersList() {
                                     const isExpiringSoon = daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 7;
 
                                     // Plan badge styling
+                                    const isCustom = /custom/i.test(planName);
+                                    const displayPlanName = isCustom ? 'Custom' : planName;
                                     const isPremium = /premium|enterprise|vip|gold/i.test(planName);
                                     const isStandard = /standard|silver|growth|pro/i.test(planName);
 
@@ -596,26 +761,72 @@ export default function RecruitersList() {
 
                                             {/* Plan & Cycle */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {hasPlan ? (
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${isPremium
-                                                        ? 'bg-purple-50 text-purple-700 border-1 border-purple-200/80'
-                                                        : isStandard
-                                                            ? 'bg-blue-50 text-blue-700 border-1 border-blue-200/80'
-                                                            : 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80'
-                                                        }`}>
-                                                        {planName}
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200/70">
-                                                        No Plan
-                                                    </span>
-                                                )}
-                                                <div className="text-[11px] text-slate-400 capitalize mt-0.5">
-                                                    {rec.billing_cycle || 'monthly'}
+                                                <div className="relative inline-block plan-dropdown-container">
+                                                    {hasPlan ? (
+                                                        <span
+                                                            onClick={() => setOpenPlanDropdown(openPlanDropdown === idx ? null : idx)}
+                                                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${isCustom
+                                                                ? 'bg-amber-50 text-amber-700 border-1 border-amber-200/80 hover:bg-amber-100'
+                                                                : isPremium
+                                                                    ? 'bg-purple-50 text-purple-700 border-1 border-purple-200/80 hover:bg-purple-100'
+                                                                    : isStandard
+                                                                        ? 'bg-blue-50 text-blue-700 border-1 border-blue-200/80 hover:bg-blue-100'
+                                                                        : 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80 hover:bg-emerald-100'
+                                                                }`}>
+                                                            {displayPlanName}
+                                                        </span>
+                                                    ) : (
+                                                        <span
+                                                            onClick={() => setOpenPlanDropdown(openPlanDropdown === idx ? null : idx)}
+                                                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200/70 cursor-pointer hover:bg-slate-200">
+                                                            No Plan
+                                                        </span>
+                                                    )}
+
+                                                    {/* Plan Dropdown */}
+                                                    {openPlanDropdown === idx && (
+                                                        <div
+                                                            className="absolute left-0 mt-1 w-44 bg-white rounded-xl shadow-2xl border border-gray-100 py-1.5 z-[100] whitespace-normal"
+                                                            style={{
+                                                                bottom: isBottom ? '100%' : 'auto',
+                                                                top: isBottom ? 'auto' : '100%',
+                                                                marginBottom: isBottom ? '0.25rem' : '0'
+                                                            }}
+                                                        >
+                                                            <div className="px-3.5 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 mb-1">
+                                                                Change Plan
+                                                            </div>
+                                                            {plans.filter(p => p.plan_type !== 'Custom' && !p.name.toLowerCase().includes('custom')).map(p => (
+                                                                <button
+                                                                    key={p.id}
+                                                                    onClick={() => { setOpenPlanDropdown(null); handleQuickChangePlan(rec, p.id); }}
+                                                                    className="block w-full text-left px-3.5 py-1.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                                                                >
+                                                                    {p.name}
+                                                                </button>
+                                                            ))}
+                                                            <div className="border-t border-gray-100 my-1"></div>
+                                                            <div
+                                                                onClick={() => { setOpenPlanDropdown(null); setCustomPlanRecruiter(rec); }}
+                                                                className="group/custom relative flex items-center justify-between w-full text-left px-3.5 py-1.5 text-xs hover:bg-blue-50 transition-colors cursor-pointer"
+                                                            >
+                                                                <button className="text-slate-700 group-hover/custom:text-blue-700 flex-1 text-left">
+                                                                    Custom
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); setOpenPlanDropdown(null); setCustomPlanRecruiter(rec); }}
+                                                                    className="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors ml-2 shadow-sm"
+                                                                    title="Edit Custom Limits"
+                                                                >
+                                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
 
-                                            {/* Job Usage */}
+                                            {/* Job Posts */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
                                                 <div className="text-xs">
                                                     <span className="font-bold text-slate-800">{jobPostsUsed}</span>
@@ -632,15 +843,18 @@ export default function RecruitersList() {
                                                         style={{ width: `${Math.min(jobPercent, 100)}%` }}
                                                     />
                                                 </div>
+                                                <div className="text-[10px] text-slate-400 mt-1">
+                                                    <span className="font-medium text-slate-600">{activeJobsCount}</span> active {activeJobLimit > 0 ? `(${activeJobLimit} max)` : ''}
+                                                </div>
                                             </td>
 
-                                            {/* Resume Views */}
+                                            {/* Resume Access */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
                                                 <div className="text-xs">
                                                     <span className="font-bold text-slate-800">{resumeUsed}</span>
-                                                    <span className="text-slate-400 font-normal"> / {resumeLimit}</span>
+                                                    <span className="text-slate-400 font-normal"> / {resumeLimit} Views</span>
                                                 </div>
-                                                <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
                                                     <div
                                                         className={`h-full rounded-full transition-all ${resumePercent >= 90
                                                             ? 'bg-rose-500'
@@ -650,6 +864,9 @@ export default function RecruitersList() {
                                                             }`}
                                                         style={{ width: `${Math.min(resumePercent, 100)}%` }}
                                                     />
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 mt-1">
+                                                    <span className="font-medium text-slate-600">{resumeDownloadsUsed}</span> / {resumeDownloadLimit} DLs
                                                 </div>
                                             </td>
 
@@ -670,6 +887,46 @@ export default function RecruitersList() {
                                                         style={{ width: `${Math.min(subPercent, 100)}%` }}
                                                     />
                                                 </div>
+                                                <div className="text-[10px] text-slate-400 mt-1">
+                                                    Team logins
+                                                </div>
+                                            </td>
+
+                                            {/* Email & WhatsApp Outreach */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-xs text-slate-700">
+                                                    <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                                    <span className="font-bold text-slate-800">{emailsUsed}</span>
+                                                    <span className="text-slate-400 font-normal">/ {emailLimit}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-xs text-slate-700 mt-1">
+                                                    <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                                    <span className="font-bold text-slate-800">{whatsappUsed}</span>
+                                                    <span className="text-slate-400 font-normal">/ {whatsappLimit}</span>
+                                                </div>
+                                            </td>
+
+                                            {/* Excel Export */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-xs">
+                                                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                    <span className="font-bold text-slate-800">{excelUsed}</span>
+                                                    <span className="text-slate-400 font-normal"> / {excelLimit}</span>
+                                                </div>
+                                                <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${excelPercent >= 90
+                                                            ? 'bg-rose-500'
+                                                            : excelPercent >= 75
+                                                                ? 'bg-amber-500'
+                                                                : 'bg-emerald-500'
+                                                            }`}
+                                                        style={{ width: `${Math.min(excelPercent, 100)}%` }}
+                                                    />
+                                                </div>
+                                                <div className="text-[10px] text-emerald-700 font-medium mt-1">
+                                                    {excelLeft} left
+                                                </div>
                                             </td>
 
                                             {/* Subscription Start */}
@@ -682,14 +939,14 @@ export default function RecruitersList() {
                                                 <div className="text-xs font-medium text-slate-700">
                                                     {formatDate(rec.subscription_expiry)}
                                                 </div>
-                                                {isExpiringSoon && (
-                                                    <span className="inline-block mt-0.5 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.2 rounded">
-                                                        {daysRemaining}d left
+                                                {daysRemaining !== null && daysRemaining > 0 && (
+                                                    <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border-1 border-emerald-200/80 px-2 py-0 rounded-full">
+                                                        <Check className="w-3 h-3" /> {daysRemaining} days left
                                                     </span>
                                                 )}
                                                 {daysRemaining !== null && daysRemaining <= 0 && isSubExpired && (
-                                                    <span className="inline-block mt-0.5 text-[10px] font-bold text-rose-700 bg-rose-50 border border-rose-200/80 px-1.5 py-0.2 rounded">
-                                                        Expired
+                                                    <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-rose-700 bg-rose-50 border-1 border-rose-200/80 px-2 py-0 rounded-full">
+                                                        <X className="w-3 h-3" /> Expired
                                                     </span>
                                                 )}
                                             </td>
@@ -731,7 +988,7 @@ export default function RecruitersList() {
 
                                             {/* Actions */}
                                             <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                                <div className="relative inline-block text-left">
+                                                <div className="relative inline-block text-left action-dropdown-container">
                                                     <button
                                                         onClick={() => setOpenDropdown(openDropdown === rec.recruiter_id ? null : rec.recruiter_id)}
                                                         className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 transition-all"
@@ -743,6 +1000,7 @@ export default function RecruitersList() {
                                                             rec={rec}
                                                             router={router}
                                                             setChangePlanRecruiter={setChangePlanRecruiter}
+                                                            setCustomPlanRecruiter={setCustomPlanRecruiter}
                                                             setExtendRecruiter={setExtendRecruiter}
                                                             setResetPassRecruiter={setResetPassRecruiter}
                                                             handleToggleStatus={handleToggleStatus}
@@ -779,6 +1037,18 @@ export default function RecruitersList() {
                 recruiter={changePlanRecruiter}
                 isOpen={Boolean(changePlanRecruiter)}
                 onClose={() => setChangePlanRecruiter(null)}
+                onSuccess={loadData}
+                onOpenCustomPlan={(rec) => {
+                    setChangePlanRecruiter(null);
+                    setCustomPlanRecruiter(rec);
+                }}
+            />
+
+            {/* Custom Plan Modal */}
+            <CustomPlanModal
+                recruiter={customPlanRecruiter}
+                isOpen={Boolean(customPlanRecruiter)}
+                onClose={() => setCustomPlanRecruiter(null)}
                 onSuccess={loadData}
             />
 

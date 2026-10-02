@@ -2,11 +2,13 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Users, UserCheck, Briefcase, UserPlus, Search,
     MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight,
-    MapPin, GraduationCap, CheckCircle2, XCircle, X, Mail, Phone, Calendar, ChevronsUpDown, Clock
+    MapPin, GraduationCap, CheckCircle2, XCircle, X, Mail, Phone, Calendar,
+    ChevronsUpDown, ChevronUp, ChevronDown, Clock, FileText, Download, ExternalLink
 } from 'lucide-react';
 import { getUsers, getUserProfile, updateUserStatus } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
+import { downloadResumeFile, viewResumeFile } from '../utils/downloadResume';
 
 // ── Format Last Active Dynamically ──
 const formatLastActive = (dateString) => {
@@ -25,7 +27,7 @@ const formatLastActive = (dateString) => {
     });
 
     if (diffInSec < 0 || diffInSec < 60) return { relative: 'Active now', exact, isOnline: true };
-    
+
     const diffInMin = Math.floor(diffInSec / 60);
     if (diffInMin < 15) return { relative: 'Active now', exact, isOnline: true };
     if (diffInMin < 60) return { relative: `${diffInMin}m ago`, exact, isOnline: false };
@@ -143,10 +145,35 @@ const ProfileModal = ({ userId, onClose }) => {
                                     </div>
                                 )}
                                 <div className="flex-1">
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-1">{profile.first_name} {profile.last_name}</h3>
-                                    <p className="text-blue-600 font-medium text-sm mb-4">{profile.role_name}</p>
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-gray-900 mb-0.5">{profile.first_name} {profile.last_name}</h3>
+                                            <p className="text-blue-600 font-semibold text-sm mb-0">{profile.role_name || 'CANDIDATE'}</p>
+                                        </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-gray-600">
+                                        {profile.resume && profile.resume !== 'Resume' && profile.resume !== '#' && profile.resume !== 'null' && (
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => viewResumeFile(profile.resume)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 rounded-xl text-xs font-semibold transition-all shadow-2xs"
+                                                >
+                                                    <Eye className="w-3.5 h-3.5" />
+                                                    View Resume
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => downloadResumeFile(profile.resume, `${profile.first_name || ''}_${profile.last_name || ''}`)}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-xs"
+                                                >
+                                                    <Download className="w-3.5 h-3.5" />
+                                                    Download
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-gray-600 mt-3">
                                         <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-gray-400" /> {profile.email}</div>
                                         <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-gray-400" /> {profile.phone_code} {profile.phone}</div>
                                         <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-gray-400" /> {profile.location || 'Location not specified'}</div>
@@ -157,6 +184,59 @@ const ProfileModal = ({ userId, onClose }) => {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            {/* Resume Card Section */}
+                            <div>
+                                <h4 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-indigo-600" />
+                                    Resume / CV
+                                </h4>
+                                {profile.resume && profile.resume !== 'Resume' && profile.resume !== '#' && profile.resume !== 'null' ? (
+                                    <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-3.5">
+                                            <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 border border-red-200/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                                <FileText className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <h5 className="text-[13px] font-bold text-gray-900 mb-2">
+                                                    {typeof profile.resume === 'string' && !profile.resume.startsWith('data:')
+                                                        ? (profile.resume.split('/').pop().split('\\').pop() || `${profile.first_name || 'Candidate'}_Resume.pdf`)
+                                                        : `${profile.first_name || 'Candidate'}_Resume.pdf`}
+                                                </h5>
+                                                <p className="text-[11px] text-gray-500 mb-0 flex items-center gap-2">
+                                                    <span className="inline-flex items-center text-emerald-700 font-bold bg-emerald-100/70 border-1 border-emerald-200/60 px-1.5 py-0.2 rounded text-[10px]">
+                                                        PDF DOCUMENT
+                                                    </span>
+                                                    <span>Uploaded by candidate</span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                                            <button
+                                                type="button"
+                                                onClick={() => viewResumeFile(profile.resume)}
+                                                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold transition-all shadow-2xs"
+                                            >
+                                                <Eye className="w-3.5 h-3.5 text-slate-600" />
+                                                View
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => downloadResumeFile(profile.resume, `${profile.first_name || ''}_${profile.last_name || ''}`)}
+                                                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-xs"
+                                            >
+                                                <Download className="w-3.5 h-3.5" />
+                                                Download
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-center">
+                                        <p className="text-xs text-gray-400 mb-0 italic">No resume document uploaded by this candidate.</p>
+                                    </div>
+                                )}
                             </div>
 
                             {profile.about && (
@@ -187,8 +267,8 @@ const ProfileModal = ({ userId, onClose }) => {
                                             <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
                                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
                                                 <h5 className="font-semibold text-gray-900">{edu.qualification} - {edu.course}</h5>
-                                                <p className="text-sm text-gray-600 mt-1">{edu.college}</p>
-                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {edu.start_date ? new Date(edu.start_date).getFullYear() : ''} - {edu.end_date ? new Date(edu.end_date).getFullYear() : 'Present'}</p>
+                                                <p className="text-sm text-gray-600 mt-1 mb-0">{edu.college}</p>
+                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1.5 mb-0"><Calendar className="w-3.5 h-3.5" /> {edu.start_date ? new Date(edu.start_date).getFullYear() : ''} - {edu.end_date ? new Date(edu.end_date).getFullYear() : 'Present'}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -203,8 +283,8 @@ const ProfileModal = ({ userId, onClose }) => {
                                             <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
                                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
                                                 <h5 className="font-semibold text-gray-900">{exp.job_title}</h5>
-                                                <p className="text-sm text-gray-600 mt-1">{exp.company_name}</p>
-                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {exp.start_date ? new Date(exp.start_date).toLocaleDateString() : ''} - {exp.currently_working ? 'Present' : (exp.end_date ? new Date(exp.end_date).toLocaleDateString() : '')}</p>
+                                                <p className="text-sm text-gray-600 mt-1 mb-0">{exp.company_name}</p>
+                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1.5 mb-0"><Calendar className="w-3.5 h-3.5" /> {exp.start_date ? new Date(exp.start_date).toLocaleDateString() : ''} - {exp.currently_working ? 'Present' : (exp.end_date ? new Date(exp.end_date).toLocaleDateString() : '')}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -232,7 +312,7 @@ export default function JobSeekers() {
     const [selectedProfileId, setSelectedProfileId] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, new: 0 });
-    const [lastActiveSort, setLastActiveSort] = useState(null); // null | 'desc' | 'asc'
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' }); // 'candidate' | 'education' | 'status' | 'last_active'
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
     // Pagination state
@@ -240,14 +320,53 @@ export default function JobSeekers() {
     const [totalPages, setTotalPages] = useState(1);
     const itemsPerPage = 10;
 
-    const displayedUsers = useMemo(() => {
-        if (!lastActiveSort) return users;
-        return [...users].sort((a, b) => {
-            const timeA = a.last_active ? new Date(a.last_active).getTime() : 0;
-            const timeB = b.last_active ? new Date(b.last_active).getTime() : 0;
-            return lastActiveSort === 'asc' ? timeA - timeB : timeB - timeA;
+    const handleSort = (key) => {
+        setSortConfig(prev => {
+            if (prev.key === key) {
+                if (prev.direction === 'asc') {
+                    return { key, direction: 'desc' };
+                }
+                return { key: null, direction: 'asc' };
+            }
+            return { key, direction: 'asc' };
         });
-    }, [users, lastActiveSort]);
+    };
+
+    const displayedUsers = useMemo(() => {
+        if (!sortConfig.key) return users;
+        return [...users].sort((a, b) => {
+            switch (sortConfig.key) {
+                case 'candidate': {
+                    const nameA = (a.name || `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.email || '').toLowerCase();
+                    const nameB = (b.name || `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.email || '').toLowerCase();
+                    return sortConfig.direction === 'asc'
+                        ? nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' })
+                        : nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
+                }
+                case 'education': {
+                    const eduA = (a.college_name || a.college || a.class || a.city || a.location || '').toLowerCase();
+                    const eduB = (b.college_name || b.college || b.class || b.city || b.location || '').toLowerCase();
+                    return sortConfig.direction === 'asc'
+                        ? eduA.localeCompare(eduB, undefined, { numeric: true, sensitivity: 'base' })
+                        : eduB.localeCompare(eduA, undefined, { numeric: true, sensitivity: 'base' });
+                }
+                case 'status': {
+                    const statusA = (a.status || '').toLowerCase();
+                    const statusB = (b.status || '').toLowerCase();
+                    return sortConfig.direction === 'asc'
+                        ? statusA.localeCompare(statusB)
+                        : statusB.localeCompare(statusA);
+                }
+                case 'last_active': {
+                    const timeA = a.last_active ? new Date(a.last_active).getTime() : 0;
+                    const timeB = b.last_active ? new Date(b.last_active).getTime() : 0;
+                    return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
+                }
+                default:
+                    return 0;
+            }
+        });
+    }, [users, sortConfig]);
 
     const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
@@ -429,7 +548,7 @@ export default function JobSeekers() {
                             placeholder="Search candidates..."
                             value={searchTerm}
                             onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                            className="pl-4 pr-9 py-2.5 w-full bg-white border border-gray-200 rounded-xl text-[13px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
+                            className="pl-4 pr-9 py-2 w-full bg-white border border-gray-200 rounded-xl text-[13px] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
                         />
                         <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
                     </div>
@@ -443,23 +562,68 @@ export default function JobSeekers() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-gray-100">
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">CANDIDATE <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
+                                <th
+                                    onClick={() => handleSort('candidate')}
+                                    className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    title="Click to sort by Candidate"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={sortConfig.key === 'candidate' ? 'text-indigo-600 font-bold' : ''}>CANDIDATE</span>
+                                        {sortConfig.key !== 'candidate' ? (
+                                            <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
+                                        ) : sortConfig.direction === 'asc' ? (
+                                            <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        ) : (
+                                            <ChevronDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        )}
+                                    </div>
                                 </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">EDUCATION / LOCATION <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
+                                <th
+                                    onClick={() => handleSort('education')}
+                                    className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    title="Click to sort by Education / Location"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={sortConfig.key === 'education' ? 'text-indigo-600 font-bold' : ''}>EDUCATION / LOCATION</span>
+                                        {sortConfig.key !== 'education' ? (
+                                            <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
+                                        ) : sortConfig.direction === 'asc' ? (
+                                            <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        ) : (
+                                            <ChevronDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        )}
+                                    </div>
                                 </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white">
-                                    <div className="flex items-center gap-2">STATUS <ChevronsUpDown className="w-3.5 h-3.5 opacity-50" /></div>
+                                <th
+                                    onClick={() => handleSort('status')}
+                                    className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    title="Click to sort by Status"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={sortConfig.key === 'status' ? 'text-indigo-600 font-bold' : ''}>STATUS</span>
+                                        {sortConfig.key !== 'status' ? (
+                                            <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
+                                        ) : sortConfig.direction === 'asc' ? (
+                                            <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        ) : (
+                                            <ChevronDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        )}
+                                    </div>
                                 </th>
-                                <th 
-                                    onClick={() => setLastActiveSort(prev => prev === 'desc' ? 'asc' : prev === 'asc' ? null : 'desc')}
-                                    className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-gray-900 select-none transition-colors"
+                                <th
+                                    onClick={() => handleSort('last_active')}
+                                    className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
                                     title="Click to sort by Last Active"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <span>LAST ACTIVE</span>
-                                        <ChevronsUpDown className={`w-3.5 h-3.5 ${lastActiveSort ? 'text-indigo-600 font-bold' : 'opacity-50'}`} />
+                                        <span className={sortConfig.key === 'last_active' ? 'text-indigo-600 font-bold' : ''}>LAST ACTIVE</span>
+                                        {sortConfig.key !== 'last_active' ? (
+                                            <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
+                                        ) : sortConfig.direction === 'asc' ? (
+                                            <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        ) : (
+                                            <ChevronDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        )}
                                     </div>
                                 </th>
                                 <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white text-center">ACTIONS</th>

@@ -2,18 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import {
     CreditCard, ArrowRight, ShieldCheck, AlertCircle,
-    Check, X, Loader2, Zap, Star, Briefcase
+    Check, X, Loader2, Zap, Star, Briefcase, Settings, Sparkles
 } from 'lucide-react';
 import { getAdminPlans, changeAdminRecruiterPlan } from '../ApiService/action';
+import CustomPlanModal from './CustomPlanModal';
 import toast from 'react-hot-toast';
 
-export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onSuccess }) {
+export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onSuccess, onOpenCustomPlan }) {
     const [plans, setPlans] = useState([]);
     const [loadingPlans, setLoadingPlans] = useState(true);
     const [selectedPlanId, setSelectedPlanId] = useState('');
     const [effectiveType, setEffectiveType] = useState('immediately'); // 'immediately' | 'next_renewal'
     const [reason, setReason] = useState('Plan updated by Super Admin');
     const [submitting, setSubmitting] = useState(false);
+    const [showInternalCustomModal, setShowInternalCustomModal] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -26,9 +28,16 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
             setLoadingPlans(true);
             const res = await getAdminPlans();
             if (res?.data?.success) {
-                const list = res.data.data || [];
+                const rawList = res.data.data || [];
+                // Only show standard subscription plans (exclude custom / user-specific plans)
+                const list = rawList.filter(p =>
+                    p.plan_type !== 'Custom' &&
+                    !p.name.toLowerCase().includes('custom') &&
+                    !p.name.toLowerCase().includes('user ')
+                );
                 setPlans(list);
-                // Select first plan that is different from current, or default to first plan
+
+                // Select first standard plan different from current, or first available
                 const currentId = recruiter?.current_plan_id || recruiter?.plan_id;
                 const diff = list.find(p => p.id !== currentId) || list[0];
                 if (diff) setSelectedPlanId(diff.id);
@@ -43,12 +52,44 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
 
     if ((isOpen !== undefined && !isOpen) || !recruiter) return null;
 
+    const handleTriggerCustomPlan = () => {
+        if (onOpenCustomPlan) {
+            onClose();
+            onOpenCustomPlan(recruiter);
+        } else {
+            setShowInternalCustomModal(true);
+        }
+    };
+
+    if (showInternalCustomModal) {
+        return (
+            <CustomPlanModal
+                recruiter={recruiter}
+                isOpen={true}
+                onClose={() => {
+                    setShowInternalCustomModal(false);
+                    onClose();
+                }}
+                onSuccess={() => {
+                    setShowInternalCustomModal(false);
+                    if (onSuccess) onSuccess();
+                    onClose();
+                }}
+            />
+        );
+    }
+
     const currentPlanName = recruiter.plan_name || 'Current Plan';
     const currentExpiryFormatted = recruiter.subscription_expiry ? new Date(recruiter.subscription_expiry).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
     const selectedPlan = plans.find(p => String(p.id) === String(selectedPlanId));
 
     const handleSubmit = async (e) => {
         e?.preventDefault();
+        if (selectedPlanId === '__custom__') {
+            handleTriggerCustomPlan();
+            return;
+        }
+
         if (!selectedPlanId) {
             toast.error("Please select a new subscription plan.");
             return;
@@ -139,7 +180,7 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Select Plan Dropdown */}
                     <div>
-                        <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                             Select New Plan <span className="text-red-500">*</span>
                         </label>
                         {loadingPlans ? (
@@ -149,22 +190,54 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                         ) : (
                             <select
                                 value={selectedPlanId}
-                                onChange={(e) => setSelectedPlanId(e.target.value)}
+                                onChange={(e) => {
+                                    if (e.target.value === '__custom__') {
+                                        handleTriggerCustomPlan();
+                                    } else {
+                                        setSelectedPlanId(e.target.value);
+                                    }
+                                }}
                                 className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:bg-white focus:border-blue-500"
                                 required
                             >
-                                {plans.map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.name} – ₹{Number(p.price).toLocaleString()} / {p.plan_type} ({p.job_post_limit} Jobs, {p.active_job_limit} Active)
-                                    </option>
-                                ))}
+                                <optgroup label="Standard Subscription Plans">
+                                    {plans.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name} – ₹{Number(p.price).toLocaleString()} / {p.plan_type} ({p.job_post_limit} Jobs, {p.active_job_limit} Active)
+                                        </option>
+                                    ))}
+                                </optgroup>
+                                <optgroup label="Custom Allocation">
+                                    <option value="__custom__">⚙️ Custom Plan — Configure Custom Quotas & Limits...</option>
+                                </optgroup>
                             </select>
                         )}
                     </div>
 
+                    {/* Custom Plan Quick Option Banner */}
+                    <div className="p-3 bg-gradient-to-r from-amber-50 to-amber-100/40 rounded-xl border-1 border-amber-200/90 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-amber-200/70 text-amber-800 flex items-center justify-center shrink-0">
+                                <Settings className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <div className="text-xs font-bold text-amber-950">Want to assign custom limits?</div>
+                                <div className="text-[11px] text-amber-800">Set tailored limits for jobs, resume views, emails, WhatsApp & Excel downloads.</div>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleTriggerCustomPlan}
+                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-medium transition-colors shadow-sm whitespace-nowrap shrink-0 flex items-center gap-1.5"
+                        >
+                            <Settings className="w-3.5 h-3.5" />
+                            Open Custom Plan
+                        </button>
+                    </div>
+
                     {/* Effective Time Choice */}
                     <div>
-                        <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                             Effective Timing
                         </label>
                         <div className="grid grid-cols-2 gap-3">
@@ -202,7 +275,7 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
 
                     {/* Reason / Admin Note */}
                     <div>
-                        <label className="block text-[12px] font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                        <label className="block text-[13px] font-semibold text-gray-700 mb-1.5">
                             Reason / Admin Note
                         </label>
                         <input
@@ -215,7 +288,7 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                     </div>
 
                     {/* Notice */}
-                    <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-[12px] flex items-start gap-2">
+                    <div className="p-3 bg-amber-50 rounded-xl border-1 border-amber-200 text-amber-800 text-[12px] flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                         <span>
                             This action updates feature access and quotas immediately. Historical subscription records will be preserved in subscription history.

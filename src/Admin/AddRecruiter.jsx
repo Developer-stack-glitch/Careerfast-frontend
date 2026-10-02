@@ -2,12 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-    Building, User, Mail, Phone, Globe, MapPin, Key, Lock, Eye, EyeOff,
-    Shield, Check, Copy, Sparkles, RefreshCw, Calendar, CreditCard,
-    AlertCircle, ArrowLeft, Loader2, CheckCircle2, ChevronDown, CheckSquare,
-    ExternalLink, Briefcase, FileText, Award, Layers
+    Building, User, Mail, Phone, Lock, Eye, EyeOff,
+    Check, Copy, Sparkles, CreditCard,
+    AlertCircle, ArrowLeft, Loader2, CheckCircle2,
+    Settings, X
 } from 'lucide-react';
 import { getAdminPlans, createAdminRecruiter } from '../ApiService/action';
+import AdminSelect from './AdminSelect';
 import toast from 'react-hot-toast';
 
 export default function AddRecruiter() {
@@ -24,6 +25,19 @@ export default function AddRecruiter() {
     // Success Modal state
     const [createdModalData, setCreatedModalData] = useState(null);
     const [copied, setCopied] = useState(false);
+
+    // Custom Limits for "Custom" plan
+    const [customLimits, setCustomLimits] = useState({
+        job_post_limit: '',
+        active_job_limit: '',
+        featured_job_limit: '',
+        urgent_job_limit: '',
+        resume_view_limit: '',
+        resume_download_limit: '',
+        sub_recruiter_limit: '',
+        email_sent_count: '',
+        whatsapp_message_count: ''
+    });
 
     // Form data
     const [formData, setFormData] = useState({
@@ -70,8 +84,19 @@ export default function AddRecruiter() {
                 setLoadingPlans(true);
                 const res = await getAdminPlans();
                 const fetchedPlans = res.data?.data || res.data || [];
-                const activePlans = fetchedPlans.filter(p => p.status === 'active' || p.status === 1);
-                setPlans(activePlans.length > 0 ? activePlans : fetchedPlans);
+                const filteredPlans = fetchedPlans.filter(p => !/custom/i.test(p.name));
+                const activePlans = filteredPlans.filter(p => p.status === 'active' || p.status === 1);
+                const finalPlans = activePlans.length > 0 ? activePlans : filteredPlans;
+
+                finalPlans.push({
+                    id: 'custom',
+                    name: 'Custom (Build your own plan)',
+                    price: 0,
+                    plan_type: 'Custom',
+                    validity_days: 30
+                });
+
+                setPlans(finalPlans);
 
                 if (fetchedPlans.length > 0) {
                     const defaultPlan = fetchedPlans[0];
@@ -171,6 +196,23 @@ export default function AddRecruiter() {
         toast.success("Generated secure password & username!");
     };
 
+    const handleLogoUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 1024 * 1024) {
+            toast.error("Company logo must be under 1MB.");
+            e.target.value = '';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setFormData({ ...formData, company_logo: reader.result });
+        };
+        reader.readAsDataURL(file);
+    };
+
     const selectedPlan = plans.find(p => String(p.id) === String(formData.plan_id));
 
     // Form submission
@@ -196,7 +238,8 @@ export default function AddRecruiter() {
             setSubmitting(true);
             const payload = {
                 ...formData,
-                subscription_status: saveAsDraft ? 'Inactive' : 'Active'
+                subscription_status: saveAsDraft ? 'Inactive' : 'Active',
+                custom_limits: formData.plan_id === 'custom' ? customLimits : undefined
             };
 
             const res = await createAdminRecruiter(payload);
@@ -246,11 +289,11 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
         <div className="max-w-7xl mx-auto space-y-6 pb-16">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     <button
                         type="button"
                         onClick={() => router.push('/admin/recruiters')}
-                        className="p-2.5 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                        className="p-2 rounded-xl border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                         title="Back to Recruiters"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -302,14 +345,196 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
                 {/* Left 2 Cols: Form Sections */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* SECTION 1: Company Information */}
+
+                    {/* SECTION 1: Subscription Plan Assignment */}
+                    <div className="bg-white p-6 rounded-2xl border-1 border-gray-100 space-y-5">
+                        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                                <CreditCard className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-bold text-gray-900 mb-0">1. Subscription Plan Assignment</h2>
+                                <p className="text-xs text-gray-500 mb-0">Attach initial quota, duration, and billing parameters</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Select Subscription Plan <span className="text-rose-500">*</span></label>
+                                {loadingPlans ? (
+                                    <div className="text-xs text-gray-400 py-2">Loading active plans...</div>
+                                ) : (
+                                    <AdminSelect
+                                        value={formData.plan_id}
+                                        onChange={(val) => handlePlanChange(val)}
+                                        options={plans.map(p => ({
+                                            label: p.name,
+                                            value: String(p.id)
+                                        }))}
+                                        className="w-full"
+                                    />
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Billing Cycle</label>
+                                <AdminSelect
+                                    value={formData.billing_cycle}
+                                    onChange={(val) => handleBillingCycleChange(val)}
+                                    options={[
+                                        { label: 'Monthly (30 Days)', value: 'monthly' },
+                                        { label: 'Quarterly (3 Months)', value: 'quarterly' },
+                                        { label: 'Half-Yearly (6 Months)', value: 'half-yearly' },
+                                        { label: 'Annually (1 Year)', value: 'yearly' }
+                                    ]}
+                                    className="w-full"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Start Date</label>
+                                <input
+                                    type="date"
+                                    value={formData.start_date}
+                                    onChange={(e) => handleStartDateChange(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Expiry Date (Auto-calculated)</label>
+                                <input
+                                    type="date"
+                                    value={formData.expiry_date}
+                                    onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Payment Status</label>
+                                <AdminSelect
+                                    value={formData.payment_status}
+                                    onChange={(val) => setFormData({ ...formData, payment_status: val })}
+                                    options={[
+                                        { label: 'Paid / Confirmed', value: 'Paid' },
+                                        { label: 'Payment Pending', value: 'Pending' },
+                                        { label: 'Waived / Free Trial', value: 'Waived' }
+                                    ]}
+                                    className="w-full"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Payment Reference / Notes</label>
+                                <input
+                                    type="text"
+                                    value={formData.payment_notes}
+                                    onChange={(e) => setFormData({ ...formData, payment_notes: e.target.value })}
+                                    placeholder="e.g. Cheque #49281, Admin Approval, Razorpay ID"
+                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION 1.5: Custom Limits Configuration (Conditional) */}
+                    {formData.plan_id === 'custom' && (
+                        <div className="bg-emerald-50/50 p-6 rounded-2xl border-1 border-emerald-100 space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex items-center gap-3 pb-3 border-b border-emerald-100/60">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold">
+                                    <Settings className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-base font-bold text-gray-900 mb-0">Custom Plan Entitlements</h2>
+                                    <p className="text-xs text-gray-500 mb-0">Set manual quotas for this recruiter's custom plan</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Monthly Job Posts</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.job_post_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, job_post_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Max Active Jobs</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.active_job_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, active_job_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Featured Jobs</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.featured_job_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, featured_job_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Urgent Jobs</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.urgent_job_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, urgent_job_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Resume Views</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.resume_view_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, resume_view_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Resume Downloads</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.resume_download_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, resume_download_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Sub-Recruiters</label>
+                                    <input
+                                        type="number" min="1" value={customLimits.sub_recruiter_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, sub_recruiter_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Email Sent Count</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.email_sent_count}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, email_sent_count: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">WhatsApp Sent Count</label>
+                                    <input
+                                        type="number" min="0" value={customLimits.whatsapp_message_count}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, whatsapp_message_count: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {/* SECTION 2: Company Information */}
                     <div className="bg-white p-6 rounded-2xl border-1 border-gray-100 space-y-5">
                         <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
                             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                                 <Building className="w-5 h-5" />
                             </div>
                             <div>
-                                <h2 className="text-base font-bold text-gray-900 mb-0">1. Company Information</h2>
+                                <h2 className="text-base font-bold text-gray-900 mb-0">2. Company Information</h2>
                                 <p className="text-xs text-gray-500 mb-0">Corporate organization details and billing address</p>
                             </div>
                         </div>
@@ -364,48 +589,67 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
 
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Industry Type</label>
-                                <select
+                                <AdminSelect
                                     value={formData.industry}
-                                    onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                >
-                                    <option value="Information Technology">Information Technology</option>
-                                    <option value="Healthcare & Pharma">Healthcare & Pharma</option>
-                                    <option value="BFSI / Banking">BFSI / Banking</option>
-                                    <option value="Education / EdTech">Education / EdTech</option>
-                                    <option value="Manufacturing & Engineering">Manufacturing & Engineering</option>
-                                    <option value="Retail & eCommerce">Retail & eCommerce</option>
-                                    <option value="Media & Entertainment">Media & Entertainment</option>
-                                    <option value="Staffing & Recruitment">Staffing & Recruitment Agency</option>
-                                    <option value="Consulting & Professional Services">Consulting & Professional Services</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                    onChange={(val) => setFormData({ ...formData, industry: val })}
+                                    options={[
+                                        { label: 'Information Technology', value: 'Information Technology' },
+                                        { label: 'Healthcare & Pharma', value: 'Healthcare & Pharma' },
+                                        { label: 'BFSI / Banking', value: 'BFSI / Banking' },
+                                        { label: 'Education / EdTech', value: 'Education / EdTech' },
+                                        { label: 'Manufacturing & Engineering', value: 'Manufacturing & Engineering' },
+                                        { label: 'Retail & eCommerce', value: 'Retail & eCommerce' },
+                                        { label: 'Media & Entertainment', value: 'Media & Entertainment' },
+                                        { label: 'Staffing & Recruitment Agency', value: 'Staffing & Recruitment' },
+                                        { label: 'Consulting & Professional Services', value: 'Consulting & Professional Services' },
+                                        { label: 'Other', value: 'Other' }
+                                    ]}
+                                    className="w-full"
+                                />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-semibold text-gray-700 mb-1">Company Type</label>
-                                <select
+                                <AdminSelect
                                     value={formData.company_type}
-                                    onChange={(e) => setFormData({ ...formData, company_type: e.target.value })}
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                >
-                                    <option value="Corporate">Corporate / Direct Employer</option>
-                                    <option value="Recruitment Agency">Recruitment Agency</option>
-                                    <option value="Startup">Startup</option>
-                                    <option value="MNC">Multinational Corporation (MNC)</option>
-                                    <option value="Consultant">Independent Consultant</option>
-                                </select>
+                                    onChange={(val) => setFormData({ ...formData, company_type: val })}
+                                    options={[
+                                        { label: 'Corporate / Direct Employer', value: 'Corporate' },
+                                        { label: 'Recruitment Agency', value: 'Recruitment Agency' },
+                                        { label: 'Startup', value: 'Startup' },
+                                        { label: 'Multinational Corporation (MNC)', value: 'MNC' },
+                                        { label: 'Independent Consultant', value: 'Consultant' }
+                                    ]}
+                                    className="w-full"
+                                />
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">Company Logo URL (Optional)</label>
-                                <input
-                                    type="text"
-                                    value={formData.company_logo}
-                                    onChange={(e) => setFormData({ ...formData, company_logo: e.target.value })}
-                                    placeholder="https://example.com/logo.png"
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                />
+                                <label className="block text-xs font-semibold text-gray-700 mb-1">Company Logo (Optional, under 1MB)</label>
+                                <div className="flex items-center gap-4">
+                                    {formData.company_logo && formData.company_logo.startsWith('data:image') ? (
+                                        <div className="relative w-12 h-12 rounded-xl border border-gray-200 overflow-hidden shrink-0 group">
+                                            <img src={formData.company_logo} alt="Logo preview" className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, company_logo: '' })}
+                                                className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <X className="w-4 h-4 text-white" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center shrink-0">
+                                            <Building className="w-5 h-5 text-gray-400" />
+                                        </div>
+                                    )}
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleLogoUpload}
+                                        className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    />
+                                </div>
                             </div>
 
                             <div className="md:col-span-2">
@@ -468,7 +712,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                         </div>
                     </div>
 
-                    {/* SECTION 2: Recruiter Account Details */}
+                    {/* SECTION 3: Recruiter Account Details */}
                     <div className="bg-white p-6 rounded-2xl border-1 border-gray-100 space-y-5">
                         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                             <div className="flex items-center gap-3">
@@ -476,7 +720,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base font-bold text-gray-900 mb-0">2. Recruiter Account & Credentials</h2>
+                                    <h2 className="text-base font-bold text-gray-900 mb-0">3. Recruiter Account & Credentials</h2>
                                     <p className="text-xs text-gray-500 mb-0">Sign-in details and primary point of contact</p>
                                 </div>
                             </div>
@@ -484,7 +728,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                             <button
                                 type="button"
                                 onClick={handleGenerateCredentials}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-lg border border-violet-200 transition-colors"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 bg-violet-50 hover:bg-violet-100 rounded-lg border-1 border-violet-200 transition-colors"
                             >
                                 <Sparkles className="w-3.5 h-3.5" />
                                 <span>Auto-Generate Credentials</span>
@@ -614,98 +858,6 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                             </label>
                         </div>
                     </div>
-
-                    {/* SECTION 3: Subscription Plan Assignment */}
-                    <div className="bg-white p-6 rounded-2xl border-1 border-gray-100 space-y-5">
-                        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
-                            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
-                                <CreditCard className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h2 className="text-base font-bold text-gray-900 mb-0">3. Subscription Plan Assignment</h2>
-                                <p className="text-xs text-gray-500 mb-0">Attach initial quota, duration, and billing parameters</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">Select Subscription Plan <span className="text-rose-500">*</span></label>
-                                {loadingPlans ? (
-                                    <div className="text-xs text-gray-400 py-2">Loading active plans...</div>
-                                ) : (
-                                    <select
-                                        value={formData.plan_id}
-                                        onChange={(e) => handlePlanChange(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                    >
-                                        {plans.map(p => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.name} — ₹{Number(p.price).toLocaleString()} ({p.plan_type || 'Monthly'})
-                                            </option>
-                                        ))}
-                                    </select>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">Billing Cycle</label>
-                                <select
-                                    value={formData.billing_cycle}
-                                    onChange={(e) => handleBillingCycleChange(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                >
-                                    <option value="monthly">Monthly (30 Days)</option>
-                                    <option value="quarterly">Quarterly (3 Months)</option>
-                                    <option value="half-yearly">Half-Yearly (6 Months)</option>
-                                    <option value="yearly">Annually (1 Year)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">Start Date</label>
-                                <input
-                                    type="date"
-                                    value={formData.start_date}
-                                    onChange={(e) => handleStartDateChange(e.target.value)}
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">Expiry Date (Auto-calculated)</label>
-                                <input
-                                    type="date"
-                                    value={formData.expiry_date}
-                                    onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">Payment Status</label>
-                                <select
-                                    value={formData.payment_status}
-                                    onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })}
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                >
-                                    <option value="Paid">Paid / Confirmed</option>
-                                    <option value="Pending">Payment Pending</option>
-                                    <option value="Waived">Waived / Free Trial</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1">Payment Reference / Notes</label>
-                                <input
-                                    type="text"
-                                    value={formData.payment_notes}
-                                    onChange={(e) => setFormData({ ...formData, payment_notes: e.target.value })}
-                                    placeholder="e.g. Cheque #49281, Admin Approval, Razorpay ID"
-                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-                                />
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Right 1 Col: Live Plan Preview Card (Sticky) */}
@@ -720,21 +872,9 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
 
                         {selectedPlan ? (
                             <div className="space-y-4">
-                                <div>
-                                    <div className="flex items-baseline gap-1">
-                                        <span className="text-3xl font-extrabold text-gray-900">
-                                            ₹{Number(selectedPlan.price).toLocaleString()}
-                                        </span>
-                                        <span className="text-xs text-gray-500 mb-0">
-                                            / {formData.billing_cycle}
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mb-0 mt-1">
-                                        {selectedPlan.description || 'Full recruiter hiring suite.'}
-                                    </p>
-                                </div>
-
-                                <div className="h-px bg-gray-100" />
+                                <p className="text-xs text-gray-500 mb-0">
+                                    {selectedPlan.description || 'Full recruiter hiring suite.'}
+                                </p>
 
                                 <div className="space-y-2.5">
                                     <span className="text-xs font-bold text-gray-800 uppercase tracking-wider">Entitlements & Quotas</span>
@@ -742,28 +882,40 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                     <div className="grid grid-cols-2 gap-2 text-xs">
                                         <div className="p-2.5 bg-gray-50 rounded-xl">
                                             <span className="text-gray-400 block text-[11px]">Monthly Job Posts</span>
-                                            <span className="text-sm font-bold text-gray-900">{selectedPlan.job_post_limit} Posts</span>
+                                            <span className="text-sm font-semibold text-gray-900">{formData.plan_id === 'custom' ? customLimits.job_post_limit || 0 : selectedPlan.job_post_limit} Posts</span>
                                         </div>
                                         <div className="p-2.5 bg-gray-50 rounded-xl">
                                             <span className="text-gray-400 block text-[11px]">Max Active Jobs</span>
-                                            <span className="text-sm font-bold text-gray-900">{selectedPlan.active_job_limit} Jobs</span>
+                                            <span className="text-sm font-semibold text-gray-900">{formData.plan_id === 'custom' ? customLimits.active_job_limit || 0 : selectedPlan.active_job_limit} Jobs</span>
                                         </div>
                                         <div className="p-2.5 bg-gray-50 rounded-xl">
                                             <span className="text-gray-400 block text-[11px]">Resume Views</span>
-                                            <span className="text-sm font-bold text-gray-900">{selectedPlan.resume_view_limit} Views</span>
+                                            <span className="text-sm font-semibold text-gray-900">{formData.plan_id === 'custom' ? customLimits.resume_view_limit || 0 : selectedPlan.resume_view_limit} Views</span>
                                         </div>
                                         <div className="p-2.5 bg-gray-50 rounded-xl">
                                             <span className="text-gray-400 block text-[11px]">Resume Downloads</span>
-                                            <span className="text-sm font-bold text-gray-900">{selectedPlan.resume_download_limit} Downloads</span>
+                                            <span className="text-sm font-semibold text-gray-900">{formData.plan_id === 'custom' ? customLimits.resume_download_limit || 0 : selectedPlan.resume_download_limit} Downloads</span>
                                         </div>
                                         <div className="p-2.5 bg-gray-50 rounded-xl">
                                             <span className="text-gray-400 block text-[11px]">Featured Jobs</span>
-                                            <span className="text-sm font-bold text-gray-900">{selectedPlan.featured_job_limit || 0}</span>
+                                            <span className="text-sm font-semibold text-gray-900">{formData.plan_id === 'custom' ? customLimits.featured_job_limit || 0 : selectedPlan.featured_job_limit || 0}</span>
                                         </div>
                                         <div className="p-2.5 bg-gray-50 rounded-xl">
                                             <span className="text-gray-400 block text-[11px]">Urgent Jobs</span>
-                                            <span className="text-sm font-bold text-gray-900">{selectedPlan.urgent_job_limit || 0}</span>
+                                            <span className="text-sm font-semibold text-gray-900">{formData.plan_id === 'custom' ? customLimits.urgent_job_limit || 0 : selectedPlan.urgent_job_limit || 0}</span>
                                         </div>
+                                        {formData.plan_id === 'custom' && (
+                                            <>
+                                                <div className="p-2.5 bg-gray-50 rounded-xl">
+                                                    <span className="text-gray-400 block text-[11px]">Email Sent Count</span>
+                                                    <span className="text-sm font-semibold text-gray-900">{customLimits.email_sent_count || 0}</span>
+                                                </div>
+                                                <div className="p-2.5 bg-gray-50 rounded-xl">
+                                                    <span className="text-gray-400 block text-[11px]">WhatsApp Messages</span>
+                                                    <span className="text-sm font-semibold text-gray-900">{customLimits.whatsapp_message_count || 0}</span>
+                                                </div>
+                                            </>
+                                        )}
                                         <div className="p-2.5 bg-indigo-50/70 border-1 border-indigo-100 rounded-xl col-span-2">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-indigo-600 font-semibold block text-[11px]">Sub-Recruiters Allowed</span>
@@ -771,8 +923,8 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                                     Team Access
                                                 </span>
                                             </div>
-                                            <span className="text-sm font-extrabold text-indigo-950 mt-0.5 block">
-                                                {selectedPlan.sub_recruiter_limit || 1} {Number(selectedPlan.sub_recruiter_limit) === 1 ? 'Seat' : 'Seats'}
+                                            <span className="text-sm font-semibold text-indigo-950 mt-0.5 block">
+                                                {formData.plan_id === 'custom' ? customLimits.sub_recruiter_limit || 1 : selectedPlan.sub_recruiter_limit || 1} Seats
                                             </span>
                                         </div>
                                     </div>

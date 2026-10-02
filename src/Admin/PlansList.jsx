@@ -2,12 +2,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-    CreditCard, Plus, Search, MoreVertical, Edit2, Copy, Trash2,
-    CheckCircle2, XCircle, Users, Eye, AlertCircle, Sparkles,
-    Shield, Briefcase, Zap, Star, ArrowRight, Loader2, Check, X,
-    LayoutGrid, Table as TableIcon, RefreshCw, ArrowUpDown,
-    TrendingUp, IndianRupee, Layers, Crown, ChevronRight, FileText,
-    Download, UserCheck, Flame, ToggleLeft, ToggleRight
+    CreditCard, Plus, Search, Edit2, Copy, Trash2,
+    Users, Eye, AlertCircle, Briefcase, Zap, Loader2, Check, X,
+    Table as TableIcon, RefreshCw, Mail, MessageSquare, FileSpreadsheet, Download, Clock,
+    TrendingUp, Layers, Crown, ChevronRight, UserCheck, Flame
 } from 'lucide-react';
 import {
     getAdminPlans,
@@ -15,6 +13,7 @@ import {
     duplicateAdminPlan,
     deleteAdminPlan
 } from '../ApiService/action';
+import AdminSelect from './AdminSelect';
 import toast from 'react-hot-toast';
 
 export default function PlansList() {
@@ -44,7 +43,8 @@ export default function PlansList() {
             else setLoading(true);
             const res = await getAdminPlans();
             if (res?.data?.success) {
-                setPlans(res.data.data || []);
+                const fetchedPlans = res.data.data || [];
+                setPlans(fetchedPlans.filter(p => p.plan_type !== 'Custom' && !p.name.toLowerCase().includes('custom')));
             }
         } catch (error) {
             console.error("Error fetching plans:", error);
@@ -221,17 +221,6 @@ export default function PlansList() {
                         </button>
 
                         <button
-                            onClick={() => router.push('/admin/plans/subscribers')}
-                            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300 rounded-xl text-[13px] font-semibold transition-all shadow-xs flex items-center gap-2"
-                        >
-                            <Users className="w-4 h-4 text-slate-500" />
-                            <span>Subscribers</span>
-                            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded-md text-[11px] font-bold">
-                                {stats.totalSubscribers}
-                            </span>
-                        </button>
-
-                        <button
                             onClick={() => router.push('/admin/plans/create')}
                             className="px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[14px] font-medium transition-all shadow-sm hover:shadow-md hover:shadow-blue-500/20 flex items-center gap-2 active:scale-95"
                         >
@@ -362,29 +351,29 @@ export default function PlansList() {
                 {/* Dropdowns & View Mode Toggles */}
                 <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap justify-between lg:justify-end">
                     {/* Billing Cycle Dropdown */}
-                    <select
+                    <AdminSelect
                         value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50/70 hover:bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
-                    >
-                        <option value="ALL">All Billing Cycles</option>
-                        <option value="monthly">Monthly Billing</option>
-                        <option value="yearly">Yearly Billing</option>
-                        <option value="custom">Custom Billing</option>
-                    </select>
+                        onChange={setTypeFilter}
+                        options={[
+                            { value: 'ALL', label: 'All Billing Cycles' },
+                            { value: 'monthly', label: 'Monthly Billing' },
+                            { value: 'yearly', label: 'Yearly Billing' },
+                            { value: 'custom', label: 'Custom Billing' }
+                        ]}
+                    />
 
                     {/* Sort Order Dropdown */}
-                    <select
+                    <AdminSelect
                         value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="px-3 py-2 bg-slate-50/70 hover:bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
-                    >
-                        <option value="default">Sort: Default</option>
-                        <option value="price-low">Price: Low to High</option>
-                        <option value="price-high">Price: High to Low</option>
-                        <option value="subscribers">Most Subscribers</option>
-                        <option value="name">Name (A-Z)</option>
-                    </select>
+                        onChange={setSortBy}
+                        options={[
+                            { value: 'default', label: 'Sort: Default' },
+                            { value: 'price-low', label: 'Price: Low to High' },
+                            { value: 'price-high', label: 'Price: High to Low' },
+                            { value: 'subscribers', label: 'Most Subscribers' },
+                            { value: 'name', label: 'Name (A-Z)' }
+                        ]}
+                    />
                 </div>
             </div>
 
@@ -479,19 +468,19 @@ export default function PlansList() {
                 /* ======================================================== */
                 /* MODERN TABLE VIEW                                        */
                 /* ======================================================== */
-                <div className="bg-white rounded-2xl border-slate-200/80 shadow-xs overflow-hidden">
+                <div className="bg-white rounded-2xl overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse text-[13px]">
+                        <table className="w-full text-left border-collapse min-w-[1180px] text-[13px]">
                             <thead>
-                                <tr className="border-b border-slate-200/80 bg-slate-50/70 text-slate-500 text-[11px] font-bold uppercase tracking-wider">
-                                    <th className="py-3.5 px-4 font-semibold">Plan Details</th>
-                                    <th className="py-3.5 px-4 font-semibold">Pricing & Cycle</th>
-                                    <th className="py-3.5 px-4 font-semibold">Job Posting Limits</th>
-                                    <th className="py-3.5 px-4 font-semibold">Candidate Access</th>
-                                    <th className="py-3.5 px-4 font-semibold">Team Seats</th>
-                                    <th className="py-3.5 px-4 font-semibold">Subscribers</th>
-                                    <th className="py-3.5 px-4 font-semibold">Status</th>
-                                    <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                                <tr className="border-b border-slate-200/80 bg-slate-50/80 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
+                                    <th className="py-3.5 px-4 min-w-[260px]">Plan Details</th>
+                                    <th className="py-3.5 px-4 min-w-[140px]">Pricing & Cycle</th>
+                                    <th className="py-3.5 px-4 min-w-[140px]">Job Posting</th>
+                                    <th className="py-3.5 px-4 min-w-[230px]">Candidate & Outreach</th>
+                                    <th className="py-3.5 px-4 min-w-[120px]">Team Seats</th>
+                                    <th className="py-3.5 px-4 min-w-[110px]">Subscribers</th>
+                                    <th className="py-3.5 px-4 min-w-[110px]">Status</th>
+                                    <th className="py-3.5 px-4 min-w-[120px] text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -502,7 +491,7 @@ export default function PlansList() {
                                     return (
                                         <tr
                                             key={plan.id}
-                                            className="hover:bg-slate-50/80 transition-colors group"
+                                            className="hover:bg-slate-50/70 transition-colors group"
                                         >
                                             {/* Column 1: Plan Details */}
                                             <td className="py-4 px-4">
@@ -512,16 +501,16 @@ export default function PlansList() {
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-semibold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
+                                                            <span className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
                                                                 {plan.name}
                                                             </span>
                                                             {Number(plan.active_subscribers) > 0 && (
-                                                                <span className="text-[10px] bg-blue-50 text-blue-700 border-1 border-blue-200 px-1.5 py-0.2 rounded-md font-semibold">
+                                                                <span className="text-[10px] bg-blue-50 text-blue-700 border-1 border-blue-200/80 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
                                                                     In-Use
                                                                 </span>
                                                             )}
                                                         </div>
-                                                        <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-1 max-w-[210px]" title={plan.description}>
+                                                        <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-1 max-w-[220px]" title={plan.description}>
                                                             {plan.description || `${plan.validity_days || 30} days validity period`}
                                                         </div>
                                                     </div>
@@ -531,10 +520,11 @@ export default function PlansList() {
                                             {/* Column 2: Pricing & Cycle */}
                                             <td className="py-4 px-4">
                                                 <div className="flex flex-col">
-                                                    <span className="font-semibold text-slate-900 text-sm tracking-tight">
+                                                    <span className="font-semibold text-slate-900 text-[15px] tracking-tight">
                                                         ₹{Number(plan.price || 0).toLocaleString()}
                                                     </span>
-                                                    <span className="text-[11px] text-slate-500 font-medium capitalize mt-0.5">
+                                                    <span className="text-[11px] text-slate-500 font-medium capitalize mt-0.5 flex items-center gap-1">
+                                                        <Clock className="w-3 h-3 text-slate-400 shrink-0" />
                                                         {plan.plan_type || 'Monthly'} • {plan.validity_days || 30}d
                                                     </span>
                                                 </div>
@@ -542,34 +532,55 @@ export default function PlansList() {
 
                                             {/* Column 3: Job Posting Limits */}
                                             <td className="py-4 px-4">
-                                                <div className="flex flex-col gap-1">
-                                                    <div className="inline-flex items-center gap-1.5 text-xs text-slate-700 font-semibold">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                                                        <span>{plan.job_post_limit} Posts</span>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <div className="flex items-center gap-1.5 text-xs text-slate-900 font-bold whitespace-nowrap">
+                                                        <Briefcase className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                                        <span>{Number(plan.job_post_limit).toLocaleString()} Posts</span>
                                                         <span className="text-[11px] text-slate-400 font-normal">/mo</span>
                                                     </div>
-                                                    <div className="text-[11px] text-slate-500">
-                                                        Max active: <strong className="text-slate-700">{plan.active_job_limit}</strong>
+                                                    <div className="text-[11px] text-slate-500 whitespace-nowrap">
+                                                        Active max: <strong className="text-slate-700 font-semibold">{Number(plan.active_job_limit).toLocaleString()}</strong>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            {/* Column 4: Candidate Access */}
+                                            {/* Column 4: Candidate & Outreach Access */}
                                             <td className="py-4 px-4">
-                                                <div className="flex flex-col gap-1 text-xs">
-                                                    <span className="text-slate-700 font-medium">
-                                                        <strong className="text-slate-900">{Number(plan.resume_view_limit || 0).toLocaleString()}</strong> Views
-                                                    </span>
-                                                    <span className="text-[11px] text-slate-500">
-                                                        <strong className="text-slate-700">{Number(plan.resume_download_limit || 0).toLocaleString()}</strong> Downloads
-                                                    </span>
+                                                <div className="flex flex-col gap-1.5">
+                                                    {/* Views & Downloads row */}
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border-1 border-blue-100/90 text-[11px] font-semibold whitespace-nowrap" title="Resume Views Limit">
+                                                            <Eye className="w-3 h-3 text-blue-600 shrink-0" />
+                                                            <span><strong>{Number(plan.resume_view_limit || 0).toLocaleString()}</strong> Views</span>
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border-1 border-slate-200/80 text-[11px] font-semibold whitespace-nowrap" title="Resume Downloads Limit">
+                                                            <Download className="w-3 h-3 text-slate-600 shrink-0" />
+                                                            <span><strong>{Number(plan.resume_download_limit || 0).toLocaleString()}</strong> DLs</span>
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Outreach & Excel chips */}
+                                                    <div className="flex items-center gap-1.5 text-[11px]">
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-600 border-1 border-slate-200/80 whitespace-nowrap" title="Email Quota Limit">
+                                                            <Mail className="w-3 h-3 text-sky-500 shrink-0" />
+                                                            <strong className="text-slate-800">{Number(plan.email_limit || 0).toLocaleString()}</strong>
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-600 border-1 border-slate-200/80 whitespace-nowrap" title="WhatsApp Message Quota Limit">
+                                                            <MessageSquare className="w-3 h-3 text-emerald-500 shrink-0" />
+                                                            <strong className="text-slate-800">{Number(plan.whatsapp_limit || 0).toLocaleString()}</strong>
+                                                        </span>
+                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-50/70 text-emerald-800 border-1 border-emerald-200/70 whitespace-nowrap" title="Excel Export Quota Limit">
+                                                            <FileSpreadsheet className="w-3 h-3 text-emerald-600 shrink-0" />
+                                                            <strong className="text-emerald-900">{Number(plan.excel_download_limit || 50).toLocaleString()}</strong>
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </td>
 
                                             {/* Column 5: Team Seats */}
                                             <td className="py-4 px-4">
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border-1 border-indigo-100/80">
-                                                    <Users className="w-3.5 h-3.5 text-indigo-500" />
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border-1 border-indigo-100/90 whitespace-nowrap">
+                                                    <Users className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                                                     {plan.sub_recruiter_limit || 1} {Number(plan.sub_recruiter_limit) === 1 ? 'Seat' : 'Seats'}
                                                 </span>
                                             </td>
@@ -578,10 +589,10 @@ export default function PlansList() {
                                             <td className="py-4 px-4">
                                                 <button
                                                     onClick={() => router.push(`/admin/plans/${plan.id}/subscribers`)}
-                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200/70 hover:border-blue-200 transition-all cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border-1 border-slate-200/80 hover:border-blue-200 transition-all cursor-pointer whitespace-nowrap"
                                                     title="View all recruiters subscribed to this tier"
                                                 >
-                                                    <UserCheck className="w-3.5 h-3.5" />
+                                                    <UserCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                                                     <span>{plan.active_subscribers || 0}</span>
                                                 </button>
                                             </td>
@@ -592,9 +603,9 @@ export default function PlansList() {
                                                     onClick={() => handleToggleStatus(plan)}
                                                     disabled={actionLoading}
                                                     title={`Click to ${plan.status === 'active' ? 'Deactivate' : 'Activate'}`}
-                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${plan.status === 'active'
+                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer whitespace-nowrap ${plan.status === 'active'
                                                         ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80 hover:bg-emerald-100'
-                                                        : 'bg-slate-100 text-slate-600 border-1 border-slate-200 hover:bg-slate-200'
+                                                        : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
                                                         }`}
                                                 >
                                                     <span className={`w-1.5 h-1.5 rounded-full ${plan.status === 'active' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
@@ -714,7 +725,7 @@ export default function PlansList() {
                                     </div>
 
                                     {/* Quota Highlights Grid */}
-                                    <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4 text-xs">
                                         <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                                             <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Job Posts</span>
                                             <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.job_post_limit} / mo</span>
@@ -730,6 +741,18 @@ export default function PlansList() {
                                         <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                                             <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Team Seats</span>
                                             <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.sub_recruiter_limit || 1} Seat(s)</span>
+                                        </div>
+                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Email Quota</span>
+                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.email_limit || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">WhatsApp Quota</span>
+                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.whatsapp_limit || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Excel Downloads</span>
+                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.excel_download_limit || 50).toLocaleString()}</span>
                                         </div>
                                     </div>
 
@@ -887,6 +910,18 @@ export default function PlansList() {
                                 <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
                                     <span className="text-slate-600 font-medium">Urgent Job Posts:</span>
                                     <span className="font-bold text-slate-900">{selectedPlan.urgent_job_limit || 0}</span>
+                                </div>
+                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                    <span className="text-slate-600 font-medium">Email Sent Count:</span>
+                                    <span className="font-bold text-slate-900">{Number(selectedPlan.email_limit || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                    <span className="text-slate-600 font-medium">WhatsApp Sent Count:</span>
+                                    <span className="font-bold text-slate-900">{Number(selectedPlan.whatsapp_limit || 0).toLocaleString()}</span>
+                                </div>
+                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center col-span-2">
+                                    <span className="text-slate-600 font-medium">Excel Download Count:</span>
+                                    <span className="font-bold text-slate-900">{Number(selectedPlan.excel_download_limit || 50).toLocaleString()}</span>
                                 </div>
                                 <div className="p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl flex justify-between items-center col-span-2">
                                     <span className="text-indigo-800 font-semibold flex items-center gap-1.5">
