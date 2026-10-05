@@ -441,6 +441,18 @@ export default function Overview() {
                 loc = j.work_location;
             }
         }
+        const isClosed = j.is_closed?.data 
+            ? j.is_closed.data[0] === 1 
+            : (typeof j.is_closed === 'object' && j.is_closed !== null
+                ? Boolean(j.is_closed[0])
+                : Number(j.is_closed) === 1 || j.is_closed === true || j.is_closed === '1');
+
+        const jobStatus = isClosed 
+            ? 'Closed' 
+            : (j.approval_status === 'pending' || j.approval_status === 'Pending' 
+                ? 'Pending Approval' 
+                : 'Active');
+
         return {
             id: j.id,
             title: j.job_title || 'Untitled Job',
@@ -454,7 +466,7 @@ export default function Overview() {
             recruiterEmail: j.recruiter_email || '-',
             timeRaw: j.created_at,
             timeAgo: formatTimeAgo(j.created_at),
-            status: j.is_closed ? 'Closed' : (j.approval_status === 'pending' ? 'Pending Approval' : 'Active')
+            status: jobStatus
         };
     });
 
