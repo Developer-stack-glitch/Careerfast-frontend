@@ -118,7 +118,7 @@ export default function RecruiterDetails({ recruiterId }) {
             const res = await loginAsRecruiter(r?.recruiter_id || recruiterId);
             if (res.data?.success && res.data?.token) {
                 toast.success(`Opening Recruiter Portal as ${recName}...`, { id: toastId });
-                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://localhost:3001';
+                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://recruit.careerfast.in';
                 const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(res.data.data))}&target=/overview`;
                 window.open(targetUrl, '_blank');
             } else {

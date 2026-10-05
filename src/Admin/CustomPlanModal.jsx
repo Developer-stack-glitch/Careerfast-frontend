@@ -1,10 +1,12 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Settings, X, Loader2, Save, Briefcase, Users } from 'lucide-react';
+import { Settings, X, Loader2, Save, Briefcase, Users, Check, Layers } from 'lucide-react';
 import { updateAdminRecruiterCustomPlan } from '../ApiService/action';
+import AdminSelect from './AdminSelect';
 import toast from 'react-hot-toast';
 
 export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess }) {
+    const [planScope, setPlanScope] = useState('all'); // 'all' | 'only_job_post'
     const [formData, setFormData] = useState({
         job_post_limit: '',
         active_job_limit: '',
@@ -21,47 +23,61 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
 
     useEffect(() => {
         if (isOpen && recruiter) {
+            const isOnlyJobPostName = /only job post/i.test(recruiter.plan_name || '');
+            const hasCandidateQuotas = Number(recruiter.resume_view_limit || 0) > 0 ||
+                Number(recruiter.resume_download_limit || 0) > 0 ||
+                Number(recruiter.email_limit || 0) > 0 ||
+                Number(recruiter.whatsapp_limit || 0) > 0 ||
+                Number(recruiter.excel_download_limit || 0) > 0;
+
+            const isOnlyJob = /only job post/i.test(recruiter.plan_name || '') || !hasCandidateQuotas;
+            setPlanScope(isOnlyJob ? 'only_job_post' : 'all');
+
             setFormData({
-                job_post_limit: recruiter.job_post_limit || 0,
-                active_job_limit: recruiter.active_job_limit || 0,
-                featured_job_limit: recruiter.featured_job_limit || 0,
-                urgent_job_limit: recruiter.urgent_job_limit || 0,
-                resume_view_limit: recruiter.resume_view_limit || 0,
-                resume_download_limit: recruiter.resume_download_limit || 0,
+                job_post_limit: recruiter.job_post_limit ?? 0,
+                active_job_limit: recruiter.active_job_limit ?? 0,
+                featured_job_limit: recruiter.featured_job_limit ?? 0,
+                urgent_job_limit: recruiter.urgent_job_limit ?? 0,
+                resume_view_limit: recruiter.resume_view_limit ?? 0,
+                resume_download_limit: recruiter.resume_download_limit ?? 0,
                 sub_recruiter_limit: recruiter.sub_recruiter_limit || 1,
-                email_limit: recruiter.email_limit ?? 50,
-                whatsapp_limit: recruiter.whatsapp_limit ?? 50,
-                excel_download_limit: recruiter.excel_download_limit ?? 50
+                email_limit: recruiter.email_limit ?? 0,
+                whatsapp_limit: recruiter.whatsapp_limit ?? 0,
+                excel_download_limit: recruiter.excel_download_limit ?? 0
             });
         }
     }, [isOpen, recruiter]);
 
     if (!isOpen || !recruiter) return null;
 
+    const isOnlyJobPost = planScope === 'only_job_post';
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             setSubmitting(true);
             const payload = {
-                job_post_limit: Number(formData.job_post_limit),
-                active_job_limit: Number(formData.active_job_limit),
-                featured_job_limit: Number(formData.featured_job_limit),
-                urgent_job_limit: Number(formData.urgent_job_limit),
-                resume_view_limit: Number(formData.resume_view_limit),
-                resume_download_limit: Number(formData.resume_download_limit),
-                sub_recruiter_limit: Number(formData.sub_recruiter_limit),
-                email_limit: Number(formData.email_limit || 0),
-                whatsapp_limit: Number(formData.whatsapp_limit || 0),
-                excel_download_limit: Number(formData.excel_download_limit || 0),
-                email_sent_count: Number(formData.email_limit || 0),
-                whatsapp_message_count: Number(formData.whatsapp_limit || 0),
-                excel_download_count: Number(formData.excel_download_limit || 0)
+                plan_scope: planScope,
+                is_only_job_post: isOnlyJobPost,
+                job_post_limit: Number(formData.job_post_limit || 0),
+                active_job_limit: Number(formData.active_job_limit || 0),
+                featured_job_limit: Number(formData.featured_job_limit || 0),
+                urgent_job_limit: Number(formData.urgent_job_limit || 0),
+                resume_view_limit: isOnlyJobPost ? 0 : Number(formData.resume_view_limit || 0),
+                resume_download_limit: isOnlyJobPost ? 0 : Number(formData.resume_download_limit || 0),
+                sub_recruiter_limit: Number(formData.sub_recruiter_limit || 1),
+                email_limit: isOnlyJobPost ? 0 : Number(formData.email_limit || 0),
+                whatsapp_limit: isOnlyJobPost ? 0 : Number(formData.whatsapp_limit || 0),
+                excel_download_limit: isOnlyJobPost ? 0 : Number(formData.excel_download_limit || 0),
+                email_sent_count: isOnlyJobPost ? 0 : Number(formData.email_limit || 0),
+                whatsapp_message_count: isOnlyJobPost ? 0 : Number(formData.whatsapp_limit || 0),
+                excel_download_count: isOnlyJobPost ? 0 : Number(formData.excel_download_limit || 0)
             };
 
             const res = await updateAdminRecruiterCustomPlan(recruiter.id || recruiter.recruiter_id, payload);
 
             if (res?.data?.success) {
-                toast.success("Custom limits applied successfully!");
+                toast.success(isOnlyJobPost ? "Job Posting limits applied successfully!" : "Custom limits applied successfully!");
                 if (onSuccess) onSuccess();
                 onClose();
             }
@@ -93,7 +109,47 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                         </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        {/* Plan Customization Scope Dropdown */}
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <Layers className="w-4 h-4 text-emerald-600" />
+                                    <label className="text-[13.5px] font-bold text-slate-800 m-0">
+                                        Custom Plan Mode
+                                    </label>
+                                </div>
+                                <p className="text-[12px] text-slate-500 mt-0.5 mb-0">
+                                    Choose whether to configure candidate resume quotas or only job postings.
+                                </p>
+                            </div>
+                            <div className="w-full sm:w-72 shrink-0">
+                                <AdminSelect
+                                    value={planScope}
+                                    onChange={(val) => {
+                                        setPlanScope(val);
+                                        if (val === 'only_job_post') {
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                resume_view_limit: 0,
+                                                resume_download_limit: 0,
+                                                sub_recruiter_limit: 1,
+                                                email_limit: 0,
+                                                whatsapp_limit: 0,
+                                                excel_download_limit: 0
+                                            }));
+                                        }
+                                    }}
+                                    options={[
+                                        { value: 'all', label: 'Full Access (Job Posts & Resume Quotas)' },
+                                        { value: 'only_job_post', label: 'Only Job Post' }
+                                    ]}
+                                    placeholder="Select Mode"
+                                    className="w-full"
+                                />
+                            </div>
+                        </div>
+
                         {/* Job Posting Limits Section */}
                         <div className="bg-white border border-slate-200/70 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
                             <div className="flex items-center gap-2.5 mb-1.5">
@@ -162,104 +218,106 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                             </div>
                         </div>
 
-                        {/* Candidate / Resume Quotas Section */}
-                        <div className="bg-white border border-slate-200/70 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
-                            <div className="flex items-center gap-2.5 mb-1.5">
-                                <Users className="w-4 h-4 text-blue-600" />
-                                <h4 className="font-bold text-slate-800 text-[15px] mb-0">Candidate / Resume Quotas</h4>
-                            </div>
-                            <p className="text-[13px] text-slate-400 mb-6">Quantitative limits for inspecting and downloading candidate profiles.</p>
+                        {/* Candidate / Resume Quotas Section (Hidden when "Only Job Post" is selected) */}
+                        {!isOnlyJobPost && (
+                            <div className="bg-white border border-slate-200/70 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] animate-in fade-in duration-200">
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                    <Users className="w-4 h-4 text-blue-600" />
+                                    <h4 className="font-bold text-slate-800 text-[15px] mb-0">Candidate / Resume Quotas</h4>
+                                </div>
+                                <p className="text-[13px] text-slate-400 mb-6">Quantitative limits for inspecting and downloading candidate profiles.</p>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                        Resume Views
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={formData.resume_view_limit}
-                                        onChange={(e) => setFormData({ ...formData, resume_view_limit: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                        required
-                                    />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max full candidate profiles viewable per cycle</p>
-                                </div>
-                                <div>
-                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                        Resume Downloads
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={formData.resume_download_limit}
-                                        onChange={(e) => setFormData({ ...formData, resume_download_limit: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                        required
-                                    />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max PDF/DOC resume files downloadable</p>
-                                </div>
-                                <div>
-                                    <label className="flex items-center justify-between text-[13px] font-semibold text-slate-700 mb-2">
-                                        Sub-Recruiter Seats
-                                        <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px]">TEAM</span>
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={formData.sub_recruiter_limit}
-                                        onChange={(e) => setFormData({ ...formData, sub_recruiter_limit: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                        required
-                                    />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max sub-recruiters main recruiter can create</p>
-                                </div>
-                                <div>
-                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                        Email Sent Count
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={formData.email_limit}
-                                        onChange={(e) => setFormData({ ...formData, email_limit: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                        required
-                                    />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate emails sendable per cycle</p>
-                                </div>
-                                <div>
-                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                        WhatsApp Sent Count
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={formData.whatsapp_limit}
-                                        onChange={(e) => setFormData({ ...formData, whatsapp_limit: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                        required
-                                    />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate WhatsApp messages sendable per cycle</p>
-                                </div>
-                                <div>
-                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                        Excel Download Count
-                                    </label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={formData.excel_download_limit}
-                                        onChange={(e) => setFormData({ ...formData, excel_download_limit: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                        required
-                                    />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate profiles exportable to Excel per cycle</p>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                            Resume Views
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.resume_view_limit}
+                                            onChange={(e) => setFormData({ ...formData, resume_view_limit: e.target.value })}
+                                            className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                            required={!isOnlyJobPost}
+                                        />
+                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max full candidate profiles viewable per cycle</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                            Resume Downloads
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.resume_download_limit}
+                                            onChange={(e) => setFormData({ ...formData, resume_download_limit: e.target.value })}
+                                            className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                            required={!isOnlyJobPost}
+                                        />
+                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max PDF/DOC resume files downloadable</p>
+                                    </div>
+                                    <div>
+                                        <label className="flex items-center justify-between text-[13px] font-semibold text-slate-700 mb-2">
+                                            Sub-Recruiter Seats
+                                            <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px]">TEAM</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            value={formData.sub_recruiter_limit}
+                                            onChange={(e) => setFormData({ ...formData, sub_recruiter_limit: e.target.value })}
+                                            className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                            required
+                                        />
+                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max sub-recruiters main recruiter can create</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                            Email Sent Count
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.email_limit}
+                                            onChange={(e) => setFormData({ ...formData, email_limit: e.target.value })}
+                                            className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                            required={!isOnlyJobPost}
+                                        />
+                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate emails sendable per cycle</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                            WhatsApp Sent Count
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.whatsapp_limit}
+                                            onChange={(e) => setFormData({ ...formData, whatsapp_limit: e.target.value })}
+                                            className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                            required={!isOnlyJobPost}
+                                        />
+                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate WhatsApp messages sendable per cycle</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                            Excel Download Count
+                                        </label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.excel_download_limit}
+                                            onChange={(e) => setFormData({ ...formData, excel_download_limit: e.target.value })}
+                                            className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                                            required={!isOnlyJobPost}
+                                        />
+                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate profiles exportable to Excel per cycle</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-slate-100">
+                        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                             <button type="button" onClick={onClose} className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-[14px] font-medium transition-colors">
                                 Cancel
                             </button>

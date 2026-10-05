@@ -342,7 +342,7 @@ export default function RecruitersList() {
             const res = await loginAsRecruiter(rec.recruiter_id);
             if (res.data?.success && res.data?.token) {
                 toast.success(`Opening Recruiter Portal as ${recName}...`, { id: toastId });
-                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://localhost:3001';
+                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://recruit.careerfast.in';
                 const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(res.data.data))}&target=/overview`;
                 window.open(targetUrl, '_blank');
             } else {
@@ -601,7 +601,7 @@ export default function RecruitersList() {
             {/* Recruiters Master Table Container */}
             <div className="bg-white rounded-2xl overflow-hidden shadow-xs">
                 {loading ? (
-                    <div className="overflow-x-auto relative">
+                    <div className="overflow-x-auto max-h-[calc(100vh-230px)] overflow-y-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar:vertical]:w-0 [&::-webkit-scrollbar-track]:bg-slate-100/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 relative">
                         <table className="w-full text-left border-collapse min-w-[1620px]">
                             <thead className="sticky top-0 z-20 bg-slate-50 shadow-xs">
                                 <tr className="border-b border-slate-200/80 bg-slate-50 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
@@ -709,7 +709,7 @@ export default function RecruitersList() {
                 ) : (
                     <div
                         onScroll={handleTableScroll}
-                        className="overflow-x-auto pb-3 relative scroll-smooth"
+                        className="overflow-x-auto max-h-[calc(100vh-230px)] overflow-y-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar:vertical]:w-0 [&::-webkit-scrollbar-track]:bg-slate-100/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 pb-2 relative scroll-smooth"
                     >
                         <table className="w-full text-left border-collapse min-w-[1620px]">
                             <thead className="sticky top-0 z-20 bg-slate-50 shadow-xs">
@@ -807,8 +807,16 @@ export default function RecruitersList() {
                                     const daysRemaining = getDaysRemaining(rec.subscription_expiry);
 
                                     // Plan badge styling
+                                    const isOnlyJobPostPlan = /only job post/i.test(planName) || (
+                                        /custom/i.test(planName) &&
+                                        Number(rec.resume_view_limit || 0) === 0 &&
+                                        Number(rec.resume_download_limit || 0) === 0 &&
+                                        Number(rec.email_limit || 0) === 0 &&
+                                        Number(rec.whatsapp_limit || 0) === 0 &&
+                                        Number(rec.excel_download_limit || 0) === 0
+                                    );
                                     const isCustom = /custom/i.test(planName);
-                                    const displayPlanName = isCustom ? 'Custom' : planName;
+                                    const displayPlanName = isOnlyJobPostPlan ? 'Only Job Post' : isCustom ? 'Custom' : planName;
                                     const isPremium = /premium|enterprise|vip|gold/i.test(planName);
                                     const isStandard = /standard|silver|growth|pro/i.test(planName);
 
@@ -936,13 +944,15 @@ export default function RecruitersList() {
                                                         <button
                                                             type="button"
                                                             onClick={() => setOpenPlanDropdown(openPlanDropdown === idx ? null : idx)}
-                                                            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer select-none transition-all duration-150 border-1 shadow-2xs hover:shadow-xs active:scale-95 ${isCustom
-                                                                ? 'bg-amber-50 text-amber-800 border-amber-200/90 hover:bg-amber-100 hover:border-amber-300'
-                                                                : isPremium
-                                                                    ? 'bg-purple-50 text-purple-800 border-purple-200/90 hover:bg-purple-100 hover:border-purple-300'
-                                                                    : isStandard
-                                                                        ? 'bg-blue-50 text-blue-800 border-blue-200/90 hover:bg-blue-100 hover:border-blue-300'
-                                                                        : 'bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100 hover:border-emerald-300'
+                                                            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer select-none transition-all duration-150 border-1 shadow-2xs hover:shadow-xs active:scale-95 ${isOnlyJobPostPlan
+                                                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100 hover:border-emerald-300'
+                                                                : isCustom
+                                                                    ? 'bg-amber-50 text-amber-800 border-amber-200/90 hover:bg-amber-100 hover:border-amber-300'
+                                                                    : isPremium
+                                                                        ? 'bg-purple-50 text-purple-800 border-purple-200/90 hover:bg-purple-100 hover:border-purple-300'
+                                                                        : isStandard
+                                                                            ? 'bg-blue-50 text-blue-800 border-blue-200/90 hover:bg-blue-100 hover:border-blue-300'
+                                                                            : 'bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100 hover:border-emerald-300'
                                                                 }`}
                                                             title="Click to switch or change plan"
                                                         >
@@ -1062,7 +1072,7 @@ export default function RecruitersList() {
 
                                             {/* 5. Sub-Recruiters (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom ? (
+                                                {isCustom && subRecruiterLimit > 1 ? (
                                                     <>
                                                         <div className="text-xs">
                                                             <span className="font-bold text-slate-800">{subRecruitersCount}</span>
@@ -1084,15 +1094,13 @@ export default function RecruitersList() {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
                                                 )}
                                             </td>
 
-
-
                                             {/* 7. Resume View (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom ? (
+                                                {isCustom && resumeLimit > 0 ? (
                                                     <>
                                                         <div className="text-xs">
                                                             <span className="font-bold text-slate-800">{resumeUsed}</span>
@@ -1114,13 +1122,13 @@ export default function RecruitersList() {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
                                                 )}
                                             </td>
 
                                             {/* 8. Resume Download (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom ? (
+                                                {isCustom && resumeDownloadLimit > 0 ? (
                                                     <>
                                                         <div className="text-xs">
                                                             <span className="font-bold text-slate-800">{resumeDownloadsUsed}</span>
@@ -1142,13 +1150,13 @@ export default function RecruitersList() {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
                                                 )}
                                             </td>
 
                                             {/* 9. Email (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom ? (
+                                                {isCustom && emailLimit > 0 ? (
                                                     <>
                                                         <div className="flex items-center gap-1.5 text-xs text-slate-700">
                                                             <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
@@ -1171,13 +1179,13 @@ export default function RecruitersList() {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
                                                 )}
                                             </td>
 
                                             {/* 10. WhatsApp (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom ? (
+                                                {isCustom && whatsappLimit > 0 ? (
                                                     <>
                                                         <div className="flex items-center gap-1.5 text-xs text-slate-700">
                                                             <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
@@ -1200,13 +1208,13 @@ export default function RecruitersList() {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
                                                 )}
                                             </td>
 
                                             {/* 11. Excel Export (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom ? (
+                                                {isCustom && excelLimit > 0 ? (
                                                     <>
                                                         <div className="flex items-center gap-1.5 text-xs">
                                                             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -1229,7 +1237,7 @@ export default function RecruitersList() {
                                                         </div>
                                                     </>
                                                 ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
                                                 )}
                                             </td>
 
