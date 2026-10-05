@@ -500,6 +500,141 @@ export function AdminFormSkeleton() {
     );
 }
 
+/**
+ * 7. Admin User Management Page Skeleton
+ */
+export function AdminUserManagementSkeleton() {
+    return (
+        <div className="w-full max-w-[1600px] mx-auto animate-in fade-in duration-300 space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3">
+                    <SkeletonShimmer className="w-10 h-10 rounded-xl shrink-0" />
+                    <div className="space-y-1.5">
+                        <SkeletonShimmer className="h-6 w-72 rounded-lg" />
+                        <SkeletonShimmer className="h-3.5 w-96 max-w-full rounded-md" />
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <SkeletonShimmer className="w-9 h-9 rounded-xl" />
+                    <SkeletonShimmer className="h-10 w-44 rounded-xl" />
+                </div>
+            </div>
+
+            {/* 4 KPI Summary Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="p-4 bg-white rounded-2xl shadow-xs space-y-2 border border-slate-100">
+                        <SkeletonShimmer className="h-4 w-28 rounded" />
+                        <SkeletonShimmer className="h-7 w-16 rounded-md" />
+                        <SkeletonShimmer className="h-3 w-24 rounded" />
+                    </div>
+                ))}
+            </div>
+
+            {/* Filter Bar */}
+            <div className="bg-white p-4 rounded-2xl shadow-xs border border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                <div className="relative flex-1 min-w-[240px]">
+                    <SkeletonShimmer className="h-10 w-full rounded-xl" />
+                </div>
+                <div className="flex items-center gap-3">
+                    <SkeletonShimmer className="h-10 w-36 rounded-xl" />
+                    <SkeletonShimmer className="h-10 w-36 rounded-xl" />
+                </div>
+            </div>
+
+            {/* Admins Table */}
+            <div className="bg-white rounded-2xl shadow-xs border border-slate-100 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-gray-100 bg-gray-50/70 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-6">Administrator</th>
+                                <th className="py-3.5 px-4">Role & Department</th>
+                                <th className="py-3.5 px-4">Granular Action Scope</th>
+                                <th className="py-3.5 px-4">Last Activity</th>
+                                <th className="py-3.5 px-4 text-center">Status</th>
+                                <th className="py-3.5 px-6 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                <tr key={i}>
+                                    {/* Column 1: Identity */}
+                                    <td className="py-4 px-6">
+                                        <div className="flex items-center gap-3">
+                                            <SkeletonShimmer className="w-9 h-9 rounded-xl shrink-0" />
+                                            <div className="space-y-1.5 flex-1 min-w-0">
+                                                <SkeletonShimmer className="h-4 w-32 rounded" />
+                                                <SkeletonShimmer className="h-3 w-44 rounded" />
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    {/* Column 2: Role & Dept */}
+                                    <td className="py-4 px-4">
+                                        <div className="space-y-1.5">
+                                            <SkeletonShimmer className="h-6 w-28 rounded-md" />
+                                            <SkeletonShimmer className="h-3 w-20 rounded" />
+                                        </div>
+                                    </td>
+
+                                    {/* Column 3: Action Scope */}
+                                    <td className="py-4 px-4">
+                                        <div className="space-y-1.5 max-w-sm">
+                                            <div className="flex items-center justify-between">
+                                                <SkeletonShimmer className="h-3.5 w-24 rounded" />
+                                                <SkeletonShimmer className="h-3 w-16 rounded" />
+                                            </div>
+                                            <div className="flex flex-wrap gap-1">
+                                                <SkeletonShimmer className="h-5 w-16 rounded-md" />
+                                                <SkeletonShimmer className="h-5 w-20 rounded-md" />
+                                                <SkeletonShimmer className="h-5 w-14 rounded-md" />
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    {/* Column 4: Last Activity */}
+                                    <td className="py-4 px-4">
+                                        <div className="flex items-center gap-2">
+                                            <SkeletonShimmer className="w-3.5 h-3.5 rounded-full shrink-0" />
+                                            <SkeletonShimmer className="h-3.5 w-20 rounded" />
+                                        </div>
+                                    </td>
+
+                                    {/* Column 5: Status */}
+                                    <td className="py-4 px-4 text-center">
+                                        <SkeletonShimmer className="h-6 w-16 rounded-full mx-auto" />
+                                    </td>
+
+                                    {/* Column 6: Actions */}
+                                    <td className="py-4 px-6 text-right">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <SkeletonShimmer className="w-7 h-7 rounded-lg" />
+                                            <SkeletonShimmer className="w-7 h-7 rounded-lg" />
+                                            <SkeletonShimmer className="w-7 h-7 rounded-lg" />
+                                            <SkeletonShimmer className="w-7 h-7 rounded-lg" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination footer */}
+                <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+                    <SkeletonShimmer className="h-4 w-36 rounded" />
+                    <div className="flex items-center gap-2">
+                        <SkeletonShimmer className="h-8 w-16 rounded-xl" />
+                        <SkeletonShimmer className="h-8 w-16 rounded-xl" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default {
     AdminDashboardSkeleton,
     AdminTableSkeleton,
@@ -507,4 +642,6 @@ export default {
     AdminCardsSkeleton,
     AdminDetailSkeleton,
     AdminFormSkeleton,
+    AdminUserManagementSkeleton,
 };
+

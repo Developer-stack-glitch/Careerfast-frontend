@@ -22,7 +22,7 @@ export default function AdminSelect({
     }, []);
 
     const selectedOption = options.find(opt => opt.value === value);
-    const isFiltered = value !== '';
+    const isFiltered = Boolean(value) && value !== 'all' && value !== '';
 
     return (
         <div ref={containerRef} className={`relative inline-block text-left ${className}`}>

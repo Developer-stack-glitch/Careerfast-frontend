@@ -14,7 +14,7 @@ import { getSuperAdminDashboardStats } from '../ApiService/action';
 import { useRouter } from 'next/navigation';
 
 const StatCard = ({ title, value, change, isPositive, icon: Icon, color, bg }) => (
-    <div className="bg-white rounded-xl shadow-xs p-4 transition-all hover:shadow-sm border border-gray-100/60">
+    <div className="bg-white rounded-xl shadow-xs p-4 transition-all hover:shadow-sm">
         <div className="flex items-start justify-between mb-3">
             <div className={`p-2 rounded-lg ${bg} ${color}`}>
                 <Icon className="w-[18px] h-[18px]" strokeWidth={1.5} />
@@ -641,7 +641,7 @@ export default function Overview() {
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                 {/* Main Area Chart */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-xs p-4 border border-gray-100/60">
+                <div className="lg:col-span-2 bg-white rounded-xl shadow-xs p-4">
                     <div className="flex justify-between items-center mb-5">
                         <div className="flex items-center gap-2">
                             <TrendingUp className="w-4 h-4 text-red-500" />
@@ -683,7 +683,7 @@ export default function Overview() {
                 </div>
 
                 {/* Pie Chart */}
-                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col border border-gray-100/60">
+                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-4">
                         <Users className="w-4 h-4 text-red-500" />
                         <h3 className="text-[15px] font-semibold text-gray-900 mb-0">User Demographics</h3>
@@ -733,14 +733,14 @@ export default function Overview() {
             </div>
 
             {/* RECENT PLATFORM ACTIVITY & REGISTRATIONS TABS SECTION */}
-            <div className="bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden mb-6">
+            <div className="bg-white rounded-2xl shadow-xs overflow-hidden mb-6">
                 {/* Section Header with Tabs and Controls */}
                 <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <button
                             onClick={() => { setActiveRecentTab('jobs'); setSearchQuery(''); }}
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeRecentTab === 'jobs'
-                                ? 'bg-purple-50 text-purple-700 border border-purple-200/80 shadow-2xs'
+                                ? 'bg-purple-50 text-purple-700 border-1 border-purple-200/80 shadow-2xs'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
                                 }`}
                         >
@@ -755,7 +755,7 @@ export default function Overview() {
                         <button
                             onClick={() => { setActiveRecentTab('candidates'); setSearchQuery(''); }}
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeRecentTab === 'candidates'
-                                ? 'bg-blue-50 text-blue-700 border border-blue-200/80 shadow-2xs'
+                                ? 'bg-blue-50 text-blue-700 border-1 border-blue-200/80 shadow-2xs'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
                                 }`}
                         >
@@ -770,7 +770,7 @@ export default function Overview() {
                         <button
                             onClick={() => { setActiveRecentTab('recruiters'); setSearchQuery(''); }}
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeRecentTab === 'recruiters'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                                ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80 shadow-2xs'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
                                 }`}
                         >
@@ -785,7 +785,7 @@ export default function Overview() {
                         <button
                             onClick={() => { setActiveRecentTab('activity'); setSearchQuery(''); }}
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeRecentTab === 'activity'
-                                ? 'bg-amber-50 text-amber-800 border border-amber-200/80 shadow-2xs'
+                                ? 'bg-amber-50 text-amber-800 border-1 border-amber-200/80 shadow-2xs'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
                                 }`}
                         >
@@ -1177,7 +1177,7 @@ export default function Overview() {
             {/* Additional Details Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
                 {/* Application Statuses */}
-                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col border border-gray-100/60">
+                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-4">
                         <FileCheck2 className="w-4 h-4 text-red-500" />
                         <h3 className="text-[15px] font-semibold text-gray-900 mb-0">Application Statuses</h3>
@@ -1228,7 +1228,7 @@ export default function Overview() {
                 </div>
 
                 {/* Top Job Categories */}
-                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col border border-gray-100/60">
+                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-4">
                         <Briefcase className="w-4 h-4 text-red-500" />
                         <h3 className="text-[15px] font-semibold text-gray-900 mb-0">Top Job Categories</h3>
@@ -1254,7 +1254,7 @@ export default function Overview() {
                 </div>
 
                 {/* Workplace Distribution */}
-                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col border border-gray-100/60">
+                <div className="bg-white rounded-xl shadow-xs p-4 flex flex-col">
                     <div className="flex items-center gap-2 mb-4">
                         <Building2 className="w-4 h-4 text-red-500" />
                         <h3 className="text-[15px] font-semibold text-gray-900 mb-0">Workplace Distribution</h3>
@@ -1308,7 +1308,7 @@ export default function Overview() {
             {/* Quick Summary Cards below for rapid access */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* Quick Card 1: Latest Job */}
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-2xs hover:shadow-xs transition-shadow">
+                <div className="bg-white rounded-xl p-4 shadow-2xs hover:shadow-xs transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 text-purple-700 font-semibold text-[13px]">
                             <Briefcase className="w-4 h-4" />
@@ -1321,7 +1321,7 @@ export default function Overview() {
                     {formattedRecentJobs.length > 0 ? (
                         <div
                             onClick={() => openDetailsModal(formattedRecentJobs[0], 'job')}
-                            className="bg-purple-50/50 hover:bg-purple-50 p-3 rounded-lg border border-purple-100/60 transition-colors cursor-pointer"
+                            className="bg-purple-50/50 hover:bg-purple-50 p-3 rounded-lg border-1 border-purple-100/60 transition-colors cursor-pointer"
                         >
                             <h4 className="text-[13px] font-bold text-gray-900 mb-0.5 truncate">{formattedRecentJobs[0].title}</h4>
                             <p className="text-[12px] text-gray-600 mb-2 truncate">{formattedRecentJobs[0].companyName} • {formattedRecentJobs[0].workplace_type}</p>
@@ -1338,7 +1338,7 @@ export default function Overview() {
                 </div>
 
                 {/* Quick Card 2: Latest Candidate */}
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-2xs hover:shadow-xs transition-shadow">
+                <div className="bg-white rounded-xl p-4 shadow-2xs hover:shadow-xs transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 text-blue-700 font-semibold text-[13px]">
                             <Users className="w-4 h-4" />
@@ -1351,7 +1351,7 @@ export default function Overview() {
                     {formattedRecentCandidates.length > 0 ? (
                         <div
                             onClick={() => openDetailsModal(formattedRecentCandidates[0], 'candidate')}
-                            className="bg-blue-50/50 hover:bg-blue-50 p-3 rounded-lg border border-blue-100/60 transition-colors cursor-pointer"
+                            className="bg-blue-50/50 hover:bg-blue-50 p-3 rounded-lg border-1 border-blue-100/60 transition-colors cursor-pointer"
                         >
                             <h4 className="text-[13px] font-bold text-gray-900 mb-0.5 truncate">{formattedRecentCandidates[0].name}</h4>
                             <p className="text-[12px] text-gray-600 mb-2 truncate">{formattedRecentCandidates[0].email}</p>
@@ -1368,7 +1368,7 @@ export default function Overview() {
                 </div>
 
                 {/* Quick Card 3: Latest Recruiter */}
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-2xs hover:shadow-xs transition-shadow">
+                <div className="bg-white rounded-xl p-4 shadow-2xs hover:shadow-xs transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 text-emerald-700 font-semibold text-[13px]">
                             <Building2 className="w-4 h-4" />
@@ -1381,7 +1381,7 @@ export default function Overview() {
                     {formattedRecentRecruiters.length > 0 ? (
                         <div
                             onClick={() => openDetailsModal(formattedRecentRecruiters[0], 'recruiter')}
-                            className="bg-emerald-50/50 hover:bg-emerald-50 p-3 rounded-lg border border-emerald-100/60 transition-colors cursor-pointer"
+                            className="bg-emerald-50/50 hover:bg-emerald-50 p-3 rounded-lg border-1 border-emerald-100/60 transition-colors cursor-pointer"
                         >
                             <h4 className="text-[13px] font-bold text-gray-900 mb-0.5 truncate">{formattedRecentRecruiters[0].name}</h4>
                             <p className="text-[12px] text-gray-600 mb-2 truncate">{formattedRecentRecruiters[0].organization}</p>

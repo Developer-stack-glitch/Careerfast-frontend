@@ -4,42 +4,44 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
     Search, Settings,
-    Plug, LineChart, Sparkles, Users,
+    Sparkles, Users,
     Rocket, ChevronRight, Bell, PanelLeftClose, PanelLeftOpen, Command,
-    Building2, Briefcase, MessageSquare, Clock, FileText, CreditCard,
-    LogOut, Layers, LayoutDashboard
+    Building2, Briefcase, MessageSquare,
+    LogOut, Layers, LayoutDashboard,
+    Users2
 } from 'lucide-react';
 import defaultLogo from '../images/careerfastlogofinal.png';
 import { getImageUrl } from '../utils/getImageUrl';
+import useAdminPermissions from './useAdminPermissions';
 
 const mockNavGroups = [
     {
         heading: 'Overview & Insights',
         items: [
-            { id: 'dashboard', title: 'Executive Dashboard', icon: LayoutDashboard, href: '/admin' },
-            { id: 'analytics', title: 'Analytics & Reports', icon: Sparkles, href: '/admin/analytics' },
+            { id: 'dashboard', module: 'dashboard', title: 'Executive Dashboard', icon: LayoutDashboard, href: '/admin' },
+            { id: 'analytics', module: 'analytics', title: 'Analytics & Reports', icon: Sparkles, href: '/admin/analytics' },
         ]
     },
     {
         heading: 'Recruiter Management',
         items: [
-            { id: 'all-plans', title: 'Subscription Plans', icon: Layers, href: '/admin/plans' },
-            { id: 'all-recruiters', title: 'Recruiters & Companies', icon: Building2, href: '/admin/recruiters' },
-            { id: 'job-post', title: 'Job Listings', icon: Briefcase, href: '/admin/job-post' },
+            { id: 'all-plans', module: 'plans', title: 'Subscription management', icon: Layers, href: '/admin/plans' },
+            { id: 'all-recruiters', module: 'recruiters', title: 'Recruiters & Companies', icon: Building2, href: '/admin/recruiters' },
+            { id: 'job-post', module: 'job_posts', title: 'Job Listings', icon: Briefcase, href: '/admin/job-post' },
         ]
     },
     {
         heading: 'Talent Pool',
         items: [
-            { id: 'job-seekers', title: 'Job Seekers Directory', icon: Users, href: '/admin/job-seekers' },
+            { id: 'job-seekers', module: 'job_seekers', title: 'Job Seekers Directory', icon: Users, href: '/admin/job-seekers' },
         ]
     },
     {
         heading: 'System & Platform',
         items: [
-            { id: 'support', title: 'Support & Help Desk', icon: MessageSquare, href: '/admin/support' },
-            { id: 'integrations', title: 'Integrations & APIs', icon: Plug, href: '/admin/integrations' },
-            { id: 'general', title: 'Platform Settings', icon: Settings, href: '/admin/general' },
+            { id: 'support', module: 'support', title: 'Support & Help Desk', icon: MessageSquare, href: '/admin/support' },
+            { id: 'users', module: 'user_management', title: 'User Management', icon: Users2, href: '/admin/users' },
+            { id: 'general', module: 'settings', title: 'Platform Settings', icon: Settings, href: '/admin/general' },
         ]
     }
 ];
@@ -102,13 +104,35 @@ const NavItem = memo(function NavItem({ item, currentPath, onLogout }) {
     );
 });
 
-export const SidebarNav = memo(function SidebarNav({ className = '', currentPath, onLogout }) {
+export const SidebarNav = memo(function SidebarNav({ className = '', currentPath, onLogout, userPermissions, isSuperAdmin = true }) {
+    // Filter nav groups based on assigned module permissions
+    const filteredGroups = useMemo(() => {
+        // Super Admin or users without restricting permissions see all modules
+        if (isSuperAdmin || !userPermissions || Object.keys(userPermissions).length === 0) {
+            return mockNavGroups;
+        }
+
+        return mockNavGroups.map(group => {
+            const allowedItems = group.items.filter(item => {
+                if (!item.module) return true;
+                const modPerm = userPermissions?.[item.module];
+                if (!modPerm) return false;
+                if (modPerm.view) return true;
+                return typeof modPerm === 'object' && Object.values(modPerm).some(v => v === true);
+            });
+            return {
+                ...group,
+                items: allowedItems
+            };
+        }).filter(group => group.items.length > 0);
+    }, [userPermissions, isSuperAdmin]);
+
     return (
         <div className={`flex flex-col w-[260px] h-full bg-white border-r border-gray-100 font-sans ${className}`}>
             <WorkspaceSwitcher />
 
             <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex flex-col gap-1 mt-3">
-                {mockNavGroups.map((group, idx) => (
+                {filteredGroups.map((group, idx) => (
                     <div key={idx} className="flex flex-col gap-1 mb-4">
                         {group.heading && (
                             <span className="px-6 mb-3 text-[11px] font-semibold tracking-widest text-gray-500/80 uppercase">
@@ -148,6 +172,7 @@ export default function AdminLayout({ children }) {
 
     const [isOpen, setIsOpen] = useState(true);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const { currentUser, isSuperAdmin, userPermissions } = useAdminPermissions();
 
     useEffect(() => {
         try {
@@ -159,6 +184,7 @@ export default function AdminLayout({ children }) {
             const loginDetails = JSON.parse(stored);
             if (loginDetails?.role_id !== 1 && loginDetails?.role_name !== 'SUPERADMIN' && loginDetails?.role_name !== 'SUPER-ADMIN') {
                 window.location.href = "/superadmin/login";
+                return;
             }
         } catch (e) {
             window.location.href = "/superadmin/login";
@@ -185,6 +211,13 @@ export default function AdminLayout({ children }) {
         window.location.href = "/superadmin/login";
     };
 
+    const userInitials = useMemo(() => {
+        if (!currentUser) return 'SA';
+        const f = currentUser.first_name ? currentUser.first_name.charAt(0).toUpperCase() : '';
+        const l = currentUser.last_name ? currentUser.last_name.charAt(0).toUpperCase() : '';
+        return (f + l) || 'SA';
+    }, [currentUser]);
+
     return (
         <div className="flex h-screen w-full bg-white font-sans overflow-hidden text-gray-900">
             <div
@@ -195,6 +228,8 @@ export default function AdminLayout({ children }) {
                     className="w-[260px] border-none"
                     currentPath={pathname}
                     onLogout={handleLogout}
+                    userPermissions={userPermissions}
+                    isSuperAdmin={isSuperAdmin}
                 />
             </div>
 
@@ -230,13 +265,23 @@ export default function AdminLayout({ children }) {
                             />
                         </div>
 
-                        <div className="flex items-center gap-4 ml-2">
+                        <div className="flex items-center gap-3 ml-2">
                             <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors border-0 bg-transparent p-0 cursor-pointer">
                                 <Bell className="w-5 h-5" />
                             </button>
 
-                            <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-800 flex items-center justify-center text-[12px] font-bold cursor-pointer shadow-sm tracking-wide ml-1">
-                                AS
+                            <div className="flex items-center gap-2">
+                                <div suppressHydrationWarning className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-[12px] font-bold shadow-xs tracking-wide">
+                                    {userInitials}
+                                </div>
+                                <div className="hidden lg:flex flex-col text-left">
+                                    <span suppressHydrationWarning className="text-xs font-bold text-gray-900 leading-tight">
+                                        {currentUser ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() : 'Super Admin'}
+                                    </span>
+                                    <span suppressHydrationWarning className="text-[10px] text-gray-400 font-semibold">
+                                        {isSuperAdmin ? 'Super Admin' : (currentUser?.admin_role_title || currentUser?.role_title || 'Sub-Admin')}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>

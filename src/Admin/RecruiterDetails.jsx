@@ -5,16 +5,19 @@ import {
     Building, User, Mail, Phone, Globe, MapPin, Lock,
     Sparkles, Calendar, CreditCard,
     AlertCircle, ArrowLeft, Loader2,
-    ExternalLink, Users, History, Receipt, ScrollText, ToggleLeft, ToggleRight
+    ExternalLink, Users, History, Receipt, ScrollText, ToggleLeft, ToggleRight,
+    LogIn
 } from 'lucide-react';
 import {
     getAdminRecruiterDetails,
-    updateAdminRecruiterStatus
+    updateAdminRecruiterStatus,
+    loginAsRecruiter
 } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import ChangePlanModal from './ChangePlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
 import ResetPasswordModal from './ResetPasswordModal';
+import CustomPlanModal from './CustomPlanModal';
 import ManageRecruiterTeam from './ManageRecruiterTeam';
 import { AdminDetailSkeleton } from './AdminSkeletons';
 import { getImageUrl } from '../utils/getImageUrl';
@@ -30,6 +33,7 @@ export default function RecruiterDetails({ recruiterId }) {
     const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
     const [isExtendOpen, setIsExtendOpen] = useState(false);
     const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+    const [isCustomPlanOpen, setIsCustomPlanOpen] = useState(false);
     const [statusUpdating, setStatusUpdating] = useState(false);
 
     const fetchDetails = async () => {
@@ -107,6 +111,25 @@ export default function RecruiterDetails({ recruiterId }) {
         }
     };
 
+    const handleLoginAsRecruiter = async () => {
+        const recName = r?.recruiter_name?.trim() || `${r?.first_name || ''} ${r?.last_name || ''}`.trim() || r?.company_name || 'Recruiter';
+        const toastId = toast.loading(`Generating recruiter session for ${recName}...`);
+        try {
+            const res = await loginAsRecruiter(r?.recruiter_id || recruiterId);
+            if (res.data?.success && res.data?.token) {
+                toast.success(`Opening Recruiter Portal as ${recName}...`, { id: toastId });
+                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://localhost:3001';
+                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(res.data.data))}&target=/overview`;
+                window.open(targetUrl, '_blank');
+            } else {
+                toast.error(res.data?.message || "Failed to login as recruiter.", { id: toastId });
+            }
+        } catch (err) {
+            console.error("Error in handleLoginAsRecruiter:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Failed to login as recruiter.", { id: toastId });
+        }
+    };
+
     if (loading) {
         return <AdminDetailSkeleton />;
     }
@@ -130,6 +153,7 @@ export default function RecruiterDetails({ recruiterId }) {
     const historyList = recruiterData.subscription_history || [];
     const paymentsList = recruiterData.payments || [];
     const auditLogsList = recruiterData.audit_logs || [];
+    const isCustom = r.plan_type === 'custom' || r.plan_name?.toLowerCase().includes('custom');
 
     // Calculate days remaining
     let daysRemaining = null;
@@ -158,7 +182,7 @@ export default function RecruiterDetails({ recruiterId }) {
         const isOverLimit = percentage >= 100;
 
         return (
-            <div className="p-4 bg-gray-50/70 rounded-xl border border-gray-100 space-y-2">
+            <div className="p-4 bg-gray-50/100 rounded-xl space-y-2">
                 <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-gray-700">{label}</span>
                     <span className="font-bold text-gray-900">
@@ -191,7 +215,7 @@ export default function RecruiterDetails({ recruiterId }) {
     return (
         <div className="max-w-7xl mx-auto space-y-6 pb-16">
             {/* Top Bar with Navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-gray-100">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => router.push('/admin/recruiters')}
@@ -218,8 +242,17 @@ export default function RecruiterDetails({ recruiterId }) {
 
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={handleLoginAsRecruiter}
+                        className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-xs group/login"
+                        title="Login to Recruiter Portal as this recruiter"
+                    >
+                        <LogIn className="w-3.5 h-3.5 group-hover/login:translate-x-0.5 transition-transform" />
+                        <span>Login as Recruiter</span>
+                        <ExternalLink className="w-3 h-3 text-blue-200 ml-0.5" />
+                    </button>
+                    <button
                         onClick={() => setIsResetPasswordOpen(true)}
-                        className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
+                        className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
                     >
                         <Lock className="w-3.5 h-3.5 text-gray-400" />
                         <span>Reset Password</span>
@@ -227,7 +260,7 @@ export default function RecruiterDetails({ recruiterId }) {
                     <button
                         onClick={handleToggleStatus}
                         disabled={statusUpdating}
-                        className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border transition-colors ${isUserActive
+                        className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl border-1 transition-colors ${isUserActive
                             ? 'text-rose-600 bg-rose-50 border-rose-200 hover:bg-rose-100'
                             : 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100'
                             }`}
@@ -250,7 +283,7 @@ export default function RecruiterDetails({ recruiterId }) {
             {/* Top Row: 2 Cards (Company/Recruiter Overview & Current Subscription) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* 1. Recruiter & Company Overview Card */}
-                <div className="bg-white p-6 rounded-2xl border border-gray-100 space-y-4">
+                <div className="bg-white p-6 rounded-2xl space-y-4">
                     <div className="flex items-start gap-4">
                         <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center font-bold text-blue-600 text-xl overflow-hidden shrink-0 shadow-xs">
                             {(() => {
@@ -339,7 +372,7 @@ export default function RecruiterDetails({ recruiterId }) {
                 </div>
 
                 {/* 2. Current Subscription Card */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 flex flex-col justify-between">
+                <div className="lg:col-span-2 bg-white p-6 rounded-2xl flex flex-col justify-between">
                     <div>
                         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                             <div className="flex items-center gap-3">
@@ -351,11 +384,11 @@ export default function RecruiterDetails({ recruiterId }) {
                                         <h2 className="text-base font-bold text-gray-900 mb-0">{r.plan_name || 'No Plan Assigned'}</h2>
                                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${r.subscription_status === 'Active'
                                             ? isExpiringSoon
-                                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                ? 'bg-amber-50 text-amber-700 border-1 border-amber-200'
+                                                : 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200'
                                             : isExpired
-                                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                                : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                                ? 'bg-rose-50 text-rose-700 border-1 border-rose-200'
+                                                : 'bg-gray-100 text-gray-700 border-1 border-gray-200'
                                             }`}>
                                             {isExpired ? 'Expired' : isExpiringSoon ? 'Expiring Soon' : r.subscription_status || 'Active'}
                                         </span>
@@ -413,7 +446,7 @@ export default function RecruiterDetails({ recruiterId }) {
                             <div className="p-3 bg-gray-50 rounded-xl">
                                 <span className="text-gray-400 block text-[11px]">Sub-Recruiter Seats</span>
                                 <span className="font-semibold text-gray-800">
-                                    {r.sub_recruiter_limit || 1} Allowed
+                                    {isCustom ? `${r.sub_recruiter_limit || 0} Allowed` : 'Not Included'}
                                 </span>
                             </div>
                         </div>
@@ -447,30 +480,67 @@ export default function RecruiterDetails({ recruiterId }) {
             </div>
 
             {/* Section 3: Usage Progress Cards (Real-time vs Plan Limits) */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 space-y-4">
+            <div className="bg-white p-6 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
                         <h3 className="text-base font-bold text-gray-900 mb-0">Current Quota & Real-time Usage</h3>
-                        <p className="text-xs text-gray-500 mb-0">Live limits enforced across the Recruiter portal</p>
+                        <p className="text-xs text-gray-500 mb-0">
+                            {isCustom
+                                ? 'Live custom limits enforced across the Recruiter portal'
+                                : 'Subscription plan job posting quota (Resume Views, Sub-Recruiters & Outreach are Custom Plan only)'}
+                        </p>
                     </div>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border-1 border-blue-100">
-                        Dynamic Plan Bounds
-                    </span>
+                    <div className="flex items-center gap-2">
+                        {isCustom && (
+                            <button
+                                onClick={() => setIsCustomPlanOpen(true)}
+                                className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border-1 border-amber-200 hover:bg-amber-100 transition-colors"
+                            >
+                                Edit Custom Limits
+                            </button>
+                        )}
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border-1 border-blue-100">
+                            {isCustom ? 'Custom Plan Bounds' : 'Standard Job Plan'}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
                     {renderUsageMeter('Monthly Job Posts', r.job_posts_used, r.job_post_limit, 'posts')}
                     {renderUsageMeter('Active Jobs on Portal', r.active_jobs_count, r.active_job_limit, 'active')}
-                    {renderUsageMeter('Resume Views', r.resume_views_used, r.resume_view_limit, 'views')}
-                    {renderUsageMeter('Sub-Recruiter Seats', r.sub_recruiters_count, r.sub_recruiter_limit || 1, 'seats')}
-                    {renderUsageMeter('Resume Downloads', r.resume_downloads_used, r.resume_download_limit, 'resumes')}
-                    {renderUsageMeter('Candidate Contacts', r.candidate_contacts_used, r.candidate_contact ? 100 : 0, 'contacts')}
-                    {renderUsageMeter('Featured Job Credits', r.featured_jobs_used, r.featured_job_limit, 'credits')}
+                    {isCustom ? (
+                        <>
+                            {renderUsageMeter('Resume Views', r.resume_views_used, r.resume_view_limit, 'views')}
+                            {renderUsageMeter('Sub-Recruiter Seats', r.sub_recruiters_count, r.sub_recruiter_limit || 0, 'seats')}
+                            {renderUsageMeter('Resume Downloads', r.resume_downloads_used, r.resume_download_limit, 'resumes')}
+                            {renderUsageMeter('Email Outreach', r.emails_used, r.email_limit, 'emails')}
+                            {renderUsageMeter('WhatsApp Outreach', r.whatsapp_used, r.whatsapp_limit, 'messages')}
+                            {renderUsageMeter('Excel Export', r.excel_downloads_used, r.excel_download_limit, 'downloads')}
+                        </>
+                    ) : (
+                        <div className="col-span-1 sm:col-span-2 lg:col-span-2 p-4 rounded-xl bg-slate-50/100 flex items-center justify-between gap-4">
+                            <div>
+                                <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                                    <span>Standard Subscription Plan</span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 mt-1 mb-0 leading-relaxed">
+                                    Resume Views, Sub-Recruiters, Email/WhatsApp outreach, and Excel Downloads apply exclusively to <strong>Custom Plans</strong>.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setIsCustomPlanOpen(true)}
+                                className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors shrink-0 shadow-xs"
+                            >
+                                Setup Custom Plan
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
             {/* Section 4: Tabbed Team, History, Payments & Audit Logs */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="bg-white rounded-2xl overflow-hidden">
                 {/* Tabs */}
                 <div className="flex flex-wrap border-b border-gray-100 px-6 pt-2">
                     <button
@@ -730,6 +800,33 @@ export default function RecruiterDetails({ recruiterId }) {
                     onClose={() => setIsResetPasswordOpen(false)}
                     onSuccess={() => {
                         setIsResetPasswordOpen(false);
+                    }}
+                />
+            )}
+
+            {isCustomPlanOpen && (
+                <CustomPlanModal
+                    isOpen={isCustomPlanOpen}
+                    recruiter={{
+                        id: r.recruiter_id,
+                        recruiter_id: r.recruiter_id,
+                        name: r.recruiter_name,
+                        company_name: r.company_name,
+                        job_post_limit: r.job_post_limit,
+                        active_job_limit: r.active_job_limit,
+                        featured_job_limit: r.featured_job_limit,
+                        urgent_job_limit: r.urgent_job_limit,
+                        resume_view_limit: r.resume_view_limit,
+                        resume_download_limit: r.resume_download_limit,
+                        sub_recruiter_limit: r.sub_recruiter_limit,
+                        email_limit: r.email_limit,
+                        whatsapp_limit: r.whatsapp_limit,
+                        excel_download_limit: r.excel_download_limit
+                    }}
+                    onClose={() => setIsCustomPlanOpen(false)}
+                    onSuccess={() => {
+                        setIsCustomPlanOpen(false);
+                        fetchDetails();
                     }}
                 />
             )}

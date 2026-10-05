@@ -1970,6 +1970,15 @@ export const toggleAdminRecruiterAutoApprove = async (id, payload) => {
   }
 };
 
+export const loginAsRecruiter = async (id) => {
+  try {
+    const response = await api.post(`/api/admin/recruiters/${id}/login-as`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAdminSubscriptions = async (params = {}) => {
   try {
     const response = await api.get("/api/admin/subscriptions", { params });
@@ -1979,9 +1988,66 @@ export const getAdminSubscriptions = async (params = {}) => {
   }
 };
 
-export const getAdminAuditLogs = async (limit = 50) => {
+// ==========================================
+// 🛡️ Super Admin User & Role Management API Service
+// ==========================================
+export const getAdminUsers = async (params = {}) => {
   try {
-    const response = await api.get("/api/admin/audit-logs", { params: { limit } });
+    const response = await api.get("/api/admin/users", { params });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminUserById = async (id) => {
+  try {
+    const response = await api.get(`/api/admin/users/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createAdminUser = async (payload) => {
+  try {
+    const response = await api.post("/api/admin/users", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateAdminUser = async (id, payload) => {
+  try {
+    const response = await api.put(`/api/admin/users/${id}`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const toggleAdminUserStatus = async (id, is_active) => {
+  try {
+    const response = await api.put(`/api/admin/users/${id}/status`, { is_active });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resetAdminUserPassword = async (id, new_password) => {
+  try {
+    const response = await api.post(`/api/admin/users/${id}/reset-password`, { new_password });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteAdminUser = async (id) => {
+  try {
+    const response = await api.delete(`/api/admin/users/${id}`);
     return response;
   } catch (error) {
     throw error;

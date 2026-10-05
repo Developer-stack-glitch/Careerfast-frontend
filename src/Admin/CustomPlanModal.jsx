@@ -74,7 +74,7 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
     };
 
     return (
-        <div className="fixed inset-0 z-[60] overflow-y-auto bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[60] overflow-y-auto bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-200 mt-0">
             <div className="min-h-screen flex items-center justify-center p-4 sm:p-6">
                 <div className="bg-white rounded-3xl max-w-[850px] w-full p-8 shadow-2xl relative">
                     {/* Header */}

@@ -41,13 +41,11 @@ import {
 } from "../ApiService/action";
 import Header from "../Header/Header";
 import SEO from "../Components/SEO/SEO";
+import { getJobSlug, getJobDetailsUrl, generateSlug } from "../utils/slug";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
 import "../css/naukri-job-details.css";
 import logo from "../images/careerfastlogofinal.png";
-
-const generateSlug = (text = "") =>
-  String(text).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 const getCurrencySymbol = (currencyCode) => {
   const currencyMap = {
@@ -250,6 +248,23 @@ export default function JobDetails({ initialData, serverSlug }) {
     }
   }, [jobId, initialData]);
 
+  // Keep browser URL slug in sync with full SEO slug format
+  useEffect(() => {
+    if (typeof window !== "undefined" && backendJobs.length > 0) {
+      const job = backendJobs[0];
+      if (job && job.id) {
+        const canonicalSlug = getJobSlug(job);
+        if (canonicalSlug) {
+          const expectedPath = `/job-details/${canonicalSlug}`;
+          if (window.location.pathname !== expectedPath && !window.location.pathname.includes(canonicalSlug)) {
+            const search = window.location.search || "";
+            window.history.replaceState(null, "", `${expectedPath}${search}`);
+          }
+        }
+      }
+    }
+  }, [backendJobs]);
+
   // Separate effect to handle application status once user ID is loaded
   useEffect(() => {
     if (jobId && loginUserId) {
@@ -292,16 +307,32 @@ export default function JobDetails({ initialData, serverSlug }) {
           params.job_nature = currentJobType;
         }
 
-        const [jobsRes, coursesRes] = await Promise.all([
-          getJobPosts(params),
-          getAllCourses()
-        ]);
+        let jobsRes = null;
+        let coursesRes = null;
 
-        if (jobsRes?.data?.data?.data) {
-          const allJobs = jobsRes.data.data.data;
-          // exclude current job if jobId exists
-          const filteredJobs = allJobs.filter(j => j.id.toString() !== String(jobId));
-          // shuffle or just take first 4
+        try {
+          const [jRes, cRes] = await Promise.all([
+            getJobPosts(params),
+            getAllCourses()
+          ]);
+          jobsRes = jRes;
+          coursesRes = cRes;
+        } catch (e) {
+          console.warn("Primary sidebar fetch error, using fallback", e);
+        }
+
+        let allJobs = jobsRes?.data?.data?.data || [];
+        if (allJobs.length <= 1) {
+          try {
+            const fallbackRes = await getJobPosts({});
+            if (fallbackRes?.data?.data?.data) {
+              allJobs = fallbackRes.data.data.data;
+            }
+          } catch (e) {}
+        }
+
+        if (allJobs.length > 0) {
+          const filteredJobs = allJobs.filter(j => String(j.id) !== String(jobId));
           setRelatedJobs(filteredJobs.slice(0, 4).map(transformJob));
         }
 
@@ -513,26 +544,7 @@ export default function JobDetails({ initialData, serverSlug }) {
   };
 
   const handleShare = (job) => {
-    const safeSlug = (val) => {
-      if (!val) return "";
-      if (Array.isArray(val)) return generateSlug(val.join(" "));
-      try {
-        const parsed = JSON.parse(val);
-        if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
-        return generateSlug(parsed);
-      } catch { return generateSlug(val); }
-    };
-    const jobNature = generateSlug(job.type || "");
-    const jobTitle = generateSlug(job.title || "");
-    const companyName = generateSlug(job.company || "");
-    const locationSlug = safeSlug(job.raw_location);
-    const workplaceType = generateSlug(job.raw_workplace_type || "");
-    const experienceType = generateSlug(job.level || "");
-    const experienceRequired = safeSlug(job.raw_experience_required);
-    let basePath = "/job-details";
-    if (job.type === "Internship") basePath = "/internship-details";
-    if (job.type === "Scholarship") basePath = "/scholarship-details";
-    const jobLink = `${window.location.origin}${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
+    const jobLink = `${window.location.origin}${getJobDetailsUrl(job)}`;
     if (navigator.share) {
       navigator.share({ title: job.title, text: `Check out this job at ${job.company}!`, url: jobLink }).catch((err) => console.error("Share failed:", err));
     } else {
@@ -873,22 +885,8 @@ export default function JobDetails({ initialData, serverSlug }) {
                             return generateSlug(parsed);
                           } catch { return generateSlug(val); }
                         };
-                        const jobNature = generateSlug(rJob.type || "");
-                        const jobTitle = generateSlug(rJob.title || "");
-                        const companyName = generateSlug(rJob.company || "");
-                        const locationSlug = safeSlug(rJob.raw_location);
-                        const workplaceType = generateSlug(rJob.raw_workplace_type || "");
-                        const experienceType = generateSlug(rJob.level || "");
-                        const experienceRequired = safeSlug(rJob.raw_experience_required);
-
-                        let basePath = "/job-details";
-                        if (rJob.type === "Internship") basePath = "/internship-details";
-                        if (rJob.type === "Scholarship") basePath = "/scholarship-details";
-
-                        const jobLink = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${rJob.id}`;
-
                         return (
-                          <a href={jobLink} key={idx} className="njd-related-item">
+                          <a href={getJobDetailsUrl(rJob)} key={idx} className="njd-related-item">
                             {rJob.logo ? (
                               <img src={getImageUrl(rJob.logo)} alt={rJob.company} className="njd-related-logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
                             ) : (

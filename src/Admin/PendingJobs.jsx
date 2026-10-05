@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 import Link from 'next/link';
 import { Modal } from 'antd';
 import AdminDateFilter from './AdminDateFilter';
+import { getJobDetailsUrl } from '../utils/slug';
 
 const getCompanyAvatarGradient = (name = '') => {
     const gradients = [
@@ -356,7 +357,7 @@ const PendingJobs = () => {
                                         </td>
                                         <td className="py-3 px-4 text-right align-middle">
                                             <div className="flex items-center justify-end gap-3">
-                                                <Link prefetch={false} target='_blank' href={`/job-details/${job.id}?preview=true`} className="no-underline hover:no-underline">
+                                                <Link prefetch={false} target='_blank' href={getJobDetailsUrl(job)} className="no-underline hover:no-underline">
                                                     <button
                                                         className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
                                                     >

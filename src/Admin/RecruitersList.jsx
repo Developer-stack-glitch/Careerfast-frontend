@@ -5,14 +5,16 @@ import {
     Building, Users, Search, Plus,
     Eye, CreditCard, Clock, CheckCircle2, XCircle,
     KeyRound, RefreshCw, X, MoreVertical, Edit3, Sliders,
-    ArrowUpDown, AlertTriangle, Check, Mail, MessageSquare, FileSpreadsheet
+    ArrowUpDown, AlertTriangle, Check, Mail, MessageSquare, FileSpreadsheet,
+    LogIn, ExternalLink, ChevronDown
 } from 'lucide-react';
 import {
     getAdminRecruiters,
     getAdminPlans,
     updateAdminRecruiterStatus,
     toggleAdminRecruiterAutoApprove,
-    changeAdminRecruiterPlan
+    changeAdminRecruiterPlan,
+    loginAsRecruiter
 } from '../ApiService/action';
 import AdminDateFilter from './AdminDateFilter';
 import AdminSelect from './AdminSelect';
@@ -21,6 +23,7 @@ import ChangePlanModal from './ChangePlanModal';
 import ExtendSubscriptionModal from './ExtendSubscriptionModal';
 import ResetPasswordModal from './ResetPasswordModal';
 import { getImageUrl } from '../utils/getImageUrl';
+import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 
 // Consistent color gradient generator for company logos/initials
@@ -42,7 +45,7 @@ const getCompanyAvatarGradient = (name = '') => {
     return gradients[index];
 };
 
-const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setCustomPlanRecruiter, setExtendRecruiter, setResetPassRecruiter, handleToggleStatus, handleToggleAutoApprove, onClose, isBottom }) => {
+const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setCustomPlanRecruiter, setExtendRecruiter, setResetPassRecruiter, handleToggleStatus, handleToggleAutoApprove, handleLoginAsRecruiter, onClose, isBottom }) => {
     const ref = useRef(null);
     const [openUp, setOpenUp] = useState(isBottom);
 
@@ -67,8 +70,17 @@ const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setCustomPlanRec
     return (
         <div
             ref={ref}
-            className={`absolute right-0 ${openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-52 bg-white rounded-xl shadow-2xl border border-slate-200/90 py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-150`}
+            className={`absolute right-0 ${openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-56 bg-white rounded-xl shadow-2xl border border-slate-200/90 py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-150`}
         >
+            <button
+                onClick={() => { handleLoginAsRecruiter(rec); onClose(); }}
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-semibold text-blue-700 bg-blue-50/60 hover:bg-blue-100/80 transition-colors group/login"
+            >
+                <LogIn className="w-3.5 h-3.5 text-blue-600 group-hover/login:translate-x-0.5 transition-transform" />
+                <span>Login as Recruiter</span>
+                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto" />
+            </button>
+            <div className="my-1 border-t border-slate-100"></div>
             <button onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 <Eye className="w-3.5 h-3.5 text-blue-600" /> View Details
             </button>
@@ -87,9 +99,12 @@ const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setCustomPlanRec
             <button onClick={() => { setResetPassRecruiter(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-amber-50 hover:text-amber-700 transition-colors">
                 <KeyRound className="w-3.5 h-3.5 text-amber-600" /> Reset Password
             </button>
-            <button onClick={() => { handleToggleAutoApprove(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
-                {rec.auto_approve ? <XCircle className="w-3.5 h-3.5 text-rose-600" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
-                {rec.auto_approve ? 'Disable Auto Approve' : 'Enable Auto Approve'}
+            <button onClick={() => { handleToggleAutoApprove(rec); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                <CheckCircle2 className={`w-3.5 h-3.5 ${rec.auto_approve === 1 ? 'text-emerald-600' : 'text-slate-400'}`} />
+                <span>{rec.auto_approve === 1 ? 'Auto Approve: ON' : 'Auto Approve: OFF'}</span>
+                <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full ${rec.auto_approve === 1 ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                    {rec.auto_approve === 1 ? 'Enabled' : 'Disabled'}
+                </span>
             </button>
             <div className="my-1 border-t border-slate-100"></div>
             <button onClick={() => { handleToggleStatus(rec); onClose(); }} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium transition-colors ${rec.user_active ? 'text-rose-600 hover:bg-rose-50' : 'text-emerald-600 hover:bg-emerald-50'}`}>
@@ -205,6 +220,14 @@ export default function RecruitersList() {
                         aValue = (a.plan_name || 'No Plan').toLowerCase();
                         bValue = (b.plan_name || 'No Plan').toLowerCase();
                         break;
+                    case 'status':
+                        aValue = (!a.user_active ? 'suspended' : (a.subscription_status || 'active')).toLowerCase();
+                        bValue = (!b.user_active ? 'suspended' : (b.subscription_status || 'active')).toLowerCase();
+                        break;
+                    case 'sub_recruiters':
+                        aValue = Number(a.sub_recruiter_limit || 0);
+                        bValue = Number(b.sub_recruiter_limit || 0);
+                        break;
                     case 'job_post':
                         aValue = Number(a.job_post_limit || 0);
                         bValue = Number(b.job_post_limit || 0);
@@ -213,13 +236,17 @@ export default function RecruitersList() {
                         aValue = Number(a.resume_view_limit || 0);
                         bValue = Number(b.resume_view_limit || 0);
                         break;
-                    case 'sub_recruiters':
-                        aValue = Number(a.sub_recruiter_limit || 0);
-                        bValue = Number(b.sub_recruiter_limit || 0);
+                    case 'resume_downloads':
+                        aValue = Number(a.resume_download_limit || 0);
+                        bValue = Number(b.resume_download_limit || 0);
                         break;
-                    case 'outreach':
-                        aValue = Number(a.emails_used || 0) + Number(a.whatsapp_used || 0);
-                        bValue = Number(b.emails_used || 0) + Number(b.whatsapp_used || 0);
+                    case 'email':
+                        aValue = Number(a.email_limit || 0);
+                        bValue = Number(b.email_limit || 0);
+                        break;
+                    case 'whatsapp':
+                        aValue = Number(a.whatsapp_limit || 0);
+                        bValue = Number(b.whatsapp_limit || 0);
                         break;
                     case 'excel':
                         aValue = Number(a.excel_downloads_used || 0);
@@ -276,6 +303,25 @@ export default function RecruitersList() {
         }
     };
 
+    const handleLoginAsRecruiter = async (rec) => {
+        const recName = rec.recruiter_name?.trim() || `${rec.first_name || ''} ${rec.last_name || ''}`.trim() || rec.company_name || 'Recruiter';
+        const toastId = toast.loading(`Generating recruiter session for ${recName}...`);
+        try {
+            const res = await loginAsRecruiter(rec.recruiter_id);
+            if (res.data?.success && res.data?.token) {
+                toast.success(`Opening Recruiter Portal as ${recName}...`, { id: toastId });
+                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://localhost:3001';
+                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(res.data.data))}&target=/overview`;
+                window.open(targetUrl, '_blank');
+            } else {
+                toast.error(res.data?.message || "Failed to login as recruiter.", { id: toastId });
+            }
+        } catch (err) {
+            console.error("Error in handleLoginAsRecruiter:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Failed to login as recruiter.", { id: toastId });
+        }
+    };
+
     const handleQuickChangePlan = async (rec, planId) => {
         try {
             const res = await changeAdminRecruiterPlan(rec.recruiter_id, {
@@ -308,6 +354,18 @@ export default function RecruitersList() {
         if (isNaN(d.getTime())) return null;
         const diff = Math.ceil((d.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
         return diff;
+    };
+
+    // Format relative time
+    const formatRelativeTime = (dateString) => {
+        if (!dateString) return null;
+        try {
+            const d = new Date(dateString);
+            if (isNaN(d.getTime())) return null;
+            return formatDistanceToNow(d, { addSuffix: true });
+        } catch (e) {
+            return null;
+        }
     };
 
     return (
@@ -505,24 +563,26 @@ export default function RecruitersList() {
             </div>
 
             {/* Recruiters Master Table Container */}
-            <div className="bg-white rounded-2xl overflow-hidden">
+            <div className="bg-white rounded-2xl overflow-hidden border border-slate-100 shadow-xs">
                 {loading ? (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse min-w-[1580px]">
+                        <table className="w-full text-left border-collapse min-w-[1720px]">
                             <thead>
                                 <tr className="border-b border-slate-200/80 bg-slate-50/90 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
                                     <th className="py-3.5 px-4 w-[200px]">Company</th>
-                                    <th className="py-3.5 px-4 w-[180px]">Recruiter</th>
-                                    <th className="py-3.5 px-4 w-[110px]">Plan & Cycle</th>
-                                    <th className="py-3.5 px-4 w-[140px]">Job Posts</th>
-                                    <th className="py-3.5 px-4 w-[135px]">Resume Access</th>
-                                    <th className="py-3.5 px-4 w-[120px]">Sub-Recruiters</th>
-                                    <th className="py-3.5 px-4 w-[140px]">Email & WhatsApp</th>
-                                    <th className="py-3.5 px-4 w-[130px]">Excel Export</th>
-                                    <th className="py-3.5 px-4 w-[105px]">Start Date</th>
-                                    <th className="py-3.5 px-4 w-[115px]">Expiry Date</th>
-                                    <th className="py-3.5 px-4 w-[100px]">Status</th>
-                                    <th className="py-3.5 px-4 text-right w-[60px]">Actions</th>
+                                    <th className="py-3.5 px-4 w-[185px]">Recruiter</th>
+                                    <th className="py-3.5 px-4 w-[125px]">Plan & Cycle</th>
+                                    <th className="py-3.5 px-4 w-[105px]">Status</th>
+                                    <th className="py-3.5 px-4 w-[115px]">Sub-Recruiters</th>
+                                    <th className="py-3.5 px-4 w-[155px]">Job Posts</th>
+
+                                    <th className="py-3.5 px-4 w-[115px]">Resume View</th>
+                                    <th className="py-3.5 px-4 w-[125px]">Resume Download</th>
+                                    <th className="py-3.5 px-4 w-[110px]">Email</th>
+                                    <th className="py-3.5 px-4 w-[110px]">WhatsApp</th>
+                                    <th className="py-3.5 px-4 w-[120px]">Excel Export</th>
+                                    <th className="py-3.5 px-4 w-[130px]">Validity</th>
+                                    <th className="py-3.5 px-4 text-right w-[65px]">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -542,36 +602,43 @@ export default function RecruitersList() {
                                             <div className="h-3 w-24 bg-slate-200 rounded"></div>
                                         </td>
                                         <td className="py-4 px-4">
-                                            <div className="h-6 w-20 bg-slate-200 rounded-full"></div>
-                                        </td>
-                                        <td className="py-4 px-4 space-y-1">
-                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
-                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
-                                        </td>
-                                        <td className="py-4 px-4 space-y-1">
-                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
-                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
-                                        </td>
-                                        <td className="py-4 px-4 space-y-1">
-                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
-                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
-                                        </td>
-                                        <td className="py-4 px-4 space-y-1">
-                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
-                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
-                                        </td>
-                                        <td className="py-4 px-4 space-y-1">
-                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
-                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
-                                        </td>
-                                        <td className="py-4 px-4">
-                                            <div className="h-3.5 w-18 bg-slate-200 rounded"></div>
-                                        </td>
-                                        <td className="py-4 px-4">
-                                            <div className="h-3.5 w-18 bg-slate-200 rounded"></div>
+                                            <div className="h-6 w-20 bg-slate-200 rounded-lg"></div>
                                         </td>
                                         <td className="py-4 px-4">
                                             <div className="h-6 w-16 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1.5">
+                                            <div className="h-3.5 w-24 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-28 bg-slate-200 rounded-full"></div>
+                                            <div className="h-5 w-24 bg-slate-200 rounded-lg"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1">
+                                            <div className="h-3.5 w-16 bg-slate-200 rounded"></div>
+                                            <div className="h-2 w-20 bg-slate-200 rounded-full"></div>
+                                        </td>
+                                        <td className="py-4 px-4 space-y-1.5">
+                                            <div className="h-3.5 w-20 bg-slate-200 rounded"></div>
+                                            <div className="h-3 w-16 bg-slate-200 rounded"></div>
                                         </td>
                                         <td className="py-4 px-4 text-right">
                                             <div className="w-8 h-8 rounded-lg bg-slate-200 ml-auto"></div>
@@ -610,41 +677,46 @@ export default function RecruitersList() {
                     </div>
                 ) : (
                     <div className="overflow-x-auto min-h-[420px] pb-3">
-                        <table className="w-full text-left border-collapse min-w-[1580px]">
+                        <table className="w-full text-left border-collapse min-w-[1720px]">
                             <thead>
                                 <tr className="border-b border-slate-200/80 bg-slate-50/90 text-slate-600 text-[11px] font-bold uppercase tracking-wider select-none">
                                     <th className="py-3.5 px-4 w-[200px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'company', direction: sortConfig.key === 'company' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Company <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[180px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'recruiter', direction: sortConfig.key === 'recruiter' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                    <th className="py-3.5 px-4 w-[185px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'recruiter', direction: sortConfig.key === 'recruiter' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Recruiter <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[110px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'plan', direction: sortConfig.key === 'plan' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                    <th className="py-3.5 px-4 w-[125px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'plan', direction: sortConfig.key === 'plan' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Plan & Cycle <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[140px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'job_post', direction: sortConfig.key === 'job_post' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                    <th className="py-3.5 px-4 w-[105px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'status', direction: sortConfig.key === 'status' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[155px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'job_post', direction: sortConfig.key === 'job_post' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Job Posts <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[135px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'resume_views', direction: sortConfig.key === 'resume_views' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Resume Access <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
-                                    </th>
-                                    <th className="py-3.5 px-4 w-[120px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'sub_recruiters', direction: sortConfig.key === 'sub_recruiters' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                    <th className="py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'sub_recruiters', direction: sortConfig.key === 'sub_recruiters' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Sub-Recruiters <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[140px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'outreach', direction: sortConfig.key === 'outreach' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Email & WhatsApp <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    <th className="py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'resume_views', direction: sortConfig.key === 'resume_views' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Resume View <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[130px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'excel', direction: sortConfig.key === 'excel' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                    <th className="py-3.5 px-4 w-[125px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'resume_downloads', direction: sortConfig.key === 'resume_downloads' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Resume Download <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[110px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'email', direction: sortConfig.key === 'email' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Email <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[110px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'whatsapp', direction: sortConfig.key === 'whatsapp' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">WhatsApp <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
+                                    <th className="py-3.5 px-4 w-[120px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'excel', direction: sortConfig.key === 'excel' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Excel Export <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[105px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'start_date', direction: sortConfig.key === 'start_date' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Start Date <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    <th className="py-3.5 px-4 w-[130px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'expiry_date', direction: sortConfig.key === 'expiry_date' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Validity <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'expiry_date', direction: sortConfig.key === 'expiry_date' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Expiry Date <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
-                                    </th>
-                                    <th className="py-3.5 px-4 w-[100px]">Status</th>
-                                    <th className="py-3.5 px-4 text-right w-[60px] whitespace-nowrap">Actions</th>
+                                    <th className="py-3.5 px-4 text-right w-[65px] whitespace-nowrap">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -667,6 +739,7 @@ export default function RecruitersList() {
 
                                     const resumeDownloadsUsed = Number(rec.resume_downloads_used || 0);
                                     const resumeDownloadLimit = Number(rec.resume_download_limit || 0);
+                                    const resumeDownloadPercent = resumeDownloadLimit > 0 ? Math.round((resumeDownloadsUsed / resumeDownloadLimit) * 100) : 0;
 
                                     const subRecruitersCount = Number(rec.sub_recruiters_count || 0);
                                     const subRecruiterLimit = hasPlan ? Number(rec.sub_recruiter_limit || 1) : 0;
@@ -692,7 +765,6 @@ export default function RecruitersList() {
                                     const isUserActive = Boolean(rec.user_active);
 
                                     const daysRemaining = getDaysRemaining(rec.subscription_expiry);
-                                    const isExpiringSoon = daysRemaining !== null && daysRemaining > 0 && daysRemaining <= 7;
 
                                     // Plan badge styling
                                     const isCustom = /custom/i.test(planName);
@@ -705,26 +777,26 @@ export default function RecruitersList() {
                                             key={rec.recruiter_id}
                                             className="hover:bg-slate-50/75 transition-colors group"
                                         >
-                                            {/* Company */}
+                                            {/* 1. Company */}
                                             <td className="py-3.5 px-4">
                                                 <div className="flex items-center gap-3">
                                                     {(() => {
                                                         const logoSrc = rec.company_logo || rec.profile_image || rec.user_avatar;
                                                         return logoSrc ? (
-                                                            <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white shadow-md p-0.5">
+                                                            <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white shadow-2xs border border-slate-100 p-0.5">
                                                                 <img
                                                                     src={getImageUrl(logoSrc)}
                                                                     alt={companyName}
-                                                                    className="w-full h-full object-cover"
+                                                                    className="w-full h-full object-cover rounded-lg"
                                                                     onError={(e) => {
-                                                                        e.currentTarget.parentElement.classList.remove('bg-white', 'border', 'border-slate-200');
+                                                                        e.currentTarget.parentElement.classList.remove('bg-white', 'border', 'border-slate-100');
                                                                         e.currentTarget.parentElement.classList.add('bg-gradient-to-br', ...getCompanyAvatarGradient(companyName).split(' '));
                                                                         e.currentTarget.replaceWith(document.createTextNode(companyName[0]?.toUpperCase() || 'C'));
                                                                     }}
                                                                 />
                                                             </div>
                                                         ) : (
-                                                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-md text-white shadow-sm shrink-0 overflow-hidden bg-gradient-to-br ${getCompanyAvatarGradient(companyName)}`}>
+                                                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm text-white shadow-2xs shrink-0 overflow-hidden bg-gradient-to-br ${getCompanyAvatarGradient(companyName)}`}>
                                                                 {companyName[0]?.toUpperCase() || 'C'}
                                                             </div>
                                                         );
@@ -732,55 +804,64 @@ export default function RecruitersList() {
                                                     <div className="min-w-0">
                                                         <div
                                                             onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}
-                                                            className="font-semibold text-xs text-slate-900 hover:text-blue-600 cursor-pointer transition-colors truncate max-w-[170px]"
+                                                            className="font-bold text-xs text-slate-900 hover:text-blue-600 cursor-pointer transition-colors truncate max-w-[170px]"
                                                             title={companyName}
                                                         >
                                                             {companyName}
                                                         </div>
-                                                        <div className="text-[11px] text-slate-400 truncate max-w-[160px] flex items-center gap-1">
+                                                        <div className="text-[11px] text-slate-400 truncate max-w-[160px] mt-0.5">
                                                             {rec.industry_type || 'Corporate'}
-                                                            {rec.auto_approve === 1 && (
-                                                                <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#FF73001A] text-[#FF7300] border-1 border-[#FF7300]" title="Auto Approve Enabled">
-                                                                    Auto Approve
-                                                                </span>
-                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
                                             </td>
 
-                                            {/* Recruiter */}
+                                            {/* 2. Recruiter */}
                                             <td className="py-3.5 px-4">
-                                                <div className="font-semibold text-xs text-slate-900 truncate max-w-[190px]">
+                                                <div className="font-semibold text-xs text-slate-900 truncate max-w-[185px]">
                                                     {recruiterName}
                                                 </div>
-                                                <div className="text-[11px] text-slate-400 truncate max-w-[190px] mt-0.5" title={rec.email}>
+                                                <div className="text-[11px] text-slate-400 truncate max-w-[185px] mt-0.5 font-mono" title={rec.email}>
                                                     {rec.email || '—'}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1.5 font-medium">
+                                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${rec.last_active && (new Date().getTime() - new Date(rec.last_active).getTime()) < 3600000 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                                                    <span className="truncate">
+                                                        {rec.last_active ? `Active ${formatRelativeTime(rec.last_active)}` : 'No recent login'}
+                                                    </span>
                                                 </div>
                                             </td>
 
-                                            {/* Plan & Cycle */}
+                                            {/* 3. Plan & Cycle */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
                                                 <div className="relative inline-block plan-dropdown-container">
                                                     {hasPlan ? (
-                                                        <span
+                                                        <button
+                                                            type="button"
                                                             onClick={() => setOpenPlanDropdown(openPlanDropdown === idx ? null : idx)}
-                                                            className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${isCustom
-                                                                ? 'bg-amber-50 text-amber-700 border-1 border-amber-200/80 hover:bg-amber-100'
+                                                            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer select-none transition-all duration-150 border-1 shadow-2xs hover:shadow-xs active:scale-95 ${isCustom
+                                                                ? 'bg-amber-50 text-amber-800 border-amber-200/90 hover:bg-amber-100 hover:border-amber-300'
                                                                 : isPremium
-                                                                    ? 'bg-purple-50 text-purple-700 border-1 border-purple-200/80 hover:bg-purple-100'
+                                                                    ? 'bg-purple-50 text-purple-800 border-purple-200/90 hover:bg-purple-100 hover:border-purple-300'
                                                                     : isStandard
-                                                                        ? 'bg-blue-50 text-blue-700 border-1 border-blue-200/80 hover:bg-blue-100'
-                                                                        : 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80 hover:bg-emerald-100'
-                                                                }`}>
-                                                            {displayPlanName}
-                                                        </span>
+                                                                        ? 'bg-blue-50 text-blue-800 border-blue-200/90 hover:bg-blue-100 hover:border-blue-300'
+                                                                        : 'bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100 hover:border-emerald-300'
+                                                                }`}
+                                                            title="Click to switch or change plan"
+                                                        >
+                                                            <span>{displayPlanName}</span>
+                                                            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${openPlanDropdown === idx ? 'rotate-180 text-slate-800' : 'opacity-60 group-hover:opacity-100'}`} />
+                                                        </button>
                                                     ) : (
-                                                        <span
+                                                        <button
+                                                            type="button"
                                                             onClick={() => setOpenPlanDropdown(openPlanDropdown === idx ? null : idx)}
-                                                            className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200/70 cursor-pointer hover:bg-slate-200">
-                                                            No Plan
-                                                        </span>
+                                                            className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border-1 border-slate-200 cursor-pointer select-none hover:bg-slate-200 shadow-2xs active:scale-95"
+                                                            title="Click to assign a plan"
+                                                        >
+                                                            <span>No Plan</span>
+                                                            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${openPlanDropdown === idx ? 'rotate-180 text-slate-800' : 'opacity-60 group-hover:opacity-100'}`} />
+                                                        </button>
                                                     )}
 
                                                     {/* Plan Dropdown */}
@@ -826,7 +907,69 @@ export default function RecruitersList() {
                                                 </div>
                                             </td>
 
-                                            {/* Job Posts */}
+                                            {/* 4. Status Badge (Moved right after Plan for immediate clarity) */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                {!isUserActive ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border-1 border-rose-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                        Suspended
+                                                    </span>
+                                                ) : isSubActive ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                        Active
+                                                    </span>
+                                                ) : isSubTrial ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border-1 border-blue-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                                                        Trial
+                                                    </span>
+                                                ) : isSubExpired ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border-1 border-amber-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                        Expired
+                                                    </span>
+                                                ) : isSubSuspended ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                                                        Suspended
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                                                        No Plan
+                                                    </span>
+                                                )}
+                                            </td>
+                                            {/* 6. Sub-Recruiters (Custom Plan Only) */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                {isCustom ? (
+                                                    <>
+                                                        <div className="text-xs">
+                                                            <span className="font-bold text-slate-800">{subRecruitersCount}</span>
+                                                            <span className="text-slate-400 font-normal"> / {subRecruiterLimit} Seats</span>
+                                                        </div>
+                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${subPercent >= 100
+                                                                    ? 'bg-rose-500'
+                                                                    : subPercent >= 75
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-indigo-600'
+                                                                    }`}
+                                                                style={{ width: `${Math.min(subPercent, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 mt-1">
+                                                            Team logins
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* 5. Job Posts (Primary Quota for All Plans) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
                                                 <div className="text-xs">
                                                     <span className="font-bold text-slate-800">{jobPostsUsed}</span>
@@ -844,154 +987,215 @@ export default function RecruitersList() {
                                                     />
                                                 </div>
                                                 <div className="text-[10px] text-slate-400 mt-1">
-                                                    <span className="font-medium text-slate-600">{activeJobsCount}</span> active {activeJobLimit > 0 ? `(${activeJobLimit} max)` : ''}
+                                                    <span className="font-semibold text-slate-600">{activeJobsCount}</span> active {activeJobLimit > 0 ? `(${activeJobLimit} max)` : ''}
                                                 </div>
-                                            </td>
-
-                                            {/* Resume Access */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="text-xs">
-                                                    <span className="font-bold text-slate-800">{resumeUsed}</span>
-                                                    <span className="text-slate-400 font-normal"> / {resumeLimit} Views</span>
+                                                <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                                                    <span className="text-slate-400">Last post: </span>
+                                                    <span className="text-slate-600 font-semibold">
+                                                        {rec.last_job_posted ? formatRelativeTime(rec.last_job_posted) : 'None yet'}
+                                                    </span>
                                                 </div>
-                                                <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all ${resumePercent >= 90
-                                                            ? 'bg-rose-500'
-                                                            : resumePercent >= 75
-                                                                ? 'bg-amber-500'
-                                                                : 'bg-teal-500'
+                                                <div className="mt-2 flex items-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleToggleAutoApprove(rec);
+                                                        }}
+                                                        className={`group inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer border-1 select-none shadow-2xs hover:shadow-xs active:scale-95 ${rec.auto_approve === 1
+                                                            ? 'bg-emerald-50/90 text-emerald-800 border-emerald-300/80 hover:bg-emerald-100 hover:border-emerald-400'
+                                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
                                                             }`}
-                                                        style={{ width: `${Math.min(resumePercent, 100)}%` }}
-                                                    />
-                                                </div>
-                                                <div className="text-[10px] text-slate-400 mt-1">
-                                                    <span className="font-medium text-slate-600">{resumeDownloadsUsed}</span> / {resumeDownloadLimit} DLs
+                                                        title={rec.auto_approve === 1 ? 'Auto Approve is currently ON (click to turn OFF)' : 'Auto Approve is currently OFF (click to turn ON)'}
+                                                    >
+                                                        {/* Modern Toggle Switch Slider */}
+                                                        <span
+                                                            className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${rec.auto_approve === 1 ? 'bg-emerald-500' : 'bg-slate-300'
+                                                                }`}
+                                                        >
+                                                            <span
+                                                                className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out ${rec.auto_approve === 1 ? 'translate-x-3.5' : 'translate-x-0.5'
+                                                                    }`}
+                                                            />
+                                                        </span>
+                                                        <span className="text-[10px] tracking-tight">
+                                                            Auto Approve: <span className={`font-bold ${rec.auto_approve === 1 ? 'text-emerald-700' : 'text-slate-500'}`}>{rec.auto_approve === 1 ? 'ON' : 'OFF'}</span>
+                                                        </span>
+                                                    </button>
                                                 </div>
                                             </td>
 
-                                            {/* Sub-Recruiters Limit & Usage */}
+
+
+                                            {/* 7. Resume View (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="text-xs">
-                                                    <span className="font-bold text-slate-800">{subRecruitersCount}</span>
-                                                    <span className="text-slate-400 font-normal"> / {hasPlan ? `${subRecruiterLimit} Seats` : '0'}</span>
-                                                </div>
-                                                <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all ${subPercent >= 100
-                                                            ? 'bg-rose-500'
-                                                            : subPercent >= 75
-                                                                ? 'bg-amber-500'
-                                                                : 'bg-indigo-600'
-                                                            }`}
-                                                        style={{ width: `${Math.min(subPercent, 100)}%` }}
-                                                    />
-                                                </div>
-                                                <div className="text-[10px] text-slate-400 mt-1">
-                                                    Team logins
-                                                </div>
+                                                {isCustom ? (
+                                                    <>
+                                                        <div className="text-xs">
+                                                            <span className="font-bold text-slate-800">{resumeUsed}</span>
+                                                            <span className="text-slate-400 font-normal"> / {resumeLimit} Views</span>
+                                                        </div>
+                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${resumePercent >= 90
+                                                                    ? 'bg-rose-500'
+                                                                    : resumePercent >= 75
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-teal-500'
+                                                                    }`}
+                                                                style={{ width: `${Math.min(resumePercent, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-teal-700 font-medium mt-1">
+                                                            {Math.max(0, resumeLimit - resumeUsed)} left
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                )}
                                             </td>
 
-                                            {/* Email & WhatsApp Outreach */}
+                                            {/* 8. Resume Download (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5 text-xs text-slate-700">
-                                                    <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
-                                                    <span className="font-bold text-slate-800">{emailsUsed}</span>
-                                                    <span className="text-slate-400 font-normal">/ {emailLimit}</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 text-xs text-slate-700 mt-1">
-                                                    <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                                                    <span className="font-bold text-slate-800">{whatsappUsed}</span>
-                                                    <span className="text-slate-400 font-normal">/ {whatsappLimit}</span>
-                                                </div>
+                                                {isCustom ? (
+                                                    <>
+                                                        <div className="text-xs">
+                                                            <span className="font-bold text-slate-800">{resumeDownloadsUsed}</span>
+                                                            <span className="text-slate-400 font-normal"> / {resumeDownloadLimit} DLs</span>
+                                                        </div>
+                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${resumeDownloadPercent >= 90
+                                                                    ? 'bg-rose-500'
+                                                                    : resumeDownloadPercent >= 75
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-purple-600'
+                                                                    }`}
+                                                                style={{ width: `${Math.min(resumeDownloadPercent, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-purple-700 font-medium mt-1">
+                                                            {Math.max(0, resumeDownloadLimit - resumeDownloadsUsed)} left
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                )}
                                             </td>
 
-                                            {/* Excel Export */}
+                                            {/* 9. Email (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5 text-xs">
-                                                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                                    <span className="font-bold text-slate-800">{excelUsed}</span>
-                                                    <span className="text-slate-400 font-normal"> / {excelLimit}</span>
-                                                </div>
-                                                <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all ${excelPercent >= 90
-                                                            ? 'bg-rose-500'
-                                                            : excelPercent >= 75
-                                                                ? 'bg-amber-500'
-                                                                : 'bg-emerald-500'
-                                                            }`}
-                                                        style={{ width: `${Math.min(excelPercent, 100)}%` }}
-                                                    />
-                                                </div>
-                                                <div className="text-[10px] text-emerald-700 font-medium mt-1">
-                                                    {excelLeft} left
-                                                </div>
+                                                {isCustom ? (
+                                                    <>
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-700">
+                                                            <Mail className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                                            <span className="font-bold text-slate-800">{emailsUsed}</span>
+                                                            <span className="text-slate-400 font-normal"> / {emailLimit}</span>
+                                                        </div>
+                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${emailPercent >= 90
+                                                                    ? 'bg-rose-500'
+                                                                    : emailPercent >= 75
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-blue-500'
+                                                                    }`}
+                                                                style={{ width: `${Math.min(emailPercent, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-blue-700 font-medium mt-1">
+                                                            {Math.max(0, emailLimit - emailsUsed)} left
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                )}
                                             </td>
 
-                                            {/* Subscription Start */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-600 font-medium">
-                                                {formatDate(rec.subscription_start)}
-                                            </td>
-
-                                            {/* Subscription Expiry */}
+                                            {/* 10. WhatsApp (Custom Plan Only) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="text-xs font-medium text-slate-700">
-                                                    {formatDate(rec.subscription_expiry)}
+                                                {isCustom ? (
+                                                    <>
+                                                        <div className="flex items-center gap-1.5 text-xs text-slate-700">
+                                                            <MessageSquare className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                                            <span className="font-bold text-slate-800">{whatsappUsed}</span>
+                                                            <span className="text-slate-400 font-normal"> / {whatsappLimit}</span>
+                                                        </div>
+                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${whatsappPercent >= 90
+                                                                    ? 'bg-rose-500'
+                                                                    : whatsappPercent >= 75
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-emerald-500'
+                                                                    }`}
+                                                                style={{ width: `${Math.min(whatsappPercent, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-emerald-700 font-medium mt-1">
+                                                            {Math.max(0, whatsappLimit - whatsappUsed)} left
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* 11. Excel Export (Custom Plan Only) */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                {isCustom ? (
+                                                    <>
+                                                        <div className="flex items-center gap-1.5 text-xs">
+                                                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                            <span className="font-bold text-slate-800">{excelUsed}</span>
+                                                            <span className="text-slate-400 font-normal"> / {excelLimit}</span>
+                                                        </div>
+                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${excelPercent >= 90
+                                                                    ? 'bg-rose-500'
+                                                                    : excelPercent >= 75
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-emerald-500'
+                                                                    }`}
+                                                                style={{ width: `${Math.min(excelPercent, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-emerald-700 font-medium mt-1">
+                                                            {excelLeft} left
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 text-sm font-semibold select-none" title="Requires Custom Plan">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* 12. Validity (Start & Expiry cleanly unified) */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="text-xs font-semibold text-slate-800">
+                                                    {rec.subscription_expiry ? formatDate(rec.subscription_expiry) : 'No Expiry'}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                                    From: {rec.subscription_start ? formatDate(rec.subscription_start) : '—'}
                                                 </div>
                                                 {daysRemaining !== null && daysRemaining > 0 && (
-                                                    <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border-1 border-emerald-200/80 px-2 py-0 rounded-full">
+                                                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border-1 border-emerald-200/90 px-2 py-0.5 rounded-full">
                                                         <Check className="w-3 h-3" /> {daysRemaining} days left
                                                     </span>
                                                 )}
                                                 {daysRemaining !== null && daysRemaining <= 0 && isSubExpired && (
-                                                    <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-medium text-rose-700 bg-rose-50 border-1 border-rose-200/80 px-2 py-0 rounded-full">
+                                                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/90 px-2 py-0.5 rounded-full">
                                                         <X className="w-3 h-3" /> Expired
                                                     </span>
                                                 )}
                                             </td>
 
-                                            {/* Status Badge */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {!isUserActive ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/80">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                        Suspended
-                                                    </span>
-                                                ) : isSubActive ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                                        Active
-                                                    </span>
-                                                ) : isSubTrial ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border-1 border-blue-200/80">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                                                        Trial
-                                                    </span>
-                                                ) : isSubExpired ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border-1 border-rose-200/80">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                        Expired
-                                                    </span>
-                                                ) : isSubSuspended ? (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border-1 border-amber-200/80">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                                                        Suspended
-                                                    </span>
-                                                ) : (
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/80">
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-                                                        No Plan
-                                                    </span>
-                                                )}
-                                            </td>
-
-                                            {/* Actions */}
+                                            {/* 13. Actions */}
                                             <td className="py-3.5 px-4 text-right whitespace-nowrap">
                                                 <div className="relative inline-block text-left action-dropdown-container">
                                                     <button
                                                         onClick={() => setOpenDropdown(openDropdown === rec.recruiter_id ? null : rec.recruiter_id)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 transition-all"
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
                                                     >
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>
@@ -1005,6 +1209,7 @@ export default function RecruitersList() {
                                                             setResetPassRecruiter={setResetPassRecruiter}
                                                             handleToggleStatus={handleToggleStatus}
                                                             handleToggleAutoApprove={handleToggleAutoApprove}
+                                                            handleLoginAsRecruiter={handleLoginAsRecruiter}
                                                             onClose={() => setOpenDropdown(null)}
                                                             isBottom={isBottom}
                                                         />

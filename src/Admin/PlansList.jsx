@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import {
     CreditCard, Plus, Search, Edit2, Copy, Trash2,
     Users, Eye, AlertCircle, Briefcase, Zap, Loader2, Check, X,
-    Table as TableIcon, RefreshCw, Mail, MessageSquare, FileSpreadsheet, Download, Clock,
+    Table as TableIcon, RefreshCw, Clock,
     TrendingUp, Layers, Crown, ChevronRight, UserCheck, Flame
 } from 'lucide-react';
 import {
@@ -476,8 +476,6 @@ export default function PlansList() {
                                     <th className="py-3.5 px-4 min-w-[260px]">Plan Details</th>
                                     <th className="py-3.5 px-4 min-w-[140px]">Pricing & Cycle</th>
                                     <th className="py-3.5 px-4 min-w-[140px]">Job Posting</th>
-                                    <th className="py-3.5 px-4 min-w-[230px]">Candidate & Outreach</th>
-                                    <th className="py-3.5 px-4 min-w-[120px]">Team Seats</th>
                                     <th className="py-3.5 px-4 min-w-[110px]">Subscribers</th>
                                     <th className="py-3.5 px-4 min-w-[110px]">Status</th>
                                     <th className="py-3.5 px-4 min-w-[120px] text-right">Actions</th>
@@ -542,47 +540,6 @@ export default function PlansList() {
                                                         Active max: <strong className="text-slate-700 font-semibold">{Number(plan.active_job_limit).toLocaleString()}</strong>
                                                     </div>
                                                 </div>
-                                            </td>
-
-                                            {/* Column 4: Candidate & Outreach Access */}
-                                            <td className="py-4 px-4">
-                                                <div className="flex flex-col gap-1.5">
-                                                    {/* Views & Downloads row */}
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border-1 border-blue-100/90 text-[11px] font-semibold whitespace-nowrap" title="Resume Views Limit">
-                                                            <Eye className="w-3 h-3 text-blue-600 shrink-0" />
-                                                            <span><strong>{Number(plan.resume_view_limit || 0).toLocaleString()}</strong> Views</span>
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border-1 border-slate-200/80 text-[11px] font-semibold whitespace-nowrap" title="Resume Downloads Limit">
-                                                            <Download className="w-3 h-3 text-slate-600 shrink-0" />
-                                                            <span><strong>{Number(plan.resume_download_limit || 0).toLocaleString()}</strong> DLs</span>
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Outreach & Excel chips */}
-                                                    <div className="flex items-center gap-1.5 text-[11px]">
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-600 border-1 border-slate-200/80 whitespace-nowrap" title="Email Quota Limit">
-                                                            <Mail className="w-3 h-3 text-sky-500 shrink-0" />
-                                                            <strong className="text-slate-800">{Number(plan.email_limit || 0).toLocaleString()}</strong>
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-600 border-1 border-slate-200/80 whitespace-nowrap" title="WhatsApp Message Quota Limit">
-                                                            <MessageSquare className="w-3 h-3 text-emerald-500 shrink-0" />
-                                                            <strong className="text-slate-800">{Number(plan.whatsapp_limit || 0).toLocaleString()}</strong>
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-50/70 text-emerald-800 border-1 border-emerald-200/70 whitespace-nowrap" title="Excel Export Quota Limit">
-                                                            <FileSpreadsheet className="w-3 h-3 text-emerald-600 shrink-0" />
-                                                            <strong className="text-emerald-900">{Number(plan.excel_download_limit || 50).toLocaleString()}</strong>
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* Column 5: Team Seats */}
-                                            <td className="py-4 px-4">
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border-1 border-indigo-100/90 whitespace-nowrap">
-                                                    <Users className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                                    {plan.sub_recruiter_limit || 1} {Number(plan.sub_recruiter_limit) === 1 ? 'Seat' : 'Seats'}
-                                                </span>
                                             </td>
 
                                             {/* Column 6: Subscribers */}
@@ -725,36 +682,45 @@ export default function PlansList() {
                                     </div>
 
                                     {/* Quota Highlights Grid */}
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4 text-xs">
-                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Job Posts</span>
-                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.job_post_limit} / mo</span>
-                                        </div>
-                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Max Active</span>
-                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.active_job_limit} jobs</span>
-                                        </div>
-                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Resume Views</span>
-                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.resume_view_limit || 0).toLocaleString()}</span>
-                                        </div>
-                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Team Seats</span>
-                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.sub_recruiter_limit || 1} Seat(s)</span>
-                                        </div>
-                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Email Quota</span>
-                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.email_limit || 0).toLocaleString()}</span>
-                                        </div>
-                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">WhatsApp Quota</span>
-                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.whatsapp_limit || 0).toLocaleString()}</span>
-                                        </div>
-                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Excel Downloads</span>
-                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.excel_download_limit || 50).toLocaleString()}</span>
-                                        </div>
-                                    </div>
+                                    {(() => {
+                                        const isCustom = plan.plan_type === 'custom' || plan.name?.toLowerCase().includes('custom');
+                                        return (
+                                            <div className={`grid ${isCustom ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-2 mb-4 text-xs`}>
+                                                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Job Posts</span>
+                                                    <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.job_post_limit} / mo</span>
+                                                </div>
+                                                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Max Active</span>
+                                                    <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.active_job_limit} jobs</span>
+                                                </div>
+                                                {isCustom && (
+                                                    <>
+                                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Resume Views</span>
+                                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.resume_view_limit || 0).toLocaleString()}</span>
+                                                        </div>
+                                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Team Seats</span>
+                                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{plan.sub_recruiter_limit || 1} Seat(s)</span>
+                                                        </div>
+                                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Email Quota</span>
+                                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.email_limit || 0).toLocaleString()}</span>
+                                                        </div>
+                                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">WhatsApp Quota</span>
+                                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.whatsapp_limit || 0).toLocaleString()}</span>
+                                                        </div>
+                                                        <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                                            <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Excel Downloads</span>
+                                                            <span className="text-sm font-bold text-slate-800 mt-0.5 block">{Number(plan.excel_download_limit || 50).toLocaleString()}</span>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
 
                                     {/* Quick Feature Privileges Chips */}
                                     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -884,54 +850,73 @@ export default function PlansList() {
                         {/* Quotas & Limits */}
                         <div className="mb-4">
                             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5">
-                                Job Posting & Candidate Limits
+                                Job Posting & Quota Limits
                             </h4>
-                            <div className="grid grid-cols-2 gap-2 text-[13px]">
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">Monthly Job Posts:</span>
-                                    <span className="font-bold text-slate-900">{selectedPlan.job_post_limit}</span>
+                            {selectedPlan.plan_type === 'custom' || selectedPlan.name?.toLowerCase().includes('custom') ? (
+                                <div className="grid grid-cols-2 gap-2 text-[13px]">
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">Monthly Job Posts:</span>
+                                        <span className="font-bold text-slate-900">{selectedPlan.job_post_limit}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">Max Active Jobs:</span>
+                                        <span className="font-bold text-slate-900">{selectedPlan.active_job_limit}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">Resume Views:</span>
+                                        <span className="font-bold text-slate-900">{Number(selectedPlan.resume_view_limit || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">Resume Downloads:</span>
+                                        <span className="font-bold text-slate-900">{Number(selectedPlan.resume_download_limit || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">Featured Job Posts:</span>
+                                        <span className="font-bold text-slate-900">{selectedPlan.featured_job_limit || 0}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">Urgent Job Posts:</span>
+                                        <span className="font-bold text-slate-900">{selectedPlan.urgent_job_limit || 0}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">Email Sent Count:</span>
+                                        <span className="font-bold text-slate-900">{Number(selectedPlan.email_limit || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
+                                        <span className="text-slate-600 font-medium">WhatsApp Sent Count:</span>
+                                        <span className="font-bold text-slate-900">{Number(selectedPlan.whatsapp_limit || 0).toLocaleString()}</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center col-span-2">
+                                        <span className="text-slate-600 font-medium">Excel Download Count:</span>
+                                        <span className="font-bold text-slate-900">{Number(selectedPlan.excel_download_limit || 50).toLocaleString()}</span>
+                                    </div>
+                                    <div className="p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl flex justify-between items-center col-span-2">
+                                        <span className="text-indigo-800 font-semibold flex items-center gap-1.5">
+                                            <Users className="w-4 h-4 text-indigo-600" /> Sub-Recruiter Team Seats:
+                                        </span>
+                                        <span className="font-extrabold text-indigo-950">
+                                            {selectedPlan.sub_recruiter_limit || 1} {Number(selectedPlan.sub_recruiter_limit) === 1 ? 'Seat' : 'Seats'}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">Max Active Jobs:</span>
-                                    <span className="font-bold text-slate-900">{selectedPlan.active_job_limit}</span>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="grid grid-cols-2 gap-2 text-[13px]">
+                                        <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 flex justify-between items-center">
+                                            <span className="text-blue-900 font-semibold">Monthly Job Posts:</span>
+                                            <span className="font-bold text-blue-950">{selectedPlan.job_post_limit}</span>
+                                        </div>
+                                        <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 flex justify-between items-center">
+                                            <span className="text-blue-900 font-semibold">Max Active Jobs:</span>
+                                            <span className="font-bold text-blue-950">{selectedPlan.active_job_limit}</span>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 text-xs text-slate-500 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+                                        <span>Candidate Resume Views/Downloads, Sub-Recruiters, Email, WhatsApp, and Excel exports are available exclusively on <strong>Custom Plans</strong>.</span>
+                                    </div>
                                 </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">Resume Views:</span>
-                                    <span className="font-bold text-slate-900">{Number(selectedPlan.resume_view_limit || 0).toLocaleString()}</span>
-                                </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">Resume Downloads:</span>
-                                    <span className="font-bold text-slate-900">{Number(selectedPlan.resume_download_limit || 0).toLocaleString()}</span>
-                                </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">Featured Job Posts:</span>
-                                    <span className="font-bold text-slate-900">{selectedPlan.featured_job_limit || 0}</span>
-                                </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">Urgent Job Posts:</span>
-                                    <span className="font-bold text-slate-900">{selectedPlan.urgent_job_limit || 0}</span>
-                                </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">Email Sent Count:</span>
-                                    <span className="font-bold text-slate-900">{Number(selectedPlan.email_limit || 0).toLocaleString()}</span>
-                                </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center">
-                                    <span className="text-slate-600 font-medium">WhatsApp Sent Count:</span>
-                                    <span className="font-bold text-slate-900">{Number(selectedPlan.whatsapp_limit || 0).toLocaleString()}</span>
-                                </div>
-                                <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 flex justify-between items-center col-span-2">
-                                    <span className="text-slate-600 font-medium">Excel Download Count:</span>
-                                    <span className="font-bold text-slate-900">{Number(selectedPlan.excel_download_limit || 50).toLocaleString()}</span>
-                                </div>
-                                <div className="p-3 bg-indigo-50/80 border border-indigo-100 rounded-xl flex justify-between items-center col-span-2">
-                                    <span className="text-indigo-800 font-semibold flex items-center gap-1.5">
-                                        <Users className="w-4 h-4 text-indigo-600" /> Sub-Recruiter Team Seats:
-                                    </span>
-                                    <span className="font-extrabold text-indigo-950">
-                                        {selectedPlan.sub_recruiter_limit || 1} {Number(selectedPlan.sub_recruiter_limit) === 1 ? 'Seat' : 'Seats'}
-                                    </span>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Feature Permissions */}

@@ -4,6 +4,7 @@ import {
     FileCheck, Search, Calendar, ChevronsUpDown, ChevronLeft, ChevronRight, Briefcase, MoreVertical, Eye, Trash2, X, Mail, Phone, MapPin, User
 } from 'lucide-react';
 import { getAllAppliedCandidates, getUserProfile } from '../ApiService/action';
+import { getJobDetailsUrl } from '../utils/slug';
 import toast from 'react-hot-toast';
 
 // ── Actions Dropdown ──
@@ -23,7 +24,7 @@ const ActionsDropdown = ({ app, onClose, onViewProfile, isBottom }) => {
             <button onClick={() => { onViewProfile(app.user_id); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 <Eye className="w-3.5 h-3.5" /> View Profile
             </button>
-            <button onClick={() => { window.open(`/job-details/${app.job_post_id}`, '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+            <button onClick={() => { window.open(getJobDetailsUrl({ id: app.job_post_id, ...app }), '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                 <Briefcase className="w-3.5 h-3.5" /> View Applied Job
             </button>
         </div>

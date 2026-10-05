@@ -563,153 +563,24 @@ export default function PlanForm({ planId = null }) {
                     </div>
                 </div>
 
-                {/* 3. Candidate / Resume Limits */}
-                <div className="bg-white rounded-2xl p-6">
-                    <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-indigo-600" />
-                        Candidate / Resume Quotas
-                    </h2>
-                    <p className="text-[12px] text-gray-400 mb-4">
-                        Quantitative limits for inspecting and downloading candidate profiles.
-                    </p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                Resume Views
-                            </label>
-                            <input
-                                type="number"
-                                name="resume_view_limit"
-                                value={formData.resume_view_limit}
-                                onChange={handleChange}
-                                min={0}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
-                            />
-                            <span className="text-[11px] text-gray-400 mt-1 block">Max full candidate profiles viewable per cycle</span>
+                {/* 3. Custom Quotas & Limits Notice */}
+                <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 border border-blue-100/80 rounded-2xl p-6 relative overflow-hidden">
+                    <div className="flex items-start gap-4 relative z-10">
+                        <div className="p-2.5 rounded-xl bg-blue-600 text-white shadow-sm shrink-0">
+                            <Sparkles className="w-5 h-5" />
                         </div>
-
                         <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                Resume Downloads
-                            </label>
-                            <input
-                                type="number"
-                                name="resume_download_limit"
-                                value={formData.resume_download_limit}
-                                onChange={handleChange}
-                                min={0}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
-                            />
-                            <span className="text-[11px] text-gray-400 mt-1 block">Max PDF/DOC resume files downloadable</span>
+                            <h3 className="text-[15px] font-bold text-slate-900 mb-1">
+                                Candidate Quotas & Advanced Custom Limits
+                            </h3>
+                            <p className="text-[13px] text-slate-600 mb-3 leading-relaxed">
+                                Standard subscription plans define the <strong>Job Posting capacity</strong> and billing tier. All candidate quotas (<em className="text-slate-700">Resume Views, Downloads, Email & WhatsApp credits, Sub-Recruiter seats, and Excel exports</em>) are customized individually per recruiter using the <strong className="text-blue-700 font-semibold">Custom Plan</strong> feature in the Recruiters Directory.
+                            </p>
+                            <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700 bg-white px-3 py-1.5 rounded-lg border-1 border-blue-200/80 shadow-2xs">
+                                <Info className="w-3.5 h-3.5 text-blue-600" />
+                                <span>Default quotas & full recruiter platform privileges are pre-configured automatically.</span>
+                            </div>
                         </div>
-
-                        <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-2 flex items-center justify-between">
-                                <span>Sub-Recruiter Seats</span>
-                                <span className="text-[10px] text-indigo-600 bg-indigo-50 font-semibold px-1.5 py-0.5 rounded">Team</span>
-                            </label>
-                            <input
-                                type="number"
-                                name="sub_recruiter_limit"
-                                value={formData.sub_recruiter_limit}
-                                onChange={handleChange}
-                                min={1}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 font-semibold text-slate-800"
-                            />
-                            <span className="text-[11px] text-gray-400 mt-1 block">Max sub-recruiters main recruiter can create</span>
-                        </div>
-
-                        <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                Email Sent Count
-                            </label>
-                            <input
-                                type="number"
-                                name="email_limit"
-                                value={formData.email_limit}
-                                onChange={handleChange}
-                                min={0}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
-                            />
-                            <span className="text-[11px] text-gray-400 mt-1 block">Max candidate emails sendable per cycle</span>
-                        </div>
-
-                        <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                WhatsApp Sent Count
-                            </label>
-                            <input
-                                type="number"
-                                name="whatsapp_limit"
-                                value={formData.whatsapp_limit}
-                                onChange={handleChange}
-                                min={0}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
-                            />
-                            <span className="text-[11px] text-gray-400 mt-1 block">Max candidate WhatsApp messages sendable per cycle</span>
-                        </div>
-
-                        <div>
-                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                Excel Download Count
-                            </label>
-                            <input
-                                type="number"
-                                name="excel_download_limit"
-                                value={formData.excel_download_limit}
-                                onChange={handleChange}
-                                min={0}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
-                            />
-                            <span className="text-[11px] text-gray-400 mt-1 block">Max candidate profiles exportable to Excel per cycle</span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 4. Additional Feature Switches */}
-                <div className="bg-white rounded-2xl p-6">
-                    <h2 className="text-base font-bold text-gray-900 mb-1 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-amber-500" />
-                        Recruiter Features & Privileges
-                    </h2>
-                    <p className="text-[12px] text-gray-400 mb-4">
-                        Toggle specific capabilities ON or OFF. Locked features will show an upgrade prompt to recruiters.
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {[
-                            { key: 'candidate_search', title: 'Candidate Search', desc: 'Direct search in the talent pool' },
-                            { key: 'candidate_contact', title: 'Candidate Contact', desc: 'Direct email/phone outreach to candidates' },
-                            { key: 'resume_database', title: 'Resume Database Access', desc: 'Full Naukri-style candidate database' },
-                            { key: 'interview_management', title: 'Interview Management', desc: 'Schedule and manage interviews' },
-                            { key: 'application_management', title: 'Application Management', desc: 'Track candidate application pipelines' },
-                            { key: 'shortlisting', title: 'Candidate Shortlisting', desc: 'Tag, rate and shortlist applicants' },
-                            { key: 'company_profile', title: 'Company Profile Page', desc: 'Custom branding & company details' },
-                            { key: 'recruiter_dashboard', title: 'Recruiter Dashboard', desc: 'Full HR dashboard & metric graphs' },
-                        ].map((item) => {
-                            const isChecked = Boolean(formData[item.key]);
-                            return (
-                                <div
-                                    key={item.key}
-                                    onClick={() => handleToggle(item.key)}
-                                    className={`p-3.5 rounded-xl border-1 transition-all cursor-pointer flex items-center justify-between ${isChecked
-                                        ? 'bg-blue-50/40 border-blue-200 text-blue-900'
-                                        : 'bg-gray-50/60 border-gray-200/70 text-gray-600 hover:bg-gray-100/60'
-                                        }`}
-                                >
-                                    <div>
-                                        <p className="font-semibold text-[13px] mb-0">{item.title}</p>
-                                        <p className="text-[11px] text-gray-400 mb-0">{item.desc}</p>
-                                    </div>
-
-                                    <div className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors duration-200 ${isChecked ? 'bg-blue-600 justify-end' : 'bg-gray-300 justify-start'
-                                        }`}>
-                                        <div className="bg-white w-4 h-4 rounded-full shadow-md transform transition-transform" />
-                                    </div>
-                                </div>
-                            );
-                        })}
                     </div>
                 </div>
 

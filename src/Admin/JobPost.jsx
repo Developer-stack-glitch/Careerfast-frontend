@@ -18,8 +18,9 @@ import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
 import { formatDistanceToNow } from 'date-fns';
-import { Modal } from 'antd';
 import Link from 'next/link';
+import { getJobDetailsUrl } from '../utils/slug';
+import { Modal } from 'antd';
 
 // Consistent color gradient generator for company logos/initials
 const getCompanyAvatarGradient = (name = '') => {
@@ -73,13 +74,13 @@ const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, on
 
     return (
         <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-lg border border-gray-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
-            <button onClick={() => { window.open(`/job-details/${job.id}?preview=true`, '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <button onClick={() => { window.open(getJobDetailsUrl(job), '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 <Eye className="w-3.5 h-3.5 text-blue-500" /> View / Preview
             </button>
             <button onClick={() => { window.location.href = `/admin/applications?search=${encodeURIComponent(job.job_title || '')}`; onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                 <Users className="w-3.5 h-3.5 text-indigo-500" /> View Applied ({job.applicants_count || 0})
             </button>
-            <button onClick={() => { window.open(job.apply_link || `/job-details/${job.id}`, '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <button onClick={() => { window.open(job.apply_link || getJobDetailsUrl(job), '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 <ExternalLink className="w-3.5 h-3.5" /> Open Apply Link
             </button>
 
@@ -164,7 +165,7 @@ export default function JobPost() {
             if (debouncedSearch) payload.searchTerm = debouncedSearch;
             if (activeFilter === 'Active') {
                 payload.is_closed = 0;
-                payload.approval_status = 'all';
+                payload.approval_status = 'approved';
             } else if (activeFilter === 'Closed') {
                 payload.is_closed = 1;
                 payload.approval_status = 'all';
@@ -382,6 +383,11 @@ export default function JobPost() {
     // Filter tabs definition
     const filterTabs = [
         {
+            label: 'Pending',
+            count: globalStats.pending,
+            color: { text: 'text-amber-600', border: 'border-amber-600', badgeBg: 'bg-amber-100', badgeText: 'text-amber-700' }
+        },
+        {
             label: 'All',
             count: globalStats.total,
             color: { text: 'text-blue-600', border: 'border-blue-600', badgeBg: 'bg-blue-100', badgeText: 'text-blue-700' }
@@ -400,11 +406,6 @@ export default function JobPost() {
             label: 'Auto Approved',
             count: globalStats.autoApproved,
             color: { text: 'text-violet-600', border: 'border-violet-600', badgeBg: 'bg-violet-100', badgeText: 'text-violet-700' }
-        },
-        {
-            label: 'Pending',
-            count: globalStats.pending,
-            color: { text: 'text-amber-600', border: 'border-amber-600', badgeBg: 'bg-amber-100', badgeText: 'text-amber-700' }
         },
         {
             label: 'Closed',
@@ -529,27 +530,40 @@ export default function JobPost() {
             <div className="bg-white rounded-xl shadow-xs overflow-hidden">
                 {/* Filter Tabs */}
                 <div className="px-6 pt-2 border-b border-gray-100 flex items-center justify-between mb-0">
-                    <div className="flex gap-8 sm:gap-12 -mb-px overflow-x-auto">
-                        {filterTabs.map((tab) => (
-                            <button
-                                key={tab.label}
-                                onClick={() => setActiveFilter(tab.label)}
-                                className={`py-4 text-[14px] font-semibold transition-all border-b-2 shrink-0 group ${activeFilter === tab.label
-                                    ? `${tab.color.border} ${tab.color.text}`
-                                    : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
-                                    }`}
-                            >
-                                <span className="flex items-center gap-2.5">
-                                    {tab.label}
-                                    <span className={`text-[12px] font-bold px-2.5 py-0.5 rounded-full transition-colors ${activeFilter === tab.label
-                                        ? `${tab.color.badgeBg} ${tab.color.badgeText}`
-                                        : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200 group-hover:text-gray-700'
-                                        }`}>
-                                        {tab.count}
+                    <div className="flex gap-7 sm:gap-10 -mb-px overflow-x-auto">
+                        {filterTabs.map((tab) => {
+                            const isPending = tab.label === 'Pending';
+                            const isPendingWithCount = isPending && tab.count > 0;
+                            const isActive = activeFilter === tab.label;
+
+                            return (
+                                <button
+                                    key={tab.label}
+                                    onClick={() => setActiveFilter(tab.label)}
+                                    className={`py-3.5 text-[14px] font-semibold transition-all border-b-2 shrink-0 group flex items-center gap-2 ${isActive
+                                        ? `${tab.color.border} ${tab.color.text}`
+                                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <span>{tab.label}</span>
+                                    <span
+                                        className={`text-[11.5px] font-bold px-2 py-1 rounded-full transition-all flex items-center gap-1.5 leading-none ${isPendingWithCount
+                                            ? isActive
+                                                ? 'bg-amber-100 text-amber-800 border-1 border-amber-300'
+                                                : 'bg-amber-50 text-amber-700 border-1 border-amber-200/90'
+                                            : isActive
+                                                ? `${tab.color.badgeBg} ${tab.color.badgeText}`
+                                                : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700'
+                                            }`}
+                                    >
+                                        {isPendingWithCount && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                                        )}
+                                        <span>{tab.count}</span>
                                     </span>
-                                </span>
-                            </button>
-                        ))}
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -713,7 +727,7 @@ export default function JobPost() {
                                                 {/* 4. Actions */}
                                                 <td className="py-3.5 px-6 text-right align-middle">
                                                     <div className="flex items-center justify-end gap-2.5">
-                                                        <Link prefetch={false} target="_blank" href={`/job-details/${job.id}?preview=true`} className="no-underline hover:no-underline">
+                                                        <Link prefetch={false} target="_blank" href={getJobDetailsUrl(job)} className="no-underline hover:no-underline">
                                                             <button className="flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors active:scale-95">
                                                                 <Eye className="w-3.5 h-3.5" /> Preview
                                                             </button>
