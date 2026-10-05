@@ -181,7 +181,7 @@ export default function PlansList() {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto font-sans pb-16 px-2 sm:px-4">
+        <div className="w-full max-w-9xl mx-auto font-sans pb-16 px-2 sm:px-4">
             {/* Breadcrumb & Header */}
             <div className="mb-6 pt-2">
                 <div className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-2">
@@ -990,7 +990,7 @@ export default function PlansList() {
                         </p>
 
                         {Number(deleteModalPlan.active_subscribers) > 0 ? (
-                            <div className="my-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-[12px] flex items-start gap-2.5">
+                            <div className="my-4 p-3.5 bg-amber-50 border-1 border-amber-200 rounded-xl text-amber-800 text-[12px] flex items-start gap-2.5">
                                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
                                 <div>
                                     <strong className="block font-bold">Active Subscriptions Warning</strong>
@@ -1017,7 +1017,7 @@ export default function PlansList() {
                                         handleToggleStatus(deleteModalPlan);
                                         setDeleteModalPlan(null);
                                     }}
-                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-xs"
+                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[13px] font-medium transition-all shadow-xs"
                                 >
                                     Deactivate Instead
                                 </button>

@@ -287,7 +287,7 @@ export default function PlanSubscribers({ planId = null }) {
     };
 
     return (
-        <div className="w-full max-w-7xl mx-auto font-sans pb-16 px-2 sm:px-4 space-y-5">
+        <div className="w-full max-w-9xl mx-auto font-sans pb-16 px-2 sm:px-4 space-y-5">
             {/* Top Navigation & Breadcrumb Header */}
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl">
                 <div className="flex items-center gap-3">

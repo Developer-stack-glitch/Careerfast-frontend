@@ -1979,6 +1979,15 @@ export const loginAsRecruiter = async (id) => {
   }
 };
 
+export const deleteAdminRecruiter = async (id) => {
+  try {
+    const response = await api.delete(`/api/admin/recruiters/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getAdminSubscriptions = async (params = {}) => {
   try {
     const response = await api.get("/api/admin/subscriptions", { params });
