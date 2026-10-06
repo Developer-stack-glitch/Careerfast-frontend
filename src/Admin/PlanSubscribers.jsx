@@ -638,8 +638,8 @@ export default function PlanSubscribers({ planId = null }) {
                                 {paginatedSubscribers.map((sub) => {
                                     const recruiterName = sub.recruiter_name || `${sub.first_name || ''} ${sub.last_name || ''}`.trim() || 'Recruiter Lead';
                                     const email = sub.recruiter_email || sub.email || '—';
-                                    const companyName = sub.company_name || 'Individual Enterprise';
-                                    const planName = sub.plan_name || currentPlanObj?.name || 'Assigned Plan';
+                                    const rawPlan = sub.plan_name || currentPlanObj?.name || 'Assigned Plan';
+                                    const planName = rawPlan.replace(/\s*[-–—]\s*User\s*\d+/gi, '').trim() || rawPlan;
                                     const daysLeft = getDaysRemaining(sub.expiry_date);
                                     const rawStatus = sub.status || sub.subscription_status || 'Active';
 

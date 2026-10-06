@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
     Users2, ShieldCheck, ShieldAlert, KeyRound, Plus, Search, Filter,
     CheckCircle2, XCircle, MoreVertical, Edit3, Trash2, Lock, Unlock,
-    Eye, Check, X, RefreshCw, Mail, Phone, Calendar, Clock,
+    Eye, EyeOff, Check, X, RefreshCw, Mail, Phone, Calendar, Clock,
     LayoutDashboard, Sparkles, Layers, Building2, Briefcase, Users,
     MessageSquare, Settings, UserCheck, ChevronDown, AlertCircle, Shield,
     SlidersHorizontal, CheckSquare, Square, Download, FileSpreadsheet,
@@ -181,6 +181,8 @@ export default function UserManagement() {
     });
 
     const [newPassword, setNewPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [showResetPassword, setShowResetPassword] = useState(false);
 
     // Fetch dynamic roles
     const fetchRoles = useCallback(async () => {
@@ -246,6 +248,7 @@ export default function UserManagement() {
             is_super_admin: defaultRole ? Boolean(defaultRole.is_super_admin) : false,
             permissions: defaultRole ? (defaultRole.permissions || {}) : {}
         });
+        setShowPassword(false);
         setIsFormOpen(true);
     };
 
@@ -685,6 +688,7 @@ export default function UserManagement() {
                                                         onClick={() => {
                                                             setSelectedAdmin(admin);
                                                             setNewPassword('');
+                                                            setShowResetPassword(false);
                                                             setIsPasswordModalOpen(true);
                                                         }}
                                                         className="p-1.5 rounded-lg text-gray-500 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer border-0 bg-transparent"
@@ -755,7 +759,7 @@ export default function UserManagement() {
                         </div>
 
                         {/* Body */}
-                        <form id="userForm" onSubmit={handleSaveAdmin} className="p-6 overflow-y-auto space-y-4">
+                        <form id="userForm" onSubmit={handleSaveAdmin} className="p-6 overflow-y-auto space-y-4 pb-10">
                             {/* Personal Details */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                 <div>
@@ -838,17 +842,18 @@ export default function UserManagement() {
                                     onChange={handleRoleSelectChange}
                                     options={roleOptions}
                                     placeholder="Select a dynamic role..."
+                                    className="w-full"
                                 />
 
                                 {/* Selected Role Preview Card */}
                                 {selectedRoleMeta && (
-                                    <div className="mt-3 p-2 rounded-xl bg-blue-50/60 border-1 border-blue-100 flex items-start gap-3">
+                                    <div className="mt-3 p-3 rounded-xl bg-blue-50/60 border-1 border-blue-100 flex items-start gap-3">
                                         <div className="p-2 bg-blue-600 text-white rounded-lg shrink-0 mt-0.5">
                                             <ShieldCheck className="w-4 h-4" />
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center justify-between gap-2 mb-0.5">
-                                                <span className="text-xs font-bold text-gray-900">
+                                                <span className="text-sm font-bold text-gray-900">
                                                     {selectedRoleMeta.role_title || selectedRoleMeta.role_name}
                                                 </span>
                                                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
@@ -873,7 +878,7 @@ export default function UserManagement() {
                                         value={formData.department}
                                         onChange={(d) => setFormData({ ...formData, department: d })}
                                         options={MODAL_DEPARTMENT_OPTIONS}
-                                        size="sm"
+                                        className="w-full"
                                     />
                                 </div>
 
@@ -882,14 +887,24 @@ export default function UserManagement() {
                                         <label className="block text-sm font-semibold text-gray-700 mb-1">
                                             Initial Password <span className="text-rose-500">*</span>
                                         </label>
-                                        <input
-                                            type="password"
-                                            placeholder="Min 6 characters"
-                                            value={formData.password}
-                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                            required={!selectedAdmin}
-                                            className="w-full px-3.5 py-2.5 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-sm outline-none transition-all"
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="Min 6 characters"
+                                                value={formData.password}
+                                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                required={!selectedAdmin}
+                                                className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-sm outline-none transition-all"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1 cursor-pointer transition-colors bg-transparent border-0 flex items-center justify-center"
+                                                title={showPassword ? "Hide password" : "Show password"}
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-gray-500" />}
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -934,14 +949,24 @@ export default function UserManagement() {
                         <form onSubmit={handleResetPassword} className="space-y-4">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-1">New Password</label>
-                                <input
-                                    type="password"
-                                    placeholder="Enter at least 6 characters"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    required
-                                    className="w-full px-3.5 py-2 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-xs outline-none"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showResetPassword ? "text" : "password"}
+                                        placeholder="Enter at least 6 characters"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        required
+                                        className="w-full pl-3.5 pr-10 py-2 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-xs outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowResetPassword(!showResetPassword)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none p-1 cursor-pointer transition-colors bg-transparent border-0 flex items-center justify-center"
+                                        title={showResetPassword ? "Hide password" : "Show password"}
+                                    >
+                                        {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-gray-500" />}
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="flex items-center justify-end gap-2 pt-2">

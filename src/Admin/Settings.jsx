@@ -146,7 +146,7 @@ export default function Settings() {
                         <SettingsIcon className="w-6 h-6 text-[#5451e1]" />
                     </div>
                     <div>
-                        <h1 className="text-[24px] font-bold text-slate-900 tracking-tight mb-1">Platform Settings</h1>
+                        <h1 className="text-[24px] font-semibold text-slate-900 tracking-tight mb-1">Platform Settings</h1>
                         <p className="text-[14px] text-slate-500 mb-0">Configure global platform settings, contact information, and more.</p>
                     </div>
                 </div>
@@ -167,7 +167,7 @@ export default function Settings() {
                                         <GroupIcon className="w-5 h-5 text-[#5451e1]" />
                                     </div>
                                     <div>
-                                        <h3 className="text-[16px] font-bold text-slate-900 leading-tight">
+                                        <h3 className="text-[16px] font-bold text-slate-900 leading-tight mb-0">
                                             {groupName} Settings
                                         </h3>
                                         <p className="text-[13px] text-slate-500 mt-1 mb-0">{groupSubtitle}</p>
@@ -189,7 +189,7 @@ export default function Settings() {
 
                                     return (
                                         <div key={setting.settingKey} className="space-y-2">
-                                            <label className="text-[13px] font-bold text-slate-900 block mb-3">
+                                            <label className="text-[13px] font-semibold text-sm text-slate-900 block mb-2">
                                                 {setting.label}
                                             </label>
 

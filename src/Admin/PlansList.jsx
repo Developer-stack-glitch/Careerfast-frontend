@@ -107,13 +107,20 @@ export default function PlansList() {
         }
     };
 
+    // Helper to format plan display name (e.g. remove internal User suffixes like "- User 66")
+    const formatPlanDisplayName = (name = '') => {
+        if (!name) return '—';
+        return name.replace(/\s*[-–—]\s*User\s*\d+/gi, '').trim() || name;
+    };
+
     // Metrics calculations
     const stats = useMemo(() => {
         const total = plans.length;
         const active = plans.filter(p => p.status === 'active').length;
         const totalSubscribers = plans.reduce((acc, p) => acc + (Number(p.active_subscribers) || 0), 0);
         const sortedBySubs = [...plans].sort((a, b) => (Number(b.active_subscribers) || 0) - (Number(a.active_subscribers) || 0));
-        const mostPopular = sortedBySubs[0]?.name || (plans.length > 0 ? plans[0].name : '—');
+        const rawPopular = sortedBySubs[0]?.name || (plans.length > 0 ? plans[0].name : '—');
+        const mostPopular = formatPlanDisplayName(rawPopular);
         const avgValue = total > 0 ? Math.round(plans.reduce((acc, p) => acc + Number(p.price || 0), 0) / total) : 0;
 
         return {
@@ -197,7 +204,7 @@ export default function PlansList() {
                                 <CreditCard className="w-5 h-5" />
                             </div>
                             <div>
-                                <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2 mb-0">
+                                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight flex items-center gap-2 mb-0">
                                     Subscription Plans Management
                                     <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                                         {plans.length} Tiers
@@ -500,7 +507,7 @@ export default function PlansList() {
                                                     <div>
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-bold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
-                                                                {plan.name}
+                                                                {formatPlanDisplayName(plan.name)}
                                                             </span>
                                                             {Number(plan.active_subscribers) > 0 && (
                                                                 <span className="text-[10px] bg-blue-50 text-blue-700 border-1 border-blue-200/80 px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wider">
@@ -645,7 +652,7 @@ export default function PlansList() {
                                             </div>
                                             <div>
                                                 <h3 className="font-bold text-slate-900 text-base group-hover:text-blue-600 transition-colors">
-                                                    {plan.name}
+                                                    {formatPlanDisplayName(plan.name)}
                                                 </h3>
                                                 <span className="text-[11px] font-semibold text-slate-400 capitalize">
                                                     {plan.plan_type || 'Monthly'} Package
@@ -803,7 +810,7 @@ export default function PlansList() {
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h3 className="text-xl font-bold text-slate-900 mb-0">
-                                            {selectedPlan.name} Plan
+                                            {formatPlanDisplayName(selectedPlan.name)} Plan
                                         </h3>
                                         <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full capitalize ${selectedPlan.status === 'active'
                                             ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200'

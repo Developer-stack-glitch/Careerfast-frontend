@@ -52,7 +52,7 @@ const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
         </div>
         <div className="relative z-10">
             <h4 className="text-gray-500 text-[14px] font-medium mb-1">{title}</h4>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">{value}</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">{value}</h2>
         </div>
     </div>
 );
@@ -944,7 +944,7 @@ export default function JobPost() {
                                                 {/* Date Posted */}
                                                 <td className="px-4 py-3.5 whitespace-nowrap">
                                                     <div className="flex flex-col justify-center">
-                                                        <span className="text-[13px] text-gray-900 font-bold">
+                                                        <span className="text-[13px] text-gray-900 font-semibold">
                                                             {formatDate(job.created_at || job.createdAt)}
                                                         </span>
                                                     </div>
@@ -954,7 +954,7 @@ export default function JobPost() {
                                                 <td className="px-4 py-3.5 whitespace-nowrap">
                                                     {(job.approved_at || job.approval_status === 'approved') ? (
                                                         <div className="flex flex-col justify-center">
-                                                            <span className="text-[13px] text-gray-900 font-bold">
+                                                            <span className="text-[13px] text-gray-900 font-semibold">
                                                                 {formatDate(job.approved_at || job.created_at || job.createdAt)}
                                                             </span>
                                                         </div>

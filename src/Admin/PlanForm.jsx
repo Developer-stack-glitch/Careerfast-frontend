@@ -266,7 +266,7 @@ export default function PlanForm({ planId = null }) {
                     <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">
+                    <h1 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">
                         {isEdit ? `Edit Plan: ${formData.name || ''}` : 'Create Subscription Plan'}
                     </h1>
                     <p className="text-[13px] text-gray-500 mt-0.5 mb-0">
