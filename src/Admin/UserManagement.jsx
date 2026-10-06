@@ -482,7 +482,7 @@ export default function UserManagement() {
                             placeholder="Search by name, email, phone or role..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-gray-50 hover:bg-gray-100/60 focus:bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-xs outline-none transition-all"
+                            className="w-full pl-9 pr-4 py-2.5 bg-gray-50 hover:bg-gray-100/60 focus:bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-sm outline-none transition-all"
                         />
                         {search && (
                             <button
