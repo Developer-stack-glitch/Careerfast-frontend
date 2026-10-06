@@ -86,7 +86,7 @@ import {
 import { State, City } from "country-state-city";
 import { HiMiniComputerDesktop } from "react-icons/hi2";
 import { MdOutlineEventNote } from "react-icons/md";
-import { MdOutlineSchool, MdOutlineWorkOutline } from "react-icons/md";
+import { MdOutlineSchool, MdOutlineWorkOutline, MdCurrencyRupee } from "react-icons/md";
 import currencySymbol from "currency-symbols";
 import currencyCodes from "currency-codes";
 import { FaTransgender } from "react-icons/fa6";
@@ -2118,6 +2118,7 @@ const EditOpportunity = () => {
                               </div>
                               <div className="njd-stat-sep"></div>
                               <div className="njd-stat-item">
+                                <MdCurrencyRupee className="njd-stat-icon" />
                                 <span>{job.salary || "Not Disclosed"}</span>
                               </div>
                               <div className="njd-stat-sep"></div>

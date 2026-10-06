@@ -27,7 +27,7 @@ import {
   PlusCircleFilled,
 } from "@ant-design/icons";
 import { IoIosShareAlt } from "react-icons/io";
-import { MdOutlineWorkOutline, MdOutlineAccessTime, MdOutlineLocationOn, MdOutlinePhone } from "react-icons/md";
+import { MdOutlineWorkOutline, MdOutlineAccessTime, MdOutlineLocationOn, MdOutlinePhone, MdCurrencyRupee } from "react-icons/md";
 import { CommonToaster } from "../Common/CommonToaster";
 import {
   applyForJob,
@@ -677,6 +677,7 @@ export default function JobDetails({ initialData, serverSlug }) {
                           </div>
                           <div className="njd-stat-sep"></div>
                           <div className="njd-stat-item">
+                            <MdCurrencyRupee className="njd-stat-icon" />
                             <span>{job.salary || "Not Disclosed"}</span>
                           </div>
                           <div className="njd-stat-sep"></div>
