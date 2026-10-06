@@ -10,8 +10,8 @@ export default function DeleteRecruiterModal({ recruiter, isOpen = true, onClose
     if ((isOpen !== undefined && !isOpen) || !recruiter) return null;
 
     const companyName = recruiter.company_name || recruiter.recruiter_name || recruiter.email || 'this recruiter';
-    const email = recruiter.email || recruiter.contact_email || '—';
-    const planName = recruiter.plan_name || 'Free Plan';
+    const rawPlan = recruiter.plan_name || 'Free Plan';
+    const planName = /custom/i.test(rawPlan) || /user\s*\d+/i.test(rawPlan) ? 'Custom Plan' : rawPlan.replace(/\s*-\s*User\s*\d+/i, '').trim();
 
     const handleDelete = async () => {
         try {
@@ -50,10 +50,10 @@ export default function DeleteRecruiterModal({ recruiter, isOpen = true, onClose
                         <Trash2 className="w-7 h-7" />
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900 tracking-tight mb-1">
+                    <h3 className="text-xl font-semibold text-slate-900 mb-1">
                         Delete Recruiter Account?
                     </h3>
-                    <p className="text-sm text-slate-500 leading-relaxed max-w-sm">
+                    <p className="text-sm text-slate-500 leading-relaxed max-w-sm mb-0">
                         Are you sure you want to permanently delete the account for <span className="font-semibold text-slate-800">{companyName}</span>?
                     </p>
                 </div>
@@ -81,7 +81,7 @@ export default function DeleteRecruiterModal({ recruiter, isOpen = true, onClose
                 </div>
 
                 {/* Permanent Warning Box */}
-                <div className="mt-3.5 p-3.5 bg-rose-50/80 border border-rose-100 rounded-2xl text-left">
+                <div className="mt-3.5 p-3.5 bg-rose-50/80 border-1 border-rose-100 rounded-2xl text-left">
                     <div className="flex items-start gap-2.5">
                         <AlertTriangle className="w-4 h-4 text-rose-600 mt-0.5 shrink-0" />
                         <div className="text-xs text-rose-900 leading-relaxed">

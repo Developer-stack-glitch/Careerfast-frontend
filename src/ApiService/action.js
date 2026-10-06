@@ -2063,6 +2063,55 @@ export const deleteAdminUser = async (id) => {
   }
 };
 
+// ==========================================
+// 🛡️ Dynamic Admin Roles & Permissions Service
+// ==========================================
+export const getAdminRoles = async () => {
+  try {
+    const response = await api.get("/api/admin/roles");
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminRoleById = async (id) => {
+  try {
+    const response = await api.get(`/api/admin/roles/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createAdminRole = async (payload) => {
+  try {
+    const response = await api.post("/api/admin/roles", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateAdminRole = async (id, payload) => {
+  try {
+    const response = await api.put(`/api/admin/roles/${id}`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteAdminRole = async (id) => {
+  try {
+    const response = await api.delete(`/api/admin/roles/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
 
 // ==========================================
 // 👥 Recruiter Team & Sub-Recruiter API Service

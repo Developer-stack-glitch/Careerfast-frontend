@@ -8,7 +8,7 @@ import {
     Rocket, ChevronRight, Bell, PanelLeftClose, PanelLeftOpen, Command,
     Building2, Briefcase, MessageSquare,
     LogOut, Layers, LayoutDashboard,
-    Users2
+    Users2, ShieldCheck, BarChart3, FileSpreadsheet
 } from 'lucide-react';
 import defaultLogo from '../images/careerfastlogofinal.png';
 import { getImageUrl } from '../utils/getImageUrl';
@@ -16,31 +16,40 @@ import useAdminPermissions from './useAdminPermissions';
 
 const mockNavGroups = [
     {
-        heading: 'Overview & Insights',
+        heading: 'DASHBOARD',
         items: [
-            { id: 'dashboard', module: 'dashboard', title: 'Executive Dashboard', icon: LayoutDashboard, href: '/admin' },
-            { id: 'analytics', module: 'analytics', title: 'Analytics & Reports', icon: Sparkles, href: '/admin/analytics' },
+            { id: 'dashboard-recruiters', module: 'dashboard', title: 'Recruiters', icon: LayoutDashboard, href: '/admin/dashboard/recruiter' },
+            { id: 'dashboard-job-seekers', module: 'dashboard', title: 'Job Seekers', icon: Users, href: '/admin/dashboard/job-seekers' },
         ]
     },
     {
-        heading: 'Recruiter Management',
+        heading: 'RECRUITER MANAGEMENT',
         items: [
-            { id: 'all-plans', module: 'plans', title: 'Subscription management', icon: Layers, href: '/admin/plans' },
             { id: 'all-recruiters', module: 'recruiters', title: 'Recruiters & Companies', icon: Building2, href: '/admin/recruiters' },
-            { id: 'job-post', module: 'job_posts', title: 'Job Listings', icon: Briefcase, href: '/admin/job-post' },
+            { id: 'job-post', module: 'job_posts', title: 'Job Post', icon: Briefcase, href: '/admin/job-post' },
+            { id: 'recruiter-plans', module: 'plans', title: 'Subscriptions', icon: Layers, href: '/admin/plans' },
         ]
     },
     {
-        heading: 'Talent Pool',
+        heading: 'TALENT MANAGEMENT',
         items: [
-            { id: 'job-seekers', module: 'job_seekers', title: 'Job Seekers Directory', icon: Users, href: '/admin/job-seekers' },
+            { id: 'talent-job-seekers', module: 'job_seekers', title: 'Job Seekers', icon: Users, href: '/admin/job-seekers' },
+            { id: 'talent-subscriptions', module: 'talent_subscriptions', title: 'Subscriptions', icon: Layers, href: '/admin/talent/subscriptions' },
         ]
     },
     {
-        heading: 'System & Platform',
+        heading: 'REPORT',
         items: [
-            { id: 'support', module: 'support', title: 'Support & Help Desk', icon: MessageSquare, href: '/admin/support' },
-            { id: 'users', module: 'user_management', title: 'User Management', icon: Users2, href: '/admin/users' },
+            { id: 'report-recruiters', module: 'analytics', title: 'Recruiters', icon: Sparkles, href: '/admin/reports/recruiters' },
+            { id: 'report-job-seekers', module: 'analytics', title: 'Job Seekers', icon: FileSpreadsheet, href: '/admin/reports/job-seekers' },
+        ]
+    },
+    {
+        heading: 'SYSTEM',
+        items: [
+            { id: 'support', module: 'support', title: 'Support Tickets', icon: MessageSquare, href: '/admin/support' },
+            { id: 'users', module: 'user_management', title: 'Users & Roles', icon: Users2, href: '/admin/users' },
+            { id: 'roles-permissions', module: 'user_management', title: 'Roles & Permissions', icon: ShieldCheck, href: '/admin/roles-permissions' },
             { id: 'general', module: 'settings', title: 'Platform Settings', icon: Settings, href: '/admin/general' },
         ]
     }
@@ -56,10 +65,21 @@ const allItems = [
     { id: 'getting-started', title: 'Getting started', icon: Rocket }
 ];
 
+const checkIsActive = (itemHref, currentPath) => {
+    if (!itemHref || !currentPath) return false;
+    if (itemHref === '/admin/dashboard/recruiter' || itemHref === '/admin') {
+        return currentPath === '/admin' || currentPath === '/admin/dashboard/recruiter' || currentPath === '/admin/dashboard/recruiters';
+    }
+    if (itemHref === '/admin/reports/recruiters') {
+        return currentPath === '/admin/reports/recruiters' || currentPath === '/admin/analytics';
+    }
+    return currentPath === itemHref || currentPath.startsWith(itemHref + '/');
+};
+
 const WorkspaceSwitcher = memo(function WorkspaceSwitcher() {
     return (
         <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
-            <Link href="/admin" className="flex items-center justify-center w-full cursor-pointer group no-underline">
+            <Link href="/admin/dashboard/recruiter" className="flex items-center justify-center w-full cursor-pointer group no-underline">
                 <div className="flex items-center gap-2">
                     <img src={getImageUrl(defaultLogo)} alt="CareerFast" className="w-[180px] h-auto object-contain" />
                 </div>
@@ -69,9 +89,7 @@ const WorkspaceSwitcher = memo(function WorkspaceSwitcher() {
 });
 
 const NavItem = memo(function NavItem({ item, currentPath, onLogout }) {
-    const isActive = item.href
-        ? (item.href === '/admin' ? currentPath === '/admin' : currentPath === item.href || currentPath.startsWith(item.href + '/'))
-        : false;
+    const isActive = checkIsActive(item.href, currentPath);
 
     if (item.id === 'logout') {
         return (
@@ -192,13 +210,7 @@ export default function AdminLayout({ children }) {
     }, []);
 
     const activeItem = useMemo(() => {
-        return allItems.find(i => {
-            if (i.href) {
-                if (i.href === '/admin') return pathname === '/admin';
-                return pathname === i.href || pathname.startsWith(i.href + '/');
-            }
-            return false;
-        });
+        return allItems.find(i => checkIsActive(i.href, pathname));
     }, [pathname]);
 
     const activeTitle = activeItem ? activeItem.title : 'Dashboard';
@@ -245,7 +257,7 @@ export default function AdminLayout({ children }) {
                             {isOpen ? <PanelLeftClose className="w-[18px] h-[18px]" /> : <PanelLeftOpen className="w-[18px] h-[18px]" />}
                         </button>
                         <div className="flex items-center text-[13px] text-gray-500">
-                            <Link href="/admin" className="cursor-pointer hover:text-gray-900 text-gray-500 no-underline font-medium">
+                            <Link href="/admin/dashboard/recruiter" className="cursor-pointer hover:text-gray-900 text-gray-500 no-underline font-medium">
                                 Superadmin
                             </Link>
                             <ChevronRight className="w-3.5 h-3.5 mx-2 text-gray-300" />

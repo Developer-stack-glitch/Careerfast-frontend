@@ -379,7 +379,9 @@ export default function RecruiterSubscriptions() {
 
                                         {/* Assigned Plan */}
                                         <td className="py-4 px-4">
-                                            <span className="font-semibold text-gray-900 block">{s.plan_name || 'No Plan'}</span>
+                                            <span className="font-semibold text-gray-900 block">
+                                                {s.plan_name ? (/custom/i.test(s.plan_name) || /user\s*\d+/i.test(s.plan_name) ? 'Custom Plan' : s.plan_name.replace(/\s*-\s*User\s*\d+/i, '').trim()) : 'No Plan'}
+                                            </span>
                                             <span className="text-[11px] text-gray-400 capitalize">{s.plan_type || 'Custom'}</span>
                                         </td>
 

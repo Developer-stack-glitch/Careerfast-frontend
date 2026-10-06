@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { getAdminPlans, changeAdminRecruiterPlan } from '../ApiService/action';
 import CustomPlanModal from './CustomPlanModal';
+import AdminSelect from './AdminSelect';
 import toast from 'react-hot-toast';
 
 export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onSuccess, onOpenCustomPlan }) {
@@ -79,9 +80,23 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
         );
     }
 
-    const currentPlanName = recruiter.plan_name || 'Current Plan';
+    const rawPlanName = recruiter.plan_name || 'Current Plan';
+    const isOnlyJobPostPlan = /only job post/i.test(rawPlanName);
+    const isCustom = /custom/i.test(rawPlanName) || /user\s*\d+/i.test(rawPlanName) || recruiter.plan_type === 'custom';
+    const currentPlanName = isOnlyJobPostPlan ? 'Only Job Post' : isCustom ? 'Custom Plan' : rawPlanName.replace(/\s*-\s*User\s*\d+/i, '').trim();
     const currentExpiryFormatted = recruiter.subscription_expiry ? new Date(recruiter.subscription_expiry).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
     const selectedPlan = plans.find(p => String(p.id) === String(selectedPlanId));
+
+    const planOptions = [
+        ...plans.map((p) => ({
+            value: String(p.id),
+            label: `${p.name} – ₹${Number(p.price).toLocaleString()} / ${p.plan_type} (${p.job_post_limit} Jobs, ${p.active_job_limit} Active)`
+        })),
+        {
+            value: '__custom__',
+            label: '⚙️ Custom Plan — Configure Custom Quotas & Limits...'
+        }
+    ];
 
     const handleSubmit = async (e) => {
         e?.preventDefault();
@@ -121,9 +136,9 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 mt-0">
             <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 max-h-[92vh] overflow-y-auto font-sans">
                 {/* Header */}
-                <div className="flex items-start justify-between pb-4 border-b border-gray-100">
+                <div className="flex items-start justify-between pb-3 border-b border-gray-100">
                     <div>
-                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 mb-0">
                             <CreditCard className="w-5 h-5 text-blue-600" />
                             Change Subscription Plan
                         </h3>
@@ -144,7 +159,7 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                     {/* Current Plan Box */}
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
                         <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Current Plan</span>
-                        <h4 className="text-lg font-bold text-gray-900 mt-1 mb-0">{currentPlanName}</h4>
+                        <h4 className="text-lg font-semibold text-gray-900 mt-1 mb-0">{currentPlanName}</h4>
                         <p className="text-[12px] text-gray-500 mt-0.5 mb-0">Expires: <strong>{currentExpiryFormatted}</strong></p>
                         <div className="mt-3 pt-3 border-t border-gray-200/80 text-[12px] space-y-1 text-gray-600">
                             <div>Job Posts: <strong>{recruiter.job_post_limit || 15}/mo</strong></div>
@@ -158,7 +173,7 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                         <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block">Target Plan</span>
                         {selectedPlan ? (
                             <>
-                                <h4 className="text-lg font-bold text-blue-900 mt-1 mb-0">
+                                <h4 className="text-lg font-semibold text-blue-900 mt-1 mb-0">
                                     {selectedPlan.name} (₹{Number(selectedPlan.price).toLocaleString()})
                                 </h4>
                                 <p className="text-[12px] text-blue-700 mt-0.5">
@@ -188,29 +203,19 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" /> Loading available plans...
                             </div>
                         ) : (
-                            <select
-                                value={selectedPlanId}
-                                onChange={(e) => {
-                                    if (e.target.value === '__custom__') {
+                            <AdminSelect
+                                value={String(selectedPlanId)}
+                                onChange={(val) => {
+                                    if (val === '__custom__') {
                                         handleTriggerCustomPlan();
                                     } else {
-                                        setSelectedPlanId(e.target.value);
+                                        setSelectedPlanId(val);
                                     }
                                 }}
-                                className="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:bg-white focus:border-blue-500"
-                                required
-                            >
-                                <optgroup label="Standard Subscription Plans">
-                                    {plans.map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name} – ₹{Number(p.price).toLocaleString()} / {p.plan_type} ({p.job_post_limit} Jobs, {p.active_job_limit} Active)
-                                        </option>
-                                    ))}
-                                </optgroup>
-                                <optgroup label="Custom Allocation">
-                                    <option value="__custom__">⚙️ Custom Plan — Configure Custom Quotas & Limits...</option>
-                                </optgroup>
-                            </select>
+                                options={planOptions}
+                                placeholder="Select a subscription plan"
+                                className="w-full"
+                            />
                         )}
                     </div>
 
@@ -221,7 +226,7 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                                 <Settings className="w-4 h-4" />
                             </div>
                             <div>
-                                <div className="text-xs font-bold text-amber-950">Want to assign custom limits?</div>
+                                <div className="text-sm font-semibold text-amber-950">Want to assign custom limits?</div>
                                 <div className="text-[11px] text-amber-800">Set tailored limits for jobs, resume views, emails, WhatsApp & Excel downloads.</div>
                             </div>
                         </div>

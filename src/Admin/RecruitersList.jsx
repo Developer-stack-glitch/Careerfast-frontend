@@ -4,26 +4,21 @@ import { useRouter } from 'next/navigation';
 import {
     Building, Users, Search, Plus,
     Eye, CreditCard, Clock, CheckCircle2, XCircle,
-    KeyRound, RefreshCw, X, MoreVertical, Edit3, Sliders,
+    RefreshCw, X, MoreVertical, Edit3,
     ArrowUpDown, AlertTriangle, Check, Mail, MessageSquare, FileSpreadsheet,
-    LogIn, ExternalLink, ChevronDown, Trash2
+    LogIn, ExternalLink, Trash2
 } from 'lucide-react';
 import {
     getAdminRecruiters,
     getAdminPlans,
-    updateAdminRecruiterStatus,
-    toggleAdminRecruiterAutoApprove,
-    changeAdminRecruiterPlan,
-    loginAsRecruiter,
-    deleteAdminRecruiter
+    loginAsRecruiter
 } from '../ApiService/action';
 import AdminDateFilter from './AdminDateFilter';
 import AdminSelect from './AdminSelect';
 import CustomPlanModal from './CustomPlanModal';
 import ChangePlanModal from './ChangePlanModal';
-import ExtendSubscriptionModal from './ExtendSubscriptionModal';
-import ResetPasswordModal from './ResetPasswordModal';
 import DeleteRecruiterModal from './DeleteRecruiterModal';
+import RecruiterStatusModal from './RecruiterStatusModal';
 import { getImageUrl } from '../utils/getImageUrl';
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
@@ -47,19 +42,26 @@ const getCompanyAvatarGradient = (name = '') => {
     return gradients[index];
 };
 
-const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setCustomPlanRecruiter, handleToggleStatus, handleDeleteRecruiter, handleLoginAsRecruiter, onClose, isBottom }) => {
+const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, handleToggleStatus, handleDeleteRecruiter, handleLoginAsRecruiter, onClose }) => {
     const ref = useRef(null);
-    const [openUp, setOpenUp] = useState(isBottom);
+    const [openUp, setOpenUp] = useState(false);
 
     React.useLayoutEffect(() => {
         if (ref.current) {
-            const rect = ref.current.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - rect.bottom;
-            if (spaceBelow < 20 || isBottom) {
+            const trigger = ref.current.parentElement;
+            const triggerRect = trigger ? trigger.getBoundingClientRect() : ref.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - triggerRect.bottom;
+            const spaceAbove = triggerRect.top;
+            const menuHeight = ref.current.offsetHeight || 230;
+
+            // Only open upward if space below is too small (< menuHeight) AND there is sufficient space above
+            if (spaceBelow < menuHeight + 15 && spaceAbove > menuHeight) {
                 setOpenUp(true);
+            } else {
+                setOpenUp(false);
             }
         }
-    }, [isBottom]);
+    }, []);
 
     useEffect(() => {
         const handler = (e) => {
@@ -86,11 +88,7 @@ const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, setCustomPlanRec
             {/* 2. Edit Plan */}
             <button
                 onClick={() => {
-                    if (rec.plan_type === 'custom' || /custom/i.test(rec.plan_name || '')) {
-                        setCustomPlanRecruiter(rec);
-                    } else {
-                        setChangePlanRecruiter(rec);
-                    }
+                    setChangePlanRecruiter(rec);
                     onClose();
                 }}
                 className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
@@ -140,7 +138,6 @@ export default function RecruitersList() {
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openDropdown, setOpenDropdown] = useState(null);
-    const [openPlanDropdown, setOpenPlanDropdown] = useState(null);
     const [sortConfig, setSortConfig] = useState({ key: 'start_date', direction: 'desc' });
 
     // Filters
@@ -152,9 +149,8 @@ export default function RecruitersList() {
 
     // Modals
     const [changePlanRecruiter, setChangePlanRecruiter] = useState(null);
-    const [extendRecruiter, setExtendRecruiter] = useState(null);
-    const [resetPassRecruiter, setResetPassRecruiter] = useState(null);
     const [customPlanRecruiter, setCustomPlanRecruiter] = useState(null);
+    const [statusModalRecruiter, setStatusModalRecruiter] = useState(null);
     const [deleteRecruiterModal, setDeleteRecruiterModal] = useState(null);
 
     // Horizontal scroll state for responsive sticky column shrinking
@@ -208,9 +204,6 @@ export default function RecruitersList() {
 
     useEffect(() => {
         const handleClickOutside = (e) => {
-            if (!e.target.closest('.plan-dropdown-container')) {
-                setOpenPlanDropdown(null);
-            }
             if (!e.target.closest('.action-dropdown-container')) {
                 setOpenDropdown(null);
             }
@@ -305,34 +298,8 @@ export default function RecruitersList() {
         return sortable;
     }, [recruiters, sortConfig]);
 
-    const handleToggleStatus = async (recruiter) => {
-        try {
-            const nextActive = recruiter.user_active ? 0 : 1;
-            const res = await updateAdminRecruiterStatus(recruiter.recruiter_id, { is_active: nextActive });
-            if (res?.data?.success) {
-                toast.success(`Recruiter account ${nextActive ? 'activated' : 'suspended'}.`);
-                loadData();
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to update status.");
-        }
-    };
-
-    const handleToggleAutoApprove = async (rec) => {
-        try {
-            const newStatus = rec.auto_approve ? 0 : 1;
-            const res = await toggleAdminRecruiterAutoApprove(rec.recruiter_id, { auto_approve: newStatus });
-            if (res.data?.success) {
-                toast.success(res.data.message || `Auto approve ${newStatus ? 'enabled' : 'disabled'} successfully.`);
-                setRecruiters(recruiters.map(r => r.recruiter_id === rec.recruiter_id ? { ...r, auto_approve: newStatus } : r));
-            } else {
-                toast.error(res.data?.message || "Failed to update auto approve status.");
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to update auto approve status.");
-        }
+    const handleToggleStatus = (recruiter) => {
+        setStatusModalRecruiter(recruiter);
     };
 
     const handleLoginAsRecruiter = async (rec) => {
@@ -356,23 +323,6 @@ export default function RecruitersList() {
 
     const handleDeleteRecruiter = (rec) => {
         setDeleteRecruiterModal(rec);
-    };
-
-    const handleQuickChangePlan = async (rec, planId) => {
-        try {
-            const res = await changeAdminRecruiterPlan(rec.recruiter_id, {
-                new_plan_id: planId,
-                effective_type: 'immediately',
-                reason: 'Quick plan change via table dropdown'
-            });
-            if (res?.data?.success) {
-                toast.success(res.data.message || "Plan updated successfully!");
-                loadData();
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error(err?.response?.data?.message || "Failed to change plan.");
-        }
     };
 
     // Format dates cleanly without wrapping
@@ -414,7 +364,7 @@ export default function RecruitersList() {
                             <Building className="w-5 h-5" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight mb-0">
+                            <h1 className="text-2xl font-semibold text-slate-900 tracking-tight mb-0">
                                 Recruiters & Companies
                             </h1>
                             <p className="text-xs text-slate-500 mt-0.5 mb-0">
@@ -607,14 +557,13 @@ export default function RecruitersList() {
                                 <tr className="border-b border-slate-200/80 bg-slate-50 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
                                     <th className="sticky top-0 left-0 z-30 bg-slate-50 py-3.5 px-4 w-[210px] min-w-[210px]">Company</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[185px]">Recruiter</th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[125px]">Plan & Cycle</th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[155px]">Job Posts</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px]">Sub-Recruiters</th>
+                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[155px]">Job Posts</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px]">Resume View</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[125px]">Resume Download</th>
+                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[120px]">Excel Export</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[110px]">Email</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[110px]">WhatsApp</th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[120px]">Excel Export</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[130px]">Validity</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 text-right w-[65px]">Actions</th>
                                 </tr>
@@ -709,7 +658,7 @@ export default function RecruitersList() {
                 ) : (
                     <div
                         onScroll={handleTableScroll}
-                        className="overflow-x-auto max-h-[calc(100vh-230px)] overflow-y-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar:vertical]:w-0 [&::-webkit-scrollbar-track]:bg-slate-100/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 pb-2 relative scroll-smooth"
+                        className="overflow-x-auto min-h-[380px] max-h-[calc(100vh-230px)] overflow-y-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar:vertical]:w-0 [&::-webkit-scrollbar-track]:bg-slate-100/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 pb-28 relative scroll-smooth"
                     >
                         <table className="w-full text-left border-collapse min-w-[1620px]">
                             <thead className="sticky top-0 z-20 bg-slate-50 shadow-xs">
@@ -729,29 +678,27 @@ export default function RecruitersList() {
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[185px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'recruiter', direction: sortConfig.key === 'recruiter' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Recruiter <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[125px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'plan', direction: sortConfig.key === 'plan' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Plan & Cycle <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'sub_recruiters', direction: sortConfig.key === 'sub_recruiters' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Sub-Recruiters <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[155px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'job_post', direction: sortConfig.key === 'job_post' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Job Posts <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'sub_recruiters', direction: sortConfig.key === 'sub_recruiters' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Sub-Recruiters <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
-                                    </th>
+
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'resume_views', direction: sortConfig.key === 'resume_views' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Resume View <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[125px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'resume_downloads', direction: sortConfig.key === 'resume_downloads' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Resume Download <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
+                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[120px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'excel', direction: sortConfig.key === 'excel' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Excel Export <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    </th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[110px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'email', direction: sortConfig.key === 'email' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Email <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[110px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'whatsapp', direction: sortConfig.key === 'whatsapp' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">WhatsApp <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
-                                    </th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[120px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'excel', direction: sortConfig.key === 'excel' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Excel Export <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[130px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'expiry_date', direction: sortConfig.key === 'expiry_date' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Validity <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
@@ -761,7 +708,6 @@ export default function RecruitersList() {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {sortedRecruiters.map((rec, idx) => {
-                                    const isBottom = idx >= Math.max(1, sortedRecruiters.length - 4) || (sortedRecruiters.length <= 6 && idx >= 2);
                                     const recruiterName = rec.recruiter_name?.trim() || `${rec.first_name || ''} ${rec.last_name || ''}`.trim() || 'Recruiter';
                                     const companyName = rec.company_name || 'Individual Recruiter';
                                     const hasPlan = Boolean(rec.plan_name && rec.plan_name !== 'No Plan');
@@ -770,8 +716,6 @@ export default function RecruitersList() {
                                     const jobPostsUsed = Number(rec.job_posts_used || 0);
                                     const jobPostLimit = Number(rec.job_post_limit || 0);
                                     const jobPercent = jobPostLimit > 0 ? Math.round((jobPostsUsed / jobPostLimit) * 100) : 0;
-                                    const activeJobsCount = Number(rec.active_jobs_count || 0);
-                                    const activeJobLimit = Number(rec.active_job_limit || 0);
 
                                     const resumeUsed = Number(rec.resume_views_used || 0);
                                     const resumeLimit = Number(rec.resume_view_limit || 0);
@@ -798,10 +742,8 @@ export default function RecruitersList() {
                                     const excelPercent = excelLimit > 0 ? Math.round((excelUsed / excelLimit) * 100) : 0;
                                     const excelLeft = Math.max(0, excelLimit - excelUsed);
 
-                                    const isSubActive = rec.subscription_status === 'Active';
                                     const isSubExpired = rec.subscription_status === 'Expired';
                                     const isSubSuspended = rec.subscription_status === 'Suspended';
-                                    const isSubTrial = rec.subscription_status === 'Trial';
                                     const isUserActive = Boolean(rec.user_active);
 
                                     const daysRemaining = getDaysRemaining(rec.subscription_expiry);
@@ -820,14 +762,21 @@ export default function RecruitersList() {
                                     const isPremium = /premium|enterprise|vip|gold/i.test(planName);
                                     const isStandard = /standard|silver|growth|pro/i.test(planName);
 
+                                    const isAutoApprove = Boolean(
+                                        rec.auto_approve === 1 ||
+                                        rec.auto_approve === true ||
+                                        rec.auto_approve === '1' ||
+                                        (rec.auto_approve?.data && rec.auto_approve.data[0] === 1)
+                                    );
+
                                     return (
                                         <tr
                                             key={rec.recruiter_id}
-                                            className="hover:bg-slate-50/75 transition-colors group"
+                                            className={`hover:bg-slate-50/75 transition-colors group/row relative ${openDropdown === rec.recruiter_id ? 'z-40' : 'hover:z-30'}`}
                                         >
                                             {/* 1. Company (Shrinks smoothly while keeping name & logo visible) */}
                                             <td
-                                                className={`sticky left-0 z-10 bg-white group-hover:bg-slate-50 transition-all duration-300 py-3.5 ${isScrolledX ? 'w-[155px] min-w-[155px] px-3' : 'w-[210px] min-w-[210px] px-4'
+                                                className={`sticky left-0 z-10 group-hover/row:z-30 bg-white group-hover/row:bg-slate-50 transition-all duration-300 py-3.5 ${isScrolledX ? 'w-[155px] min-w-[155px] px-3' : 'w-[210px] min-w-[210px] px-4'
                                                     }`}
                                             >
                                                 <div className={`flex items-center ${isScrolledX ? 'gap-2' : 'gap-3'} transition-all duration-300`}>
@@ -837,6 +786,13 @@ export default function RecruitersList() {
                                                         className="relative shrink-0 cursor-pointer"
                                                         title={companyName}
                                                     >
+                                                        {/* Status Indicator (Green for Active, Red for Suspended) on top-right corner */}
+                                                        <span
+                                                            className={`absolute -top-1 -right-1 z-10 w-2.5 h-2.5 rounded-full ring-2 ring-white shadow-xs ${isUserActive && !isSubSuspended ? 'bg-emerald-500' : 'bg-rose-500'
+                                                                }`}
+                                                            title={isUserActive && !isSubSuspended ? 'Active' : 'Suspended'}
+                                                        />
+
                                                         {(() => {
                                                             const logoSrc = rec.company_logo || rec.profile_image || rec.user_avatar;
                                                             return logoSrc ? (
@@ -862,60 +818,44 @@ export default function RecruitersList() {
                                                         })()}
                                                     </div>
 
-                                                    {/* Company Name & Status */}
+                                                    {/* Company Name & Plan */}
                                                     <div className="min-w-0 flex-1 relative group/comp">
                                                         <div
                                                             onClick={() => router.push(`/admin/recruiters/${rec.recruiter_id}`)}
-                                                            className={`font-bold text-slate-900 hover:text-blue-600 cursor-pointer transition-all duration-300 truncate ${isScrolledX ? 'text-xs max-w-[95px]' : 'text-sm max-w-[145px]'
+                                                            className={`font-semibold text-slate-900 hover:text-blue-600 cursor-pointer transition-all duration-300 truncate ${isScrolledX ? 'text-xs max-w-[105px]' : 'text-sm max-w-[155px]'
                                                                 }`}
-                                                            title={companyName}
                                                         >
                                                             {companyName}
                                                         </div>
 
-                                                        {/* Elegant Floating Tooltip on Hover */}
-                                                        <div className="pointer-events-none absolute left-0 bottom-full mb-2 z-[100] hidden group-hover/comp:flex flex-col items-start bg-slate-900 text-white rounded-xl py-1.5 px-3 shadow-2xl shadow-slate-900/30 border border-slate-700/60 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150">
+                                                        {/* Beautiful Floating Tooltip (No Auto-Approver Badge) */}
+                                                        <div className={`pointer-events-none absolute left-0 ${idx === 0 ? 'top-full mt-2' : 'bottom-full mb-2'} z-50 hidden group-hover/comp:flex flex-col items-start bg-slate-900 text-white rounded-xl py-1.5 px-3 shadow-2xl shadow-slate-950/40 border border-slate-700/80 whitespace-nowrap animate-in fade-in zoom-in-95 duration-150`}>
                                                             <span className="text-xs font-medium text-white">{companyName}</span>
                                                             {rec.email && (
                                                                 <span className="text-[10.5px] text-slate-300 font-normal">{rec.email}</span>
                                                             )}
-                                                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-slate-900" />
+                                                            <div className={`absolute ${idx === 0 ? 'bottom-full left-4 -mb-1 border-b-slate-900' : 'top-full left-4 -mt-1 border-t-slate-900'} border-4 border-transparent`} />
                                                         </div>
 
-                                                        {/* Status with Indication */}
-                                                        <div className={`flex items-center gap-1 mt-0.5 whitespace-nowrap transition-all duration-300 ${isScrolledX ? 'text-[10px]' : 'text-[11px]'
-                                                            }`}>
-                                                            {!isUserActive ? (
-                                                                <>
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />
-                                                                    <span className="font-semibold text-rose-600">Suspended</span>
-                                                                </>
-                                                            ) : isSubActive ? (
-                                                                <>
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                                                    <span className="font-semibold text-emerald-600">Active</span>
-                                                                </>
-                                                            ) : isSubTrial ? (
-                                                                <>
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                                                                    <span className="font-semibold text-blue-600">Trial</span>
-                                                                </>
-                                                            ) : isSubExpired ? (
-                                                                <>
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                                                                    <span className="font-semibold text-amber-600">Expired</span>
-                                                                </>
-                                                            ) : isSubSuspended ? (
-                                                                <>
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                                                                    <span className="font-semibold text-amber-600">Suspended</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
-                                                                    <span className="font-medium text-slate-500">No Plan</span>
-                                                                </>
-                                                            )}
+                                                        {/* Plan Badge (Static display, no changing option) */}
+                                                        <div className="mt-1 flex items-center">
+                                                            <span
+                                                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold tracking-tight border-1 ${isOnlyJobPostPlan
+                                                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90'
+                                                                    : isCustom
+                                                                        ? 'bg-amber-50 text-amber-800 border-amber-200/90'
+                                                                        : isPremium
+                                                                            ? 'bg-purple-50 text-purple-800 border-purple-200/90'
+                                                                            : isStandard
+                                                                                ? 'bg-blue-50 text-blue-800 border-blue-200/90'
+                                                                                : hasPlan
+                                                                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90'
+                                                                                    : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                                    }`}
+                                                                title={`Plan: ${displayPlanName}`}
+                                                            >
+                                                                {displayPlanName}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -934,139 +874,6 @@ export default function RecruitersList() {
                                                     <span className="truncate">
                                                         {rec.last_active ? `Active ${formatRelativeTime(rec.last_active)}` : 'No recent login'}
                                                     </span>
-                                                </div>
-                                            </td>
-
-                                            {/* 3. Plan & Cycle */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="relative inline-block plan-dropdown-container">
-                                                    {hasPlan ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setOpenPlanDropdown(openPlanDropdown === idx ? null : idx)}
-                                                            className={`group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer select-none transition-all duration-150 border-1 shadow-2xs hover:shadow-xs active:scale-95 ${isOnlyJobPostPlan
-                                                                ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100 hover:border-emerald-300'
-                                                                : isCustom
-                                                                    ? 'bg-amber-50 text-amber-800 border-amber-200/90 hover:bg-amber-100 hover:border-amber-300'
-                                                                    : isPremium
-                                                                        ? 'bg-purple-50 text-purple-800 border-purple-200/90 hover:bg-purple-100 hover:border-purple-300'
-                                                                        : isStandard
-                                                                            ? 'bg-blue-50 text-blue-800 border-blue-200/90 hover:bg-blue-100 hover:border-blue-300'
-                                                                            : 'bg-emerald-50 text-emerald-800 border-emerald-200/90 hover:bg-emerald-100 hover:border-emerald-300'
-                                                                }`}
-                                                            title="Click to switch or change plan"
-                                                        >
-                                                            <span>{displayPlanName}</span>
-                                                            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${openPlanDropdown === idx ? 'rotate-180 text-slate-800' : 'opacity-60 group-hover:opacity-100'}`} />
-                                                        </button>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setOpenPlanDropdown(openPlanDropdown === idx ? null : idx)}
-                                                            className="group inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 border-1 border-slate-200 cursor-pointer select-none hover:bg-slate-200 shadow-2xs active:scale-95"
-                                                            title="Click to assign a plan"
-                                                        >
-                                                            <span>No Plan</span>
-                                                            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${openPlanDropdown === idx ? 'rotate-180 text-slate-800' : 'opacity-60 group-hover:opacity-100'}`} />
-                                                        </button>
-                                                    )}
-
-                                                    {/* Plan Dropdown */}
-                                                    {openPlanDropdown === idx && (
-                                                        <div
-                                                            className="absolute left-0 mt-1 w-44 bg-white rounded-xl shadow-2xl border border-gray-100 py-1.5 z-[100] whitespace-normal"
-                                                            style={{
-                                                                bottom: isBottom ? '100%' : 'auto',
-                                                                top: isBottom ? 'auto' : '100%',
-                                                                marginBottom: isBottom ? '0.25rem' : '0'
-                                                            }}
-                                                        >
-                                                            <div className="px-3.5 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50 mb-1">
-                                                                Change Plan
-                                                            </div>
-                                                            {plans.filter(p => p.plan_type !== 'Custom' && !p.name.toLowerCase().includes('custom')).map(p => (
-                                                                <button
-                                                                    key={p.id}
-                                                                    onClick={() => { setOpenPlanDropdown(null); handleQuickChangePlan(rec, p.id); }}
-                                                                    className="block w-full text-left px-3.5 py-1.5 text-xs text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
-                                                                >
-                                                                    {p.name}
-                                                                </button>
-                                                            ))}
-                                                            <div className="border-t border-gray-100 my-1"></div>
-                                                            <div
-                                                                onClick={() => { setOpenPlanDropdown(null); setCustomPlanRecruiter(rec); }}
-                                                                className="group/custom relative flex items-center justify-between w-full text-left px-3.5 py-1.5 text-xs hover:bg-blue-50 transition-colors cursor-pointer"
-                                                            >
-                                                                <button className="text-slate-700 group-hover/custom:text-blue-700 flex-1 text-left">
-                                                                    Custom
-                                                                </button>
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); setOpenPlanDropdown(null); setCustomPlanRecruiter(rec); }}
-                                                                    className="p-1 hover:bg-blue-100 rounded text-blue-600 transition-colors ml-2 shadow-sm"
-                                                                    title="Edit Custom Limits"
-                                                                >
-                                                                    <Edit3 className="w-3.5 h-3.5" />
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
-
-                                            {/* 4. Job Posts (Primary Quota for All Plans) */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                <div className="text-xs">
-                                                    <span className="font-bold text-slate-800">{jobPostsUsed}</span>
-                                                    <span className="text-slate-400 font-normal"> / {jobPostLimit} Jobs</span>
-                                                </div>
-                                                <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all ${jobPercent >= 90
-                                                            ? 'bg-rose-500'
-                                                            : jobPercent >= 75
-                                                                ? 'bg-amber-500'
-                                                                : 'bg-blue-600'
-                                                            }`}
-                                                        style={{ width: `${Math.min(jobPercent, 100)}%` }}
-                                                    />
-                                                </div>
-                                                <div className="text-[10px] text-slate-400 mt-1">
-                                                    <span className="font-semibold text-slate-600">{activeJobsCount}</span> active {activeJobLimit > 0 ? `(${activeJobLimit} max)` : ''}
-                                                </div>
-                                                <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
-                                                    <span className="text-slate-400">Last post: </span>
-                                                    <span className="text-slate-600 font-semibold">
-                                                        {rec.last_job_posted ? formatRelativeTime(rec.last_job_posted) : 'None yet'}
-                                                    </span>
-                                                </div>
-                                                <div className="mt-2 flex items-center">
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleToggleAutoApprove(rec);
-                                                        }}
-                                                        className={`group inline-flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all duration-200 cursor-pointer border-1 select-none shadow-2xs hover:shadow-xs active:scale-95 ${rec.auto_approve === 1
-                                                            ? 'bg-emerald-50/90 text-emerald-800 border-emerald-300/80 hover:bg-emerald-100 hover:border-emerald-400'
-                                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
-                                                            }`}
-                                                        title={rec.auto_approve === 1 ? 'Auto Approve is currently ON (click to turn OFF)' : 'Auto Approve is currently OFF (click to turn ON)'}
-                                                    >
-                                                        {/* Modern Toggle Switch Slider */}
-                                                        <span
-                                                            className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${rec.auto_approve === 1 ? 'bg-emerald-500' : 'bg-slate-300'
-                                                                }`}
-                                                        >
-                                                            <span
-                                                                className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-xs transition-transform duration-200 ease-in-out ${rec.auto_approve === 1 ? 'translate-x-3.5' : 'translate-x-0.5'
-                                                                    }`}
-                                                            />
-                                                        </span>
-                                                        <span className="text-[10px] tracking-tight">
-                                                            Auto Approve: <span className={`font-bold ${rec.auto_approve === 1 ? 'text-emerald-700' : 'text-slate-500'}`}>{rec.auto_approve === 1 ? 'ON' : 'OFF'}</span>
-                                                        </span>
-                                                    </button>
                                                 </div>
                                             </td>
 
@@ -1096,6 +903,41 @@ export default function RecruitersList() {
                                                 ) : (
                                                     <span className="text-slate-300 text-sm font-semibold select-none">—</span>
                                                 )}
+                                            </td>
+
+                                            {/* 4. Job Posts (Primary Quota for All Plans) */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="text-xs">
+                                                        <span className="font-bold text-slate-800">{jobPostsUsed}</span>
+                                                        <span className="text-slate-400 font-normal"> / {jobPostLimit} Jobs</span>
+                                                    </div>
+                                                    {isAutoApprove && (
+                                                        <span
+                                                            className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[11px] font-semibold shrink-0 shadow-2xs select-none cursor-help"
+                                                            title="Auto Approver (A): Posted jobs are approved automatically without admin review"
+                                                        >
+                                                            A
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="w-24 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all ${jobPercent >= 90
+                                                            ? 'bg-rose-500'
+                                                            : jobPercent >= 75
+                                                                ? 'bg-amber-500'
+                                                                : 'bg-blue-600'
+                                                            }`}
+                                                        style={{ width: `${Math.min(jobPercent, 100)}%` }}
+                                                    />
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-0.5 font-medium">
+                                                    <span className="text-slate-400">Last post: </span>
+                                                    <span className="text-slate-600 font-semibold">
+                                                        {rec.last_job_posted ? formatRelativeTime(rec.last_job_posted) : 'None yet'}
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {/* 7. Resume View (Custom Plan Only) */}
@@ -1147,6 +989,35 @@ export default function RecruitersList() {
                                                         </div>
                                                         <div className="text-[10px] text-purple-700 font-medium mt-1">
                                                             {Math.max(0, resumeDownloadLimit - resumeDownloadsUsed)} left
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
+                                                )}
+                                            </td>
+
+                                            {/* 11. Excel Export (Custom Plan Only) */}
+                                            <td className="py-3.5 px-4 whitespace-nowrap">
+                                                {isCustom && excelLimit > 0 ? (
+                                                    <>
+                                                        <div className="flex items-center gap-1.5 text-xs">
+                                                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                            <span className="font-bold text-slate-800">{excelUsed}</span>
+                                                            <span className="text-slate-400 font-normal"> / {excelLimit}</span>
+                                                        </div>
+                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all ${excelPercent >= 90
+                                                                    ? 'bg-rose-500'
+                                                                    : excelPercent >= 75
+                                                                        ? 'bg-amber-500'
+                                                                        : 'bg-emerald-500'
+                                                                    }`}
+                                                                style={{ width: `${Math.min(excelPercent, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <div className="text-[10px] text-emerald-700 font-medium mt-1">
+                                                            {excelLeft} left
                                                         </div>
                                                     </>
                                                 ) : (
@@ -1212,35 +1083,6 @@ export default function RecruitersList() {
                                                 )}
                                             </td>
 
-                                            {/* 11. Excel Export (Custom Plan Only) */}
-                                            <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom && excelLimit > 0 ? (
-                                                    <>
-                                                        <div className="flex items-center gap-1.5 text-xs">
-                                                            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                                            <span className="font-bold text-slate-800">{excelUsed}</span>
-                                                            <span className="text-slate-400 font-normal"> / {excelLimit}</span>
-                                                        </div>
-                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all ${excelPercent >= 90
-                                                                    ? 'bg-rose-500'
-                                                                    : excelPercent >= 75
-                                                                        ? 'bg-amber-500'
-                                                                        : 'bg-emerald-500'
-                                                                    }`}
-                                                                style={{ width: `${Math.min(excelPercent, 100)}%` }}
-                                                            />
-                                                        </div>
-                                                        <div className="text-[10px] text-emerald-700 font-medium mt-1">
-                                                            {excelLeft} left
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
-                                                )}
-                                            </td>
-
                                             {/* 12. Validity (Start & Expiry cleanly unified) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
                                                 <div className="text-xs font-semibold text-slate-800">
@@ -1275,12 +1117,10 @@ export default function RecruitersList() {
                                                             rec={rec}
                                                             router={router}
                                                             setChangePlanRecruiter={setChangePlanRecruiter}
-                                                            setCustomPlanRecruiter={setCustomPlanRecruiter}
                                                             handleToggleStatus={handleToggleStatus}
                                                             handleDeleteRecruiter={handleDeleteRecruiter}
                                                             handleLoginAsRecruiter={handleLoginAsRecruiter}
                                                             onClose={() => setOpenDropdown(null)}
-                                                            isBottom={isBottom}
                                                         />
                                                     )}
                                                 </div>
@@ -1326,26 +1166,19 @@ export default function RecruitersList() {
                 onSuccess={loadData}
             />
 
-            {/* Extend Subscription Modal */}
-            <ExtendSubscriptionModal
-                recruiter={extendRecruiter}
-                isOpen={Boolean(extendRecruiter)}
-                onClose={() => setExtendRecruiter(null)}
-                onSuccess={loadData}
-            />
-
-            {/* Reset Password Modal */}
-            <ResetPasswordModal
-                recruiter={resetPassRecruiter}
-                isOpen={Boolean(resetPassRecruiter)}
-                onClose={() => setResetPassRecruiter(null)}
-            />
-
             {/* Delete Confirmation Modal */}
             <DeleteRecruiterModal
                 recruiter={deleteRecruiterModal}
                 isOpen={Boolean(deleteRecruiterModal)}
                 onClose={() => setDeleteRecruiterModal(null)}
+                onSuccess={loadData}
+            />
+
+            {/* Suspend / Activate Status Modal */}
+            <RecruiterStatusModal
+                recruiter={statusModalRecruiter}
+                isOpen={Boolean(statusModalRecruiter)}
+                onClose={() => setStatusModalRecruiter(null)}
                 onSuccess={loadData}
             />
         </div>

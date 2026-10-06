@@ -48,7 +48,7 @@ export default function SuperadminLogin() {
                 const user = JSON.parse(storedDetails);
                 if (user?.role_id === 1 || user?.role_name === 'SUPER-ADMIN' || user?.role_name === 'SUPERADMIN') {
                     // Already logged in as Superadmin, redirect directly to dashboard
-                    window.location.href = '/admin';
+                    window.location.href = '/admin/dashboard/recruiter';
                     return;
                 }
             }
@@ -176,9 +176,9 @@ export default function SuperadminLogin() {
             const name = superadminDetails?.first_name ? ` ${superadminDetails.first_name}` : '';
             showToastNotification(`Authentication successful! Welcome back, Superadmin${name}.`, 'success');
 
-            // Seamless redirect to Superadmin Dashboard (/admin)
+            // Seamless redirect to Superadmin Dashboard (/admin/dashboard/recruiter)
             setTimeout(() => {
-                window.location.href = '/admin';
+                window.location.href = '/admin/dashboard/recruiter';
             }, 700);
 
         } catch (err) {

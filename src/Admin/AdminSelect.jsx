@@ -21,7 +21,7 @@ export default function AdminSelect({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const selectedOption = options.find(opt => opt.value === value);
+    const selectedOption = options.find(opt => String(opt.value) === String(value));
     const isFiltered = Boolean(value) && value !== 'all' && value !== '';
 
     return (
@@ -41,10 +41,10 @@ export default function AdminSelect({
 
             {/* Dropdown Menu */}
             {isOpen && (
-                <div className="absolute left-0 right-auto mt-1.5 min-w-full w-max bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute left-0 right-0 mt-1.5 min-w-full w-full bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="max-h-56 overflow-y-auto hide-scrollbar">
                         {options.map((option) => {
-                            const isSelected = value === option.value;
+                            const isSelected = String(value) === String(option.value);
                             return (
                                 <button
                                     key={option.value}
@@ -53,12 +53,12 @@ export default function AdminSelect({
                                         onChange(option.value);
                                         setIsOpen(false);
                                     }}
-                                    className={`w-full flex items-center justify-between gap-3 px-3.5 py-2 text-[13px] text-left transition-colors ${isSelected
+                                    className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 text-[13px] text-left transition-colors ${isSelected
                                         ? 'bg-blue-50/80 text-blue-700 font-semibold'
                                         : 'text-gray-700 hover:bg-gray-50'
                                         }`}
                                 >
-                                    <span className="whitespace-nowrap">{option.label}</span>
+                                    <span className="truncate">{option.label}</span>
                                     {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
                                 </button>
                             );
