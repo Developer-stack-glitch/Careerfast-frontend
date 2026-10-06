@@ -274,22 +274,47 @@ export default function PostCourses() {
         }
     };
 
-    const handleEdit = (course) => {
-        const cContent = course.content || INITIAL_FORM_STATE.content;
-        if (typeof cContent.tools === 'string') {
-            cContent.tools = cContent.tools.split(",").map(s => ({ name: s.trim(), logo: "" })).filter(t => t.name);
-        } else if (Array.isArray(cContent.tools)) {
-            // Map any raw strings to objects for uniform UI handling
-            cContent.tools = cContent.tools.map(t => typeof t === 'string' ? { name: t, logo: "" } : t);
-        }
+    const handleEdit = async (course) => {
+        setLoading(true);
+        try {
+            let fullCourse = course;
+            try {
+                const res = await fetch(`${API_URL}/api/courses/${course.slug || course.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data) {
+                        fullCourse = data;
+                    }
+                }
+            } catch (fetchErr) {
+                console.warn("Failed to fetch full course by slug", fetchErr);
+            }
 
-        setCourseData({
-            ...course,
-            imageBase64: course.image, // Map DB 'image' to form 'imageBase64'
-            content: cContent
-        });
-        setCurrentCourseId(course.id);
-        setFormMode("edit");
+            const cContent = fullCourse.content
+                ? (typeof fullCourse.content === 'string' ? JSON.parse(fullCourse.content) : JSON.parse(JSON.stringify(fullCourse.content)))
+                : JSON.parse(JSON.stringify(INITIAL_FORM_STATE.content));
+
+            if (typeof cContent.tools === 'string') {
+                cContent.tools = cContent.tools.split(",").map(s => ({ name: s.trim(), logo: "" })).filter(t => t.name);
+            } else if (Array.isArray(cContent.tools)) {
+                cContent.tools = cContent.tools.map(t => typeof t === 'string' ? { name: t, logo: "" } : t);
+            } else {
+                cContent.tools = [];
+            }
+
+            setCourseData({
+                ...fullCourse,
+                imageBase64: fullCourse.image,
+                content: cContent
+            });
+            setCurrentCourseId(fullCourse.id);
+            setFormMode("edit");
+        } catch (err) {
+            console.error("Error setting up edit form:", err);
+            toast.error("Failed to restore course details");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleDelete = (id) => {
@@ -891,7 +916,7 @@ export default function PostCourses() {
                                                     }
                                                 }} style={{ padding: '8px', border: '1px solid #ddd', borderRadius: '4px', width: '100%' }} />
                                                 {(t.logo) && (
-                                                    <div style={{ width: '40px', height: '40px', flexShrink: 0, borderRadius: '4px', overflow: 'hidden', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
+                                                    <div style={{ width: '64px', height: '42px', flexShrink: 0, borderRadius: '6px', overflow: 'hidden', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', padding: '4px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
                                                         <img src={t.logo} alt="logo preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                                                     </div>
                                                 )}
