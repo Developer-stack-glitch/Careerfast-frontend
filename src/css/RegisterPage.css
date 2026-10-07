@@ -247,13 +247,21 @@
 
 .cf-register-form-column .cf-native-input {
   flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
   font-size: 13.5px;
   color: var(--cf-slate-900);
   font-family: inherit;
   width: 100%;
+}
+
+.cf-register-form-column .cf-native-input:focus,
+.cf-register-form-column .cf-native-input:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .cf-register-form-column .cf-native-input::placeholder {
@@ -269,18 +277,37 @@
   transition: background-color 5000s ease-in-out 0s;
 }
 
-.cf-register-form-column .cf-antd-pass {
+.cf-register-form-column .cf-antd-pass,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-focused,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper:focus,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper:focus-within,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless:focus,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless:focus-within,
+.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless.ant-input-affix-wrapper-focused {
   flex: 1;
   width: 100%;
   padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   background: transparent !important;
 }
 
-.cf-register-form-column .cf-antd-pass input {
+.cf-register-form-column .cf-antd-pass input,
+.cf-register-form-column .cf-antd-pass input:focus,
+.cf-register-form-column .cf-antd-pass input:focus-visible,
+.cf-register-form-column .cf-antd-pass .ant-input,
+.cf-register-form-column .cf-antd-pass .ant-input:focus,
+.cf-register-form-column .cf-antd-pass .ant-input:focus-visible {
   font-size: 13.5px !important;
   color: var(--cf-slate-900) !important;
   font-family: inherit !important;
   background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .cf-register-form-column .cf-antd-pass input::placeholder {

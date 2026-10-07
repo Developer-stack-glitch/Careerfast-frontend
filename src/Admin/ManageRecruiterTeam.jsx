@@ -249,7 +249,7 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                             <Users className="w-5 h-5" />
                         </div>
                         <div>
-                            <h2 className="text-base font-bold text-slate-900 tracking-tight mb-0">
+                            <h2 className="text-lg font-semibold text-slate-900 tracking-tight mb-0">
                                 Sub-Recruiters & Team Seats
                             </h2>
                             <p className="text-xs text-slate-500 mt-0.5 mb-0">
@@ -290,9 +290,9 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                 {/* Quota & Stat Cards Grid */}
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3.5">
                     {/* Card 1: Allocation Progress */}
-                    <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/70 flex flex-col justify-between">
+                    <div className="bg-slate-50/80 p-4 rounded-xl flex flex-col justify-between">
                         <div className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-slate-700">Team Seat Allocation</span>
+                            <span className="font-semibold text-sm text-slate-700">Team Seat Allocation</span>
                             <span className="font-bold text-slate-900 bg-white px-2 py-0.5 rounded-md border border-slate-200/60 shadow-xs">
                                 {stats.total_members} / {stats.sub_recruiter_limit} Seats
                             </span>
@@ -316,9 +316,9 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                     </div>
 
                     {/* Card 2: Active Logins */}
-                    <div className="bg-emerald-50/40 p-4 rounded-xl border border-emerald-100/80 flex flex-col justify-between">
+                    <div className="bg-emerald-50/40 p-4 rounded-xl flex flex-col justify-between">
                         <div className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-emerald-900">Active Logins</span>
+                            <span className="font-semibold text-sm text-emerald-900">Active Logins</span>
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100/80 text-emerald-700">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                 Live
@@ -332,9 +332,9 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                     </div>
 
                     {/* Card 3: Plan Quota */}
-                    <div className="bg-indigo-50/40 p-4 rounded-xl border border-indigo-100/80 flex flex-col justify-between">
+                    <div className="bg-indigo-50/40 p-4 rounded-xl flex flex-col justify-between">
                         <div className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-indigo-900">Plan Quota</span>
+                            <span className="font-semibold text-sm text-indigo-900">Plan Quota</span>
                             <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100/80 text-indigo-700">
                                 Max Limit
                             </span>
@@ -402,7 +402,7 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                         <div className="w-14 h-14 rounded-2xl bg-indigo-50/80 border-1 border-indigo-100/80 flex items-center justify-center text-indigo-500 mb-3 shadow-xs">
                             <Users className="w-7 h-7" />
                         </div>
-                        <h4 className="text-sm font-bold text-slate-800 mb-1">No Sub-Recruiters Added Yet</h4>
+                        <h4 className="text-lg font-semibold text-slate-800 mb-1">No Sub-Recruiters Added Yet</h4>
                         <p className="text-xs text-slate-400 max-w-sm mx-auto mb-4 leading-relaxed">
                             You can create sub-recruiter accounts for hiring managers, talent sourcers, or recruiters and define what they can do.
                         </p>

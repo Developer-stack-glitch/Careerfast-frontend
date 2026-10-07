@@ -53,7 +53,7 @@ export default function AdminSelect({
     }, []);
 
     const selectedOption = options.find(opt => String(opt.value) === String(value));
-    const isFiltered = Boolean(value) && value !== 'all' && value !== '';
+    const isFiltered = Boolean(value) && String(value).toLowerCase() !== 'all' && String(value).trim() !== '';
 
     // Size variants
     const sizeClasses = {

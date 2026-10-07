@@ -2179,6 +2179,73 @@ export const createAdminSubRecruiter = async (recruiterId, payload) => {
   }
 };
 
+// ==========================================
+// 🎫 Support Tickets APIs
+// ==========================================
+export const createSupportTicket = async (ticketData) => {
+  try {
+    const response = await api.post('/api/support/tickets', ticketData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSupportTickets = async (params = {}) => {
+  try {
+    const response = await api.get('/api/support/tickets', { params });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSupportTicketStats = async () => {
+  try {
+    const response = await api.get('/api/support/tickets/stats');
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSupportTicketById = async (id) => {
+  try {
+    const response = await api.get(`/api/support/tickets/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateSupportTicketStatus = async (id, status) => {
+  try {
+    const response = await api.put(`/api/support/tickets/${id}/status`, { status });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addSupportTicketMessage = async (id, messageData) => {
+  try {
+    const response = await api.post(`/api/support/tickets/${id}/messages`, messageData);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteSupportTicket = async (id) => {
+  try {
+    const response = await api.delete(`/api/support/tickets/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+
 // Worldwide Job Roles & Locations & Skills & Companies Third-Party APIs
 export {
   fetchWorldwideJobRoles,

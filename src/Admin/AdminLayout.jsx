@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useMemo, memo } from 'react';
+import React, { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -13,6 +13,7 @@ import {
 import defaultLogo from '../images/careerfastlogofinal.png';
 import { getImageUrl } from '../utils/getImageUrl';
 import useAdminPermissions from './useAdminPermissions';
+import { getSupportTicketStats } from '../ApiService/action';
 
 const mockNavGroups = [
     {
@@ -88,7 +89,7 @@ const WorkspaceSwitcher = memo(function WorkspaceSwitcher() {
     );
 });
 
-const NavItem = memo(function NavItem({ item, currentPath, onLogout }) {
+const NavItem = memo(function NavItem({ item, currentPath, onLogout, badgeCount = 0 }) {
     const isActive = checkIsActive(item.href, currentPath);
 
     if (item.id === 'logout') {
@@ -117,12 +118,18 @@ const NavItem = memo(function NavItem({ item, currentPath, onLogout }) {
                 className={`w-[16px] h-[16px] shrink-0 ${isActive ? 'text-gray-700' : 'text-gray-400'}`}
                 strokeWidth={isActive ? 2 : 1.5}
             />
-            <span className="truncate">{item.title}</span>
+            <span className="truncate flex-1">{item.title}</span>
+
+            {Boolean(badgeCount && badgeCount > 0) && (
+                <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 text-[11px] font-bold rounded-full bg-rose-500 text-white shadow-xs leading-none shrink-0 animate-in fade-in">
+                    {badgeCount > 99 ? '99+' : badgeCount}
+                </span>
+            )}
         </Link>
     );
 });
 
-export const SidebarNav = memo(function SidebarNav({ className = '', currentPath, onLogout, userPermissions, isSuperAdmin = true }) {
+export const SidebarNav = memo(function SidebarNav({ className = '', currentPath, onLogout, userPermissions, isSuperAdmin = true, badges = {} }) {
     // Filter nav groups based on assigned module permissions
     const filteredGroups = useMemo(() => {
         // Super Admin or users without restricting permissions see all modules
@@ -163,6 +170,7 @@ export const SidebarNav = memo(function SidebarNav({ className = '', currentPath
                                 item={item}
                                 currentPath={currentPath}
                                 onLogout={onLogout}
+                                badgeCount={badges[item.id]}
                             />
                         ))}
                     </div>
@@ -190,7 +198,32 @@ export default function AdminLayout({ children }) {
 
     const [isOpen, setIsOpen] = useState(true);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [openTicketCount, setOpenTicketCount] = useState(0);
     const { currentUser, isSuperAdmin, userPermissions } = useAdminPermissions();
+
+    const fetchTicketStats = useCallback(async () => {
+        try {
+            const res = await getSupportTicketStats();
+            if (res?.data?.success && res.data.data) {
+                setOpenTicketCount(res.data.data.open || 0);
+            }
+        } catch (e) {
+            // Ignore if logged out or endpoint fails
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchTicketStats();
+        // Polling every 20s for real-time ticket notification
+        const interval = setInterval(fetchTicketStats, 20000);
+        const handleTicketChange = () => fetchTicketStats();
+        window.addEventListener('support_ticket_changed', handleTicketChange);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('support_ticket_changed', handleTicketChange);
+        };
+    }, [fetchTicketStats]);
 
     useEffect(() => {
         try {
@@ -242,6 +275,7 @@ export default function AdminLayout({ children }) {
                     onLogout={handleLogout}
                     userPermissions={userPermissions}
                     isSuperAdmin={isSuperAdmin}
+                    badges={{ support: openTicketCount }}
                 />
             </div>
 
@@ -278,9 +312,14 @@ export default function AdminLayout({ children }) {
                         </div>
 
                         <div className="flex items-center gap-3 ml-2">
-                            <button type="button" className="text-gray-400 hover:text-gray-600 transition-colors border-0 bg-transparent p-0 cursor-pointer">
+                            <Link href="/admin/support" className="text-gray-400 hover:text-gray-600 transition-colors border-0 bg-transparent p-0 cursor-pointer relative no-underline flex items-center justify-center">
                                 <Bell className="w-5 h-5" />
-                            </button>
+                                {openTicketCount > 0 && (
+                                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-white animate-in zoom-in">
+                                        {openTicketCount > 99 ? '99+' : openTicketCount}
+                                    </span>
+                                )}
+                            </Link>
 
                             <div className="flex items-center gap-2">
                                 <div suppressHydrationWarning className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-[12px] font-bold shadow-xs tracking-wide">

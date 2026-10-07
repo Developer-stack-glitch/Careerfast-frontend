@@ -36,7 +36,7 @@
 }
 
 .premium-input:focus,
-.ant-input-affix-wrapper-focused,
+.premium-input.ant-input-affix-wrapper-focused,
 .premium-input.ant-input-focused {
   border-color: #6800ad !important;
   box-shadow: 0 0 0 4px rgba(104, 0, 173, 0.1) !important;

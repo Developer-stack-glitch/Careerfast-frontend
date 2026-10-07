@@ -230,13 +230,21 @@
 
 .cf-native-input {
   flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
   font-size: 14px;
   color: var(--cf-slate-900);
   font-family: inherit;
   width: 100%;
+}
+
+.cf-native-input:focus,
+.cf-native-input:focus-visible {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .cf-native-input::placeholder {
@@ -253,18 +261,37 @@
   transition: background-color 5000s ease-in-out 0s;
 }
 
-.cf-antd-pass {
+.cf-antd-pass,
+.cf-antd-pass.ant-input-affix-wrapper,
+.cf-antd-pass.ant-input-affix-wrapper-focused,
+.cf-antd-pass.ant-input-affix-wrapper:focus,
+.cf-antd-pass.ant-input-affix-wrapper:focus-within,
+.cf-antd-pass.ant-input-affix-wrapper-borderless,
+.cf-antd-pass.ant-input-affix-wrapper-borderless:focus,
+.cf-antd-pass.ant-input-affix-wrapper-borderless:focus-within,
+.cf-antd-pass.ant-input-affix-wrapper-borderless.ant-input-affix-wrapper-focused {
   flex: 1;
   width: 100%;
   padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   background: transparent !important;
 }
 
-.cf-antd-pass input {
+.cf-antd-pass input,
+.cf-antd-pass input:focus,
+.cf-antd-pass input:focus-visible,
+.cf-antd-pass .ant-input,
+.cf-antd-pass .ant-input:focus,
+.cf-antd-pass .ant-input:focus-visible {
   font-size: 14px !important;
   color: var(--cf-slate-900) !important;
   font-family: inherit !important;
   background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .cf-antd-pass input::placeholder {

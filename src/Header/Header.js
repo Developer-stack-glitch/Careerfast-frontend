@@ -44,7 +44,9 @@ import {
   CodeOutlined,
   MailOutlined,
   PhoneOutlined,
+  CustomerServiceOutlined,
 } from "@ant-design/icons";
+
 
 import { Tag } from "antd";
 import {
@@ -592,11 +594,23 @@ export default function Header({ noSticky = false }) {
               </div>
             </div>
 
-            <div className="d-flex align-items-center gap-4">
-              <div className="top-bar-item" style={{ cursor: 'pointer' }}>Career Advice</div>
+            <div className="d-flex align-items-center gap-3">
+              <button
+                type="button"
+                onClick={() => smartNavigate("/support")}
+                className="top-bar-support-btn"
+                title="24/7 Helpdesk & Ticket Support"
+              >
+                <span className="support-icon-pulse">
+                  <CustomerServiceOutlined />
+                </span>
+                <span className="support-btn-text">Raise Support</span>
+                <span className="support-badge-live">24/7</span>
+              </button>
               <div className="top-bar-divider">|</div>
               <div className="top-bar-item" style={{ cursor: 'pointer' }}><AppstoreOutlined /> EN <IoChevronDownOutline /></div>
             </div>
+
           </div>
         </div>
       </div>

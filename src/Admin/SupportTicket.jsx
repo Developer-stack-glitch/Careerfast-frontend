@@ -1,50 +1,30 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Ticket, Search, MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight,
-    MessageSquare, AlertCircle, CheckCircle2, Clock, X, Filter
+    MessageSquare, AlertCircle, CheckCircle2, Clock, X, Filter, RefreshCw, Send
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import AdminSelect from './AdminSelect';
+import {
+    getSupportTickets,
+    getSupportTicketStats,
+    updateSupportTicketStatus,
+    addSupportTicketMessage,
+    deleteSupportTicket
+} from '../ApiService/action';
 
-// ── Mock Data Generator ──
-const generateMockTickets = (count) => {
-    const statuses = ['Open', 'In Progress', 'Closed'];
-    const priorities = ['Low', 'Medium', 'High', 'Urgent'];
-    const subjects = [
-        'Cannot access my account',
-        'Payment failed for premium plan',
-        'How to update my profile?',
-        'Bug in the application submission',
-        'Feature request: Dark mode',
-        'Need help with employer verification',
-        'Job posting rejected',
-        'Email notifications not working'
-    ];
-    const names = ['Alice Johnson', 'Bob Smith', 'Charlie Brown', 'Diana Prince', 'Evan Wright', 'Fiona Gallagher'];
-
-    return Array.from({ length: count }, (_, i) => ({
-        id: `TKT-${1000 + i}`,
-        _id: `mongo_id_${i}`,
-        subject: subjects[Math.floor(Math.random() * subjects.length)],
-        user: {
-            name: names[Math.floor(Math.random() * names.length)],
-            email: `user${i}@example.com`,
-            avatar: null
-        },
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        priority: priorities[Math.floor(Math.random() * priorities.length)],
-        createdAt: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-        description: 'This is a detailed description of the issue faced by the user. It contains various information that the admin needs to review and act upon. Please resolve this as soon as possible.',
-        messages: [
-            { sender: 'User', time: new Date(Date.now() - 5000000).toISOString(), text: 'Hello, I need help with this issue.' },
-            { sender: 'Admin', time: new Date(Date.now() - 3000000).toISOString(), text: 'Sure, we are looking into it.' }
-        ]
-    })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-};
+const PRIORITY_OPTIONS = [
+    { value: 'All', label: 'All Priorities' },
+    { value: 'Low', label: 'Low' },
+    { value: 'Medium', label: 'Medium' },
+    { value: 'High', label: 'High' },
+    { value: 'Urgent', label: 'Urgent' }
+];
 
 // ── Stat Card Component ──
 const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
-    <div className="bg-white rounded-xl p-4 group transition-all duration-300 relative overflow-hidden flex items-center gap-4">
+    <div className="bg-white rounded-2xl p-4 group transition-all duration-300 relative overflow-hidden flex items-center gap-4">
         <div className={`p-3 rounded-xl ${bg} ${color} ring-1 ring-inset ${accent}`}>
             <Icon className="w-6 h-6" strokeWidth={1.8} />
         </div>
@@ -69,8 +49,8 @@ const StatusBadge = ({ status }) => {
         'Closed': <CheckCircle2 className="w-3.5 h-3.5" />
     };
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${styles[status]}`}>
-            {icons[status]} {status}
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${styles[status] || styles['Open']}`}>
+            {icons[status] || icons['Open']} {status}
         </span>
     );
 };
@@ -83,7 +63,7 @@ const PriorityBadge = ({ priority }) => {
         'Urgent': 'bg-red-100 text-red-700'
     };
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${styles[priority]}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${styles[priority] || styles['Medium']}`}>
             {priority}
         </span>
     );
@@ -99,8 +79,8 @@ const ActionsDropdown = ({ ticket, onClose, onDelete, onViewDetails, onUpdateSta
     }, [onClose]);
 
     return (
-        <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-lg border border-gray-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
-            <button onClick={() => { onViewDetails(ticket); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+        <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-xl border border-gray-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
+            <button onClick={() => { onViewDetails(ticket); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                 <Eye className="w-4 h-4" /> View Details
             </button>
             <div className="my-1 border-t border-gray-100"></div>
@@ -120,20 +100,44 @@ const ActionsDropdown = ({ ticket, onClose, onDelete, onViewDetails, onUpdateSta
 };
 
 // ── Ticket Details Modal Component ──
-const TicketModal = ({ ticket, onClose, onUpdateStatus }) => {
+const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
+    const [replyText, setReplyText] = useState('');
+    const [sending, setSending] = useState(false);
+
     if (!ticket) return null;
 
+    const handleSend = async (e) => {
+        e?.preventDefault();
+        if (!replyText.trim()) return;
+        setSending(true);
+        try {
+            await onAddReply(ticket.id, replyText.trim());
+            setReplyText('');
+        } catch (err) {
+            console.error('Failed to send reply:', err);
+        } finally {
+            setSending(false);
+        }
+    };
+
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/70">
                     <div>
                         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-0">
-                            {ticket.id}
+                            #{ticket.ticket_number || ticket.id}
                             <PriorityBadge priority={ticket.priority} />
+                            {ticket.category && (
+                                <span className="bg-purple-50 text-purple-700 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-purple-100">
+                                    {ticket.category}
+                                </span>
+                            )}
                         </h2>
-                        <p className="text-sm text-gray-500 mt-0.5 mb-0">Created on {new Date(ticket.createdAt).toLocaleString()}</p>
+                        <p className="text-xs text-gray-500 mt-1 mb-0">
+                            Logged on {new Date(ticket.createdAt || ticket.created_at).toLocaleString()}
+                        </p>
                     </div>
                     <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
                         <X className="w-5 h-5" />
@@ -141,79 +145,116 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus }) => {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto flex-1 bg-gray-50/30 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
-                    <div className="space-y-6">
+                <div className="p-6 overflow-y-auto flex-1 bg-gray-50/30 space-y-6">
+                    {/* Subject & Status selector */}
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Subject</span>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-0">{ticket.subject}</h3>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Status</span>
+                            <div className="w-36 inline-block">
+                                <AdminSelect
+                                    value={ticket.status}
+                                    onChange={(val) => onUpdateStatus(ticket.id, val)}
+                                    options={[
+                                        { value: 'Open', label: 'Open' },
+                                        { value: 'In Progress', label: 'In Progress' },
+                                        { value: 'Closed', label: 'Closed' }
+                                    ]}
+                                    size="sm"
+                                    align="right"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-                        {/* Subject & Status */}
-                        <div className="flex items-start justify-between gap-4">
+                    {/* User Info */}
+                    <div className="bg-white p-3.5 rounded-xl flex items-center justify-between mt-0">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold text-base border border-indigo-100">
+                                {(ticket.user?.name || ticket.name || 'U').charAt(0).toUpperCase()}
+                            </div>
                             <div>
-                                <h3 className="text-xl font-semibold mb-0 text-gray-900">{ticket.subject}</h3>
-                            </div>
-                            <select
-                                value={ticket.status}
-                                onChange={(e) => onUpdateStatus(ticket.id, e.target.value)}
-                                className={`text-sm font-semibold rounded-lg px-3 py-1.5 outline-none cursor-pointer
-                                    ${ticket.status === 'Open' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                        ticket.status === 'In Progress' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                            'bg-emerald-50 text-emerald-700 border-emerald-200'}`}
-                            >
-                                <option value="Open">Open</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Closed">Closed</option>
-                            </select>
-                        </div>
-
-                        {/* User Info */}
-                        <div className="bg-white p-3 rounded-xl shadow-sm flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-lg">
-                                {ticket.user.name.charAt(0)}
-                            </div>
-                            <div>
-                                <div className="font-semibold text-gray-900">{ticket.user.name}</div>
-                                <div className="text-sm text-gray-500">{ticket.user.email}</div>
+                                <div className="font-semibold text-gray-900 text-sm">{ticket.user?.name || ticket.name}</div>
+                                <div className="text-xs text-gray-500">{ticket.user?.email || ticket.email}</div>
                             </div>
                         </div>
-
-                        {/* Description */}
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-2">Description</h4>
-                            <div className="bg-white p-3 rounded-xl text-sm text-gray-700 leading-relaxed shadow-sm">
-                                {ticket.description}
+                        {(ticket.user?.phone || ticket.phone) && (
+                            <div className="text-xs text-gray-500 font-medium">
+                                📞 {ticket.user?.phone || ticket.phone}
                             </div>
-                        </div>
+                        )}
+                    </div>
 
-                        {/* Conversation */}
-                        <div>
-                            <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                <MessageSquare className="w-4 h-4" /> Discussion
-                            </h4>
-                            <div className="space-y-4">
-                                {ticket.messages.map((msg, idx) => (
+                    {/* Description */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Original Issue Description</h4>
+                        <div className="bg-white p-3.5 rounded-xl text-sm text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">
+                            {ticket.description}
+                        </div>
+                    </div>
+
+                    {/* Discussion Thread */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4 text-indigo-600" />
+                            <span>Conversation History ({ticket.messages?.length || 0})</span>
+                        </h4>
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                            {ticket.messages && ticket.messages.length > 0 ? (
+                                ticket.messages.map((msg, idx) => (
                                     <div key={idx} className={`flex flex-col ${msg.sender === 'Admin' ? 'items-end' : 'items-start'}`}>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-xs font-semibold text-gray-600">{msg.sender}</span>
-                                            <span className="text-[10px] text-gray-400">{new Date(msg.time).toLocaleTimeString()}</span>
+                                            <span className="text-xs font-semibold text-gray-600">
+                                                {msg.sender === 'Admin' ? '🛡️ Admin Support' : `👤 ${msg.sender_name || 'User'}`}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400">
+                                                {msg.time ? new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                            </span>
                                         </div>
-                                        <div className={`px-4 py-2 rounded-2xl max-w-[85%] text-sm ${msg.sender === 'Admin' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm'}`}>
+                                        <div className={`px-4 py-2 rounded-2xl max-w-[85%] text-sm ${msg.sender === 'Admin'
+                                            ? 'bg-indigo-600 text-white rounded-tr-sm'
+                                            : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm'}`}
+                                        >
                                             {msg.text}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                ))
+                            ) : (
+                                <div className="text-xs text-gray-400 italic text-center py-2">No discussion messages yet.</div>
+                            )}
                         </div>
-
                     </div>
                 </div>
 
                 {/* Footer Reply Box */}
-                <div className="p-4 border-t border-gray-100 bg-white">
+                <form onSubmit={handleSend} className="p-4 border-t border-gray-100 bg-white">
                     <div className="flex items-center gap-3">
-                        <input type="text" placeholder="Type a reply..." className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none" />
-                        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm">
-                            Send
+                        <input
+                            type="text"
+                            placeholder="Type an admin reply to the user..."
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                        />
+                        <button
+                            type="submit"
+                            disabled={sending || !replyText.trim()}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {sending ? (
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                                <>
+                                    <Send className="w-4 h-4" />
+                                    <span>Send</span>
+                                </>
+                            )}
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     );
@@ -221,6 +262,7 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus }) => {
 
 export default function SupportTicket() {
     const [tickets, setTickets] = useState([]);
+    const [stats, setStats] = useState({ total: 0, open: 0, inprogress: 0, closed: 0 });
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeStatusFilter, setActiveStatusFilter] = useState('All');
@@ -232,37 +274,116 @@ export default function SupportTicket() {
 
     const itemsPerPage = 10;
 
-    useEffect(() => {
-        // Simulate API fetch
-        const fetchTickets = async () => {
-            setLoading(true);
-            setTimeout(() => {
-                const mockData = generateMockTickets(45); // Generate 45 dummy tickets
-                setTickets(mockData);
-                setLoading(false);
-            }, 800);
-        };
-        fetchTickets();
-    }, []);
+    // Fetch dynamic tickets and stats from backend
+    const fetchTicketsData = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [ticketsRes, statsRes] = await Promise.all([
+                getSupportTickets({
+                    search: searchTerm,
+                    status: activeStatusFilter,
+                    priority: activePriorityFilter
+                }),
+                getSupportTicketStats()
+            ]);
 
-    const handleDeleteTicket = (ticket) => {
-        setTickets(prev => prev.filter(t => t.id !== ticket.id));
-        toast.success(`Ticket ${ticket.id} deleted successfully`);
-    };
-
-    const handleUpdateStatus = (ticketId, newStatus) => {
-        setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
-        if (selectedTicket && selectedTicket.id === ticketId) {
-            setSelectedTicket(prev => ({ ...prev, status: newStatus }));
+            if (ticketsRes?.data?.success && ticketsRes.data.data) {
+                setTickets(ticketsRes.data.data);
+            }
+            if (statsRes?.data?.success && statsRes.data.data) {
+                setStats(statsRes.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching support tickets:', error);
+            toast.error('Failed to load tickets from server.');
+        } finally {
+            setLoading(false);
         }
-        toast.success(`Ticket status updated to ${newStatus}`);
+    }, [searchTerm, activeStatusFilter, activePriorityFilter]);
+
+    useEffect(() => {
+        fetchTicketsData();
+    }, [fetchTicketsData]);
+
+    const handleDeleteTicket = async (ticket) => {
+        try {
+            const res = await deleteSupportTicket(ticket.id || ticket.ticket_number);
+            if (res?.data?.success) {
+                setTickets(prev => prev.filter(t => t.id !== ticket.id));
+                toast.success(`Ticket #${ticket.id} deleted successfully`);
+                // Update stats
+                fetchTicketsData();
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('support_ticket_changed'));
+                }
+            }
+        } catch (error) {
+            console.error('Error deleting ticket:', error);
+            toast.error('Failed to delete ticket.');
+        }
     };
 
-    // Filter Logic
+    const handleUpdateStatus = async (ticketId, newStatus) => {
+        try {
+            const res = await updateSupportTicketStatus(ticketId, newStatus);
+            if (res?.data?.success) {
+                setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
+                if (selectedTicket && selectedTicket.id === ticketId) {
+                    setSelectedTicket(prev => ({ ...prev, status: newStatus }));
+                }
+                toast.success(`Ticket #${ticketId} status updated to ${newStatus}`);
+                fetchTicketsData();
+                if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new Event('support_ticket_changed'));
+                }
+            }
+        } catch (error) {
+            console.error('Error updating status:', error);
+            toast.error('Failed to update ticket status.');
+        }
+    };
+
+    const handleAddAdminReply = async (ticketId, text) => {
+        try {
+            const res = await addSupportTicketMessage(ticketId, {
+                sender: 'Admin',
+                sender_name: 'Super Admin',
+                text
+            });
+            if (res?.data?.success) {
+                const newMsg = {
+                    sender: 'Admin',
+                    sender_name: 'Super Admin',
+                    text,
+                    time: new Date().toISOString()
+                };
+                setTickets(prev => prev.map(t => {
+                    if (t.id === ticketId) {
+                        return { ...t, messages: [...(t.messages || []), newMsg] };
+                    }
+                    return t;
+                }));
+                if (selectedTicket && selectedTicket.id === ticketId) {
+                    setSelectedTicket(prev => ({
+                        ...prev,
+                        messages: [...(prev.messages || []), newMsg]
+                    }));
+                }
+                toast.success('Reply sent successfully!');
+            }
+        } catch (error) {
+            console.error('Error posting admin message:', error);
+            toast.error('Failed to post reply message.');
+            throw error;
+        }
+    };
+
+    // Filter Logic for client-side search fine tuning if any
     const filteredTickets = tickets.filter(ticket => {
-        const matchSearch = ticket.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.user.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchSearch = (ticket.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (ticket.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (ticket.user?.name || ticket.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (ticket.user?.email || ticket.email || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = activeStatusFilter === 'All' || ticket.status === activeStatusFilter;
         const matchPriority = activePriorityFilter === 'All' || ticket.priority === activePriorityFilter;
         return matchSearch && matchStatus && matchPriority;
@@ -272,25 +393,26 @@ export default function SupportTicket() {
     const totalPages = Math.ceil(filteredTickets.length / itemsPerPage) || 1;
     const paginatedTickets = filteredTickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-    // Reset page on filter change
     useEffect(() => {
         setCurrentPage(1);
     }, [searchTerm, activeStatusFilter, activePriorityFilter]);
 
-    // Stats
-    const stats = {
-        total: tickets.length,
-        open: tickets.filter(t => t.status === 'Open').length,
-        inprogress: tickets.filter(t => t.status === 'In Progress').length,
-        closed: tickets.filter(t => t.status === 'Closed').length
-    };
-
     return (
         <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full p-2 md:p-4 lg:p-4">
             {/* Header Section */}
-            <div className="mb-8">
-                <h1 className="text-2xl md:text-2xl font-bold text-gray-900 mb-2">Support Tickets</h1>
-                <p className="text-sm text-gray-500 mb-0">Manage user inquiries, issues, and support requests efficiently.</p>
+            <div className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">Support Tickets</h1>
+                    <p className="text-sm text-gray-500 mb-0">Manage user inquiries, issues, and support requests in real-time.</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={() => fetchTicketsData()}
+                    className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition-all self-start sm:self-auto"
+                >
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-600' : ''}`} />
+                    <span>Refresh Data</span>
+                </button>
             </div>
 
             {/* Stats Overview */}
@@ -306,34 +428,32 @@ export default function SupportTicket() {
 
                 {/* Status Filters */}
                 <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-                    {['All', 'Open', 'In Progress', 'Closed'].map(status => (
-                        <button
-                            key={status}
-                            onClick={() => setActiveStatusFilter(status)}
-                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeStatusFilter === status
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
-                                }`}
-                        >
-                            {status} {status !== 'All' && `(${stats[status.toLowerCase().replace(' ', '')]})`}
-                        </button>
-                    ))}
+                    {['All', 'Open', 'In Progress', 'Closed'].map(status => {
+                        const count = status === 'All' ? stats.total : stats[status.toLowerCase().replace(' ', '')];
+                        return (
+                            <button
+                                key={status}
+                                onClick={() => setActiveStatusFilter(status)}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeStatusFilter === status
+                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+                                    }`}
+                            >
+                                {status} {status !== 'All' && `(${count || 0})`}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
                     {/* Priority Filter */}
-                    <div className="relative">
-                        <select
+                    <div className="">
+                        <AdminSelect
                             value={activePriorityFilter}
-                            onChange={(e) => setActivePriorityFilter(e.target.value)}
-                            className="w-full sm:w-auto appearance-none bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-medium cursor-pointer"
-                        >
-                            <option value="All">All Priorities</option>
-                            <option value="Low">Low</option>
-                            <option value="Medium">Medium</option>
-                            <option value="High">High</option>
-                            <option value="Urgent">Urgent</option>
-                        </select>
+                            onChange={setActivePriorityFilter}
+                            options={PRIORITY_OPTIONS}
+                            placeholder="All Priorities"
+                        />
                     </div>
 
                     {/* Search */}
@@ -355,7 +475,7 @@ export default function SupportTicket() {
                 <div className={`min-h-[300px] ${openDropdown !== null ? '' : 'overflow-x-auto'}`}>
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
+                            <tr className="bg-gray-50/70 border-b border-gray-100">
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     Ticket Details
                                 </th>
@@ -412,19 +532,25 @@ export default function SupportTicket() {
                                                     {ticket.subject}
                                                 </div>
                                                 <div className="text-xs text-gray-500 font-medium flex items-center gap-2">
-                                                    <span className="text-gray-400">#{ticket.id}</span>
+                                                    <span className="text-indigo-600 font-semibold">#{ticket.ticket_number || ticket.id}</span>
                                                     •
-                                                    <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
+                                                    <span>{new Date(ticket.createdAt || ticket.created_at).toLocaleDateString()}</span>
+                                                    {ticket.category && (
+                                                        <>
+                                                            •
+                                                            <span className="text-gray-400">{ticket.category}</span>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs border border-indigo-100">
-                                                        {ticket.user.name.charAt(0)}
+                                                        {(ticket.user?.name || ticket.name || 'U').charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <div className="font-semibold text-gray-900 text-sm">{ticket.user.name}</div>
-                                                        <div className="text-xs text-gray-500">{ticket.user.email}</div>
+                                                        <div className="font-semibold text-gray-900 text-sm">{ticket.user?.name || ticket.name}</div>
+                                                        <div className="text-xs text-gray-500">{ticket.user?.email || ticket.email}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -498,17 +624,6 @@ export default function SupportTicket() {
                                         </button>
                                     );
                                 })}
-                                {totalPages > 5 && currentPage < totalPages - 2 && (
-                                    <>
-                                        <span className="text-gray-400 px-1">...</span>
-                                        <button
-                                            onClick={() => setCurrentPage(totalPages)}
-                                            className="w-8 h-8 flex items-center justify-center text-sm font-semibold rounded-lg text-gray-600 hover:bg-gray-100 transition-all"
-                                        >
-                                            {totalPages}
-                                        </button>
-                                    </>
-                                )}
                             </div>
 
                             <button
@@ -528,6 +643,7 @@ export default function SupportTicket() {
                 ticket={selectedTicket}
                 onClose={() => setSelectedTicket(null)}
                 onUpdateStatus={handleUpdateStatus}
+                onAddReply={handleAddAdminReply}
             />
         </div>
     );

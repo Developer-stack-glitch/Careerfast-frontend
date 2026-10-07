@@ -50,10 +50,102 @@
 }
 
 .top-bar-divider {
-  color: #475569;
+  color: #6d28d9;
   font-size: 12px;
-  margin: 0 8px;
+  margin: 0 4px;
+  opacity: 0.6;
 }
+
+/* Premium Highlighted Raise Support Button */
+.top-bar-support-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.08) 100%);
+  border: 1px solid rgba(250, 204, 21, 0.6);
+  color: #ffffff;
+  padding: 3px 12px 3px 9px;
+  border-radius: 9999px;
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+
+.top-bar-support-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  transition: left 0.6s ease;
+}
+
+.top-bar-support-btn:hover::before {
+  left: 100%;
+}
+
+.top-bar-support-btn:hover {
+  background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+  color: #1e1b4b;
+  border-color: #fde047;
+}
+
+.top-bar-support-btn .support-icon-pulse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #facc15;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  filter: drop-shadow(0 0 4px rgba(250, 204, 21, 0.5));
+}
+
+.top-bar-support-btn:hover .support-icon-pulse {
+  color: #1e1b4b;
+  filter: none;
+  transform: rotate(-10deg) scale(1.1);
+}
+
+.support-badge-live {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+@keyframes liveBadgeGlow {
+
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  }
+
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.9);
+  }
+}
+
+.top-bar-support-btn:hover .support-badge-live {
+  background: #1e1b4b;
+  color: #facc15;
+  box-shadow: none;
+}
+
 
 .trust-marquee-wrapper {
   display: flex;
