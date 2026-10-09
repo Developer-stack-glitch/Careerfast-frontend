@@ -1,11 +1,14 @@
 import JobDetails from '@/JobPortal/JobDetails';
 import { fetchJobForSEO } from '@/utils/seo-fetch';
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
+  const sParams = searchParams ? await searchParams : {};
+  const isPreview = sParams?.preview === 'true';
+  const previewToken = sParams?.preview_token || sParams?.token;
   const jobId = slug.split("-").pop();
   
-  const job = await fetchJobForSEO(jobId);
+  const job = await fetchJobForSEO(jobId, { preview: isPreview, preview_token: previewToken });
   
   if (!job) {
     return {
@@ -51,11 +54,14 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function Page({ params }) {
+export default async function Page({ params, searchParams }) {
   const { slug } = await params;
+  const sParams = searchParams ? await searchParams : {};
+  const isPreview = sParams?.preview === 'true';
+  const previewToken = sParams?.preview_token || sParams?.token;
   const jobId = slug.split("-").pop();
   
-  const job = await fetchJobForSEO(jobId);
+  const job = await fetchJobForSEO(jobId, { preview: isPreview, preview_token: previewToken });
 
   // Scholarship Schema (using Course/EducationalOccupationalCredential as generic) or just generic JobPosting with scholarship nuances
   const jsonLd = job ? {
@@ -85,7 +91,7 @@ export default async function Page({ params }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <JobDetails initialData={job} serverSlug={slug} />
+      <JobDetails initialData={job} serverSlug={slug} isPreview={isPreview} previewToken={previewToken} />
     </>
   );
 }

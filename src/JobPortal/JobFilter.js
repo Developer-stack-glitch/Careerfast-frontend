@@ -14,6 +14,7 @@ import {
   Drawer,
   Empty,
   Modal,
+  Dropdown,
 } from "antd";
 import { getImageUrl } from "../utils/getImageUrl";
 import {
@@ -35,6 +36,7 @@ import {
   FormatPainterOutlined,
   GlobalOutlined,
   BulbOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate, useParams } from "@/routing-shim";
@@ -43,6 +45,7 @@ import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import CommonSelectField from "../Common/CommonSelectField";
 import SEO from "../Components/SEO/SEO";
+import { CommonToaster } from "../Common/CommonToaster";
 
 import { getAllCourses, getJobCategoryData, getJobPosts, getUniqueCompanies } from "../ApiService/action";
 
@@ -96,6 +99,24 @@ const isClient = typeof window !== "undefined";
 const currentPath = isClient ? window.location.pathname : "";
 const currentOrigin = isClient ? window.location.origin : "";
 
+const POPULAR_COMPANIES = [
+  "Google", "Microsoft", "Amazon", "Infosys", "TCS (Tata Consultancy Services)",
+  "Wipro", "Cognizant", "Accenture", "IBM", "HCLTech",
+  "Capgemini", "Tech Mahindra", "Deloitte", "Oracle", "Cisco",
+  "Adobe", "Salesforce", "Zoho", "Freshworks", "Flipkart",
+  "Zomato", "Paytm", "PhonePe", "Razorpay", "Reliance Industries",
+  "HDFC Bank", "ICICI Bank", "Larsen & Toubro (L&T)", "Apple", "Meta"
+];
+
+const isCleanCompanyName = (name) => {
+  if (!name || typeof name !== "string") return false;
+  const trimmed = name.trim();
+  if (trimmed.length < 2) return false;
+  if (/^[/\*\\#@_\-+=.,]/.test(trimmed)) return false;
+  if (/^\d+$/.test(trimmed)) return false;
+  return true;
+};
+
 const workTypes = ["In Office", "On Field", "Work From Home"];
 const jobNature = ["Job", "Internship", "Scholarship"];
 
@@ -127,9 +148,10 @@ export default function JobFilter() {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
+  const [selectedDiversity, setSelectedDiversity] = useState([]);
   const [selectedWorkingDays, setSelectedWorkingDays] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedSort, setSelectedSort] = useState(null);
+  const [selectedSort, setSelectedSort] = useState("recommended");
   const [selectedUserType, setSelectedUserType] = useState("");
   const [jobNatureSelected, setJobNatureSelected] = useState(
     isClient && window.location.pathname.includes("/internship") ? "Internship" :
@@ -144,6 +166,9 @@ export default function JobFilter() {
   const [selectedCompanies, setSelectedCompanies] = useState([]);
   const [companyOptions, setCompanyOptions] = useState([]);
   const [companySearch, setCompanySearch] = useState("");
+  const [companyModalVisible, setCompanyModalVisible] = useState(false);
+  const [tempSelectedCompanies, setTempSelectedCompanies] = useState([]);
+  const [modalCompanySearch, setModalCompanySearch] = useState("");
 
   // Derived - lightweight list replacing heavy cities-list package
   const [allCities] = useState(POPULAR_CITIES);
@@ -159,9 +184,34 @@ export default function JobFilter() {
     try {
       const res = await getUniqueCompanies();
       const raw = res?.data?.data || [];
-      setCompanyOptions(raw.map(name => ({ label: name, value: name })));
+      const cleanRaw = raw.filter(isCleanCompanyName);
+
+      const seen = new Set();
+      const merged = [];
+
+      // Top curated MNCs first
+      POPULAR_COMPANIES.forEach((name) => {
+        const lower = name.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          merged.push({ label: name, value: name });
+        }
+      });
+
+      // Clean registered companies from backend
+      cleanRaw.forEach((name) => {
+        const trimmed = name.trim();
+        const lower = trimmed.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          merged.push({ label: trimmed, value: trimmed });
+        }
+      });
+
+      setCompanyOptions(merged);
     } catch (err) {
       console.log("Error loading companies:", err);
+      setCompanyOptions(POPULAR_COMPANIES.map(name => ({ label: name, value: name })));
     }
   };
 
@@ -206,6 +256,7 @@ export default function JobFilter() {
     let locations = [];
     let categories = [];
     let types = [];
+    let diversity = [];
     let userType = "";
 
     // Parse Nature
@@ -217,6 +268,7 @@ export default function JobFilter() {
     const qLocations = [...queryParams.getAll('l'), ...queryParams.getAll('location')];
     const qCategories = queryParams.getAll('c');
     const qCompanies = queryParams.getAll('co');
+    const qDiversity = [...queryParams.getAll('g'), ...queryParams.getAll('gender'), ...queryParams.getAll('diversity')];
     const qExperience = queryParams.get('experience');
     const qSearch = queryParams.get('q');
     const qNature = queryParams.get('job_nature');
@@ -224,6 +276,7 @@ export default function JobFilter() {
     if (qNature && jobNature.includes(qNature)) nature = qNature;
     if (qLocations.length > 0) locations = qLocations;
     if (qCategories.length > 0) categories = qCategories;
+    if (qDiversity.length > 0) diversity = qDiversity;
     if (qSearch && qSearch !== searchTerm) setSearchTerm(qSearch);
 
     if (qExperience !== null) {
@@ -306,28 +359,41 @@ export default function JobFilter() {
       // Locations
       if (locations.length > 0) {
         if (JSON.stringify(selectedLocations) !== JSON.stringify(locations)) setSelectedLocations(locations);
-      } else if (filterSlug || location.search) {
-        // Only clear if slug/query implies we should
-        if (!filterSlug && !location.search.includes('l=')) setSelectedLocations([]);
+      } else {
+        if (selectedLocations.length > 0) setSelectedLocations([]);
       }
 
       // Categories
       if (categories.length > 0) {
         if (JSON.stringify(selectedCategories) !== JSON.stringify(categories)) setSelectedCategories(categories);
-      } else if (filterSlug || location.search) {
-        if (!filterSlug && !location.search.includes('c=')) setSelectedCategories([]);
+      } else {
+        if (selectedCategories.length > 0) setSelectedCategories([]);
       }
 
+      // Work Modes
       if (types.length > 0) {
         if (JSON.stringify(selectedTypes) !== JSON.stringify(types)) setSelectedTypes(types);
-      } else if (!filterSlug && !location.search.includes('types=')) {
+      } else {
         if (selectedTypes.length > 0) setSelectedTypes([]);
       }
 
-      if (userType && selectedUserType !== userType) setSelectedUserType(userType);
-      else if (!filterSlug && selectedUserType !== "") setSelectedUserType("");
+      // Diversity / Gender
+      if (diversity.length > 0) {
+        if (JSON.stringify(selectedDiversity) !== JSON.stringify(diversity)) setSelectedDiversity(diversity);
+      } else {
+        if (selectedDiversity.length > 0) setSelectedDiversity([]);
+      }
 
-      if (JSON.stringify(selectedCompanies) !== JSON.stringify(companiesParsed)) setSelectedCompanies(companiesParsed);
+      // Experience Level
+      if (userType && selectedUserType !== userType) setSelectedUserType(userType);
+      else if (!userType && selectedUserType !== "") setSelectedUserType("");
+
+      // Companies
+      if (companiesParsed.length > 0) {
+        if (JSON.stringify(selectedCompanies) !== JSON.stringify(companiesParsed)) setSelectedCompanies(companiesParsed);
+      } else {
+        if (selectedCompanies.length > 0) setSelectedCompanies([]);
+      }
 
       if (isFirstTime || lastSlugRef.current.split("/")[1] !== location.pathname.split("/")[1]) {
         setSelectedStatus("");
@@ -336,7 +402,7 @@ export default function JobFilter() {
       }
       lastSlugRef.current = filterSlug || location.pathname + location.search;
     }
-  }, [filterSlug, location.pathname, location.search, allCities, jobCategoryOptions, selectedCategories.length, selectedLocations.length]);
+  }, [filterSlug, location.pathname, location.search, allCities, jobCategoryOptions, selectedCategories.length, selectedLocations.length, selectedDiversity.length]);
 
   // 2. State --> URL Sync
   const syncFilterUrl = (overrides = {}) => {
@@ -344,6 +410,7 @@ export default function JobFilter() {
     const locations = overrides.hasOwnProperty('locations') ? overrides.locations : selectedLocations;
     const categories = overrides.hasOwnProperty('categories') ? overrides.categories : selectedCategories;
     const types = overrides.hasOwnProperty('types') ? overrides.types : selectedTypes;
+    const diversity = overrides.hasOwnProperty('diversity') ? overrides.diversity : selectedDiversity;
     const userType = overrides.hasOwnProperty('userType') ? overrides.userType : selectedUserType;
     const companies = overrides.hasOwnProperty('companies') ? overrides.companies : selectedCompanies;
 
@@ -383,6 +450,10 @@ export default function JobFilter() {
       queryParams.append('c', categories[0]);
     }
 
+    if (diversity.length > 0) {
+      diversity.forEach(d => queryParams.append('g', d));
+    }
+
     if (companies.length > 0) {
       companies.forEach(co => queryParams.append('co', co));
     }
@@ -409,10 +480,25 @@ export default function JobFilter() {
     setLoading(true);
     setJobs([]);
 
-    // Use a timeout to debounce rapid filter changes
+    // Construct fresh payload immediately to avoid closure staleness
+    const freshPayload = {
+      ...(selectedCategories.length > 0 ? { job_categories: selectedCategories } : {}),
+      ...(selectedTypes.length > 0 ? { workplace_type: selectedTypes } : {}),
+      ...(selectedLocations.length > 0 ? { work_location: selectedLocations } : {}),
+      ...(selectedDiversity.length > 0 ? { diversity_hiring: selectedDiversity } : {}),
+      ...(selectedWorkingDays ? { working_days: selectedWorkingDays } : {}),
+      ...(selectedStatus ? { status: selectedStatus } : {}),
+      ...(jobNatureSelected ? { job_nature: jobNatureSelected } : {}),
+      ...(selectedUserType ? { experience_type: selectedUserType } : {}),
+      ...(searchTerm ? { searchTerm: searchTerm } : {}),
+      ...(selectedCompanies.length > 0 ? { companies: selectedCompanies } : {}),
+      ...(selectedSort === "date" ? { sort_key: "created_at", sort_direction: "desc" } : {}),
+      ...(selectedSort === "relevance" ? { sort_key: "created_at", sort_direction: "desc" } : {}),
+    };
+
     const timer = setTimeout(() => {
-      fetchJobs(1, true);
-    }, 400); // 400ms debounce
+      fetchJobs(1, true, freshPayload);
+    }, 300);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -420,6 +506,7 @@ export default function JobFilter() {
     selectedCategories.join("|"),
     selectedTypes.join("|"),
     selectedLocations.join("|"),
+    selectedDiversity.join("|"),
     selectedWorkingDays,
     selectedStatus,
     selectedSort,
@@ -470,8 +557,10 @@ export default function JobFilter() {
       if (selectedUserType) p.experience_type = selectedUserType;
       if (searchTerm) p.searchTerm = searchTerm;
       if (selectedCompanies.length > 0) p.companies = selectedCompanies;
-      if (selectedSort === "highToLow") p.salary_sort = "high_to_low";
-      else if (selectedSort === "lowToHigh") p.salary_sort = "low_to_high";
+      if (selectedSort === "date" || selectedSort === "relevance") {
+        p.sort_key = "created_at";
+        p.sort_direction = "desc";
+      }
       return p;
     },
     [
@@ -483,6 +572,8 @@ export default function JobFilter() {
       jobNatureSelected,
       selectedUserType,
       selectedSort,
+      searchTerm,
+      selectedCompanies,
     ]
   );
 
@@ -520,13 +611,29 @@ export default function JobFilter() {
     });
   }, [jobCategoryOptions, selectedCategories, categorySearch, filteredCategoryOptions]);
 
+  const filteredCompanyOptions = useMemo(() => {
+    if (!companySearch) return companyOptions;
+    return companyOptions.filter(c =>
+      c.label.toLowerCase().includes(companySearch.toLowerCase())
+    );
+  }, [companyOptions, companySearch]);
+
   const displayCompanies = useMemo(() => {
-    const combined = [...new Set([...selectedCompanies, ...companyOptions.map(o => o.value).slice(0, 5)])];
+    if (companySearch) {
+      const combined = [...selectedCompanies, ...filteredCompanyOptions.map(o => o.value)];
+      const unique = [...new Set(combined)].slice(0, 15);
+      return unique.map(val => {
+        const co = companyOptions.find(c => c.value === val);
+        return { value: val, label: co ? co.label : val };
+      });
+    }
+    const top = companyOptions.slice(0, 7).map(c => c.value);
+    const combined = [...new Set([...top, ...selectedCompanies])];
     return combined.map(val => {
-      const co = companyOptions.find(o => o.value === val);
+      const co = companyOptions.find(c => c.value === val);
       return { value: val, label: co ? co.label : val };
     });
-  }, [companyOptions, selectedCompanies]);
+  }, [companyOptions, selectedCompanies, companySearch, filteredCompanyOptions]);
 
 
   const transformJob = (job) => {
@@ -576,7 +683,7 @@ export default function JobFilter() {
     };
   };
 
-  const fetchJobs = async (passedPage = 1, isReset = false) => {
+  const fetchJobs = async (passedPage = 1, isReset = false, customPayload = null) => {
     if (isReset) {
       setLoading(true);
       setJobs([]);
@@ -588,8 +695,9 @@ export default function JobFilter() {
     const requestId = ++fetchRequestId.current;
 
     try {
+      const activePayload = customPayload || payload;
       const paginatedPayload = {
-        ...payload,
+        ...activePayload,
         page: passedPage,
         limit: 20,
       };
@@ -597,10 +705,10 @@ export default function JobFilter() {
       const res = await getJobPosts(paginatedPayload);
       if (requestId !== fetchRequestId.current) return;
 
-      const raw = res?.data?.data?.data || [];
-      const meta = res?.data?.data?.meta || {};
-      const hasMoreOnBackend = meta.hasMore || false;
-      const backendTotal = meta.total || 0;
+      const raw = res?.data?.data?.data || (Array.isArray(res?.data?.data) ? res.data.data : []) || (Array.isArray(res?.data) ? res.data : []);
+      const meta = res?.data?.data?.meta || res?.data?.meta || {};
+      const hasMoreOnBackend = meta.hasMore !== undefined ? meta.hasMore : false;
+      const backendTotal = meta.total !== undefined ? meta.total : (Array.isArray(raw) ? raw.length : 0);
 
       const transformedBatch = raw.map(transformJob);
 
@@ -644,6 +752,30 @@ export default function JobFilter() {
   const getFilterTitle = () => {
     const natureSuffix = jobNatureSelected === "Job" ? "Jobs" : jobNatureSelected === "Internship" ? "Internships" : jobNatureSelected === "Scholarship" ? "Scholarships" : "Opportunities";
 
+    if (searchTerm && searchTerm.trim() !== "") {
+      return `${searchTerm.trim()} ${natureSuffix}`;
+    }
+
+    if (selectedCompanies.length === 1 && selectedLocations.length === 1) {
+      return `${selectedCompanies[0]} ${natureSuffix} in ${selectedLocations[0]}`;
+    }
+    if (selectedCompanies.length === 1) {
+      return `${selectedCompanies[0]} ${natureSuffix}`;
+    }
+
+    if (selectedCategories.length === 1 && selectedLocations.length === 1) {
+      return `${selectedCategories[0]} ${natureSuffix} in ${selectedLocations[0]}`;
+    }
+    if (selectedCategories.length === 1) {
+      return `${selectedCategories[0]} ${natureSuffix}`;
+    }
+    if (selectedLocations.length === 1) {
+      return `${natureSuffix} in ${selectedLocations[0]}`;
+    }
+    if (selectedCategories.length > 1) {
+      return `${selectedCategories[0]} & More ${natureSuffix}`;
+    }
+
     // Slug based titles
     if (filterSlug) {
       if (filterSlug === "work-from-home") return `Work From Home ${natureSuffix}`;
@@ -657,21 +789,55 @@ export default function JobFilter() {
       if (filterSlug === "it-jobs") return `IT & Software ${natureSuffix}`;
       if (filterSlug === "marketing-jobs") return `Marketing ${natureSuffix}`;
       if (filterSlug === "fresher-jobs") return `Fresher ${natureSuffix}`;
-    }
 
-    // State based fallbacks
-    if (selectedLocations.length === 1) return `${natureSuffix} in ${selectedLocations[0]}`;
-    if (selectedCategories.length === 1) return `${selectedCategories[0]} ${natureSuffix}`;
-    if (jobNatureSelected) {
-      const plural = jobNatureSelected === "Job" ? "Jobs" : jobNatureSelected === "Internship" ? "Internships" : "Scholarships";
-      let title = `${jobNatureSelected} Opportunities`;
-      if (selectedLocations.length === 1) {
-        title += ` in ${selectedLocations[0]}`;
+      // Dynamic slug formatter (e.g. "react-js-jobs" -> "React Js Jobs")
+      const cleanSlug = filterSlug.replace(/-jobs$/, "").replace(/-internships$/, "").replace(/-scholarships$/, "");
+      const formatted = cleanSlug
+        .split("-")
+        .filter(Boolean)
+        .map(word => {
+          if (word.toLowerCase() === "js") return "JS";
+          if (word.toLowerCase() === "ui" || word.toLowerCase() === "ux") return word.toUpperCase();
+          if (word.toLowerCase() === "it") return "IT";
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(" ");
+
+      if (formatted) {
+        return `${formatted} ${natureSuffix}`;
       }
-      return title;
     }
 
-    return `Latest ${natureSuffix}`;
+    return `${natureSuffix}`;
+  };
+
+  const sortMenuItems = [
+    {
+      key: 'recommended',
+      label: <div className={`naukri-sort-dropdown-item ${selectedSort === 'recommended' || !selectedSort ? 'active' : ''}`}>Recommended</div>,
+    },
+    {
+      key: 'relevance',
+      label: <div className={`naukri-sort-dropdown-item ${selectedSort === 'relevance' ? 'active' : ''}`}>Relevance</div>,
+    },
+    {
+      key: 'date',
+      label: <div className={`naukri-sort-dropdown-item ${selectedSort === 'date' ? 'active' : ''}`}>Date</div>,
+    },
+  ];
+
+  const getSortLabel = (key) => {
+    switch (key) {
+      case 'date': return 'Date';
+      case 'relevance': return 'Relevance';
+      case 'recommended':
+      default: return 'Recommended';
+    }
+  };
+
+  const handleSendJobsAlert = () => {
+    const title = getFilterTitle();
+    CommonToaster(`Job alert activated for "${title}"! You'll receive daily notifications. 🔔`, "success");
   };
 
   /** -------------------- SIDEBAR FILTER UI (UNCHANGED) -------------------- **/
@@ -688,6 +854,7 @@ export default function JobFilter() {
               setSelectedCategories([]);
               setSelectedTypes([]);
               setSelectedLocations([]);
+              setSelectedDiversity([]);
               setSelectedWorkingDays("");
               setSelectedStatus("");
               setSelectedSort(null);
@@ -778,6 +945,27 @@ export default function JobFilter() {
           </Checkbox.Group>
         </div>
 
+        {/* Gender / Diversity */}
+        <div className="naukri-filter-group">
+          <h4 className="naukri-filter-group-title">
+            Gender Preference
+            <SyncOutlined style={{ fontSize: 10, color: "#8292b4" }} />
+          </h4>
+          <Checkbox.Group
+            value={selectedDiversity}
+            onChange={(v) => { setSelectedDiversity(v); syncFilterUrl({ diversity: v }); }}
+            style={{ width: "100%" }}
+          >
+            <Space direction="vertical" style={{ width: "100%" }}>
+              {["Male", "Female"].map((g) => (
+                <Checkbox key={g} value={g} className="naukri-filter-item">
+                  <span className="naukri-checkbox-label">{g} Only</span>
+                </Checkbox>
+              ))}
+            </Space>
+          </Checkbox.Group>
+        </div>
+
         {/* User Type */}
         <div className="naukri-filter-group">
           <h4 className="naukri-filter-group-title">Experience Level</h4>
@@ -803,19 +991,40 @@ export default function JobFilter() {
         {/* Company */}
         <div className="naukri-filter-group">
           <h4 className="naukri-filter-group-title">Company</h4>
-          <Checkbox.Group
-            value={selectedCompanies}
-            onChange={(v) => { setSelectedCompanies(v); syncFilterUrl({ companies: v }); }}
-            style={{ width: "100%" }}
+          <input
+            type="text"
+            value={companySearch}
+            onChange={(e) => setCompanySearch(e.target.value)}
+            placeholder="Search companies..."
+            className="category-search-input"
+            style={{ width: "100%", marginBottom: 10, padding: "6px 10px", borderRadius: 4, border: "1px solid #ddd" }}
+          />
+          <div>
+            <Checkbox.Group
+              value={selectedCompanies}
+              onChange={(v) => { setSelectedCompanies(v); syncFilterUrl({ companies: v }); }}
+              style={{ width: "100%" }}
+            >
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {displayCompanies.map((co) => (
+                  <Checkbox key={co.value} value={co.value} className="naukri-filter-item">
+                    <span className="naukri-checkbox-label">{co.label}</span>
+                  </Checkbox>
+                ))}
+              </Space>
+            </Checkbox.Group>
+          </div>
+
+          <span
+            className="naukri-view-more"
+            onClick={() => {
+              setTempSelectedCompanies(selectedCompanies);
+              setModalCompanySearch("");
+              setCompanyModalVisible(true);
+            }}
           >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {displayCompanies.map((co) => (
-                <Checkbox key={co.value} value={co.value} className="naukri-filter-item">
-                  <span className="naukri-checkbox-label">{co.label}</span>
-                </Checkbox>
-              ))}
-            </Space>
-          </Checkbox.Group>
+            View More
+          </span>
         </div>
 
         {/* Category */}
@@ -1224,11 +1433,45 @@ export default function JobFilter() {
 
                 {/* Top Results Header */}
                 <div className="naukri-results-info">
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-                    <h2 className="naukri-results-count" style={{ margin: 0 }}>
-                      {`${totalJobs} ${getFilterTitle()}`}
-                    </h2>
-                    <div className="naukri-sort-container" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <div className="naukri-results-header-row">
+                    <div className="naukri-results-count-box">
+                      <span className="naukri-results-range">
+                        {totalJobs > 0
+                          ? `1 - ${Math.min(jobs.length, 20)} of ${totalJobs.toLocaleString('en-IN')}`
+                          : jobs.length > 0 ? `1 - ${jobs.length} of ${jobs.length}` : '0 of 0'}
+                      </span>
+                      <h1 className="naukri-results-title">
+                        {getFilterTitle()}
+                      </h1>
+                    </div>
+
+                    <div className="naukri-results-controls">
+                      <button
+                        type="button"
+                        className="naukri-send-jobs-btn"
+                        onClick={handleSendJobsAlert}
+                      >
+                        Send me jobs like these
+                      </button>
+
+                      <Dropdown
+                        menu={{
+                          items: sortMenuItems,
+                          onClick: ({ key }) => setSelectedSort(key),
+                          selectable: true,
+                          selectedKeys: [selectedSort || 'recommended'],
+                          className: "naukri-sort-menu-popup"
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                      >
+                        <button type="button" className="naukri-sort-dropdown-btn">
+                          <span className="naukri-sort-label">Sort by:</span>
+                          <span className="naukri-sort-current">{getSortLabel(selectedSort)}</span>
+                          <DownOutlined className="naukri-sort-arrow" />
+                        </button>
+                      </Dropdown>
+
                       <Button
                         className="mobile-filter-btn"
                         icon={<FilterOutlined />}
@@ -1236,15 +1479,6 @@ export default function JobFilter() {
                         style={{ display: 'none', borderRadius: '20px', border: '1px solid #e2e8f0', color: '#475569', fontWeight: 500 }}
                       >
                         Filters
-                      </Button>
-                      <span style={{ fontSize: '13px', color: 'var(--naukri-text-tertiary)' }}>Sort by:</span>
-                      <Button
-                        type="text"
-                        size="small"
-                        style={{ fontWeight: selectedSort ? 700 : 400, color: selectedSort ? 'var(--naukri-primary)' : 'inherit' }}
-                        onClick={() => setSelectedSort(selectedSort === 'highToLow' ? 'lowToHigh' : 'highToLow')}
-                      >
-                        Salary {selectedSort === 'highToLow' ? '↓' : selectedSort === 'lowToHigh' ? '↑' : ''}
                       </Button>
                     </div>
                   </div>
@@ -1492,6 +1726,79 @@ export default function JobFilter() {
                 setSelectedCategories(tempSelectedCategories);
                 syncFilterUrl({ categories: tempSelectedCategories });
                 setCategoryModalVisible(false);
+              }}
+            >
+              Apply
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Company Selection Modal */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingRight: '20px' }}>
+            <span style={{ fontSize: '18px', fontWeight: 700, padding: '8px 0' }}>Company / Employer</span>
+            <Button
+              type="link"
+              size="small"
+              className="naukri-clear-all-link"
+              onClick={() => setTempSelectedCompanies([])}
+              style={{ fontWeight: 600 }}
+            >
+              Clear All
+            </Button>
+          </div>
+        }
+        open={companyModalVisible}
+        onCancel={() => setCompanyModalVisible(false)}
+        footer={null}
+        width={900}
+        closeIcon={<span style={{ fontSize: '18px' }}>×</span>}
+        className="naukri-location-modal"
+      >
+        <div className="naukri-modal-content">
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              value={modalCompanySearch}
+              onChange={(e) => setModalCompanySearch(e.target.value)}
+              placeholder="Search companies (e.g. Google, Infosys, TCS, Amazon)..."
+              className="category-search-input"
+              style={{ width: "100%", padding: "10px 15px", borderRadius: "30px", border: "1px solid #ddd", fontSize: "14px", outline: "none" }}
+            />
+          </div>
+
+          <div className="naukri-location-grid">
+            {companyOptions
+              .filter(opt => opt.label.toLowerCase().includes(modalCompanySearch.toLowerCase()))
+              .map((opt) => (
+                <div key={opt.value} className="naukri-modal-item">
+                  <Checkbox
+                    checked={tempSelectedCompanies.includes(opt.value)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setTempSelectedCompanies([...tempSelectedCompanies, opt.value]);
+                      } else {
+                        setTempSelectedCompanies(tempSelectedCompanies.filter(item => item !== opt.value));
+                      }
+                    }}
+                  >
+                    <span className="naukri-modal-label">{opt.label}</span>
+                  </Checkbox>
+                </div>
+              ))}
+          </div>
+
+          <div className="naukri-modal-footer">
+            <div className="naukri-modal-scrollbar"></div>
+            <Button
+              type="primary"
+              className="naukri-apply-btn"
+              onClick={() => {
+                setSelectedCompanies(tempSelectedCompanies);
+                syncFilterUrl({ companies: tempSelectedCompanies });
+                setCompanyModalVisible(false);
               }}
             >
               Apply

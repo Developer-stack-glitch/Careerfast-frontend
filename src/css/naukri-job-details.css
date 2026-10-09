@@ -57,7 +57,7 @@
 
 .njd-job-title {
     font-size: 20px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--njd-text-title);
     margin-bottom: 8px;
     overflow-wrap: break-word !important;
@@ -267,7 +267,7 @@
 }
 
 .njd-apply-btn:disabled {
-    background-color: #cbd5e1;
+    background-color: #47b749;
     cursor: not-allowed;
 }
 

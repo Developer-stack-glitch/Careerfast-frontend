@@ -21,29 +21,187 @@ import { AdminUserManagementSkeleton } from './AdminSkeletons';
 import toast from 'react-hot-toast';
 import useAdminPermissions from './useAdminPermissions';
 
-// ── Master Portal Permissions Matrix ──
-export const PORTAL_MODULES = [
+// ── Navigation Category Groups ──
+export const MODULE_CATEGORIES = [
     {
-        id: 'dashboard',
-        name: 'Executive Dashboard Page',
+        id: 'DASHBOARD',
+        title: 'DASHBOARD',
+        description: 'Recruiter overview, candidate statistics, live platform counters & growth curves.',
+        color: 'text-blue-700 bg-blue-50 border-blue-200'
+    },
+    {
+        id: 'RECRUITER MANAGEMENT',
+        title: 'RECRUITER MANAGEMENT',
+        description: 'Corporate accounts, auto-approvals, job listings moderation & pricing subscriptions.',
+        color: 'text-emerald-700 bg-emerald-50 border-emerald-200'
+    },
+    {
+        id: 'TALENT MANAGEMENT',
+        title: 'TALENT MANAGEMENT',
+        description: 'Candidate directory, talent verification, resume downloads & candidate memberships.',
+        color: 'text-amber-700 bg-amber-50 border-amber-200'
+    },
+    {
+        id: 'REPORT',
+        title: 'REPORT',
+        description: 'Business intelligence, employer growth trends, candidate analytics & placement metrics.',
+        color: 'text-purple-700 bg-purple-50 border-purple-200'
+    },
+    {
+        id: 'SYSTEM',
+        title: 'SYSTEM',
+        description: 'Customer helpdesk tickets, staff accounts, dynamic roles & platform settings.',
+        color: 'text-slate-700 bg-slate-100 border-slate-200'
+    }
+];
+
+// ── Master Portal Permissions Matrix (12 Modules, Grouped per Page Structure) ──
+export const PORTAL_MODULES = [
+    // ── DASHBOARD ──
+    {
+        id: 'dashboard_recruiter',
+        group: 'DASHBOARD',
+        name: 'Recruiters Dashboard',
         page: '/admin/dashboard/recruiter',
-        description: 'Manage executive summary KPI counters, growth charts, demographics and recent activity logs.',
+        description: 'Executive overview, corporate KPIs, platform growth trajectories, recruiter demographics and live activity.',
         icon: LayoutDashboard,
         color: 'text-blue-600 bg-blue-50 border-blue-100',
         actions: [
-            { id: 'scoreboard_kpis', label: 'Score Board & Top KPI Cards', desc: 'Total users, active jobs, applications' },
-            { id: 'growth_trends', label: 'Platform Growth Trends Chart', desc: 'Monthly/Weekly signup trajectories' },
-            { id: 'demographics_breakdown', label: 'User Demographics Donut', desc: 'Job seekers vs recruiter ratios' },
-            { id: 'recent_activity_feed', label: 'Recent Platform Activity Stream', desc: 'Live actions, registrations, posts' },
-            { id: 'export_dashboard_pdf', label: 'Export Executive Dashboard Report', desc: 'Download PDF snapshot' },
+            { id: 'scoreboard_kpis', label: 'Score Board & Top KPI Cards', desc: 'Total users, active jobs, applications counters' },
+            { id: 'growth_trends', label: 'Platform Growth Trends Chart', desc: 'Monthly/Weekly user signup trajectories' },
+            { id: 'demographics_breakdown', label: 'User Demographics Donut', desc: 'Job seekers vs recruiter ratios & breakdown' },
+            { id: 'recent_activity_feed', label: 'Recent Platform Activity Stream', desc: 'Live actions, registrations, posts feed' },
+            { id: 'export_dashboard_pdf', label: 'Export Executive Dashboard Report', desc: 'Download PDF/CSV snapshot' },
             { id: 'realtime_stat_refresh', label: 'Realtime Manual Refresh Action', desc: 'Force reload dashboard metrics' },
         ]
     },
     {
-        id: 'analytics',
-        name: 'Analytics & Reports Page',
-        page: '/admin/analytics',
-        description: 'Comprehensive business intelligence, user acquisition, job post trends and pipeline data.',
+        id: 'dashboard_job_seekers',
+        group: 'DASHBOARD',
+        name: 'Job Seekers Dashboard',
+        page: '/admin/dashboard/job-seekers',
+        description: 'Candidate talent analytics, registration growth curves, skill breakdowns and application flow.',
+        icon: Users,
+        color: 'text-sky-600 bg-sky-50 border-sky-100',
+        actions: [
+            { id: 'job_seekers_kpis', label: 'Candidate Score Board & Top KPIs', desc: 'Total talent, active applicants, verified profiles' },
+            { id: 'talent_registration_chart', label: 'Talent Registration & Growth Chart', desc: 'Candidate acquisition trajectory curves' },
+            { id: 'skills_education_breakdown', label: 'Skills & Education Distribution', desc: 'Candidate specialization donut charts' },
+            { id: 'recent_talent_activity', label: 'Recent Talent Activity Stream', desc: 'New registrations, profile updates, applications' },
+            { id: 'export_talent_stats', label: 'Export Talent Dashboard Snapshot', desc: 'Download candidate metrics summary' },
+            { id: 'realtime_talent_refresh', label: 'Realtime Manual Refresh Action', desc: 'Force reload candidate metrics' },
+        ]
+    },
+
+    // ── RECRUITER MANAGEMENT ──
+    {
+        id: 'recruiters',
+        group: 'RECRUITER MANAGEMENT',
+        name: 'Recruiters & Companies',
+        page: '/admin/recruiters',
+        description: 'Manage employer profiles, extend subscription validity, assign custom plans, and auto-approve posts.',
+        icon: Building2,
+        color: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+        actions: [
+            { id: 'view_recruiters_directory', label: 'Recruiter Directory & Metrics Table', desc: 'Browse employer accounts and profiles' },
+            { id: 'add_recruiter_button', label: 'Add Recruiter Button', desc: 'Onboard new employer account manually' },
+            { id: 'view_recruiter_profile', label: 'View Recruiter Profile & Stats', desc: 'Company details, jobs and history' },
+            { id: 'edit_recruiter_profile', label: 'Edit Recruiter & Company Info', desc: 'Modify corporate details & branding' },
+            { id: 'toggle_recruiter_status', label: 'Toggle Account Active / Suspended', desc: 'Control employer account access' },
+            { id: 'toggle_auto_approve', label: 'Toggle Auto-Approve Job Posts', desc: 'Bypass job moderation queue' },
+            { id: 'change_plan_modal', label: 'Change Recruiter Plan Modal', desc: 'Upgrade / downgrade subscription package' },
+            { id: 'assign_custom_plan_modal', label: 'Assign Custom Plan & Feature Quotas', desc: 'Custom jobs, validity & tools limits' },
+            { id: 'extend_subscription_modal', label: 'Extend Subscription Expiry Date', desc: 'Grant validity extension to employer' },
+            { id: 'reset_recruiter_password', label: 'Reset Recruiter Password Button', desc: 'Issue new password credentials' },
+            { id: 'login_as_recruiter_button', label: 'Login As Recruiter (Direct SSO)', desc: 'Impersonate employer dashboard' },
+            { id: 'manage_recruiter_team', label: 'Manage Recruiter Sub-Recruiters', desc: 'Team member permissions & access' },
+            { id: 'export_recruiters_data', label: 'Export Recruiter Directory to Excel', desc: 'Download company roster file' },
+        ]
+    },
+    {
+        id: 'job_posts',
+        group: 'RECRUITER MANAGEMENT',
+        name: 'Job Listings & Moderation',
+        page: '/admin/job-post',
+        description: 'Review active postings, moderate pending jobs queue, bulk approve, reject with notes, and expire listings.',
+        icon: Briefcase,
+        color: 'text-violet-600 bg-violet-50 border-violet-100',
+        actions: [
+            { id: 'view_job_directory', label: 'View Active & Expired Job Postings', desc: 'Browse published jobs directory' },
+            { id: 'view_pending_jobs', label: 'Pending Jobs Moderation Queue Tab', desc: 'Review jobs awaiting admin approval' },
+            { id: 'approve_single_job', label: 'Approve Single Job Post', desc: 'Publish individual listing to portal' },
+            { id: 'bulk_approve_all_jobs', label: 'Bulk Approve All Pending Jobs', desc: 'One-click publish all pending listings' },
+            { id: 'reject_job_post', label: 'Reject / Disapprove Job Post', desc: 'Decline posting with rejection reason' },
+            { id: 'view_job_details_modal', label: 'View Full Job Details & Description', desc: 'Inspect full job post specifications' },
+            { id: 'edit_job_post', label: 'Edit Job Details & Requirements', desc: 'Modify title, salary, location & skills' },
+            { id: 'toggle_job_active', label: 'Toggle Job Active / Inactive', desc: 'Reactivate expired job listings' },
+            { id: 'expire_job_post', label: 'Expire Job Post Listing', desc: 'Manually close candidate applications' },
+            { id: 'delete_job_post', label: 'Delete Job Post Listing', desc: 'Permanently remove job from system' },
+            { id: 'view_job_applicants', label: 'View Applied Candidates for Job', desc: 'Inspect candidates for this opening' },
+        ]
+    },
+    {
+        id: 'plans',
+        group: 'RECRUITER MANAGEMENT',
+        name: 'Recruiter Subscriptions',
+        page: '/admin/plans',
+        description: 'Manage employer pricing packages, validity duration, job posting limits, and active subscriber rosters.',
+        icon: Layers,
+        color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
+        actions: [
+            { id: 'view_plans_table', label: 'View Subscription Plans Directory', desc: 'Browse all pricing packages' },
+            { id: 'add_plan_button', label: 'Add New Plan Button', desc: 'Create new subscription tier' },
+            { id: 'edit_plan_details', label: 'Edit Plan Details & Pricing', desc: 'Modify cost, limits & validity' },
+            { id: 'duplicate_plan_action', label: 'Duplicate Subscription Plan', desc: 'Clone plan template' },
+            { id: 'toggle_plan_status', label: 'Toggle Plan Active / Inactive Status', desc: 'Control public plan visibility' },
+            { id: 'delete_plan_action', label: 'Delete Subscription Plan', desc: 'Purge package from system' },
+            { id: 'view_plan_subscribers', label: 'View Active & Expired Subscribers', desc: 'Recruiters on this plan' },
+        ]
+    },
+
+    // ── TALENT MANAGEMENT ──
+    {
+        id: 'job_seekers',
+        group: 'TALENT MANAGEMENT',
+        name: 'Job Seekers & Talent Pool',
+        page: '/admin/job-seekers',
+        description: 'Browse candidate talent directory, review credentials, verify trust badges, download resumes, and moderate accounts.',
+        icon: Users,
+        color: 'text-amber-600 bg-amber-50 border-amber-100',
+        actions: [
+            { id: 'view_seekers_directory', label: 'View Job Seekers Directory', desc: 'Browse candidate profiles table' },
+            { id: 'view_candidate_profile_full', label: 'View Full Candidate Profile Details', desc: 'Inspect candidate portfolio & career data' },
+            { id: 'download_candidate_resume', label: 'Download Candidate Resume / CV', desc: 'Access candidate documents' },
+            { id: 'verify_candidate_profile_badge', label: 'Verify / Unverify Candidate Badge', desc: 'Trust badge moderation' },
+            { id: 'toggle_candidate_account_status', label: 'Toggle Job Seeker Active / Suspended', desc: 'Ban / unban candidates' },
+            { id: 'export_candidates_roster', label: 'Export Candidate Directory to Excel', desc: 'Export job seekers data file' },
+            { id: 'delete_candidate_profile', label: 'Delete Candidate Account Permanently', desc: 'Purge candidate profile from system' },
+        ]
+    },
+    {
+        id: 'talent_subscriptions',
+        group: 'TALENT MANAGEMENT',
+        name: 'Talent Subscriptions',
+        page: '/admin/talent/subscriptions',
+        description: 'Manage candidate premium membership tiers, resume spotlight features, and candidate subscription history.',
+        icon: Layers,
+        color: 'text-teal-600 bg-teal-50 border-teal-100',
+        actions: [
+            { id: 'view_talent_subscriptions', label: 'View Talent Memberships & Plans', desc: 'Browse candidate pro tiers' },
+            { id: 'manage_talent_tiers', label: 'Add & Edit Talent Subscription Tiers', desc: 'Configure pricing & perks' },
+            { id: 'view_talent_subscribers', label: 'View Active Pro Job Seekers', desc: 'Browse paid candidate subscribers' },
+            { id: 'grant_talent_pro_access', label: 'Grant Complimentary Pro Validity', desc: 'Manual activation for candidates' },
+            { id: 'export_talent_subscriptions', label: 'Export Talent Subscription Records', desc: 'Download CSV financial data' },
+        ]
+    },
+
+    // ── REPORT ──
+    {
+        id: 'report_recruiters',
+        group: 'REPORT',
+        name: 'Recruiter Reports & Analytics',
+        page: '/admin/reports/recruiters',
+        description: 'Comprehensive business intelligence, employer acquisition, job post moderation trends and pipeline data.',
         icon: Sparkles,
         color: 'text-purple-600 bg-purple-50 border-purple-100',
         actions: [
@@ -57,101 +215,27 @@ export const PORTAL_MODULES = [
         ]
     },
     {
-        id: 'plans',
-        name: 'Subscription Management Page',
-        page: '/admin/plans',
-        description: 'Manage pricing tiers, validity, job limits and active subscriber lists.',
-        icon: Layers,
-        color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
-        actions: [
-            { id: 'view_plans_table', label: 'View Subscription Plans Directory', desc: 'Browse all pricing packages' },
-            { id: 'add_plan_button', label: 'Add New Plan Button', desc: 'Create new subscription tier' },
-            { id: 'edit_plan_details', label: 'Edit Plan Details & Pricing', desc: 'Modify cost, limits & validity' },
-            { id: 'duplicate_plan_action', label: 'Duplicate Subscription Plan', desc: 'Clone plan template' },
-            { id: 'toggle_plan_status', label: 'Toggle Plan Active / Inactive Status', desc: 'Control public plan visibility' },
-            { id: 'delete_plan_action', label: 'Delete Subscription Plan', desc: 'Purge package from system' },
-            { id: 'view_plan_subscribers', label: 'View Active & Expired Subscribers', desc: 'Recruiters on this plan' },
-        ]
-    },
-    {
-        id: 'recruiters',
-        name: 'Recruiters & Companies Page',
-        page: '/admin/recruiters',
-        description: 'Manage employer profiles, extend validity, assign custom plans, and auto-approve.',
-        icon: Building2,
-        color: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-        actions: [
-            { id: 'view_recruiters_directory', label: 'Recruiter Directory & Metrics Table', desc: 'Browse employer accounts' },
-            { id: 'add_recruiter_button', label: 'Add Recruiter Button', desc: 'Onboard new employer account' },
-            { id: 'view_recruiter_profile', label: 'View Recruiter Profile & Stats', desc: 'Company details and history' },
-            { id: 'edit_recruiter_profile', label: 'Edit Recruiter & Company Info', desc: 'Modify corporate profile' },
-            { id: 'toggle_recruiter_status', label: 'Toggle Account Active / Suspended', desc: 'Control account access' },
-            { id: 'toggle_auto_approve', label: 'Toggle Auto-Approve Job Posts', desc: 'Bypass moderation queue' },
-            { id: 'change_plan_modal', label: 'Change Recruiter Plan Modal', desc: 'Upgrade / downgrade subscription' },
-            { id: 'assign_custom_plan_modal', label: 'Assign Custom Plan & Feature Quotas', desc: 'Custom jobs, validity & tools' },
-            { id: 'extend_subscription_modal', label: 'Extend Subscription Expiry Date', desc: 'Grant validity extension' },
-            { id: 'reset_recruiter_password', label: 'Reset Recruiter Password Button', desc: 'Issue new credentials' },
-            { id: 'login_as_recruiter_button', label: 'Login As Recruiter (Direct SSO)', desc: 'Impersonate employer dashboard' },
-            { id: 'manage_recruiter_team', label: 'Manage Recruiter Sub-Recruiters', desc: 'Team member permissions' },
-            { id: 'export_recruiters_data', label: 'Export Recruiter Directory to Excel', desc: 'Download company roster' },
-        ]
-    },
-    {
-        id: 'job_posts',
-        name: 'Job Listings & Moderation Page',
-        page: '/admin/job-post',
-        description: 'Review active postings, moderate pending jobs, approve/reject and expire listings.',
-        icon: Briefcase,
-        color: 'text-violet-600 bg-violet-50 border-violet-100',
-        actions: [
-            { id: 'view_job_directory', label: 'View Active & Expired Job Postings', desc: 'Browse published jobs' },
-            { id: 'view_pending_jobs', label: 'Pending Jobs Moderation Queue Tab', desc: 'Jobs awaiting review' },
-            { id: 'approve_single_job', label: 'Approve Single Job Post', desc: 'Publish individual listing' },
-            { id: 'bulk_approve_all_jobs', label: 'Bulk Approve All Pending Jobs', desc: 'One-click publish all pending' },
-            { id: 'reject_job_post', label: 'Reject / Disapprove Job Post', desc: 'Decline posting with reason' },
-            { id: 'view_job_details_modal', label: 'View Full Job Details & Description', desc: 'Inspect full listing' },
-            { id: 'edit_job_post', label: 'Edit Job Details & Requirements', desc: 'Modify title, salary & skills' },
-            { id: 'toggle_job_active', label: 'Toggle Job Active / Inactive', desc: 'Reactivate expired listings' },
-            { id: 'expire_job_post', label: 'Expire Job Post Listing', desc: 'Manually close applications' },
-            { id: 'delete_job_post', label: 'Delete Job Post Listing', desc: 'Permanently remove job' },
-            { id: 'view_job_applicants', label: 'View Applied Candidates for Job', desc: 'Candidates for this position' },
-        ]
-    },
-    {
-        id: 'job_seekers',
-        name: 'Job Seekers & Talent Pool Page',
-        page: '/admin/job-seekers',
-        description: 'Browse candidate directory, review credentials, verify badges, download resumes.',
-        icon: Users,
-        color: 'text-amber-600 bg-amber-50 border-amber-100',
-        actions: [
-            { id: 'view_seekers_directory', label: 'View Job Seekers Directory', desc: 'Browse candidate profiles' },
-            { id: 'view_candidate_profile_full', label: 'View Full Candidate Profile Details', desc: 'Inspect candidate portfolio' },
-            { id: 'download_candidate_resume', label: 'Download Candidate Resume / CV', desc: 'Access candidate documents' },
-            { id: 'verify_candidate_profile_badge', label: 'Verify / Unverify Candidate Badge', desc: 'Trust badge moderation' },
-            { id: 'toggle_candidate_account_status', label: 'Toggle Job Seeker Active / Suspended', desc: 'Ban / unban candidates' },
-            { id: 'export_candidates_roster', label: 'Export Candidate Directory to Excel', desc: 'Export job seekers data' },
-            { id: 'delete_candidate_profile', label: 'Delete Candidate Account Permanently', desc: 'Purge seeker profile' },
-        ]
-    },
-    {
-        id: 'applications',
-        name: 'Candidate Job Applications Page',
-        page: '/admin/applications',
-        description: 'Audit live candidate job applications across all companies and recruiters.',
+        id: 'report_job_seekers',
+        group: 'REPORT',
+        name: 'Job Seeker Reports',
+        page: '/admin/reports/job-seekers',
+        description: 'Candidate demographics, application submission rates, job seeker search analytics, and placement metrics reports.',
         icon: FileSpreadsheet,
-        color: 'text-teal-600 bg-teal-50 border-teal-100',
+        color: 'text-fuchsia-600 bg-fuchsia-50 border-fuchsia-100',
         actions: [
-            { id: 'view_all_applications_log', label: 'View All Job Applications Feed', desc: 'Browse cross-company applications' },
-            { id: 'filter_by_recruiter_company', label: 'Filter Applications by Employer', desc: 'Sort by recruiter/position' },
-            { id: 'view_resume_preview_modal', label: 'Open Candidate Resume Previewer', desc: 'Inspect applicant CV online' },
-            { id: 'update_application_hiring_stage', label: 'Update Candidate Hiring Stage', desc: 'Advance applicant progress' },
-            { id: 'export_applications_spreadsheet', label: 'Export Applications to Spreadsheet', desc: 'Download CSV roster' },
+            { id: 'view_candidate_growth_report', label: 'Candidate Registration & Growth Trajectory', desc: 'Signups by region and channel' },
+            { id: 'skills_demand_analytics', label: 'Skills Demand vs Talent Supply Analytics', desc: 'Market matching intelligence' },
+            { id: 'application_submission_trends', label: 'Application Submission & Placement Rates', desc: 'Candidate success metrics' },
+            { id: 'resume_download_audit_report', label: 'Resume Downloads & Profile Views Report', desc: 'Recruiter engagement with talent' },
+            { id: 'export_job_seekers_report', label: 'Export Job Seekers Report to Excel', desc: 'Download detailed talent analytics' },
         ]
     },
+
+    // ── SYSTEM ──
     {
         id: 'support',
-        name: 'Support & Help Desk Page',
+        group: 'SYSTEM',
+        name: 'Support Tickets & Help Desk',
         page: '/admin/support',
         description: 'Manage incoming user inquiries, reply to tickets, assign agents, and close issues.',
         icon: MessageSquare,
@@ -168,9 +252,10 @@ export const PORTAL_MODULES = [
     },
     {
         id: 'user_management',
-        name: 'User & Role Management Page',
+        group: 'SYSTEM',
+        name: 'Users & Roles Management',
         page: '/admin/users',
-        description: 'Create sub-administrators, assign security clearances, view activity audit logs.',
+        description: 'Create sub-administrators, assign security clearances, configure staff accounts.',
         icon: UserCheck,
         color: 'text-sky-600 bg-sky-50 border-sky-100',
         actions: [
@@ -185,10 +270,28 @@ export const PORTAL_MODULES = [
         ]
     },
     {
+        id: 'roles_permissions',
+        group: 'SYSTEM',
+        name: 'Roles & Permissions',
+        page: '/admin/roles-permissions',
+        description: 'Design dynamic roles, define granular module permissions, manage security access templates.',
+        icon: ShieldCheck,
+        color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
+        actions: [
+            { id: 'view_roles_matrix', label: 'View Roles Directory & Permission Matrix', desc: 'Browse configured dynamic roles' },
+            { id: 'create_custom_role', label: 'Create New Dynamic Custom Role', desc: 'Build custom role templates' },
+            { id: 'edit_role_permissions', label: 'Edit Role Info & Module Permissions', desc: 'Modify security checklists' },
+            { id: 'clone_role_template', label: 'Clone / Duplicate Existing Role', desc: 'Fast-track role creation' },
+            { id: 'delete_custom_role', label: 'Delete Dynamic Custom Role', desc: 'Remove unused roles' },
+            { id: 'export_roles_overview', label: 'Export Roles & Clearances Report', desc: 'Download security clearance PDF/Excel' },
+        ]
+    },
+    {
         id: 'settings',
-        name: 'Platform Settings & Config Page',
+        group: 'SYSTEM',
+        name: 'Platform Settings & Config',
         page: '/admin/general',
-        description: 'System configurations, email delivery, notification gateways and maintenance.',
+        description: 'System configurations, company branding, SMTP delivery, and maintenance tools.',
         icon: Settings,
         color: 'text-slate-600 bg-slate-50 border-slate-100',
         actions: [
@@ -224,7 +327,7 @@ const MODAL_DEPARTMENT_OPTIONS = DEPARTMENTS.map(d => ({ value: d, label: d }));
 const PRESET_TEMPLATES = [
     {
         title: 'Full Super Admin',
-        desc: 'Unrestricted master clearance to all modules & actions',
+        desc: 'Unrestricted master clearance across all 5 navigation groups and modules',
         isSuper: true,
         generate: () => {
             const perms = {};
@@ -238,12 +341,13 @@ const PRESET_TEMPLATES = [
     },
     {
         title: 'Operations Manager',
-        desc: 'Recruiters, Job Posts, Talent Directory & Support',
+        desc: 'Dashboards, Recruiters, Job Posts, Subscriptions, Talent Pool & Support',
         isSuper: false,
         generate: () => {
             const perms = {};
+            const opMods = ['dashboard_recruiter', 'dashboard_job_seekers', 'recruiters', 'job_posts', 'plans', 'job_seekers', 'talent_subscriptions', 'support'];
             PORTAL_MODULES.forEach(mod => {
-                const isOp = ['dashboard', 'recruiters', 'job_posts', 'job_seekers', 'applications', 'support'].includes(mod.id);
+                const isOp = opMods.includes(mod.id);
                 const modPerms = { view: isOp, create_edit: isOp, delete: false };
                 mod.actions.forEach(act => {
                     if (isOp && !act.id.includes('delete') && !act.id.includes('reset')) {
@@ -257,15 +361,16 @@ const PRESET_TEMPLATES = [
     },
     {
         title: 'Job & Content Moderator',
-        desc: 'Job listings queue, approval, and support inquiries',
+        desc: 'Job listings moderation queue, approval/rejection, candidate badges, and support tickets',
         isSuper: false,
         generate: () => {
             const perms = {};
+            const modMods = ['dashboard_recruiter', 'job_posts', 'job_seekers', 'support'];
             PORTAL_MODULES.forEach(mod => {
-                const isMod = ['job_posts', 'support', 'dashboard'].includes(mod.id);
+                const isMod = modMods.includes(mod.id);
                 const modPerms = { view: isMod, create_edit: isMod, delete: false };
                 mod.actions.forEach(act => {
-                    if (['view_job_directory', 'view_pending_jobs', 'approve_single_job', 'bulk_approve_all_jobs', 'reject_job_post', 'view_job_details_modal', 'view_all_tickets', 'reply_to_ticket_thread', 'scoreboard_kpis'].includes(act.id)) {
+                    if (['view_job_directory', 'view_pending_jobs', 'approve_single_job', 'bulk_approve_all_jobs', 'reject_job_post', 'view_job_details_modal', 'view_seekers_directory', 'view_candidate_profile_full', 'verify_candidate_profile_badge', 'view_all_tickets', 'reply_to_ticket_thread', 'scoreboard_kpis'].includes(act.id)) {
                         modPerms[act.id] = true;
                     }
                 });
@@ -276,15 +381,36 @@ const PRESET_TEMPLATES = [
     },
     {
         title: 'Billing & Subscriptions Admin',
-        desc: 'Plans, pricing, custom recruiter packages & validity',
+        desc: 'Recruiter & candidate subscription packages, quotas, validity extension & revenue reports',
         isSuper: false,
         generate: () => {
             const perms = {};
+            const billMods = ['dashboard_recruiter', 'plans', 'talent_subscriptions', 'recruiters', 'report_recruiters'];
             PORTAL_MODULES.forEach(mod => {
-                const isBill = ['plans', 'recruiters', 'analytics', 'dashboard'].includes(mod.id);
+                const isBill = billMods.includes(mod.id);
                 const modPerms = { view: isBill, create_edit: isBill, delete: false };
                 mod.actions.forEach(act => {
-                    if (['view_plans_table', 'add_plan_button', 'edit_plan_details', 'duplicate_plan_action', 'view_plan_subscribers', 'change_plan_modal', 'assign_custom_plan_modal', 'extend_subscription_modal', 'export_recruiters_data', 'view_recruiters_directory', 'scoreboard_kpis', 'recruiter_metrics'].includes(act.id)) {
+                    if (['view_plans_table', 'add_plan_button', 'edit_plan_details', 'duplicate_plan_action', 'view_plan_subscribers', 'view_talent_subscriptions', 'manage_talent_tiers', 'view_talent_subscribers', 'grant_talent_pro_access', 'export_talent_subscriptions', 'change_plan_modal', 'assign_custom_plan_modal', 'extend_subscription_modal', 'export_recruiters_data', 'view_recruiters_directory', 'scoreboard_kpis', 'recruiter_metrics', 'revenue_forecasts'].includes(act.id)) {
+                        modPerms[act.id] = true;
+                    }
+                });
+                perms[mod.id] = modPerms;
+            });
+            return perms;
+        }
+    },
+    {
+        title: 'Customer Support Lead',
+        desc: 'Support inquiries queue, ticket replies, triage status, and candidate/employer profile viewing',
+        isSuper: false,
+        generate: () => {
+            const perms = {};
+            const supMods = ['dashboard_recruiter', 'support', 'job_seekers', 'recruiters'];
+            PORTAL_MODULES.forEach(mod => {
+                const isSup = supMods.includes(mod.id);
+                const modPerms = { view: isSup, create_edit: isSup, delete: false };
+                mod.actions.forEach(act => {
+                    if (['view_all_tickets', 'filter_by_ticket_status', 'reply_to_ticket_thread', 'change_ticket_priority_status', 'assign_ticket_to_agent', 'close_resolve_ticket', 'view_seekers_directory', 'view_candidate_profile_full', 'view_recruiters_directory', 'view_recruiter_profile', 'scoreboard_kpis'].includes(act.id)) {
                         modPerms[act.id] = true;
                     }
                 });
@@ -295,14 +421,14 @@ const PRESET_TEMPLATES = [
     },
     {
         title: 'Read-Only Auditor',
-        desc: 'View-only visibility across analytics, recruiters and jobs',
+        desc: 'View-only visibility across platform reports, dashboards, jobs and candidate rosters',
         isSuper: false,
         generate: () => {
             const perms = {};
             PORTAL_MODULES.forEach(mod => {
                 const modPerms = { view: true, create_edit: false, delete: false };
                 mod.actions.forEach(act => {
-                    if (act.id.startsWith('view_') || act.id.includes('metrics') || act.id.includes('scoreboard')) {
+                    if (act.id.startsWith('view_') || act.id.includes('metrics') || act.id.includes('scoreboard') || act.id.includes('chart') || act.id.includes('analytics') || act.id.includes('report')) {
                         modPerms[act.id] = true;
                     }
                 });
@@ -333,6 +459,7 @@ export default function RolesPermissions() {
     const [isSuperRole, setIsSuperRole] = useState(false);
     const [permissions, setPermissions] = useState({});
     const [searchPermissionQuery, setSearchPermissionQuery] = useState('');
+    const [selectedPreset, setSelectedPreset] = useState(null);
 
     // Delete confirmation modal
     const [deleteModal, setDeleteModal] = useState({ isOpen: false, role: null });
@@ -378,6 +505,7 @@ export default function RolesPermissions() {
         setDepartment('Operations');
         setDescription('');
         setIsSuperRole(false);
+        setSelectedPreset(null);
 
         // Initialize default empty permissions
         const initialPerms = {};
@@ -397,6 +525,11 @@ export default function RolesPermissions() {
         setDescription(role.description || '');
         setIsSuperRole(Boolean(role.is_super_admin));
 
+        const matchedPreset = PRESET_TEMPLATES.find(
+            p => p.title.toLowerCase() === (role.role_title || role.role_name || '').toLowerCase()
+        );
+        setSelectedPreset(matchedPreset ? matchedPreset.title : (Boolean(role.is_super_admin) ? 'Full Super Admin' : null));
+
         let existingPerms = role.permissions || {};
         if (typeof existingPerms === 'string') {
             try { existingPerms = JSON.parse(existingPerms); } catch (e) { existingPerms = {}; }
@@ -408,11 +541,13 @@ export default function RolesPermissions() {
 
     // Apply Preset
     const applyPreset = (preset) => {
+        setSelectedPreset(preset.title);
         const generated = preset.generate();
         setPermissions(generated);
         setIsSuperRole(Boolean(preset.isSuper));
-        if (!roleTitle || roleTitle.trim() === '') {
-            setRoleTitle(preset.title);
+        setRoleTitle(preset.title);
+        if (!description || description.trim() === '') {
+            setDescription(preset.desc);
         }
         toast.success(`Loaded permissions from "${preset.title}" preset`);
     };
@@ -463,6 +598,26 @@ export default function RolesPermissions() {
                 ...prev,
                 [moduleId]: updatedMod
             };
+        });
+    };
+
+    // Toggle all modules in a specific Navigation Group
+    const toggleGroupAll = (groupId, enableAll) => {
+        if (isSuperRole) return;
+        setPermissions(prev => {
+            const next = { ...prev };
+            PORTAL_MODULES.filter(m => m.group === groupId).forEach(mod => {
+                const updatedMod = {
+                    view: enableAll,
+                    create_edit: enableAll,
+                    delete: enableAll
+                };
+                mod.actions.forEach(act => {
+                    updatedMod[act.id] = enableAll;
+                });
+                next[mod.id] = updatedMod;
+            });
+            return next;
         });
     };
 
@@ -752,7 +907,7 @@ export default function RolesPermissions() {
                                         <div className="flex items-center justify-between text-xs mb-1.5">
                                             <span className="text-gray-500 font-medium">Security Clearance</span>
                                             <span className="font-bold text-gray-900">
-                                                {isSuper ? 'All 76 Actions' : `${grantedCount} / ${TOTAL_AVAILABLE_ACTIONS}`}
+                                                {isSuper ? `All ${TOTAL_AVAILABLE_ACTIONS} Actions` : `${grantedCount} / ${TOTAL_AVAILABLE_ACTIONS}`}
                                             </span>
                                         </div>
                                         <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
@@ -815,7 +970,7 @@ export default function RolesPermissions() {
                                     </span>
                                     <span className="text-xs text-gray-400">•</span>
                                     <span className="text-xs font-bold text-blue-700 bg-blue-50/70 px-2.5 py-0.5 rounded-full border-1 border-blue-200/60">
-                                        {isSuperRole ? '76 / 76 Full Master Actions' : `${currentGrantedCount} / ${TOTAL_AVAILABLE_ACTIONS} Actions Granted`}
+                                        {isSuperRole ? `${TOTAL_AVAILABLE_ACTIONS} / ${TOTAL_AVAILABLE_ACTIONS} Full Master Actions` : `${currentGrantedCount} / ${TOTAL_AVAILABLE_ACTIONS} Actions Granted`}
                                     </span>
                                 </div>
                                 <h2 className="text-lg font-bold text-gray-900 mt-1 mb-0">
@@ -890,6 +1045,7 @@ export default function RolesPermissions() {
                                                 const val = e.target.checked;
                                                 setIsSuperRole(val);
                                                 if (val) {
+                                                    setSelectedPreset('Full Super Admin');
                                                     const allPerms = {};
                                                     PORTAL_MODULES.forEach(mod => {
                                                         const modPerms = { view: true, create_edit: true, delete: true };
@@ -897,6 +1053,10 @@ export default function RolesPermissions() {
                                                         allPerms[mod.id] = modPerms;
                                                     });
                                                     setPermissions(allPerms);
+                                                } else {
+                                                    if (selectedPreset === 'Full Super Admin') {
+                                                        setSelectedPreset(null);
+                                                    }
                                                 }
                                             }}
                                             className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
@@ -918,33 +1078,52 @@ export default function RolesPermissions() {
                                 </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                                    {PRESET_TEMPLATES.map((preset, idx) => (
-                                        <button
-                                            key={idx}
-                                            type="button"
-                                            onClick={() => applyPreset(preset)}
-                                            className="p-3 text-left rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all bg-white cursor-pointer group"
-                                        >
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-semibold text-gray-900 group-hover:text-blue-700">
-                                                    {preset.title}
-                                                </span>
-                                                <Sparkles className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500" />
-                                            </div>
-                                            <p className="text-[12px] text-gray-500 line-clamp-2 leading-tight mb-0">
-                                                {preset.desc}
-                                            </p>
-                                        </button>
-                                    ))}
+                                    {PRESET_TEMPLATES.map((preset, idx) => {
+                                        const isSelected = selectedPreset === preset.title;
+                                        return (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => applyPreset(preset)}
+                                                className={`p-3 text-left rounded-xl border transition-all cursor-pointer group relative ${isSelected
+                                                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
+                                                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 bg-white'
+                                                    }`}
+                                            >
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className={`text-sm font-semibold transition-colors ${isSelected ? 'text-blue-700 font-bold' : 'text-gray-900 group-hover:text-blue-700'
+                                                        }`}>
+                                                        {preset.title}
+                                                    </span>
+                                                    {isSelected ? (
+                                                        <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white shrink-0 animate-in zoom-in-75">
+                                                            <Check className="w-3 h-3 stroke-[3]" />
+                                                        </span>
+                                                    ) : (
+                                                        <Sparkles className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500" />
+                                                    )}
+                                                </div>
+                                                <p className={`text-[12px] line-clamp-2 leading-tight mb-0 transition-colors ${isSelected ? 'text-blue-800/80 font-medium' : 'text-gray-500'
+                                                    }`}>
+                                                    {preset.desc}
+                                                </p>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            {/* Section 3: Granular Checklist */}
-                            <div className="space-y-4 pt-2">
+                            {/* Section 3: Granular Checklist by Navigation Groups */}
+                            <div className="space-y-5 pt-2">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sticky top-[-30px] bg-white py-2 z-10 border-b border-gray-100">
-                                    <span className="text-sm font-semibold text-gray-900">
-                                        3. Module-Wise Permissions Checklist
-                                    </span>
+                                    <div>
+                                        <span className="text-sm font-semibold text-gray-900 block">
+                                            3. Navigation Structure & Module Permissions
+                                        </span>
+                                        <span className="text-[11px] text-gray-500">
+                                            Clearances structured across the 5 primary platform navigation sections.
+                                        </span>
+                                    </div>
 
                                     <div className="flex items-center gap-2">
                                         <div className="relative">
@@ -954,7 +1133,7 @@ export default function RolesPermissions() {
                                                 placeholder="Filter actions..."
                                                 value={searchPermissionQuery}
                                                 onChange={(e) => setSearchPermissionQuery(e.target.value)}
-                                                className="pl-8 pr-3 py-2.5 bg-gray-50 focus:bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-sm outline-none w-44"
+                                                className="pl-8 pr-3 py-2 bg-gray-50 focus:bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-xs outline-none w-44"
                                             />
                                         </div>
 
@@ -962,7 +1141,7 @@ export default function RolesPermissions() {
                                             type="button"
                                             onClick={handleSelectAllGlobal}
                                             disabled={isSuperRole}
-                                            className="px-2.5 py-2 text-sm font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg border-0 cursor-pointer disabled:opacity-50"
+                                            className="px-2.5 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg border-0 cursor-pointer disabled:opacity-50"
                                         >
                                             Select All
                                         </button>
@@ -970,7 +1149,7 @@ export default function RolesPermissions() {
                                             type="button"
                                             onClick={handleClearAllGlobal}
                                             disabled={isSuperRole}
-                                            className="px-2.5 py-2 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg border-0 cursor-pointer disabled:opacity-50"
+                                            className="px-2.5 py-1.5 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg border-0 cursor-pointer disabled:opacity-50"
                                         >
                                             Clear All
                                         </button>
@@ -982,103 +1161,147 @@ export default function RolesPermissions() {
                                         <Sparkles className="w-8 h-8 text-purple-600 mx-auto mb-2" />
                                         <h4 className="text-sm font-bold text-purple-900 mb-1">Full Super Admin Mode Enabled</h4>
                                         <p className="text-xs text-purple-700 max-w-md mx-auto">
-                                            This role possesses master clearance across all 10 modules and 76 fine-grained actions. Uncheck the Super Admin option above to configure customized actions.
+                                            This role possesses master clearance across all 5 navigation groups, 12 modules and {TOTAL_AVAILABLE_ACTIONS} fine-grained actions. Uncheck the Super Admin option above to configure customized actions.
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
-                                        {PORTAL_MODULES.map(mod => {
-                                            const modPerms = permissions[mod.id] || {};
-                                            const isViewAllowed = Boolean(modPerms.view);
+                                    <div className="space-y-6">
+                                        {MODULE_CATEGORIES.map(category => {
+                                            const categoryModules = PORTAL_MODULES.filter(m => m.group === category.id);
 
-                                            // Filter actions if search query is typed
-                                            const filteredActions = searchPermissionQuery.trim()
-                                                ? mod.actions.filter(a =>
+                                            // Check if category has any modules matching search
+                                            const matchingModules = categoryModules.filter(mod => {
+                                                if (!searchPermissionQuery.trim()) return true;
+                                                const matchesMod = mod.name.toLowerCase().includes(searchPermissionQuery.toLowerCase()) ||
+                                                    mod.description.toLowerCase().includes(searchPermissionQuery.toLowerCase()) ||
+                                                    mod.page.toLowerCase().includes(searchPermissionQuery.toLowerCase());
+                                                const matchesAction = mod.actions.some(a =>
                                                     a.label.toLowerCase().includes(searchPermissionQuery.toLowerCase()) ||
                                                     a.desc.toLowerCase().includes(searchPermissionQuery.toLowerCase()) ||
                                                     a.id.toLowerCase().includes(searchPermissionQuery.toLowerCase())
-                                                )
-                                                : mod.actions;
+                                                );
+                                                return matchesMod || matchesAction;
+                                            });
 
-                                            if (searchPermissionQuery.trim() && filteredActions.length === 0) {
-                                                return null;
-                                            }
+                                            if (matchingModules.length === 0) return null;
 
-                                            const allActionsSelectedInMod = mod.actions.every(a => Boolean(modPerms[a.id]));
+                                            // Check if all actions in this entire category are selected
+                                            const allActionsInCategory = categoryModules.flatMap(m => m.actions.map(a => ({ modId: m.id, actId: a.id })));
+                                            const isAllCategorySelected = allActionsInCategory.every(item => Boolean(permissions[item.modId]?.[item.actId]));
 
                                             return (
-                                                <div
-                                                    key={mod.id}
-                                                    className="bg-white rounded-xl border border-gray-200/90 overflow-hidden shadow-xs"
-                                                >
-                                                    {/* Module Title Bar */}
-                                                    <div className="px-4 py-3 bg-gray-50/70 border-b border-gray-100 flex items-center justify-between">
+                                                <div key={category.id} className="space-y-3 bg-gray-50/50 p-3.5 rounded-2xl border border-gray-200/80">
+                                                    {/* Category Section Header */}
+                                                    <div className="flex items-center justify-between px-1 py-0.5">
                                                         <div className="flex items-center gap-2.5">
-                                                            <div className={`p-1.5 rounded-lg ${mod.color}`}>
-                                                                <mod.icon className="w-4 h-4" />
-                                                            </div>
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <h4 className="text-sm font-semibold text-gray-900 mb-0">
-                                                                        {mod.name}
-                                                                    </h4>
-                                                                    <span className="text-[12px] text-gray-400 font-mono">
-                                                                        ({mod.page})
-                                                                    </span>
-                                                                </div>
-                                                                <p className="text-[12px] text-gray-500 mb-0">
-                                                                    {mod.description}
-                                                                </p>
-                                                            </div>
+                                                            <span className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold tracking-wider uppercase ${category.color}`}>
+                                                                {category.title}
+                                                            </span>
+                                                            <span className="text-xs text-gray-500 hidden sm:inline">
+                                                                {category.description}
+                                                            </span>
                                                         </div>
 
-                                                        <div className="flex items-center gap-2">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => toggleModuleAll(mod.id, !allActionsSelectedInMod)}
-                                                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 bg-transparent border-0 cursor-pointer px-2 py-1 hover:bg-blue-50 rounded"
-                                                            >
-                                                                {allActionsSelectedInMod ? 'Deselect Module' : 'Select All in Module'}
-                                                            </button>
-                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleGroupAll(category.id, !isAllCategorySelected)}
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-white border border-blue-200 shadow-xs px-2.5 py-1 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                                                        >
+                                                            {isAllCategorySelected ? 'Deselect Section' : 'Select All in Section'}
+                                                        </button>
                                                     </div>
 
-                                                    {/* Actions Grid */}
-                                                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                                                        {filteredActions.map(act => {
-                                                            const isChecked = Boolean(modPerms[act.id]);
+                                                    {/* Modules in this Category */}
+                                                    <div className="space-y-3.5">
+                                                        {matchingModules.map(mod => {
+                                                            const modPerms = permissions[mod.id] || {};
+                                                            const filteredActions = searchPermissionQuery.trim()
+                                                                ? mod.actions.filter(a =>
+                                                                    a.label.toLowerCase().includes(searchPermissionQuery.toLowerCase()) ||
+                                                                    a.desc.toLowerCase().includes(searchPermissionQuery.toLowerCase()) ||
+                                                                    a.id.toLowerCase().includes(searchPermissionQuery.toLowerCase())
+                                                                )
+                                                                : mod.actions;
+
+                                                            const allActionsSelectedInMod = mod.actions.every(a => Boolean(modPerms[a.id]));
 
                                                             return (
                                                                 <div
-                                                                    key={act.id}
-                                                                    role="button"
-                                                                    tabIndex={0}
-                                                                    onClick={() => toggleAction(mod.id, act.id)}
-                                                                    onKeyDown={(e) => {
-                                                                        if (e.key === ' ' || e.key === 'Enter') {
-                                                                            e.preventDefault();
-                                                                            toggleAction(mod.id, act.id);
-                                                                        }
-                                                                    }}
-                                                                    className={`flex items-start gap-2.5 p-3 rounded-xl border text-left cursor-pointer transition-all select-none
-                                                                        ${isChecked
-                                                                            ? 'bg-blue-50/80 border-blue-300 text-blue-900 shadow-xs'
-                                                                            : 'bg-white border-gray-200/80 text-gray-700 hover:bg-gray-50/90 hover:border-gray-300'}`}
+                                                                    key={mod.id}
+                                                                    className="bg-white rounded-xl border border-gray-200/90 overflow-hidden shadow-xs"
                                                                 >
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={isChecked}
-                                                                        readOnly
-                                                                        tabIndex={-1}
-                                                                        className="w-4 h-4 mt-0.5 rounded text-blue-600 border-gray-300 focus:ring-0 shrink-0 pointer-events-none cursor-pointer"
-                                                                    />
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <span className="text-sm font-semibold block leading-tight">
-                                                                            {act.label}
-                                                                        </span>
-                                                                        <span className="text-[12px] text-gray-500 block truncate mt-0.5">
-                                                                            {act.desc}
-                                                                        </span>
+                                                                    {/* Module Title Bar */}
+                                                                    <div className="px-4 py-3 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between">
+                                                                        <div className="flex items-center gap-2.5">
+                                                                            <div className={`p-1.5 rounded-lg ${mod.color}`}>
+                                                                                <mod.icon className="w-4 h-4" />
+                                                                            </div>
+                                                                            <div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <h4 className="text-sm font-semibold text-gray-900 mb-0">
+                                                                                        {mod.name}
+                                                                                    </h4>
+                                                                                    <span className="text-[11px] text-gray-400 font-mono">
+                                                                                        ({mod.page})
+                                                                                    </span>
+                                                                                </div>
+                                                                                <p className="text-[11px] text-gray-500 mb-0 mt-0.5">
+                                                                                    {mod.description}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="flex items-center gap-2">
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => toggleModuleAll(mod.id, !allActionsSelectedInMod)}
+                                                                                className="text-xs font-semibold text-blue-600 hover:text-blue-800 bg-transparent border-0 cursor-pointer px-2 py-1 hover:bg-blue-50 rounded"
+                                                                            >
+                                                                                {allActionsSelectedInMod ? 'Deselect Module' : 'Select All in Module'}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Actions Grid */}
+                                                                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                                                        {filteredActions.map(act => {
+                                                                            const isChecked = Boolean(modPerms[act.id]);
+
+                                                                            return (
+                                                                                <div
+                                                                                    key={act.id}
+                                                                                    role="button"
+                                                                                    tabIndex={0}
+                                                                                    onClick={() => toggleAction(mod.id, act.id)}
+                                                                                    onKeyDown={(e) => {
+                                                                                        if (e.key === ' ' || e.key === 'Enter') {
+                                                                                            e.preventDefault();
+                                                                                            toggleAction(mod.id, act.id);
+                                                                                        }
+                                                                                    }}
+                                                                                    className={`flex items-start gap-2.5 p-3 rounded-xl border-1 text-left cursor-pointer transition-all select-none
+                                                                                        ${isChecked
+                                                                                            ? 'bg-blue-50/80 border-blue-300 text-blue-900 shadow-xs'
+                                                                                            : 'bg-white border-gray-200/80 text-gray-700 hover:bg-gray-50/90 hover:border-gray-300'}`}
+                                                                                >
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={isChecked}
+                                                                                        readOnly
+                                                                                        tabIndex={-1}
+                                                                                        className="w-4 h-4 mt-0.5 rounded text-blue-600 border-gray-300 focus:ring-0 shrink-0 pointer-events-none cursor-pointer"
+                                                                                    />
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        <span className="text-xs font-semibold block leading-tight">
+                                                                                            {act.label}
+                                                                                        </span>
+                                                                                        <span className="text-[11px] text-gray-500 block truncate mt-0.5">
+                                                                                            {act.desc}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
                                                                     </div>
                                                                 </div>
                                                             );
@@ -1095,14 +1318,14 @@ export default function RolesPermissions() {
                         {/* Modal Sticky Footer */}
                         <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between shrink-0">
                             <span className="text-xs text-gray-500">
-                                Configured <strong className="text-gray-900">{isSuperRole ? '76' : currentGrantedCount}</strong> specific permissions
+                                Configured <strong className="text-gray-900">{isSuperRole ? TOTAL_AVAILABLE_ACTIONS : currentGrantedCount}</strong> of <strong className="text-gray-900">{TOTAL_AVAILABLE_ACTIONS}</strong> specific permissions
                             </span>
 
                             <div className="flex items-center gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setIsRoleModalOpen(false)}
-                                    className="px-4 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg shadow-xs cursor-pointer"
+                                    className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg shadow-xs cursor-pointer"
                                 >
                                     Cancel
                                 </button>
@@ -1111,7 +1334,7 @@ export default function RolesPermissions() {
                                     type="submit"
                                     form="roleForm"
                                     disabled={submitting}
-                                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-xs shadow-blue-500/20 transition-all cursor-pointer border-0 disabled:opacity-50 flex items-center gap-2"
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-xs shadow-blue-500/20 transition-all cursor-pointer border-0 disabled:opacity-50 flex items-center gap-2"
                                 >
                                     {submitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                                     {editingRole ? 'Save Changes' : 'Create Role'}
@@ -1124,7 +1347,7 @@ export default function RolesPermissions() {
 
             {/* Modal: Delete Confirmation */}
             {deleteModal.isOpen && deleteModal.role && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-150 mt-0">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-150">
                         <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
                             <Trash2 className="w-6 h-6" />

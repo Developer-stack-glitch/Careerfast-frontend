@@ -41,6 +41,7 @@ import {
 } from "../ApiService/action";
 import Header from "../Header/Header";
 import SEO from "../Components/SEO/SEO";
+import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import { getJobSlug, getJobDetailsUrl, generateSlug } from "../utils/slug";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
@@ -211,11 +212,13 @@ const transformJob = (job) => {
   };
 };
 
-export default function JobDetails({ initialData, serverSlug }) {
+export default function JobDetails({ initialData, serverSlug, isPreview: isPreviewProp, previewToken: previewTokenProp }) {
   const [postDetails, setPostDetails] = useState(initialData ? [transformJob(initialData)] : []);
   const [backendJobs, setBackendJobs] = useState(initialData ? [initialData] : []);
   const [appliedDates, setAppliedDates] = useState({});
   const [openApplyNow, setOpenApplyNow] = useState(false);
+  const [authDrawerOpen, setAuthDrawerOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
   const [answers, setAnswers] = useState("");
   const [loginUserId, setLoginUserId] = useState(null);
   const [isApplied, setIsApplied] = useState({});
@@ -229,7 +232,8 @@ export default function JobDetails({ initialData, serverSlug }) {
 
   const { slug: clientSlug } = useParams();
   const searchParams = useSearchParams();
-  const isPreview = searchParams?.get('preview') === 'true';
+  const isPreview = isPreviewProp || searchParams?.get('preview') === 'true';
+  const previewToken = previewTokenProp || searchParams?.get('preview_token') || searchParams?.get('token');
   const slug = serverSlug || clientSlug;
   const jobId = slug?.split("-").pop();
 
@@ -328,7 +332,7 @@ export default function JobDetails({ initialData, serverSlug }) {
             if (fallbackRes?.data?.data?.data) {
               allJobs = fallbackRes.data.data.data;
             }
-          } catch (e) {}
+          } catch (e) { }
         }
 
         if (allJobs.length > 0) {
@@ -355,7 +359,7 @@ export default function JobDetails({ initialData, serverSlug }) {
     localStorage.setItem("appliedDates", JSON.stringify(appliedDates));
   }, [appliedDates]);
 
-  useEffect(() => {
+  const syncUserAuth = () => {
     try {
       const stored = localStorage.getItem("loginDetails");
       const token = localStorage.getItem("AccessToken");
@@ -367,14 +371,50 @@ export default function JobDetails({ initialData, serverSlug }) {
       }
     } catch (error) {
       console.error("Invalid JSON in localStorage", error);
+      setLoginUserId(null);
     }
+  };
+
+  useEffect(() => {
+    syncUserAuth();
+
+    const handleAuthChange = (e) => {
+      const details = e?.detail;
+      if (details?.id) {
+        setLoginUserId(details.id);
+      } else {
+        syncUserAuth();
+      }
+    };
+
+    window.addEventListener("storage", syncUserAuth);
+    window.addEventListener("authChange", handleAuthChange);
+    return () => {
+      window.removeEventListener("storage", syncUserAuth);
+      window.removeEventListener("authChange", handleAuthChange);
+    };
   }, []);
+
+  const isUserAuthenticated = () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+      const stored = typeof window !== "undefined" ? localStorage.getItem("loginDetails") : null;
+      if (!token || !stored) return false;
+      const parsed = JSON.parse(stored);
+      return Boolean(parsed && parsed.id);
+    } catch {
+      return false;
+    }
+  };
 
   const fetchJobs = async (postId) => {
     setLoading(true);
     setPostDetails([]);
     const payload = (postId !== undefined && postId !== null && postId !== '') ? { id: postId } : {};
-    if (isPreview) payload.preview = true;
+    if (isPreview) {
+      payload.preview = true;
+      if (previewToken) payload.preview_token = previewToken;
+    }
 
     try {
       const response = await getJobPosts(payload);
@@ -406,8 +446,15 @@ export default function JobDetails({ initialData, serverSlug }) {
   };
 
   const checkIsJobAppliedData = async (postId) => {
-    if (!loginUserId || !postId) return;
-    const payload = { user_id: loginUserId, job_post_id: postId };
+    const currentId = loginUserId || (() => {
+      try {
+        const s = localStorage.getItem("loginDetails");
+        return s ? JSON.parse(s)?.id : null;
+      } catch { return null; }
+    })();
+
+    if (!currentId || !postId) return;
+    const payload = { user_id: currentId, job_post_id: postId };
     try {
       const response = await checkIsJobApplied(payload);
       setIsApplied((prev) => ({ ...prev, [postId]: response?.data?.data || false }));
@@ -416,36 +463,100 @@ export default function JobDetails({ initialData, serverSlug }) {
     }
   };
 
-  const applyForJobData = async () => {
-    const token = localStorage.getItem("AccessToken");
-    if (!token) {
-      CommonToaster("Please login before applying.", "error");
+  const getCleanUserId = (overrideId) => {
+    if (typeof overrideId === "number" || (typeof overrideId === "string" && !isNaN(Number(overrideId)) && overrideId.trim() !== "")) {
+      return Number(overrideId);
+    }
+    if (loginUserId && (typeof loginUserId === "number" || (typeof loginUserId === "string" && !isNaN(Number(loginUserId))))) {
+      return Number(loginUserId);
+    }
+    try {
+      const s = typeof window !== "undefined" ? localStorage.getItem("loginDetails") : null;
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (parsed?.id && !isNaN(Number(parsed.id))) return Number(parsed.id);
+      }
+    } catch {}
+    return null;
+  };
+
+  const applyForJobData = async (overrideUserId) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+    const effectiveUserId = getCleanUserId(overrideUserId);
+
+    if (!token || !effectiveUserId) {
+      setPendingAction("apply");
+      setAuthDrawerOpen(true);
       return;
     }
-    const jobId = postDetails[0]?.id;
+
+    const currentJobId = postDetails[0]?.id;
     const questionsWithIds = postDetails[0]?.questions_with_ids || [];
     const missingRequired = questionsWithIds.some((q, index) => q.isrequired && !answers[index]?.trim());
     if (missingRequired) {
       CommonToaster("Please answer all required questions before applying.", "warning");
       return;
     }
-    const structuredAnswers = questionsWithIds.map((q, index) => ({ questionId: q.id, answer: answers[index] || "" }));
-    const payload = { postId: jobId, userId: loginUserId, answers: structuredAnswers };
+    const structuredAnswers = questionsWithIds.map((q, index) => ({
+      questionId: q.id,
+      answer: answers[index] || ""
+    }));
+    const payload = { postId: Number(currentJobId), userId: effectiveUserId, answers: structuredAnswers };
     try {
       const response = await applyForJob(payload, token);
       CommonToaster("Application submitted successfully! 🚀", "success");
-      setIsApplied((prev) => ({ ...prev, [jobId]: true }));
-      const appliedDate = response.data.appliedJob.created_at;
-      setAppliedDates((prev) => ({ ...prev, [jobId]: appliedDate }));
+      setIsApplied((prev) => ({ ...prev, [currentJobId]: true }));
+      const appliedDate = response?.data?.appliedJob?.created_at || new Date().toISOString();
+      setAppliedDates((prev) => ({ ...prev, [currentJobId]: appliedDate }));
       setOpenApplyNow(false);
+      setAnswers("");
     } catch (error) {
-      CommonToaster("Error while applying. Please try again.", "error");
+      console.error("Apply job error:", error);
+      const msg = error?.response?.data?.details || error?.response?.data?.message || "Error while applying. Please try again.";
+      CommonToaster(msg, "error");
+    }
+  };
+
+  const handleExternalEmployerApply = async (externalLink, overrideUserId) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+    const effectiveUserId = getCleanUserId(overrideUserId);
+    const currentJobId = postDetails[0]?.id;
+
+    if (!token || !effectiveUserId) {
+      setPendingAction("apply");
+      setAuthDrawerOpen(true);
+      return;
+    }
+
+    try {
+      const payload = { postId: Number(currentJobId), userId: effectiveUserId, answers: [] };
+      const response = await applyForJob(payload, token);
+      const appliedDate = response?.data?.appliedJob?.created_at || new Date().toISOString();
+
+      setIsApplied((prev) => ({ ...prev, [currentJobId]: true }));
+      setAppliedDates((prev) => ({ ...prev, [currentJobId]: appliedDate }));
+      setPostDetails((prev) => prev.map(p => p.id === currentJobId ? { ...p, applicantsCount: (Number(p.applicantsCount) || 0) + 1 } : p));
+
+      CommonToaster("Marked as applied! Redirecting to employer website... 🚀", "success");
+    } catch (error) {
+      console.warn("External apply status note:", error);
+      setIsApplied((prev) => ({ ...prev, [currentJobId]: true }));
+    } finally {
+      if (externalLink) {
+        window.open(externalLink, '_blank');
+      }
     }
   };
 
   const showDrawer = () => {
+    if (!isUserAuthenticated()) {
+      setPendingAction("apply");
+      setAuthDrawerOpen(true);
+      return;
+    }
+
     if (postDetails[0]?.apply_link) {
-      window.open(postDetails[0].apply_link, '_blank');
+      handleExternalEmployerApply(postDetails[0].apply_link);
       return;
     }
     if (postDetails[0]?.questions?.length > 0) {
@@ -461,9 +572,45 @@ export default function JobDetails({ initialData, serverSlug }) {
     setAnswers("");
   };
 
+  const handleLoginSuccess = (userDetails) => {
+    const newUserId = userDetails?.id;
+    if (newUserId) {
+      setLoginUserId(newUserId);
+      const currentJobId = postDetails[0]?.id || jobId;
+      if (currentJobId) {
+        checkIsJobAppliedData(currentJobId);
+        checkIsJobSavedData(currentJobId);
+      }
+    }
+
+    const actionToPerform = pendingAction;
+    setPendingAction(null);
+
+    if (actionToPerform === "apply") {
+      setTimeout(() => {
+        if (postDetails[0]?.apply_link) {
+          handleExternalEmployerApply(postDetails[0].apply_link, newUserId);
+        } else if (postDetails[0]?.questions?.length > 0) {
+          setOpenApplyNow(true);
+          CommonToaster("Please complete the screening questions", "info");
+        } else {
+          applyForJobData(newUserId);
+        }
+      }, 350);
+    } else if (actionToPerform === "save") {
+      const currentJobId = postDetails[0]?.id || jobId;
+      if (currentJobId) {
+        setTimeout(() => {
+          handleWishlistToggle(currentJobId, newUserId);
+        }, 350);
+      }
+    }
+  };
+
   const checkIsJobSavedData = async (postId) => {
-    if (!loginUserId || !postId) return;
-    const payload = { user_id: loginUserId, job_post_id: postId };
+    const currentId = getCleanUserId();
+    if (!currentId || !postId) return;
+    const payload = { user_id: currentId, job_post_id: Number(postId) };
     try {
       const response = await checkIsJobSaved(payload);
       setIsSaved((prev) => ({ ...prev, [postId]: response?.data?.data || false }));
@@ -479,30 +626,33 @@ export default function JobDetails({ initialData, serverSlug }) {
     }
   }, [postDetails]);
 
-  const handleWishlistToggle = async (jobId) => {
-    if (!loginUserId) {
-      CommonToaster("Please login to add wishlist", "error");
+  const handleWishlistToggle = async (targetJobId, overrideUserId) => {
+    const effectiveUserId = getCleanUserId(overrideUserId);
+
+    if (!isUserAuthenticated() || !effectiveUserId) {
+      setPendingAction("save");
+      setAuthDrawerOpen(true);
       return;
     }
     try {
-      const isWishlisted = !wishlistedJobs[jobId];
+      const isWishlisted = !wishlistedJobs[targetJobId];
       setWishlistedJobs((prev) => {
-        const updated = { ...prev, [jobId]: isWishlisted };
+        const updated = { ...prev, [targetJobId]: isWishlisted };
         localStorage.setItem("wishlist", JSON.stringify(updated));
         return updated;
       });
       if (isWishlisted) {
-        await saveJobPostData(jobId);
+        await saveJobPostData(targetJobId, effectiveUserId);
         CommonToaster("Added to wishlist ❤️", "success");
       } else {
-        await removeSavedJobsData(jobId);
+        await removeSavedJobsData(targetJobId, effectiveUserId);
         CommonToaster("Removed from wishlist 💔", "error");
       }
-      setIsSaved((prev) => ({ ...prev, [jobId]: !prev[jobId] }));
+      setIsSaved((prev) => ({ ...prev, [targetJobId]: !prev[targetJobId] }));
       await getSavedJobsData();
     } catch (error) {
       setWishlistedJobs((prev) => {
-        const updated = { ...prev, [jobId]: !prev[jobId] };
+        const updated = { ...prev, [targetJobId]: !prev[targetJobId] };
         localStorage.setItem("wishlist", JSON.stringify(updated));
         return updated;
       });
@@ -511,9 +661,10 @@ export default function JobDetails({ initialData, serverSlug }) {
     }
   };
 
-  const saveJobPostData = async (jobId) => {
-    if (!loginUserId || !jobId) return;
-    const payload = { user_id: loginUserId, job_post_id: jobId };
+  const saveJobPostData = async (jobId, overrideUserId) => {
+    const effectiveUserId = getCleanUserId(overrideUserId);
+    if (!effectiveUserId || !jobId) return;
+    const payload = { user_id: effectiveUserId, job_post_id: Number(jobId) };
     try {
       return await saveJobPost(payload);
     } catch (error) {
@@ -622,6 +773,35 @@ export default function JobDetails({ initialData, serverSlug }) {
   }
 
 
+  if (!loading && postDetails.length === 0) {
+    return (
+      <>
+        <Header />
+        <main className="njd-page-wrapper">
+          <div className="njd-container" style={{ maxWidth: '800px', margin: '60px auto', textAlign: 'center', background: '#fff', padding: '48px 32px', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
+            <div style={{ width: '64px', height: '64px', background: '#FEF3C7', color: '#D97706', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px' }}>
+              🔒
+            </div>
+            <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#1E293B', marginBottom: '12px' }}>
+              Job Post Pending Approval or Access Restricted
+            </h2>
+            <p style={{ fontSize: '14.5px', color: '#64748B', lineHeight: '1.6', maxWidth: '540px', margin: '0 auto 24px' }}>
+              This job posting is currently under review or requires administrator preview access. Authorized administrators can view this listing using the secure Preview link from the Admin Dashboard.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <a href="/jobs" style={{ padding: '10px 24px', background: '#0A66C2', color: '#fff', borderRadius: '12px', fontWeight: 600, textDecoration: 'none' }}>
+                Browse Active Jobs
+              </a>
+              <a href="/" style={{ padding: '10px 24px', background: '#F1F5F9', color: '#334155', borderRadius: '12px', fontWeight: 600, textDecoration: 'none' }}>
+                Go to Home
+              </a>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
   const job = postDetails[0];
 
   return (
@@ -664,6 +844,36 @@ export default function JobDetails({ initialData, serverSlug }) {
             <Col lg={17} md={24}>
               {job && (
                 <>
+                  {isPreview && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%)',
+                      border: '1px solid #93C5FD',
+                      borderRadius: '16px',
+                      padding: '14px 20px',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                      boxShadow: '0 2px 10px rgba(10, 102, 194, 0.08)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ background: '#0A66C2', color: '#fff', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Admin Preview Mode
+                        </span>
+                        <span style={{ fontSize: '13.5px', color: '#1E40AF', fontWeight: 600 }}>
+                          This job post is currently <span style={{ color: "#b45309 ", fontWeight: 700 }}>Pending Approval</span> and visible only with this secure preview token.
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', color: '#3B82F6', background: '#FFFFFF', padding: '4px 12px', borderRadius: '10px', border: '1px solid #BFDBFE', fontWeight: 600 }}>
+                          Job ID #{job.id}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="njd-header-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ flex: 1 }}>
@@ -874,61 +1084,61 @@ export default function JobDetails({ initialData, serverSlug }) {
                   <>
                     {relatedJobs.length > 0 && (
                       <div className="njd-sidebar-card">
-                    <h3 className="njd-sidebar-title">Related Jobs</h3>
-                    <div className="njd-related-list">
-                      {relatedJobs.map((rJob, idx) => {
-                        const safeSlug = (val) => {
-                          if (!val) return "";
-                          if (Array.isArray(val)) return generateSlug(val.join(" "));
-                          try {
-                            const parsed = JSON.parse(val);
-                            if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
-                            return generateSlug(parsed);
-                          } catch { return generateSlug(val); }
-                        };
-                        return (
-                          <a href={getJobDetailsUrl(rJob)} key={idx} className="njd-related-item">
-                            {rJob.logo ? (
-                              <img src={getImageUrl(rJob.logo)} alt={rJob.company} className="njd-related-logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
-                            ) : (
-                              <div className="njd-related-logo-placeholder">{rJob.company ? rJob.company.charAt(0) : "C"}</div>
-                            )}
-                            <div className="njd-related-info">
-                              <h4 className="njd-related-title">{rJob.title}</h4>
-                              <div className="njd-related-company">{rJob.company}</div>
-                              <div className="njd-related-loc"><FaMapMarkerAlt /> {rJob.location}</div>
-                            </div>
-                          </a>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+                        <h3 className="njd-sidebar-title">Related Jobs</h3>
+                        <div className="njd-related-list">
+                          {relatedJobs.map((rJob, idx) => {
+                            const safeSlug = (val) => {
+                              if (!val) return "";
+                              if (Array.isArray(val)) return generateSlug(val.join(" "));
+                              try {
+                                const parsed = JSON.parse(val);
+                                if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
+                                return generateSlug(parsed);
+                              } catch { return generateSlug(val); }
+                            };
+                            return (
+                              <a href={getJobDetailsUrl(rJob)} key={idx} className="njd-related-item">
+                                {rJob.logo ? (
+                                  <img src={getImageUrl(rJob.logo)} alt={rJob.company} className="njd-related-logo" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
+                                ) : (
+                                  <div className="njd-related-logo-placeholder">{rJob.company ? rJob.company.charAt(0) : "C"}</div>
+                                )}
+                                <div className="njd-related-info">
+                                  <h4 className="njd-related-title">{rJob.title}</h4>
+                                  <div className="njd-related-company">{rJob.company}</div>
+                                  <div className="njd-related-loc"><FaMapMarkerAlt /> {rJob.location}</div>
+                                </div>
+                              </a>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
 
-                {courses.length > 0 && (
-                  <div className="njd-sidebar-card" style={{ marginTop: '16px' }}>
-                    <h3 className="njd-sidebar-title">Recommended Courses</h3>
-                    <div className="njd-related-list">
-                      {courses.map((course, idx) => {
-                        const courseLink = `/courses/${course.slug || generateSlug(course.title) + '-' + course.id}`;
-                        return (
-                          <a href={courseLink} key={idx} className="njd-related-item njd-course-item">
-                            {course.image ? (
-                              <img src={getImageUrl(course.image)} alt={course.title} className="njd-course-img" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
-                            ) : (
-                              <div className="njd-course-img-placeholder"><MdOutlineWorkOutline /></div>
-                            )}
-                            <div className="njd-related-info">
-                              <h4 className="njd-related-title" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{course.title}</h4>
-                              {course.category && <div className="njd-related-company">{course.category}</div>}
-                              <div className="njd-related-loc" style={{ color: '#5f2eea', fontWeight: 600 }}>Explore Course &rarr;</div>
-                            </div>
-                          </a>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )}
+                    {courses.length > 0 && (
+                      <div className="njd-sidebar-card" style={{ marginTop: '16px' }}>
+                        <h3 className="njd-sidebar-title">Recommended Courses</h3>
+                        <div className="njd-related-list">
+                          {courses.map((course, idx) => {
+                            const courseLink = `/courses/${course.slug || generateSlug(course.title) + '-' + course.id}`;
+                            return (
+                              <a href={courseLink} key={idx} className="njd-related-item njd-course-item">
+                                {course.image ? (
+                                  <img src={getImageUrl(course.image)} alt={course.title} className="njd-course-img" onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }} />
+                                ) : (
+                                  <div className="njd-course-img-placeholder"><MdOutlineWorkOutline /></div>
+                                )}
+                                <div className="njd-related-info">
+                                  <h4 className="njd-related-title" style={{ whiteSpace: 'normal', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{course.title}</h4>
+                                  {course.category && <div className="njd-related-company">{course.category}</div>}
+                                  <div className="njd-related-loc" style={{ color: '#5f2eea', fontWeight: 600 }}>Explore Course &rarr;</div>
+                                </div>
+                              </a>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -937,15 +1147,26 @@ export default function JobDetails({ initialData, serverSlug }) {
         </div>
       </main>
 
-      <Drawer title="Apply for Job" placement="right" onClose={onClose} open={openApplyNow} width={400}>
+      <Drawer title="Apply for Job" placement="right" onClose={onClose} open={openApplyNow} width={400} zIndex={10000}>
         {job?.questions_with_ids?.map((q, index) => (
           <div key={q.id ? `q-${q.id}-${index}` : index} style={{ marginBottom: 20 }}>
             <p style={{ fontWeight: 600 }}>{q.question} {q.isrequired && <span style={{ color: "red" }}>*</span>}</p>
             <Input.TextArea rows={4} value={answers[index]} onChange={(e) => { const newAnswers = { ...answers }; newAnswers[index] = e.target.value; setAnswers(newAnswers); }} placeholder="Your answer..." />
           </div>
         ))}
-        <Button type="primary" block size="large" onClick={applyForJobData} style={{ marginTop: 20, background: '#5f2eea' }}>Submit Application</Button>
+        <Button type="primary" block size="large" onClick={() => applyForJobData()} style={{ marginTop: 20, background: '#5f2eea' }}>Submit Application</Button>
       </Drawer>
+
+      <LoginDrawer
+        open={authDrawerOpen}
+        onClose={() => {
+          setAuthDrawerOpen(false);
+          setPendingAction(null);
+        }}
+        job={postDetails[0]}
+        actionType={pendingAction || "apply"}
+        onLoginSuccess={handleLoginSuccess}
+      />
     </>
   );
 }

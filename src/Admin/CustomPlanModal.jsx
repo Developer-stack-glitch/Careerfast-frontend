@@ -12,6 +12,7 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
         active_job_limit: '',
         featured_job_limit: '',
         urgent_job_limit: '',
+        master_login_limit: 1,
         resume_view_limit: '',
         resume_download_limit: '',
         sub_recruiter_limit: '',
@@ -38,6 +39,7 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                 active_job_limit: recruiter.active_job_limit ?? 0,
                 featured_job_limit: recruiter.featured_job_limit ?? 0,
                 urgent_job_limit: recruiter.urgent_job_limit ?? 0,
+                master_login_limit: recruiter.master_login_limit || 1,
                 resume_view_limit: recruiter.resume_view_limit ?? 0,
                 resume_download_limit: recruiter.resume_download_limit ?? 0,
                 sub_recruiter_limit: recruiter.sub_recruiter_limit || 1,
@@ -63,6 +65,7 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                 active_job_limit: Number(formData.active_job_limit || 0),
                 featured_job_limit: Number(formData.featured_job_limit || 0),
                 urgent_job_limit: Number(formData.urgent_job_limit || 0),
+                master_login_limit: Math.max(1, Number(formData.master_login_limit || 1)),
                 resume_view_limit: isOnlyJobPost ? 0 : Number(formData.resume_view_limit || 0),
                 resume_download_limit: isOnlyJobPost ? 0 : Number(formData.resume_download_limit || 0),
                 sub_recruiter_limit: Number(formData.sub_recruiter_limit || 1),
@@ -218,14 +221,56 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                             </div>
                         </div>
 
+                        {/* Team & Login Access Section (Visible in all modes) */}
+                        <div className="bg-white border border-slate-200/70 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)]">
+                            <div className="flex items-center gap-2.5 mb-1.5">
+                                <Users className="w-4 h-4 text-indigo-600" />
+                                <h4 className="font-bold text-slate-800 text-[15px] mb-0">Team & Master Login Access</h4>
+                            </div>
+                            <p className="text-[13px] text-slate-400 mb-6">Manage allowed concurrent master login sessions and sub-recruiter team seats.</p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="flex items-center justify-between text-[13px] font-semibold text-slate-700 mb-2">
+                                        Master Login Count
+                                        <span className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-[10px]">PRIMARY</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={formData.master_login_limit}
+                                        onChange={(e) => setFormData({ ...formData, master_login_limit: e.target.value })}
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all font-semibold"
+                                        required
+                                    />
+                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max allowed primary recruiter master logins</p>
+                                </div>
+                                <div>
+                                    <label className="flex items-center justify-between text-[13px] font-semibold text-slate-700 mb-2">
+                                        Sub-Recruiter Seats
+                                        <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">TEAM</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        value={formData.sub_recruiter_limit}
+                                        onChange={(e) => setFormData({ ...formData, sub_recruiter_limit: e.target.value })}
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                                        required
+                                    />
+                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max sub-recruiters main recruiter can create</p>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Candidate / Resume Quotas Section (Hidden when "Only Job Post" is selected) */}
                         {!isOnlyJobPost && (
                             <div className="bg-white border border-slate-200/70 rounded-2xl p-4 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.02)] animate-in fade-in duration-200">
                                 <div className="flex items-center gap-2.5 mb-1.5">
-                                    <Users className="w-4 h-4 text-blue-600" />
+                                    <Briefcase className="w-4 h-4 text-blue-600" />
                                     <h4 className="font-bold text-slate-800 text-[15px] mb-0">Candidate / Resume Quotas</h4>
                                 </div>
-                                <p className="text-[13px] text-slate-400 mb-6">Quantitative limits for inspecting and downloading candidate profiles.</p>
+                                <p className="text-[13px] text-slate-400 mb-6">Quantitative limits for inspecting, contacting, and exporting candidate profiles.</p>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
@@ -257,19 +302,18 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                                         <p className="text-[11px] text-slate-400 mt-2 mb-0">Max PDF/DOC resume files downloadable</p>
                                     </div>
                                     <div>
-                                        <label className="flex items-center justify-between text-[13px] font-semibold text-slate-700 mb-2">
-                                            Sub-Recruiter Seats
-                                            <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px]">TEAM</span>
+                                        <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                            Excel Download Count
                                         </label>
                                         <input
                                             type="number"
-                                            min="1"
-                                            value={formData.sub_recruiter_limit}
-                                            onChange={(e) => setFormData({ ...formData, sub_recruiter_limit: e.target.value })}
+                                            min="0"
+                                            value={formData.excel_download_limit}
+                                            onChange={(e) => setFormData({ ...formData, excel_download_limit: e.target.value })}
                                             className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                            required
+                                            required={!isOnlyJobPost}
                                         />
-                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max sub-recruiters main recruiter can create</p>
+                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate profiles exportable to Excel per cycle</p>
                                     </div>
                                     <div>
                                         <label className="block text-[13px] font-semibold text-slate-700 mb-2">
@@ -298,20 +342,6 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                                             required={!isOnlyJobPost}
                                         />
                                         <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate WhatsApp messages sendable per cycle</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[13px] font-semibold text-slate-700 mb-2">
-                                            Excel Download Count
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={formData.excel_download_limit}
-                                            onChange={(e) => setFormData({ ...formData, excel_download_limit: e.target.value })}
-                                            className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/20 transition-all"
-                                            required={!isOnlyJobPost}
-                                        />
-                                        <p className="text-[11px] text-slate-400 mt-2 mb-0">Max candidate profiles exportable to Excel per cycle</p>
                                     </div>
                                 </div>
                             </div>

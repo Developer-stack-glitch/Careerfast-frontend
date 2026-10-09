@@ -19,8 +19,8 @@ const mockNavGroups = [
     {
         heading: 'DASHBOARD',
         items: [
-            { id: 'dashboard-recruiters', module: 'dashboard', title: 'Recruiters', icon: LayoutDashboard, href: '/admin/dashboard/recruiter' },
-            { id: 'dashboard-job-seekers', module: 'dashboard', title: 'Job Seekers', icon: Users, href: '/admin/dashboard/job-seekers' },
+            { id: 'dashboard-recruiters', module: 'dashboard_recruiter', title: 'Recruiters', icon: LayoutDashboard, href: '/admin/dashboard/recruiter' },
+            { id: 'dashboard-job-seekers', module: 'dashboard_job_seekers', title: 'Job Seekers', icon: Users, href: '/admin/dashboard/job-seekers' },
         ]
     },
     {
@@ -41,8 +41,8 @@ const mockNavGroups = [
     {
         heading: 'REPORT',
         items: [
-            { id: 'report-recruiters', module: 'analytics', title: 'Recruiters', icon: Sparkles, href: '/admin/reports/recruiters' },
-            { id: 'report-job-seekers', module: 'analytics', title: 'Job Seekers', icon: FileSpreadsheet, href: '/admin/reports/job-seekers' },
+            { id: 'report-recruiters', module: 'report_recruiters', title: 'Recruiters', icon: Sparkles, href: '/admin/reports/recruiters' },
+            { id: 'report-job-seekers', module: 'report_job_seekers', title: 'Job Seekers', icon: FileSpreadsheet, href: '/admin/reports/job-seekers' },
         ]
     },
     {
@@ -50,7 +50,7 @@ const mockNavGroups = [
         items: [
             { id: 'support', module: 'support', title: 'Support Tickets', icon: MessageSquare, href: '/admin/support' },
             { id: 'users', module: 'user_management', title: 'Users & Roles', icon: Users2, href: '/admin/users' },
-            { id: 'roles-permissions', module: 'user_management', title: 'Roles & Permissions', icon: ShieldCheck, href: '/admin/roles-permissions' },
+            { id: 'roles-permissions', module: 'roles_permissions', title: 'Roles & Permissions', icon: ShieldCheck, href: '/admin/roles-permissions' },
             { id: 'general', module: 'settings', title: 'Platform Settings', icon: Settings, href: '/admin/general' },
         ]
     }
@@ -129,7 +129,7 @@ const NavItem = memo(function NavItem({ item, currentPath, onLogout, badgeCount 
     );
 });
 
-export const SidebarNav = memo(function SidebarNav({ className = '', currentPath, onLogout, userPermissions, isSuperAdmin = true, badges = {} }) {
+export const SidebarNav = memo(function SidebarNav({ className = '', currentPath, onLogout, userPermissions, isSuperAdmin = true, can = null, badges = {} }) {
     // Filter nav groups based on assigned module permissions
     const filteredGroups = useMemo(() => {
         // Super Admin or users without restricting permissions see all modules
@@ -140,6 +140,9 @@ export const SidebarNav = memo(function SidebarNav({ className = '', currentPath
         return mockNavGroups.map(group => {
             const allowedItems = group.items.filter(item => {
                 if (!item.module) return true;
+                if (typeof can === 'function') {
+                    return can(item.module);
+                }
                 const modPerm = userPermissions?.[item.module];
                 if (!modPerm) return false;
                 if (modPerm.view) return true;
@@ -150,7 +153,8 @@ export const SidebarNav = memo(function SidebarNav({ className = '', currentPath
                 items: allowedItems
             };
         }).filter(group => group.items.length > 0);
-    }, [userPermissions, isSuperAdmin]);
+    }, [userPermissions, isSuperAdmin, can]);
+
 
     return (
         <div className={`flex flex-col w-[260px] h-full bg-white border-r border-gray-100 font-sans ${className}`}>
@@ -199,7 +203,7 @@ export default function AdminLayout({ children }) {
     const [isOpen, setIsOpen] = useState(true);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [openTicketCount, setOpenTicketCount] = useState(0);
-    const { currentUser, isSuperAdmin, userPermissions } = useAdminPermissions();
+    const { currentUser, isSuperAdmin, userPermissions, can } = useAdminPermissions();
 
     const fetchTicketStats = useCallback(async () => {
         try {
@@ -275,6 +279,7 @@ export default function AdminLayout({ children }) {
                     onLogout={handleLogout}
                     userPermissions={userPermissions}
                     isSuperAdmin={isSuperAdmin}
+                    can={can}
                     badges={{ support: openTicketCount }}
                 />
             </div>

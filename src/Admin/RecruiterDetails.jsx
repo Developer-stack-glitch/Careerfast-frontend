@@ -145,8 +145,24 @@ export default function RecruiterDetails({ recruiterId }) {
             const res = await loginAsRecruiter(r?.recruiter_id || recruiterId);
             if (res.data?.success && res.data?.token) {
                 toast.success(`Opening Recruiter Portal as ${recName}...`, { id: toastId });
-                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://recruit.careerfast.in';
-                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(res.data.data))}&target=/overview`;
+                const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+                const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+                const rawData = res.data?.data || {};
+                const safeData = {
+                    id: rawData.id || r?.recruiter_id || recruiterId,
+                    first_name: rawData.first_name || 'Recruiter',
+                    last_name: rawData.last_name || '',
+                    email: rawData.email || '',
+                    role_id: rawData.role_id || 3,
+                    role_name: rawData.role_name || 'recruiter',
+                    company_name: rawData.company_name || r?.company_name || 'Recruiter',
+                    organization: rawData.organization || '',
+                    company_id: rawData.company_id || null,
+                    is_email_verified: 1,
+                    impersonated_by_admin: true,
+                };
+                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(safeData))}&target=/overview`;
                 window.open(targetUrl, '_blank');
             } else {
                 toast.error(res.data?.message || "Failed to login as recruiter.", { id: toastId });
@@ -585,16 +601,30 @@ export default function RecruiterDetails({ recruiterId }) {
                                 </div>
                             </div>
 
-                            {/* Row 2: Sub-Recruiter Seats */}
-                            <div className="w-fit sm:min-w-[220px] bg-slate-50 border-1 border-slate-100 rounded-2xl p-2.5 flex items-center gap-3">
-                                <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                                    <Users className="w-4 h-4" />
+                            {/* Row 2: Master Login & Sub-Recruiter Seats */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="bg-emerald-50/70 border-1 border-emerald-100/80 rounded-2xl p-2.5 flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                        <User className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[11px] text-gray-500 block leading-tight">Master Login Limit</span>
+                                        <span className="text-sm font-semibold text-gray-900 block mt-0.5">
+                                            {r.master_login_limit || 1} Allowed
+                                        </span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <span className="text-[11px] text-gray-500 block leading-tight">Sub-Recruiter Seats</span>
-                                    <span className="text-sm font-semibold text-gray-900 block mt-0.5">
-                                        {isCustom && Number(r.sub_recruiter_limit) > 0 ? `${r.sub_recruiter_limit} Allowed` : 'Not Included'}
-                                    </span>
+
+                                <div className="bg-slate-50 border-1 border-slate-100 rounded-2xl p-2.5 flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                                        <Users className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[11px] text-gray-500 block leading-tight">Sub-Recruiter Seats</span>
+                                        <span className="text-sm font-semibold text-gray-900 block mt-0.5">
+                                            {isCustom && Number(r.sub_recruiter_limit) > 0 ? `${r.sub_recruiter_limit} Allowed` : 'Not Included'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

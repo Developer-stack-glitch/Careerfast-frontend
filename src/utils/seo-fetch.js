@@ -7,13 +7,21 @@ const getApiBaseUrl = () => {
 
 const apiBaseUrl = getApiBaseUrl();
 
-export const fetchJobForSEO = async (jobId) => {
+export const fetchJobForSEO = async (jobId, options = {}) => {
   try {
+    const payload = { id: jobId };
+    if (options.preview) {
+      payload.preview = true;
+      if (options.preview_token) {
+        payload.preview_token = options.preview_token;
+      }
+    }
+
     const response = await fetch(`${apiBaseUrl}/api/getJobPosts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: jobId }),
-      next: { revalidate: 3600 } // Cache for 1 hour
+      body: JSON.stringify(payload),
+      next: { revalidate: options.preview ? 0 : 3600 }
     });
     const result = await response.json();
     const jobData = result?.data?.data;

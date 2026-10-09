@@ -4,7 +4,7 @@ import {
     Briefcase, Search, Calendar, ChevronLeft, ChevronRight, CheckCircle, XCircle, Eye, Loader, MapPin, ArrowUpDown, User, Clock, MoreVertical, ChevronDown
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { getPendingJobs, approveJobPost, rejectJobPost, approveAllPendingJobs } from '../ApiService/action';
+import { getPendingJobs, approveJobPost, rejectJobPost, approveAllPendingJobs, loginAsRecruiter } from '../ApiService/action';
 import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
@@ -28,6 +28,35 @@ const getCompanyAvatarGradient = (name = '') => {
     }
     const index = Math.abs(hash) % gradients.length;
     return gradients[index];
+};
+
+const formatCleanText = (val, fallback = 'Not Specified') => {
+    if (val === null || val === undefined) return fallback;
+    let parsed = val;
+    if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (!trimmed || trimmed === '[]' || trimmed === 'null' || trimmed === '[""]' || trimmed === '[" "]' || trimmed === '[null]') {
+            return fallback;
+        }
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try {
+                parsed = JSON.parse(trimmed);
+            } catch (e) {
+                parsed = trimmed;
+            }
+        }
+    }
+    if (Array.isArray(parsed)) {
+        const filtered = parsed
+            .map(item => (typeof item === 'string' ? item.trim() : item))
+            .filter(item => item !== null && item !== undefined && item !== '' && item !== 'null' && item !== 'undefined');
+        return filtered.length > 0 ? filtered.join(', ') : fallback;
+    }
+    if (typeof parsed === 'string') {
+        const cleaned = parsed.replace(/^[\["'\s]+|[\]"'\s]+$/g, '').trim();
+        return cleaned || fallback;
+    }
+    return String(parsed || fallback);
 };
 
 const PendingJobs = () => {
@@ -107,6 +136,51 @@ const PendingJobs = () => {
         } finally {
             setActionModal({ isOpen: false, type: '', id: null, title: '' });
             setRejectReason('');
+        }
+    };
+
+    const handleViewPreview = async (job) => {
+        const recruiterId = job.user_id || job.recruiter_id;
+        const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+        const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+
+        if (!recruiterId) {
+            window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
+            return;
+        }
+
+        const recName = job.recruiter_name?.trim() || job.company_name || 'Recruiter';
+        const toastId = toast.loading(`Generating recruiter session for ${recName}...`);
+        try {
+            const res = await loginAsRecruiter(recruiterId);
+            if (res.data?.success && res.data?.token) {
+                toast.success(`Opening Recruiter Portal (Applicants #${job.id})...`, { id: toastId });
+                const rawData = res.data?.data || {};
+                const safeData = {
+                    id: rawData.id || recruiterId,
+                    first_name: rawData.first_name || 'Recruiter',
+                    last_name: rawData.last_name || '',
+                    email: rawData.email || '',
+                    role_id: rawData.role_id || 3,
+                    role_name: rawData.role_name || 'recruiter',
+                    company_name: rawData.company_name || job.company_name || 'Recruiter',
+                    organization: rawData.organization || '',
+                    company_id: rawData.company_id || null,
+                    is_email_verified: 1,
+                    impersonated_by_admin: true,
+                };
+                const targetPath = `/applicants/${job.id}`;
+                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(safeData))}&target=${encodeURIComponent(targetPath)}`;
+                window.open(targetUrl, '_blank');
+            } else {
+                toast.error(res.data?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
+                window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
+            }
+        } catch (err) {
+            console.error("Error in handleViewPreview:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
+            window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
         }
     };
 
@@ -299,8 +373,15 @@ const PendingJobs = () => {
                                                         </div>
                                                     );
                                                 })()}
-                                                <div className="flex flex-col gap-0.5">
-                                                    <h3 className="text-[15px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors line-clamp-1 mb-0">{job.job_title}</h3>
+                                                <div className="flex flex-col gap-0.5 min-w-0">
+                                                    <a
+                                                        href={getJobDetailsUrl(job, true)}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="no-underline hover:no-underline inline-block max-w-full"
+                                                    >
+                                                        <h3 className="text-[15px] font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1 mb-0 cursor-pointer">{job.job_title}</h3>
+                                                    </a>
                                                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                                                         <p className="text-sm font-semibold text-slate-700 mb-0">{job.company_name}</p>
                                                         {job.recruiter_plan_name && (
@@ -329,14 +410,7 @@ const PendingJobs = () => {
                                                 <div className="flex items-center gap-1.5 text-[13px] text-slate-500 font-medium">
                                                     <MapPin className="w-3.5 h-3.5" />
                                                     <span className="truncate max-w-[200px]">
-                                                        {(() => {
-                                                            try {
-                                                                const locs = typeof job.work_location === 'string' ? JSON.parse(job.work_location) : job.work_location;
-                                                                return Array.isArray(locs) ? locs.join(', ') : (locs || 'Not Specified');
-                                                            } catch (e) {
-                                                                return 'Not Specified';
-                                                            }
-                                                        })()}
+                                                        {formatCleanText(job.work_location, 'Not Specified')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -357,13 +431,12 @@ const PendingJobs = () => {
                                         </td>
                                         <td className="py-3 px-4 text-right align-middle">
                                             <div className="flex items-center justify-end gap-3">
-                                                <Link prefetch={false} target='_blank' href={getJobDetailsUrl(job)} className="no-underline hover:no-underline">
-                                                    <button
-                                                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                                                    >
-                                                        <Eye className="w-4 h-4" /> Preview
-                                                    </button>
-                                                </Link>
+                                                <button
+                                                    onClick={() => handleViewPreview(job)}
+                                                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                                >
+                                                    <Eye className="w-4 h-4" /> Preview
+                                                </button>
                                                 <button
                                                     onClick={() => {
                                                         if (job.recruiter_can_approve === false) {

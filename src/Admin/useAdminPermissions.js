@@ -136,8 +136,8 @@ export default function useAdminPermissions() {
 
     /**
      * Checks if the current admin is permitted to perform an action or view a module.
-     * @param {string} moduleId - e.g. 'analytics', 'recruiters', 'plans', 'job_posts', etc.
-     * @param {string} [actionId] - e.g. 'export_analytics_data', 'user_growth_analysis', etc.
+     * @param {string} moduleId - e.g. 'dashboard_recruiter', 'dashboard_job_seekers', 'recruiters', 'job_posts', 'plans', 'job_seekers', 'talent_subscriptions', 'report_recruiters', 'report_job_seekers', 'support', 'user_management', 'roles_permissions', 'settings'
+     * @param {string} [actionId] - e.g. 'view_recruiters_directory', 'approve_single_job', etc.
      * @returns {boolean}
      */
     const can = useMemo(() => {
@@ -146,7 +146,32 @@ export default function useAdminPermissions() {
             if (isSuperAdmin) return true;
             if (!userPermissions) return false;
 
-            const modPerms = userPermissions[moduleId];
+            // Direct check
+            let modPerms = userPermissions[moduleId];
+
+            // Backward-compatible alias lookups
+            if (!modPerms) {
+                if (moduleId === 'dashboard_recruiter') {
+                    modPerms = userPermissions['dashboard'] || userPermissions['dashboard_recruiters'];
+                } else if (moduleId === 'dashboard_recruiters') {
+                    modPerms = userPermissions['dashboard_recruiter'] || userPermissions['dashboard'];
+                } else if (moduleId === 'dashboard') {
+                    modPerms = userPermissions['dashboard_recruiter'] || userPermissions['dashboard_recruiters'];
+                } else if (moduleId === 'dashboard_job_seekers') {
+                    modPerms = userPermissions['dashboard_job_seeker'] || userPermissions['job_seekers_dashboard'];
+                } else if (moduleId === 'report_recruiters') {
+                    modPerms = userPermissions['analytics'] || userPermissions['reports_recruiters'];
+                } else if (moduleId === 'analytics') {
+                    modPerms = userPermissions['report_recruiters'] || userPermissions['reports_recruiters'];
+                } else if (moduleId === 'report_job_seekers') {
+                    modPerms = userPermissions['reports_job_seekers'];
+                } else if (moduleId === 'roles_permissions') {
+                    modPerms = userPermissions['user_management'];
+                } else if (moduleId === 'talent_subscriptions') {
+                    modPerms = userPermissions['plans'] || userPermissions['recruiter_subscriptions'];
+                }
+            }
+
             if (!modPerms) return false;
 
             // If no specific action specified, check if module has view permission or any active permission
@@ -155,7 +180,16 @@ export default function useAdminPermissions() {
                 return typeof modPerms === 'object' && Object.values(modPerms).some(v => v === true);
             }
 
-            // Check specific fine-grained action
+            // Check specific fine-grained action with alias fallback
+            if (modPerms[actionId]) return true;
+
+            // Common action aliases
+            if (actionId === 'export_analytics_data' && (modPerms['export_analytics_excel'] || modPerms['export_analytics_data'])) return true;
+            if (actionId === 'user_growth_analysis' && (modPerms['view_growth_charts'] || modPerms['user_growth_analysis'])) return true;
+            if (actionId === 'job_moderation_trends' && (modPerms['jobs_performance_analytics'] || modPerms['job_moderation_trends'])) return true;
+            if (actionId === 'application_pipeline' && (modPerms['applications_pipeline_funnel'] || modPerms['application_pipeline'])) return true;
+            if (actionId === 'recruiter_conversions' && (modPerms['recruiter_metrics'] || modPerms['recruiter_conversions'])) return true;
+
             return Boolean(modPerms[actionId]);
         };
     }, [isSuperAdmin, userPermissions]);
@@ -171,3 +205,4 @@ export default function useAdminPermissions() {
         refreshPermissions: syncLiveFromBackend
     };
 }
+

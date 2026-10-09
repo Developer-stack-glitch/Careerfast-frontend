@@ -309,8 +309,24 @@ export default function RecruitersList() {
             const res = await loginAsRecruiter(rec.recruiter_id);
             if (res.data?.success && res.data?.token) {
                 toast.success(`Opening Recruiter Portal as ${recName}...`, { id: toastId });
-                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://recruit.careerfast.in';
-                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(res.data.data))}&target=/overview`;
+                const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+                const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+                const rawData = res.data?.data || {};
+                const safeData = {
+                    id: rawData.id || rec.recruiter_id,
+                    first_name: rawData.first_name || 'Recruiter',
+                    last_name: rawData.last_name || '',
+                    email: rawData.email || '',
+                    role_id: rawData.role_id || 3,
+                    role_name: rawData.role_name || 'recruiter',
+                    company_name: rawData.company_name || rec.company_name || 'Recruiter',
+                    organization: rawData.organization || '',
+                    company_id: rawData.company_id || null,
+                    is_email_verified: 1,
+                    impersonated_by_admin: true,
+                };
+                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(safeData))}&target=/overview`;
                 window.open(targetUrl, '_blank');
             } else {
                 toast.error(res.data?.message || "Failed to login as recruiter.", { id: toastId });
@@ -557,7 +573,7 @@ export default function RecruitersList() {
                                 <tr className="border-b border-slate-200/80 bg-slate-50 text-slate-600 text-[11px] font-bold uppercase tracking-wider">
                                     <th className="sticky top-0 left-0 z-30 bg-slate-50 py-3.5 px-4 w-[210px] min-w-[210px]">Company</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[185px]">Recruiter</th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px]">Sub-Recruiters</th>
+                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[130px]">Logins & Seats</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[155px]">Job Posts</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px]">Resume View</th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[125px]">Resume Download</th>
@@ -658,7 +674,7 @@ export default function RecruitersList() {
                 ) : (
                     <div
                         onScroll={handleTableScroll}
-                        className="overflow-x-auto min-h-[380px] max-h-[calc(100vh-230px)] overflow-y-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar:vertical]:w-0 [&::-webkit-scrollbar-track]:bg-slate-100/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 pb-28 relative scroll-smooth"
+                        className="overflow-x-auto min-h-[380px] max-h-[calc(100vh-230px)] overflow-y-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar:vertical]:w-0 [&::-webkit-scrollbar-track]:bg-slate-100/70 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400 pb-4 relative scroll-smooth"
                     >
                         <table className="w-full text-left border-collapse min-w-[1620px]">
                             <thead className="sticky top-0 z-20 bg-slate-50 shadow-xs">
@@ -678,8 +694,8 @@ export default function RecruitersList() {
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[185px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'recruiter', direction: sortConfig.key === 'recruiter' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Recruiter <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
-                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[115px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'sub_recruiters', direction: sortConfig.key === 'sub_recruiters' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
-                                        <div className="flex items-center gap-1">Sub-Recruiters <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
+                                    <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[130px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'sub_recruiters', direction: sortConfig.key === 'sub_recruiters' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
+                                        <div className="flex items-center gap-1">Logins & Seats <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
                                     </th>
                                     <th className="sticky top-0 z-20 bg-slate-50 py-3.5 px-4 w-[155px] cursor-pointer hover:bg-slate-100/50" onClick={() => setSortConfig({ key: 'job_post', direction: sortConfig.key === 'job_post' && sortConfig.direction === 'asc' ? 'desc' : 'asc' })}>
                                         <div className="flex items-center gap-1">Job Posts <ArrowUpDown className="w-3 h-3 opacity-50" /></div>
@@ -877,32 +893,45 @@ export default function RecruitersList() {
                                                 </div>
                                             </td>
 
-                                            {/* 5. Sub-Recruiters (Custom Plan Only) */}
+                                            {/* 3. Logins & Seats (Master Logins + Sub-Recruiters) */}
                                             <td className="py-3.5 px-4 whitespace-nowrap">
-                                                {isCustom && subRecruiterLimit > 1 ? (
-                                                    <>
-                                                        <div className="text-xs">
-                                                            <span className="font-bold text-slate-800">{subRecruitersCount}</span>
-                                                            <span className="text-slate-400 font-normal"> / {subRecruiterLimit} Seats</span>
-                                                        </div>
-                                                        <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all ${subPercent >= 100
-                                                                    ? 'bg-rose-500'
-                                                                    : subPercent >= 75
-                                                                        ? 'bg-amber-500'
-                                                                        : 'bg-indigo-600'
-                                                                    }`}
-                                                                style={{ width: `${Math.min(subPercent, 100)}%` }}
-                                                            />
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-400 mt-1">
-                                                            Team logins
-                                                        </div>
-                                                    </>
-                                                ) : (
-                                                    <span className="text-slate-300 text-sm font-semibold select-none">—</span>
-                                                )}
+                                                {(() => {
+                                                    const masterLimit = Number(rec.master_login_limit || 1);
+                                                    return (
+                                                        <>
+                                                            <div className="text-xs">
+                                                                <span className="font-bold text-slate-800">{masterLimit}</span>
+                                                                <span className="text-slate-500 font-medium"> Master Login{masterLimit > 1 ? 's' : ''}</span>
+                                                            </div>
+                                                            {isCustom && subRecruiterLimit > 1 ? (
+                                                                <div className="mt-1">
+                                                                    <div className="text-[11px] text-slate-600 font-medium">
+                                                                        <span className="font-bold text-slate-800">{subRecruitersCount}</span>
+                                                                        <span className="text-slate-400 font-normal"> / {subRecruiterLimit} Seats</span>
+                                                                    </div>
+                                                                    <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
+                                                                        <div
+                                                                            className={`h-full rounded-full transition-all ${subPercent >= 100
+                                                                                ? 'bg-rose-500'
+                                                                                : subPercent >= 75
+                                                                                    ? 'bg-amber-500'
+                                                                                    : 'bg-indigo-600'
+                                                                                }`}
+                                                                            style={{ width: `${Math.min(subPercent, 100)}%` }}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="text-[10px] text-slate-400 mt-0.5">
+                                                                        Team logins
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-[10px] text-slate-400 mt-0.5 font-normal">
+                                                                    Single account
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    );
+                                                })()}
                                             </td>
 
                                             {/* 4. Job Posts (Primary Quota for All Plans) */}

@@ -1,0 +1,561 @@
+/* ==========================================================================
+   CareerFast - Premium Candidate Login Drawer
+   ========================================================================== */
+
+.cf-auth-drawer {
+  z-index: 10000 !important;
+}
+
+.cf-auth-drawer .ant-drawer-mask {
+  z-index: 9999 !important;
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(2px) !important;
+}
+
+.cf-auth-drawer .ant-drawer-content-wrapper {
+  z-index: 10000 !important;
+  box-shadow: -10px 0 35px rgba(15, 23, 42, 0.25) !important;
+}
+
+.cf-auth-drawer .ant-drawer-content {
+  background: #ffffff;
+  border-left: 1px solid #f1f5f9;
+}
+
+.cf-auth-drawer .ant-drawer-body {
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.cf-auth-drawer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.cf-auth-drawer-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cf-auth-drawer-container::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+/* Header */
+.cf-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: linear-gradient(180deg, #faf5ff 0%, #ffffff 100%);
+  border-bottom: 1px solid #f3e8ff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.cf-drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cf-drawer-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+}
+
+.cf-drawer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3e8ff;
+  color: #7c3aed;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cf-drawer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #8b5cf6;
+  box-shadow: 0 0 6px #8b5cf6;
+  animation: cfPulse 2s infinite ease-in-out;
+}
+
+@keyframes cfPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.cf-drawer-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cf-drawer-close-btn:hover {
+  background: #fee2e2;
+  color: #ef4444;
+  transform: rotate(90deg);
+}
+
+/* Job Context Card */
+.cf-drawer-job-card {
+  margin: 16px 24px 0 24px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.cf-drawer-job-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cf-drawer-job-logo-wrap {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+}
+
+.cf-drawer-job-logo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.cf-drawer-job-initial {
+  font-size: 18px;
+  font-weight: 700;
+  color: #5f2eea;
+}
+
+.cf-drawer-job-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cf-drawer-job-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cf-drawer-job-company {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.cf-drawer-job-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.cf-drawer-job-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.cf-drawer-tag-salary {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+
+.cf-drawer-job-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 12px;
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* Body Content */
+.cf-drawer-body {
+  padding: 24px;
+  flex: 1;
+}
+
+.cf-drawer-title-box {
+  margin-bottom: 22px;
+}
+
+.cf-drawer-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.3px;
+}
+
+.cf-drawer-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Form */
+.cf-drawer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cf-drawer-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cf-drawer-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.cf-required {
+  color: #ef4444;
+}
+
+.cf-drawer-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 14px;
+  height: 46px;
+  transition: all 0.2s ease;
+}
+
+.cf-drawer-input-wrapper:focus-within {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.cf-drawer-input-wrapper.cf-has-error {
+  border-color: #ef4444;
+  background-color: #fef2f2;
+}
+
+.cf-drawer-input-wrapper.cf-has-error:focus-within {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.cf-drawer-field-icon {
+  color: #94a3b8;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.cf-drawer-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #1e293b;
+  width: 100%;
+}
+
+.cf-drawer-input::placeholder {
+  color: #94a3b8;
+}
+
+.cf-drawer-antd-pass {
+  flex: 1;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.cf-drawer-antd-pass input {
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.cf-drawer-error {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Options */
+.cf-drawer-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -2px;
+}
+
+.cf-drawer-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #475569;
+  user-select: none;
+}
+
+.cf-drawer-checkbox .ant-checkbox-checked .ant-checkbox-inner {
+  background-color: #7c3aed !important;
+  border-color: #7c3aed !important;
+}
+
+.cf-drawer-forgot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7c3aed;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.cf-drawer-forgot-link:hover {
+  color: #5b21b6;
+  text-decoration: underline;
+}
+
+/* Submit CTA */
+.cf-drawer-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #7c3aed 0%, #5f2eea 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 6px;
+}
+
+.cf-drawer-submit-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6d28d9 0%, #4f1ac7 100%);
+  transform: translateY(-1px);
+}
+
+.cf-drawer-submit-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cf-drawer-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cf-drawer-btn-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cf-drawer-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: cfSpin 0.8s linear infinite;
+}
+
+@keyframes cfSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Divider */
+.cf-drawer-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 20px 0 16px 0;
+  color: #94a3b8;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cf-drawer-divider::before,
+.cf-drawer-divider::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.cf-drawer-divider span {
+  padding: 0 12px;
+  font-weight: 600;
+}
+
+/* Google Login Wrapper */
+.cf-drawer-google-wrap {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.cf-drawer-google-wrap>div {
+  width: 100% !important;
+}
+
+/* Footer switch */
+.cf-drawer-footer-switch {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13.5px;
+  color: #64748b;
+}
+
+.cf-drawer-register-link {
+  color: #7c3aed;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.cf-drawer-register-link:hover {
+  color: #5b21b6;
+  text-decoration: underline;
+}
+
+/* Forgot Password View */
+.cf-drawer-forgot-box {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cf-drawer-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: color 0.15s;
+}
+
+.cf-drawer-back-btn:hover {
+  color: #7c3aed;
+}
+
+/* Bottom Trust Footer */
+.cf-drawer-trust-footer {
+  margin-top: auto;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+  text-align: center;
+}
+
+.cf-drawer-trust-icon {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 500px) {
+  .cf-auth-drawer .ant-drawer-content-wrapper {
+    width: 100% !important;
+  }
+
+  .cf-drawer-body {
+    padding: 18px;
+  }
+
+  .cf-drawer-job-card {
+    margin: 12px 18px 0 18px;
+  }
+}

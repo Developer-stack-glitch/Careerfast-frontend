@@ -3,7 +3,8 @@ import {
     Briefcase, Building2, MapPin, Search,
     MoreVertical, CheckCircle2, CheckCircle, XCircle, FileText, Download,
     Eye, Trash2, ExternalLink, ChevronLeft, ChevronRight, SlidersHorizontal, Clock,
-    ChevronsUpDown, Folder, GraduationCap, ClipboardList, Users, User, Calendar
+    ChevronsUpDown, Folder, GraduationCap, ClipboardList, Users, User, Calendar,
+    Layers, Filter, RotateCcw, ChevronDown, Sparkles
 } from 'lucide-react';
 import {
     getJobPosts,
@@ -12,7 +13,8 @@ import {
     makeJobActive,
     approveJobPost,
     rejectJobPost,
-    approveAllPendingJobs
+    approveAllPendingJobs,
+    loginAsRecruiter
 } from '../ApiService/action';
 import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
@@ -41,6 +43,36 @@ const getCompanyAvatarGradient = (name = '') => {
     return gradients[index];
 };
 
+// Robust text/array parser to handle JSON strings, arrays, empty arrays, and nulls
+const formatCleanText = (val, fallback = 'Not Specified') => {
+    if (val === null || val === undefined) return fallback;
+    let parsed = val;
+    if (typeof val === 'string') {
+        const trimmed = val.trim();
+        if (!trimmed || trimmed === '[]' || trimmed === 'null' || trimmed === '[""]' || trimmed === '[" "]' || trimmed === '[null]') {
+            return fallback;
+        }
+        if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+            try {
+                parsed = JSON.parse(trimmed);
+            } catch (e) {
+                parsed = trimmed;
+            }
+        }
+    }
+    if (Array.isArray(parsed)) {
+        const filtered = parsed
+            .map(item => (typeof item === 'string' ? item.trim() : item))
+            .filter(item => item !== null && item !== undefined && item !== '' && item !== 'null' && item !== 'undefined');
+        return filtered.length > 0 ? filtered.join(', ') : fallback;
+    }
+    if (typeof parsed === 'string') {
+        const cleaned = parsed.replace(/^[\["'\s]+|[\]"'\s]+$/g, '').trim();
+        return cleaned || fallback;
+    }
+    return String(parsed || fallback);
+};
+
 // ── Stat Card Component ──
 const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
     <div className="bg-white rounded-xl p-4 group transition-all duration-300 relative overflow-hidden">
@@ -58,7 +90,7 @@ const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
 );
 
 // ── Actions Dropdown (for Standard Table) ──
-const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, onReject, isBottom }) => {
+const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, onReject, onViewPreview, isBottom }) => {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -74,13 +106,13 @@ const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, on
 
     return (
         <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-lg border border-gray-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
-            <button onClick={() => { window.open(getJobDetailsUrl(job), '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <button onClick={() => { onViewPreview(job); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 <Eye className="w-3.5 h-3.5 text-blue-500" /> View / Preview
             </button>
             <button onClick={() => { window.location.href = `/admin/applications?search=${encodeURIComponent(job.job_title || '')}`; onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                 <Users className="w-3.5 h-3.5 text-indigo-500" /> View Applied ({job.applicants_count || 0})
             </button>
-            <button onClick={() => { window.open(job.apply_link || getJobDetailsUrl(job), '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <button onClick={() => { window.open(job.apply_link || getJobDetailsUrl(job, true), '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 <ExternalLink className="w-3.5 h-3.5" /> Open Apply Link
             </button>
 
@@ -138,6 +170,9 @@ export default function JobPost() {
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
     const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
+    const [selectedNature, setSelectedNature] = useState('All');
+    const [selectedWorkplace, setSelectedWorkplace] = useState('All');
+    const [selectedExperience, setSelectedExperience] = useState('All');
 
     // Approval action modals
     const [actionModal, setActionModal] = useState({ isOpen: false, type: '', id: null, title: '' });
@@ -152,7 +187,7 @@ export default function JobPost() {
 
     useEffect(() => {
         fetchJobs();
-    }, [currentPage, itemsPerPage, debouncedSearch, activeFilter, dateFilter, sortConfig]);
+    }, [currentPage, itemsPerPage, debouncedSearch, activeFilter, dateFilter, sortConfig, selectedNature, selectedWorkplace, selectedExperience]);
 
     const fetchJobs = async () => {
         try {
@@ -177,6 +212,20 @@ export default function JobPost() {
                 payload.approval_status = 'pending';
             } else {
                 payload.approval_status = 'all';
+            }
+
+            if (selectedNature === 'Walk-in') {
+                payload.is_walk_in = 1;
+            } else if (selectedNature !== 'All') {
+                payload.job_nature = selectedNature;
+            }
+
+            if (selectedWorkplace !== 'All') {
+                payload.workplace_type = [selectedWorkplace];
+            }
+
+            if (selectedExperience !== 'All') {
+                payload.experience_type = selectedExperience;
             }
 
             if (dateFilter.startDate) payload.start_date = dateFilter.startDate;
@@ -270,6 +319,51 @@ export default function JobPost() {
         }
     };
 
+    const handleViewPreview = async (job) => {
+        const recruiterId = job.user_id || job.recruiter_id;
+        const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+        const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+
+        if (!recruiterId) {
+            window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
+            return;
+        }
+
+        const recName = job.recruiter_name?.trim() || job.company_name || 'Recruiter';
+        const toastId = toast.loading(`Generating recruiter session for ${recName}...`);
+        try {
+            const res = await loginAsRecruiter(recruiterId);
+            if (res.data?.success && res.data?.token) {
+                toast.success(`Opening Recruiter Portal (Applicants #${job.id})...`, { id: toastId });
+                const rawData = res.data?.data || {};
+                const safeData = {
+                    id: rawData.id || recruiterId,
+                    first_name: rawData.first_name || 'Recruiter',
+                    last_name: rawData.last_name || '',
+                    email: rawData.email || '',
+                    role_id: rawData.role_id || 3,
+                    role_name: rawData.role_name || 'recruiter',
+                    company_name: rawData.company_name || job.company_name || 'Recruiter',
+                    organization: rawData.organization || '',
+                    company_id: rawData.company_id || null,
+                    is_email_verified: 1,
+                    impersonated_by_admin: true,
+                };
+                const targetPath = `/applicants/${job.id}`;
+                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(safeData))}&target=${encodeURIComponent(targetPath)}`;
+                window.open(targetUrl, '_blank');
+            } else {
+                toast.error(res.data?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
+                window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
+            }
+        } catch (err) {
+            console.error("Error in handleViewPreview:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
+            window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
+        }
+    };
+
     const handleExport = async () => {
         try {
             const toastId = toast.loading('Generating export...');
@@ -282,6 +376,10 @@ export default function JobPost() {
             if (activeFilter === 'Closed') payload.is_closed = 1;
             if (activeFilter === 'Approved') payload.approval_status = 'approved';
             if (activeFilter === 'Pending') payload.approval_status = 'pending';
+            if (selectedNature === 'Walk-in') payload.is_walk_in = 1;
+            else if (selectedNature !== 'All') payload.job_nature = selectedNature;
+            if (selectedWorkplace !== 'All') payload.workplace_type = [selectedWorkplace];
+            if (selectedExperience !== 'All') payload.experience_type = selectedExperience;
 
             const response = await getJobPosts(payload);
             const responseData = response?.data?.data || response?.data || {};
@@ -298,8 +396,8 @@ export default function JobPost() {
             exportJobs.forEach(job => {
                 const title = `"${(job.job_title || '').replace(/"/g, '""')}"`;
                 const company = `"${(job.company_name || '').replace(/"/g, '""')}"`;
-                const type = `"${Array.isArray(job.job_category) ? job.job_category.join(', ') : (job.job_category || 'General')}"`;
-                const location = `"${Array.isArray(job.work_location) ? job.work_location.join(', ') : (job.work_location || 'Remote')}"`;
+                const type = `"${formatCleanText(job.job_category, 'General').replace(/"/g, '""')}"`;
+                const location = `"${formatCleanText(job.work_location, 'Not Specified').replace(/"/g, '""')}"`;
                 const datePosted = `"${new Date(job.created_at || new Date()).toLocaleDateString()}"`;
                 const dateApproved = `"${job.approved_at ? new Date(job.approved_at).toLocaleDateString() : 'Pending'}"`;
                 const status = job.is_closed === 0 ? 'Active' : 'Closed';
@@ -432,7 +530,7 @@ export default function JobPost() {
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-xl font-bold text-gray-900 tracking-tight mb-0">
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">
                         {activeFilter === 'Pending' ? 'Approval Pending Jobs' : 'Job Postings'}
                     </h1>
                     <p className="text-[13px] text-gray-500 mt-0.5 mb-0">
@@ -524,6 +622,100 @@ export default function JobPost() {
                     bg="bg-rose-50"
                     accent="ring-rose-100"
                 />
+            </div>
+
+            {/* ── Quick Filter Boxes (Jobs, Internships, Walk-ins, Attributes) ── */}
+            <div className="bg-white rounded-xl p-3 sm:p-4 mb-5 border border-slate-200/80 shadow-xs">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+                    {/* Left: Nature Type Filter Boxes */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1.5">
+                            <Filter className="w-3.5 h-3.5" /> Type:
+                        </span>
+                        {[
+                            { label: 'All Types', value: 'All', icon: Layers },
+                            { label: 'Jobs', value: 'Job', icon: Briefcase },
+                            { label: 'Internships', value: 'Internship', icon: GraduationCap },
+                            { label: 'Walk-in Drives', value: 'Walk-in', icon: Calendar },
+                        ].map((t) => {
+                            const isSelected = selectedNature === t.value;
+                            const Icon = t.icon;
+                            return (
+                                <button
+                                    key={t.value}
+                                    onClick={() => {
+                                        setSelectedNature(t.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${
+                                        isSelected
+                                            ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-600/30'
+                                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/70'
+                                    }`}
+                                >
+                                    <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
+                                    <span>{t.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Right: Dropdown Select Boxes & Reset */}
+                    <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+                        {/* Workplace Select */}
+                        <div className="relative">
+                            <select
+                                value={selectedWorkplace}
+                                onChange={(e) => {
+                                    setSelectedWorkplace(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="appearance-none pl-3 pr-8 py-2 text-[12.5px] font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                            >
+                                <option value="All">All Workplace</option>
+                                <option value="Work from office">🏢 On-site / Office</option>
+                                <option value="Hybrid">⚡ Hybrid</option>
+                                <option value="Remote">🌐 Remote</option>
+                            </select>
+                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+
+                        {/* Experience Select */}
+                        <div className="relative">
+                            <select
+                                value={selectedExperience}
+                                onChange={(e) => {
+                                    setSelectedExperience(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="appearance-none pl-3 pr-8 py-2 text-[12.5px] font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                            >
+                                <option value="All">All Experience</option>
+                                <option value="Fresher">🌱 Fresher</option>
+                                <option value="Experienced">💼 Experienced</option>
+                            </select>
+                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        </div>
+
+                        {/* Reset Button (only if active filters applied) */}
+                        {(selectedNature !== 'All' || selectedWorkplace !== 'All' || selectedExperience !== 'All' || searchTerm) && (
+                            <button
+                                onClick={() => {
+                                    setSelectedNature('All');
+                                    setSelectedWorkplace('All');
+                                    setSelectedExperience('All');
+                                    setSearchTerm('');
+                                    setCurrentPage(1);
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200/60 transition-all cursor-pointer"
+                                title="Reset all filters"
+                            >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>Reset</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
 
             {/* Content Area */}
@@ -697,14 +889,7 @@ export default function JobPost() {
                                                         <div className="flex items-center gap-1.5 text-[13px] text-gray-500 font-medium">
                                                             <MapPin className="w-3.5 h-3.5 text-gray-400" />
                                                             <span className="truncate max-w-[200px]">
-                                                                {(() => {
-                                                                    try {
-                                                                        const locs = typeof job.work_location === 'string' ? JSON.parse(job.work_location) : job.work_location;
-                                                                        return Array.isArray(locs) ? locs.join(', ') : (locs || 'Not Specified');
-                                                                    } catch (e) {
-                                                                        return job.work_location || 'Not Specified';
-                                                                    }
-                                                                })()}
+                                                                {formatCleanText(job.work_location, 'Not Specified')}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -727,11 +912,12 @@ export default function JobPost() {
                                                 {/* 4. Actions */}
                                                 <td className="py-3.5 px-6 text-right align-middle">
                                                     <div className="flex items-center justify-end gap-2.5">
-                                                        <Link prefetch={false} target="_blank" href={getJobDetailsUrl(job)} className="no-underline hover:no-underline">
-                                                            <button className="flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors active:scale-95">
-                                                                <Eye className="w-3.5 h-3.5" /> Preview
-                                                            </button>
-                                                        </Link>
+                                                        <button
+                                                            onClick={() => handleViewPreview(job)}
+                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-[12.5px] font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors active:scale-95"
+                                                        >
+                                                            <Eye className="w-3.5 h-3.5" /> Preview
+                                                        </button>
                                                         <button
                                                             onClick={() => {
                                                                 if (job.recruiter_can_approve === false) {
@@ -852,8 +1038,8 @@ export default function JobPost() {
                                         const isActive = job.is_closed === 0;
                                         const jobTitleText = job.job_title || 'Untitled Role';
                                         const companyNameText = job.company_name || '-';
-                                        const jobCategoryText = Array.isArray(job.job_category) && job.job_category.length > 0 ? job.job_category.join(', ') : (job.job_category || 'General');
-                                        const workLocationText = Array.isArray(job.work_location) && job.work_location.length > 0 ? job.work_location.join(', ') : (job.work_location || 'Remote');
+                                        const jobCategoryText = formatCleanText(job.job_category, 'General');
+                                        const workLocationText = formatCleanText(job.work_location, 'Not Specified');
                                         const logoSrc = job.company_logo || job.logo;
                                         const grad = getCompanyAvatarGradient(companyNameText);
 
@@ -889,15 +1075,22 @@ export default function JobPost() {
                                                         )}
                                                         <div className="min-w-0 flex flex-col justify-center">
                                                             <div className="relative group/title inline-block min-w-0">
-                                                                <h3 className="text-[14px] font-bold text-blue-950 group-hover:text-blue-600 transition-colors truncate mb-0">
-                                                                    {jobTitleText}
-                                                                </h3>
-                                                                <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/title:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
+                                                                <a
+                                                                    href={getJobDetailsUrl(job, true)}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="no-underline hover:no-underline group/link inline-block max-w-full"
+                                                                >
+                                                                    <h3 className="text-[14px] font-bold text-blue-950 group-hover/link:text-blue-600 hover:text-blue-600 transition-colors truncate mb-0 cursor-pointer">
+                                                                        {jobTitleText}
+                                                                    </h3>
+                                                                </a>
+                                                                <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/title:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl pointer-events-none">
                                                                     {jobTitleText}
                                                                     <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
                                                                 </div>
                                                             </div>
-                                                            <div className="text-[13px] text-gray-500 mt-1 flex items-center gap-1.5 relative group/cat min-w-0">
+                                                            <div className="text-[13px] text-gray-500 mt-0 flex items-center gap-1.5 relative group/cat min-w-0">
                                                                 <Folder className="w-3.5 h-3.5 shrink-0 text-gray-400" />
                                                                 <span className="truncate">{jobCategoryText}</span>
                                                                 <div className="absolute left-0 bottom-full mb-1.5 hidden group-hover/cat:block bg-gray-900 text-white text-[11px] font-medium rounded-lg py-1.5 px-2.5 z-[100] whitespace-nowrap shadow-xl">
@@ -970,7 +1163,7 @@ export default function JobPost() {
                                                     <a
                                                         href={`/admin/applications?search=${encodeURIComponent(jobTitleText)}`}
                                                         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${(Number(job.applicants_count) > 0)
-                                                            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border border-indigo-200/80 shadow-2xs'
+                                                            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border-1 border-indigo-200/80 shadow-2xs'
                                                             : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200/60'
                                                             }`}
                                                         title={`View ${job.applicants_count || 0} applied candidates`}
@@ -1011,6 +1204,7 @@ export default function JobPost() {
                                                                 onToggleStatus={handleToggleStatus}
                                                                 onApprove={(j) => openModal('approve', j.id, j.job_title)}
                                                                 onReject={(j) => openModal('reject', j.id, j.job_title)}
+                                                                onViewPreview={handleViewPreview}
                                                                 isBottom={index >= paginatedJobs.length - 2 && paginatedJobs.length > 2}
                                                             />
                                                         )}

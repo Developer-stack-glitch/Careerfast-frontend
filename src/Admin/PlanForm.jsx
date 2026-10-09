@@ -38,6 +38,7 @@ export default function PlanForm({ planId = null }) {
         featured_job_limit: 0,
         urgent_job_limit: 0,
         sub_recruiter_limit: 1,
+        master_login_limit: 1,
 
         // Candidate / Resume Limits
         resume_view_limit: 50,
@@ -85,6 +86,7 @@ export default function PlanForm({ planId = null }) {
                     featured_job_limit: p.featured_job_limit ?? 0,
                     urgent_job_limit: p.urgent_job_limit ?? 0,
                     sub_recruiter_limit: p.sub_recruiter_limit ?? 1,
+                    master_login_limit: p.master_login_limit ?? 1,
 
                     resume_view_limit: p.resume_view_limit ?? 50,
                     resume_download_limit: p.resume_download_limit ?? 10,
@@ -212,6 +214,7 @@ export default function PlanForm({ planId = null }) {
                 featured_job_limit: Number(formData.featured_job_limit),
                 urgent_job_limit: Number(formData.urgent_job_limit),
                 sub_recruiter_limit: Number(formData.sub_recruiter_limit),
+                master_login_limit: Math.max(1, Number(formData.master_login_limit || 1)),
                 resume_view_limit: Number(formData.resume_view_limit),
                 resume_download_limit: Number(formData.resume_download_limit),
                 email_limit: Number(formData.email_limit || 0),
@@ -500,7 +503,7 @@ export default function PlanForm({ planId = null }) {
                         Controls how many jobs the company can publish and keep active concurrently.
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
                         <div>
                             <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Monthly Job Posts
@@ -559,6 +562,21 @@ export default function PlanForm({ planId = null }) {
                                 className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500"
                             />
                             <span className="text-[11px] text-gray-400 mt-1 block">Urgent tag badge</span>
+                        </div>
+
+                        <div>
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                Master Login Count
+                            </label>
+                            <input
+                                type="number"
+                                name="master_login_limit"
+                                value={formData.master_login_limit}
+                                onChange={handleChange}
+                                min={1}
+                                className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 font-semibold"
+                            />
+                            <span className="text-[11px] text-gray-400 mt-1 block">Primary master logins</span>
                         </div>
                     </div>
                 </div>

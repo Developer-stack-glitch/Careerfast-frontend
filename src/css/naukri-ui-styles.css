@@ -28,6 +28,135 @@
   z-index: 1000;
 }
 
+.naukri-results-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.naukri-results-count-box {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.naukri-results-range {
+  font-size: 15px;
+  font-weight: 500;
+  color: #334155;
+  letter-spacing: -0.1px;
+}
+
+.naukri-results-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  display: inline;
+  letter-spacing: -0.2px;
+}
+
+.naukri-results-controls {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.naukri-send-jobs-btn {
+  background: transparent;
+  border: none;
+  color: #7f5af0;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.naukri-send-jobs-btn:hover {
+  color: #7f5af0;
+  text-decoration: underline;
+}
+
+.naukri-sort-dropdown-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 13.5px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.naukri-sort-dropdown-btn:hover,
+.naukri-sort-dropdown-btn:focus,
+.ant-dropdown-open .naukri-sort-dropdown-btn {
+  border-color: #7f5af0;
+  background: #fdfcff;
+}
+
+.naukri-sort-label {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.naukri-sort-current {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.naukri-sort-arrow {
+  font-size: 10px;
+  color: #64748b;
+  margin-left: 2px;
+}
+
+.naukri-sort-menu-popup .ant-dropdown-menu {
+  padding: 6px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(127, 90, 240, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #f1f0f7 !important;
+  min-width: 160px !important;
+}
+
+.naukri-sort-menu-popup .ant-dropdown-menu-item-selected {
+  background-color: #f5f0ff !important;
+  color: #7f5af0 !important;
+}
+
+.naukri-sort-menu-popup .ant-dropdown-menu-item:hover {
+  background-color: #faf7ff !important;
+}
+
+.naukri-sort-dropdown-item {
+  padding: 6px 12px;
+  font-size: 13.5px;
+  color: #334155;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.naukri-sort-dropdown-item.active {
+  color: #7f5af0 !important;
+  font-weight: 600;
+  background: #f5f0ff !important;
+}
+
+.naukri-sort-dropdown-item:hover {
+  background: #faf7ff;
+  color: #7f5af0;
+}
+
 .naukri-results-count {
   font-size: 16px;
   font-weight: 600;
@@ -687,7 +816,7 @@
   border-radius: 20px !important;
   height: 40px !important;
   padding: 0 30px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   font-size: 14px !important;
   border: none !important;
 }
@@ -715,12 +844,12 @@
   .naukri-content-wrapper {
     padding: 0px 16px !important;
   }
-  
+
   .mobile-filter-btn {
     display: flex !important;
     align-items: center;
   }
-  
+
   .desktop-sidebar-col {
     display: none !important;
   }

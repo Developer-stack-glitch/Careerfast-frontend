@@ -32,6 +32,7 @@ export default function AddRecruiter() {
         active_job_limit: '',
         featured_job_limit: '',
         urgent_job_limit: '',
+        master_login_limit: 1,
         resume_view_limit: '',
         resume_download_limit: '',
         sub_recruiter_limit: '',
@@ -497,6 +498,14 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                     <input
                                         type="number" min="0" value={customLimits.resume_download_limit}
                                         onChange={(e) => setCustomLimits({ ...customLimits, resume_download_limit: e.target.value })}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Master Login Count</label>
+                                    <input
+                                        type="number" min="1" value={customLimits.master_login_limit}
+                                        onChange={(e) => setCustomLimits({ ...customLimits, master_login_limit: e.target.value })}
                                         className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
                                     />
                                 </div>

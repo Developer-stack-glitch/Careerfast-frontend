@@ -112,41 +112,52 @@ export default function Header({ noSticky = false }) {
 
 
   useEffect(() => {
-    const getCookie = (name) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop().split(';').shift();
-      return null;
+    const syncAuth = () => {
+      const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+      };
+
+      let stored = localStorage.getItem("loginDetails");
+      let token = localStorage.getItem("AccessToken");
+
+      // Sync from cookies if localStorage is empty (in case logged in via course app)
+      if (!token) {
+        const cookieToken = getCookie("AccessToken");
+        const cookieDetails = getCookie("loginDetails");
+        if (cookieToken && cookieDetails) {
+          localStorage.setItem("AccessToken", cookieToken);
+          localStorage.setItem("loginDetails", decodeURIComponent(cookieDetails));
+          token = cookieToken;
+          stored = decodeURIComponent(cookieDetails);
+          dispatch(storeLoginStatus(true));
+        }
+      }
+
+      if (stored && token) {
+        try {
+          const loginDetails = JSON.parse(stored);
+          setLoginUserId(loginDetails.id);
+          setRoleId(loginDetails.role_id);
+        } catch (err) {
+          console.error("Invalid loginDetails", err);
+        }
+      } else {
+        setLoginUserId(null);
+        setRoleId(null);
+      }
     };
 
-    let stored = localStorage.getItem("loginDetails");
-    let token = localStorage.getItem("AccessToken");
+    syncAuth();
 
-    // Sync from cookies if localStorage is empty (in case logged in via course app)
-    if (!token) {
-      const cookieToken = getCookie("AccessToken");
-      const cookieDetails = getCookie("loginDetails");
-      if (cookieToken && cookieDetails) {
-        localStorage.setItem("AccessToken", cookieToken);
-        localStorage.setItem("loginDetails", decodeURIComponent(cookieDetails));
-        token = cookieToken;
-        stored = decodeURIComponent(cookieDetails);
-        dispatch(storeLoginStatus(true));
-      }
-    }
-
-    if (stored && token) {
-      try {
-        const loginDetails = JSON.parse(stored);
-        setLoginUserId(loginDetails.id);
-        setRoleId(loginDetails.role_id);
-      } catch (err) {
-        console.error("Invalid loginDetails", err);
-      }
-    } else {
-      setLoginUserId(null);
-      setRoleId(null);
-    }
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("authChange", syncAuth);
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("authChange", syncAuth);
+    };
   }, [dispatch]);
 
   const handleLogOut = () => {

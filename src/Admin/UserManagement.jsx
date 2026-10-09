@@ -2,13 +2,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import {
-    Users2, ShieldCheck, ShieldAlert, KeyRound, Plus, Search, Filter,
-    CheckCircle2, XCircle, MoreVertical, Edit3, Trash2, Lock, Unlock,
-    Eye, EyeOff, Check, X, RefreshCw, Mail, Phone, Calendar, Clock,
-    LayoutDashboard, Sparkles, Layers, Building2, Briefcase, Users,
-    MessageSquare, Settings, UserCheck, ChevronDown, AlertCircle, Shield,
-    SlidersHorizontal, CheckSquare, Square, Download, FileSpreadsheet,
-    ArrowUpDown, LogIn, ExternalLink, ArrowRight
+    Users2, ShieldCheck, KeyRound, Plus, Search, Filter,
+    CheckCircle2, XCircle, Edit3, Trash2, Lock, Unlock,
+    Eye, EyeOff, X, RefreshCw, Mail, Phone, Clock, Sparkles,
+    UserCheck, Shield, ExternalLink, ArrowRight
 } from 'lucide-react';
 import {
     getAdminUsers,
@@ -20,7 +17,6 @@ import {
     getAdminRoles
 } from '../ApiService/action';
 import AdminSelect from './AdminSelect';
-import { AdminUserManagementSkeleton } from './AdminSkeletons';
 import toast from 'react-hot-toast';
 import { PORTAL_MODULES } from './RolesPermissions';
 import useAdminPermissions from './useAdminPermissions';
@@ -637,7 +633,7 @@ export default function UserManagement() {
                                                         </span>
                                                     )}
                                                     <span className="text-[10px] text-gray-400">
-                                                        ({isSuper ? '76/76' : `${grantedCount}/${TOTAL_AVAILABLE_ACTIONS}`})
+                                                        ({isSuper ? `${TOTAL_AVAILABLE_ACTIONS}/${TOTAL_AVAILABLE_ACTIONS}` : `${grantedCount}/${TOTAL_AVAILABLE_ACTIONS}`})
                                                     </span>
                                                 </div>
                                             </td>
@@ -936,12 +932,12 @@ export default function UserManagement() {
 
             {/* Modal: Reset Password */}
             {isPasswordModalOpen && selectedAdmin && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-150 mt-0">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-150">
                         <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
                             <KeyRound className="w-6 h-6" />
                         </div>
-                        <h3 className="text-base font-bold text-gray-900 mb-1">Reset Password</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-1">Reset Password</h3>
                         <p className="text-xs text-gray-600 leading-relaxed mb-4">
                             Set a new password for administrator <strong>{selectedAdmin.first_name} {selectedAdmin.last_name}</strong> ({selectedAdmin.email}).
                         </p>
@@ -956,7 +952,7 @@ export default function UserManagement() {
                                         value={newPassword}
                                         onChange={(e) => setNewPassword(e.target.value)}
                                         required
-                                        className="w-full pl-3.5 pr-10 py-2 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-xs outline-none"
+                                        className="w-full pl-3.5 pr-10 py-2.5 bg-white border border-gray-200 focus:border-blue-500 rounded-lg text-sm outline-none"
                                     />
                                     <button
                                         type="button"
@@ -973,14 +969,14 @@ export default function UserManagement() {
                                 <button
                                     type="button"
                                     onClick={() => setIsPasswordModalOpen(false)}
-                                    className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-lg border-0 cursor-pointer"
+                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg border-0 cursor-pointer"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={actionLoading}
-                                    className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg border-0 cursor-pointer shadow-xs shadow-amber-500/20 disabled:opacity-50 flex items-center gap-1.5"
+                                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded-lg border-0 cursor-pointer shadow-xs shadow-amber-500/20 disabled:opacity-50 flex items-center gap-1.5"
                                 >
                                     {actionLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                                     Update Password
@@ -993,7 +989,7 @@ export default function UserManagement() {
 
             {/* Modal: Delete User */}
             {isDeleteModalOpen && selectedAdmin && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-150 mt-0">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-150">
                         <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-4">
                             <Trash2 className="w-6 h-6" />

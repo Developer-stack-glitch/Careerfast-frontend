@@ -193,7 +193,7 @@ const ProSubscription = () => {
                     position: "relative",
                     overflow: "hidden"
                   }}
-                  bodyStyle={{ padding: 24 }}
+                  styles={{ body: { padding: 24 } }}
                 >
                   {plan.name.toLowerCase().includes("pro") && (
                     <div style={{

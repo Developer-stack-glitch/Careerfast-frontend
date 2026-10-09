@@ -1,6 +1,28 @@
 export const generateSlug = (text = "") =>
   String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
+export const generatePreviewToken = (jobId) => {
+  if (!jobId) return "";
+  const secret = "careerfast_admin_preview_token_2026";
+  let hash = 0;
+  const str = `job_${jobId}_${secret}`;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  const hexPart = Math.abs(hash).toString(16);
+  const payload = JSON.stringify({ id: Number(jobId), key: hexPart });
+  try {
+    if (typeof btoa !== 'undefined') {
+      return btoa(payload).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    }
+    return Buffer.from(payload).toString('base64url');
+  } catch (e) {
+    return hexPart;
+  }
+};
+
 export const getJobSlug = (job) => {
   if (!job) return "";
   const safeSlug = (val) => {
@@ -41,6 +63,15 @@ export const getJobSlug = (job) => {
 export const getJobDetailsUrl = (job, preview = false) => {
   if (!job) return "/jobs";
   const slug = getJobSlug(job);
-  const isPreviewParam = preview ? "?preview=true" : "";
-  return `/job-details/${slug}${isPreviewParam}`;
+  const id = job.id || job.job_id || job.job_post_id;
+  const isPending = job.approval_status === 'pending' || job.approval_status === 'rejected' || preview;
+
+  const isInternship = String(job.job_nature || job.type || '').toLowerCase().includes('intern');
+  const basePath = isInternship ? '/internship-details' : '/job-details';
+
+  if (isPending || preview) {
+    const token = generatePreviewToken(id);
+    return `${basePath}/${slug}?preview=true&preview_token=${token}`;
+  }
+  return `${basePath}/${slug}`;
 };
