@@ -19,6 +19,7 @@ import {
 import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
+import AdminSelect from './AdminSelect';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { getJobDetailsUrl } from '../utils/slug';
@@ -624,78 +625,74 @@ export default function JobPost() {
                 />
             </div>
 
-            {/* ── Quick Filter Boxes (Jobs, Internships, Walk-ins, Attributes) ── */}
-            <div className="bg-white rounded-xl p-3 sm:p-4 mb-5 border border-slate-200/80 shadow-xs">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
-                    {/* Left: Nature Type Filter Boxes */}
+            {/* ── Quick Filter Bar (Type tabs, Workplace & Experience filters) ── */}
+            <div className="bg-white rounded-2xl p-2 sm:p-2.5 mb-4 shadow-2xs">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    {/* Left: Nature Type Segmented Control */}
                     <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1.5">
-                            <Filter className="w-3.5 h-3.5" /> Type:
-                        </span>
-                        {[
-                            { label: 'All Types', value: 'All', icon: Layers },
-                            { label: 'Jobs', value: 'Job', icon: Briefcase },
-                            { label: 'Internships', value: 'Internship', icon: GraduationCap },
-                            { label: 'Walk-in Drives', value: 'Walk-in', icon: Calendar },
-                        ].map((t) => {
-                            const isSelected = selectedNature === t.value;
-                            const Icon = t.icon;
-                            return (
-                                <button
-                                    key={t.value}
-                                    onClick={() => {
-                                        setSelectedNature(t.value);
-                                        setCurrentPage(1);
-                                    }}
-                                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all shrink-0 active:scale-95 cursor-pointer ${
-                                        isSelected
-                                            ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-600/30'
-                                            : 'bg-slate-50 text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/70'
-                                    }`}
-                                >
-                                    <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
-                                    <span>{t.label}</span>
-                                </button>
-                            );
-                        })}
+                        <div className="inline-flex items-center p-1 bg-slate-100/80 rounded-xl border border-slate-200/70 gap-1 shrink-0">
+                            {[
+                                { label: 'All Types', value: 'All', icon: Layers },
+                                { label: 'Jobs', value: 'Job', icon: Briefcase },
+                                { label: 'Internships', value: 'Internship', icon: GraduationCap },
+                                { label: 'Walk-in Drives', value: 'Walk-in', icon: Calendar },
+                            ].map((t) => {
+                                const isSelected = selectedNature === t.value;
+                                const Icon = t.icon;
+                                return (
+                                    <button
+                                        key={t.value}
+                                        onClick={() => {
+                                            setSelectedNature(t.value);
+                                            setCurrentPage(1);
+                                        }}
+                                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all shrink-0 active:scale-95 cursor-pointer ${isSelected
+                                            ? 'bg-blue-600 text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+                                            }`}
+                                    >
+                                        <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                                        <span>{t.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Right: Dropdown Select Boxes & Reset */}
-                    <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap shrink-0">
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
                         {/* Workplace Select */}
-                        <div className="relative">
-                            <select
-                                value={selectedWorkplace}
-                                onChange={(e) => {
-                                    setSelectedWorkplace(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="appearance-none pl-3 pr-8 py-2 text-[12.5px] font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                            >
-                                <option value="All">All Workplace</option>
-                                <option value="Work from office">🏢 On-site / Office</option>
-                                <option value="Hybrid">⚡ Hybrid</option>
-                                <option value="Remote">🌐 Remote</option>
-                            </select>
-                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        </div>
+                        <AdminSelect
+                            value={selectedWorkplace}
+                            onChange={(val) => {
+                                setSelectedWorkplace(val);
+                                setCurrentPage(1);
+                            }}
+                            options={[
+                                { value: 'All', label: 'All Workplace' },
+                                { value: 'Work from office', label: 'On-site / Office' },
+                                { value: 'Hybrid', label: 'Hybrid' },
+                                { value: 'Remote', label: 'Remote' },
+                            ]}
+                            placeholder="All Workplace"
+                            size="sm"
+                        />
 
                         {/* Experience Select */}
-                        <div className="relative">
-                            <select
-                                value={selectedExperience}
-                                onChange={(e) => {
-                                    setSelectedExperience(e.target.value);
-                                    setCurrentPage(1);
-                                }}
-                                className="appearance-none pl-3 pr-8 py-2 text-[12.5px] font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                            >
-                                <option value="All">All Experience</option>
-                                <option value="Fresher">🌱 Fresher</option>
-                                <option value="Experienced">💼 Experienced</option>
-                            </select>
-                            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                        </div>
+                        <AdminSelect
+                            value={selectedExperience}
+                            onChange={(val) => {
+                                setSelectedExperience(val);
+                                setCurrentPage(1);
+                            }}
+                            options={[
+                                { value: 'All', label: 'All Experience' },
+                                { value: 'Fresher', label: 'Fresher' },
+                                { value: 'Experienced', label: 'Experienced' },
+                            ]}
+                            placeholder="All Experience"
+                            size="sm"
+                        />
 
                         {/* Reset Button (only if active filters applied) */}
                         {(selectedNature !== 'All' || selectedWorkplace !== 'All' || selectedExperience !== 'All' || searchTerm) && (
@@ -707,10 +704,10 @@ export default function JobPost() {
                                     setSearchTerm('');
                                     setCurrentPage(1);
                                 }}
-                                className="flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200/60 transition-all cursor-pointer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border-1 border-rose-200/80 transition-all cursor-pointer active:scale-95 shadow-2xs"
                                 title="Reset all filters"
                             >
-                                <RotateCcw className="w-3.5 h-3.5" />
+                                <RotateCcw className="w-3 h-3" />
                                 <span>Reset</span>
                             </button>
                         )}
