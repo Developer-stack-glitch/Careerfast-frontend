@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
     Building, Users, Search, Plus,
@@ -42,46 +43,126 @@ const getCompanyAvatarGradient = (name = '') => {
     return gradients[index];
 };
 
-const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, handleToggleStatus, handleDeleteRecruiter, handleLoginAsRecruiter, onClose }) => {
-    const ref = useRef(null);
-    const [openUp, setOpenUp] = useState(false);
+const ActionsDropdown = ({
+    anchorRef,
+    rec,
+    router,
+    setChangePlanRecruiter,
+    handleToggleStatus,
+    handleDeleteRecruiter,
+    handleLoginAsRecruiter,
+    onClose
+}) => {
+    const menuRef = useRef(null);
+    const [mounted, setMounted] = useState(false);
+    const [position, setPosition] = useState(null);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    const updatePosition = () => {
+        if (!anchorRef?.current) return;
+        const rect = anchorRef.current.getBoundingClientRect();
+
+        // If trigger button is completely outside the viewport, close
+        if (rect.bottom < 0 || rect.top > window.innerHeight) {
+            onClose();
+            return;
+        }
+
+        const menuWidth = 224; // w-56
+        const menuHeight = menuRef.current?.offsetHeight || 230;
+
+        // Align right edge of dropdown with right edge of button
+        let left = rect.right - menuWidth;
+        if (left < 10) left = 10;
+        if (left + menuWidth > window.innerWidth - 10) {
+            left = window.innerWidth - menuWidth - 10;
+        }
+
+        const spaceBelow = window.innerHeight - rect.bottom;
+        const spaceAbove = rect.top;
+
+        let top;
+        // Check if there is comfortable space below
+        if (spaceBelow >= menuHeight + 10) {
+            top = rect.bottom + 6;
+        } else if (spaceAbove >= menuHeight + 10) {
+            top = rect.top - menuHeight - 6;
+        } else if (spaceBelow >= spaceAbove) {
+            top = rect.bottom + 6;
+        } else {
+            top = rect.top - menuHeight - 6;
+        }
+
+        // Clamp top to ensure popup is never clipped by top or bottom edge of viewport
+        top = Math.max(10, Math.min(top, window.innerHeight - menuHeight - 10));
+
+        setPosition({ top, left });
+    };
 
     React.useLayoutEffect(() => {
-        if (ref.current) {
-            const trigger = ref.current.parentElement;
-            const triggerRect = trigger ? trigger.getBoundingClientRect() : ref.current.getBoundingClientRect();
-            const spaceBelow = window.innerHeight - triggerRect.bottom;
-            const spaceAbove = triggerRect.top;
-            const menuHeight = ref.current.offsetHeight || 230;
-
-            // Only open upward if space below is too small (< menuHeight) AND there is sufficient space above
-            if (spaceBelow < menuHeight + 15 && spaceAbove > menuHeight) {
-                setOpenUp(true);
-            } else {
-                setOpenUp(false);
-            }
-        }
+        updatePosition();
     }, []);
 
     useEffect(() => {
-        const handler = (e) => {
-            if (ref.current && !ref.current.contains(e.target)) onClose();
+        const handleMouseDown = (e) => {
+            if (
+                menuRef.current && !menuRef.current.contains(e.target) &&
+                anchorRef?.current && !anchorRef.current.contains(e.target)
+            ) {
+                onClose();
+            }
         };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
+
+        const handleScroll = (e) => {
+            if (menuRef.current && menuRef.current.contains(e.target)) return;
+            updatePosition();
+        };
+
+        const handleResize = () => {
+            updatePosition();
+        };
+
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+
+        document.addEventListener('mousedown', handleMouseDown);
+        window.addEventListener('scroll', handleScroll, true);
+        window.addEventListener('resize', handleResize);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('mousedown', handleMouseDown);
+            window.removeEventListener('scroll', handleScroll, true);
+            window.removeEventListener('resize', handleResize);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, [onClose]);
 
-    return (
+    if (!mounted || typeof document === 'undefined') return null;
+
+    return createPortal(
         <div
-            ref={ref}
-            className={`absolute right-0 ${openUp ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} w-56 bg-white rounded-xl shadow-2xl border border-slate-200/90 py-1.5 z-[100] animate-in fade-in zoom-in-95 duration-150`}
+            ref={menuRef}
+            style={{
+                position: 'fixed',
+                top: position ? `${position.top}px` : '-9999px',
+                left: position ? `${position.left}px` : '-9999px',
+                zIndex: 99999,
+                opacity: position ? 1 : 0,
+                visibility: position ? 'visible' : 'hidden',
+            }}
+            className="w-56 bg-white rounded-xl shadow-2xl border border-slate-200/90 py-1.5 animate-in fade-in zoom-in-95 duration-150 select-none max-h-[calc(100vh-20px)] overflow-y-auto"
         >
             {/* 1. View Details */}
             <button
                 onClick={() => { router.push(`/admin/recruiters/${rec.recruiter_id}`); onClose(); }}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer text-left"
             >
-                <Eye className="w-3.5 h-3.5 text-blue-600" />
+                <Eye className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                 <span>View Details</span>
             </button>
 
@@ -91,9 +172,9 @@ const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, handleToggleStat
                     setChangePlanRecruiter(rec);
                     onClose();
                 }}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-colors cursor-pointer text-left"
             >
-                <Edit3 className="w-3.5 h-3.5 text-purple-600" />
+                <Edit3 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
                 <span>Edit Plan</span>
             </button>
 
@@ -102,18 +183,18 @@ const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, handleToggleStat
             {/* 3. Suspend / Activate Account */}
             <button
                 onClick={() => { handleToggleStatus(rec); onClose(); }}
-                className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium transition-colors ${rec.user_active ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium transition-colors cursor-pointer text-left ${rec.user_active ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'}`}
             >
-                {rec.user_active ? <XCircle className="w-3.5 h-3.5 text-amber-600" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                {rec.user_active ? <XCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" /> : <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
                 <span>{rec.user_active ? 'Suspend Account' : 'Activate Account'}</span>
             </button>
 
             {/* 4. Delete Account */}
             <button
                 onClick={() => { handleDeleteRecruiter(rec); onClose(); }}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer text-left"
             >
-                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                <Trash2 className="w-3.5 h-3.5 text-rose-600 shrink-0" />
                 <span>Delete Account</span>
             </button>
 
@@ -122,13 +203,59 @@ const ActionsDropdown = ({ rec, router, setChangePlanRecruiter, handleToggleStat
             {/* 5. Login as Recruiter */}
             <button
                 onClick={() => { handleLoginAsRecruiter(rec); onClose(); }}
-                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-semibold text-blue-700 bg-blue-50/60 hover:bg-blue-100/80 transition-colors group/login"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-semibold text-blue-700 bg-blue-50/60 hover:bg-blue-100/80 transition-colors group/login cursor-pointer text-left"
             >
-                <LogIn className="w-3.5 h-3.5 text-blue-600 group-hover/login:translate-x-0.5 transition-transform" />
+                <LogIn className="w-3.5 h-3.5 text-blue-600 group-hover/login:translate-x-0.5 transition-transform shrink-0" />
                 <span>Login as Recruiter</span>
-                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto" />
+                <ExternalLink className="w-3 h-3 text-blue-400 ml-auto shrink-0" />
             </button>
-        </div>
+        </div>,
+        document.body
+    );
+};
+
+const RecruiterActionCell = ({
+    rec,
+    router,
+    isOpen,
+    onToggle,
+    onClose,
+    setChangePlanRecruiter,
+    handleToggleStatus,
+    handleDeleteRecruiter,
+    handleLoginAsRecruiter
+}) => {
+    const buttonRef = useRef(null);
+
+    return (
+        <td className="py-3.5 px-4 text-right whitespace-nowrap">
+            <div className="relative inline-block text-left action-dropdown-container">
+                <button
+                    ref={buttonRef}
+                    onClick={onToggle}
+                    className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
+                        isOpen
+                            ? 'text-blue-600 bg-blue-50 border-blue-200 shadow-xs'
+                            : 'text-slate-400 hover:text-slate-900 bg-white border-slate-200 hover:border-slate-300'
+                    }`}
+                    title="Actions"
+                >
+                    <MoreVertical className="w-4 h-4" />
+                </button>
+                {isOpen && (
+                    <ActionsDropdown
+                        anchorRef={buttonRef}
+                        rec={rec}
+                        router={router}
+                        setChangePlanRecruiter={setChangePlanRecruiter}
+                        handleToggleStatus={handleToggleStatus}
+                        handleDeleteRecruiter={handleDeleteRecruiter}
+                        handleLoginAsRecruiter={handleLoginAsRecruiter}
+                        onClose={onClose}
+                    />
+                )}
+            </div>
+        </td>
     );
 };
 
@@ -1131,27 +1258,17 @@ export default function RecruitersList() {
                                             </td>
 
                                             {/* 13. Actions */}
-                                            <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                                <div className="relative inline-block text-left action-dropdown-container">
-                                                    <button
-                                                        onClick={() => setOpenDropdown(openDropdown === rec.recruiter_id ? null : rec.recruiter_id)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 bg-white border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95"
-                                                    >
-                                                        <MoreVertical className="w-4 h-4" />
-                                                    </button>
-                                                    {openDropdown === rec.recruiter_id && (
-                                                        <ActionsDropdown
-                                                            rec={rec}
-                                                            router={router}
-                                                            setChangePlanRecruiter={setChangePlanRecruiter}
-                                                            handleToggleStatus={handleToggleStatus}
-                                                            handleDeleteRecruiter={handleDeleteRecruiter}
-                                                            handleLoginAsRecruiter={handleLoginAsRecruiter}
-                                                            onClose={() => setOpenDropdown(null)}
-                                                        />
-                                                    )}
-                                                </div>
-                                            </td>
+                                            <RecruiterActionCell
+                                                rec={rec}
+                                                router={router}
+                                                isOpen={openDropdown === rec.recruiter_id}
+                                                onToggle={() => setOpenDropdown(openDropdown === rec.recruiter_id ? null : rec.recruiter_id)}
+                                                onClose={() => setOpenDropdown(null)}
+                                                setChangePlanRecruiter={setChangePlanRecruiter}
+                                                handleToggleStatus={handleToggleStatus}
+                                                handleDeleteRecruiter={handleDeleteRecruiter}
+                                                handleLoginAsRecruiter={handleLoginAsRecruiter}
+                                            />
                                         </tr>
                                     );
                                 })}
