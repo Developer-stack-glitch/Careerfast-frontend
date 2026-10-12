@@ -274,10 +274,10 @@ export default function AppliedJobs() {
             boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
           }}>
             <img
-              src={record.company_logo || 'https://via.placeholder.com/48?text=Logo'}
+              src={record.company_logo || '/favicon.png'}
               alt={record.company_name}
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={(e) => { e.target.src = 'https://via.placeholder.com/48?text=Logo' }}
+              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/favicon.png'; }}
             />
           </div>
           <div>

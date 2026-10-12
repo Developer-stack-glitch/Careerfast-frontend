@@ -596,9 +596,10 @@ export default function InternshipLandingPage() {
 
                     <div className="elite-logo-wrapper">
                       <img
-                        src={getImageUrl(jobs.company_logo)}
+                        src={getImageUrl(jobs.company_logo) || "/favicon.png"}
                         alt={jobs.company_name}
                         className="elite-company-logo"
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/favicon.png"; }}
                       />
                       <div className="elite-logo-backdrop"></div>
                     </div>
@@ -788,8 +789,9 @@ export default function InternshipLandingPage() {
                 <div className="card-header">
                   <div className="company-logos">
                     <img
-                      src={getImageUrl(job.company_logo || logo1)}
+                      src={getImageUrl(job.company_logo || logo1) || "/favicon.png"}
                       alt={job.company_name}
+                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/favicon.png"; }}
                     />
                   </div>
                   <div className="company-info">

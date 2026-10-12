@@ -1371,7 +1371,15 @@ export default function JobFilter() {
           </div>
         </div>
         <div className="naukri-logo-container">
-          <img src={getImageUrl(job.logo)} alt={job.company} className="naukri-company-logo" />
+          <img
+            src={getImageUrl(job.logo) || "/favicon.png"}
+            alt={job.company || "Company logo"}
+            className="naukri-company-logo"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "/favicon.png";
+            }}
+          />
         </div>
       </div>
 

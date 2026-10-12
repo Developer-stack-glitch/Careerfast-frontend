@@ -139,11 +139,12 @@ const OpportunityCard = ({ opportunity, onSave }) => {
         <div className="relative shrink-0 mr-10">
           <div className="w-[65px] h-[65px] shadow-md rounded-xl flex items-center justify-center overflow-hidden bg-white">
             <img
-              src={opportunity.company_logo || "/default_logo.png"}
+              src={opportunity.company_logo || "/favicon.png"}
               alt={`${opportunity.company_name || opportunity.company} logo`}
               className="w-4/5 h-4/5 object-contain"
               onError={(e) => {
-                e.target.style.display = 'none';
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = "/favicon.png";
               }}
             />
           </div>

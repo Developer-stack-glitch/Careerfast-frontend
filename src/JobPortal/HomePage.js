@@ -1360,9 +1360,9 @@ export default function HomePage() {
                                         <div className="hp-company-violet-box">
                                             <div className="hp-company-logo-wrapper">
                                                 <img
-                                                    src={getImageUrl(job.company_logo)}
+                                                    src={getImageUrl(job.company_logo) || "/favicon.png"}
                                                     alt={job.company_name}
-                                                    onError={(e) => { e.target.onerror = null; e.target.src = getPlaceholderSvg("Logo", 100, 100); }}
+                                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/favicon.png"; }}
                                                 />
                                             </div>
 
@@ -1483,9 +1483,9 @@ export default function HomePage() {
                                         <div className="hp-company-violet-box">
                                             <div className="hp-company-logo-wrapper">
                                                 <img
-                                                    src={getImageUrl(job.company_logo)}
+                                                    src={getImageUrl(job.company_logo) || "/favicon.png"}
                                                     alt={job.company_name}
-                                                    onError={(e) => { e.target.onerror = null; e.target.src = getPlaceholderSvg("Logo", 100, 100); }}
+                                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/favicon.png"; }}
                                                 />
                                             </div>
                                             <div className="hp-card-tag" style={{ color: 'green' }}>
