@@ -61,7 +61,9 @@ import {
   Trash2,
   X,
   Camera,
-  MoreHorizontal
+  MoreHorizontal,
+  Zap,
+  AlertCircle
 } from "lucide-react";
 import {
   EditOutlined,
@@ -4786,6 +4788,20 @@ export default function MainProfile() {
   const completedChecksCount = completenessChecks.filter((c) => c.done).length;
   const profileCompletionPercentage = Math.round((completedChecksCount / completenessChecks.length) * 100);
   const profileDonutOffset = 150.8 - (150.8 * profileCompletionPercentage) / 100;
+  const missingSections = completenessChecks.filter((c) => !c.done);
+
+  const handleOpenCompletenessSection = (key) => {
+    if (key === "experience") {
+      handleAddNewExperience();
+    } else if (key === "education") {
+      handleAddNewEducation();
+    } else if (key === "projects") {
+      handleAddNewProject();
+    } else {
+      setActiveTab(key);
+      showDrawer();
+    }
+  };
 
   if (userProfileLoading || isLoading) {
     return (
@@ -5180,6 +5196,122 @@ export default function MainProfile() {
             </div>
           </div>
         </div>
+
+        {/* PROFILE COMPLETION ALERT & HR VISIBILITY BANNER */}
+        {profileCompletionPercentage < 100 ? (
+          <div className="profile-completion-pro-banner">
+            <div className="pro-banner-left">
+              <div className="pro-banner-meta-row">
+                <span className="pro-banner-badge">
+                  <Zap size={12} className="pro-zap-icon" /> 3x Recruiter Attention
+                </span>
+                <span className="pro-banner-missing-pill">
+                  {completenessChecks.length - completedChecksCount} section{completenessChecks.length - completedChecksCount > 1 ? "s" : ""} left to reach 100%
+                </span>
+              </div>
+
+              <h3 className="pro-banner-title">
+                Complete your profile to stand out to Recruiters & HR Managers
+              </h3>
+              <p className="pro-banner-desc">
+                Profiles with <span className="pro-highlight-purple">100% completeness</span> get prioritized in search results and receive up to <span className="pro-highlight-orange">3x more direct interview calls</span>.
+              </p>
+
+              {missingSections.length > 0 && (
+                <div className="pro-banner-chips-row">
+                  <span className="pro-banner-chips-label">Missing:</span>
+                  <div className="pro-banner-chips-list">
+                    {missingSections.map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className="pro-banner-chip-btn"
+                        onClick={() => handleOpenCompletenessSection(item.key)}
+                        title={`Click to add ${item.label}`}
+                      >
+                        <span className="chip-plus-circle"><Plus size={11} /></span>
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pro-banner-right">
+              <div className="pro-banner-metric-box">
+                <div className="pro-banner-donut-wrap">
+                  <svg className="pro-banner-donut-svg" viewBox="0 0 44 44">
+                    <circle className="pro-donut-bg-circle" cx="22" cy="22" r="18" />
+                    <circle
+                      className="pro-donut-fill-circle"
+                      cx="22"
+                      cy="22"
+                      r="18"
+                      style={{
+                        strokeDasharray: "113.1",
+                        strokeDashoffset: `${113.1 - (113.1 * profileCompletionPercentage) / 100}`
+                      }}
+                    />
+                  </svg>
+                  <span className="pro-banner-donut-num">{profileCompletionPercentage}%</span>
+                </div>
+                <div className="pro-banner-metric-info">
+                  <span className="pro-banner-metric-title">{completedChecksCount} of {completenessChecks.length} done</span>
+                  <span className="pro-banner-metric-sub">⭐ Reach 100% for All-Star</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                className="pro-banner-cta-btn"
+                onClick={() => {
+                  const firstIncomplete = completenessChecks.find((c) => !c.done);
+                  if (firstIncomplete) {
+                    handleOpenCompletenessSection(firstIncomplete.key);
+                  } else {
+                    setActiveTab("basic");
+                    showDrawer();
+                  }
+                }}
+              >
+                <span>{missingSections[0] ? `+ ${missingSections[0].label}` : "Complete Profile"}</span>
+                <ArrowRight size={14} />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="profile-completion-allstar-card">
+            <div className="allstar-left">
+              <div className="allstar-icon-box">
+                <Sparkles size={22} color="#ffffff" />
+              </div>
+              <div className="allstar-text-wrap">
+                <div className="allstar-badge">
+                  <ShieldCheck size={13} /> 100% ALL-STAR PROFILE
+                </div>
+                <h3 className="allstar-title">
+                  Congratulations! Your profile is 100% complete
+                </h3>
+                <p className="allstar-subtitle">
+                  Your profile is fully optimized for HR recruiters and search algorithms. You are getting maximum visibility in candidate shortlists.
+                </p>
+              </div>
+            </div>
+            <div className="allstar-right">
+              <button
+                type="button"
+                className="allstar-edit-btn"
+                onClick={() => {
+                  setActiveTab("basic");
+                  showDrawer();
+                }}
+              >
+                Keep Profile Updated
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* TWO COLUMN GRID CONTAINER */}
         <div className="profile-grid-container">
@@ -5952,31 +6084,49 @@ export default function MainProfile() {
                 {completenessChecks.map((item, idx) => (
                   <div
                     key={idx}
-                    className="checklist-item"
+                    className={`checklist-item ${item.done ? "is-done" : "is-todo"}`}
                     style={{ cursor: "pointer" }}
-                    onClick={() => {
-                      setActiveTab(item.key);
-                      showDrawer();
-                    }}
-                    title={`Click to update ${item.label}`}
+                    onClick={() => handleOpenCompletenessSection(item.key)}
+                    title={`Click to ${item.done ? "update" : "add"} ${item.label}`}
                   >
                     {item.done ? (
                       <CheckCircle2 size={15} className="check-done-icon" />
                     ) : (
                       <div className="check-todo-dot" />
                     )}
-                    <span style={{ color: item.done ? "#1e293b" : "#64748b" }}>{item.label}</span>
+                    <span className="checklist-label-text" style={{ color: item.done ? "#1e293b" : "#475569" }}>
+                      {item.label}
+                    </span>
+                    {!item.done && (
+                      <span className="checklist-add-badge">
+                        + Add
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
 
+              {profileCompletionPercentage < 100 && (
+                <div className="completeness-hr-tip">
+                  <Sparkles size={13} className="hr-tip-icon" />
+                  <span>
+                    <strong>HR Insight:</strong> 100% complete profiles get 3x more recruiter views & direct calls.
+                  </span>
+                </div>
+              )}
+
               <button
                 type="button"
                 className="btn-improve-profile"
+                style={{ marginTop: 14 }}
                 onClick={() => {
                   const firstIncomplete = completenessChecks.find((c) => !c.done);
-                  setActiveTab(firstIncomplete ? firstIncomplete.key : "basic");
-                  showDrawer();
+                  if (firstIncomplete) {
+                    handleOpenCompletenessSection(firstIncomplete.key);
+                  } else {
+                    setActiveTab("basic");
+                    showDrawer();
+                  }
                 }}
               >
                 {profileCompletionPercentage === 100 ? "Update Profile" : "Improve Profile"}

@@ -503,7 +503,7 @@ export default function PlanForm({ planId = null }) {
                         Controls how many jobs the company can publish and keep active concurrently.
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                         <div>
                             <label className="block text-[13px] font-semibold text-slate-700 mb-2">
                                 Monthly Job Posts
@@ -576,7 +576,22 @@ export default function PlanForm({ planId = null }) {
                                 min={1}
                                 className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 font-semibold"
                             />
-                            <span className="text-[11px] text-gray-400 mt-1 block">Primary master logins</span>
+                            <span className="text-[11px] text-gray-400 mt-1 block">Max master logins</span>
+                        </div>
+
+                        <div>
+                            <label className="block text-[13px] font-semibold text-slate-700 mb-2">
+                                Total Sub-Recruiter Seats
+                            </label>
+                            <input
+                                type="number"
+                                name="sub_recruiter_limit"
+                                value={formData.sub_recruiter_limit}
+                                onChange={handleChange}
+                                min={0}
+                                className="w-full px-3.5 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:bg-white focus:border-blue-500 font-semibold"
+                            />
+                            <span className="text-[11px] text-gray-400 mt-1 block">Company sub-seat pool</span>
                         </div>
                     </div>
                 </div>

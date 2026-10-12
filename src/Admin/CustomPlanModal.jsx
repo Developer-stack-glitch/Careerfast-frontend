@@ -25,24 +25,30 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
     useEffect(() => {
         if (isOpen && recruiter) {
             const isOnlyJobPostName = /only job post/i.test(recruiter.plan_name || '');
-            const hasCandidateQuotas = Number(recruiter.resume_view_limit || 0) > 0 ||
-                Number(recruiter.resume_download_limit || 0) > 0 ||
-                Number(recruiter.email_limit || 0) > 0 ||
-                Number(recruiter.whatsapp_limit || 0) > 0 ||
-                Number(recruiter.excel_download_limit || 0) > 0;
-
-            const isOnlyJob = /only job post/i.test(recruiter.plan_name || '') || !hasCandidateQuotas;
+            const isOnlyJob = isOnlyJobPostName || Boolean(recruiter.is_only_job_post);
             setPlanScope(isOnlyJob ? 'only_job_post' : 'all');
+
+            const masterLimit = Number(
+                recruiter.master_login_limit ?? 
+                recruiter.max_master_recruiters ?? 
+                1
+            ) || 1;
+
+            const subLimit = Number(
+                recruiter.total_sub_recruiter_seats ??
+                recruiter.sub_recruiter_limit ??
+                1
+            );
 
             setFormData({
                 job_post_limit: recruiter.job_post_limit ?? 0,
                 active_job_limit: recruiter.active_job_limit ?? 0,
                 featured_job_limit: recruiter.featured_job_limit ?? 0,
                 urgent_job_limit: recruiter.urgent_job_limit ?? 0,
-                master_login_limit: recruiter.master_login_limit || 1,
+                master_login_limit: Math.max(1, masterLimit),
                 resume_view_limit: recruiter.resume_view_limit ?? 0,
                 resume_download_limit: recruiter.resume_download_limit ?? 0,
-                sub_recruiter_limit: recruiter.sub_recruiter_limit || 1,
+                sub_recruiter_limit: Math.max(0, isNaN(subLimit) ? 1 : subLimit),
                 email_limit: recruiter.email_limit ?? 0,
                 whatsapp_limit: recruiter.whatsapp_limit ?? 0,
                 excel_download_limit: recruiter.excel_download_limit ?? 0
@@ -227,13 +233,13 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                                 <Users className="w-4 h-4 text-indigo-600" />
                                 <h4 className="font-bold text-slate-800 text-[15px] mb-0">Team & Master Login Access</h4>
                             </div>
-                            <p className="text-[13px] text-slate-400 mb-6">Manage allowed concurrent master login sessions and sub-recruiter team seats.</p>
+                            <p className="text-[13px] text-slate-400 mb-4">Manage allowed Master Recruiter accounts and independent sub-recruiter team seats.</p>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="flex items-center justify-between text-[13px] font-semibold text-slate-700 mb-2">
                                         Master Login Count
-                                        <span className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-[10px]">PRIMARY</span>
+                                        <span className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded text-[10px]">COMPANY LIMIT</span>
                                     </label>
                                     <input
                                         type="number"
@@ -243,23 +249,38 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                                         className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all font-semibold"
                                         required
                                     />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max allowed primary recruiter master logins</p>
+                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max Master Recruiter logins allowed for this company</p>
                                 </div>
                                 <div>
                                     <label className="flex items-center justify-between text-[13px] font-semibold text-slate-700 mb-2">
-                                        Sub-Recruiter Seats
-                                        <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">TEAM</span>
+                                        Total Sub-Recruiter Seats
+                                        <span className="bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded text-[10px]">COMPANY POOL</span>
                                     </label>
                                     <input
                                         type="number"
-                                        min="1"
+                                        min="0"
                                         value={formData.sub_recruiter_limit}
                                         onChange={(e) => setFormData({ ...formData, sub_recruiter_limit: e.target.value })}
-                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                                        className="w-full px-3 py-2.5 bg-white border border-slate-200/80 rounded-xl text-[14px] text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all font-semibold"
                                         required
                                     />
-                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Max sub-recruiters main recruiter can create</p>
+                                    <p className="text-[11px] text-slate-400 mt-2 mb-0">Total sub-recruiter team seats pool allowed for this company</p>
                                 </div>
+                            </div>
+
+                            {/* Capacity Summary Banner */}
+                            <div className="mt-4 p-3 bg-indigo-50/60 border-1 border-indigo-100 rounded-xl flex items-center justify-between text-xs">
+                                <div className="space-y-0.5">
+                                    <span className="text-indigo-900 font-bold block">
+                                        Company Team Capacity:
+                                    </span>
+                                    <span className="text-[11px] text-indigo-700 block">
+                                        Super Admin allocates sub-seats individually to each Master Login from this total pool.
+                                    </span>
+                                </div>
+                                <span className="font-semibold text-indigo-950 bg-white px-2.5 py-1 rounded-lg border border-indigo-200/60 shadow-2xs shrink-0">
+                                    {Number(formData.master_login_limit || 1)} Master Accounts &bull; {Number(formData.sub_recruiter_limit || 0)} Total Sub-Recruiter Seats
+                                </span>
                             </div>
                         </div>
 

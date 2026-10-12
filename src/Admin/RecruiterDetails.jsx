@@ -5,17 +5,19 @@ import {
     Building, User, Mail, Phone, Globe, MapPin, Lock,
     Sparkles, Calendar, CreditCard,
     AlertCircle, ArrowLeft, Loader2,
-    ExternalLink, Users, History, Receipt, ScrollText, ToggleLeft, ToggleRight,
+    ExternalLink, Users, UserPlus, UserCheck, History, Receipt, ScrollText, ToggleLeft, ToggleRight,
     LogIn,
-    Pencil,
+    Pencil, Sliders,
     CheckCircle2, Clock, Briefcase, BadgeCheck, ShieldCheck, ChevronRight, Layers,
-    BarChart2, FileText, Eye, Download, MessageCircle, FileSpreadsheet, Settings
+    BarChart2, FileText, Eye, EyeOff, Download, MessageCircle, FileSpreadsheet, Settings, X, Plus
 } from 'lucide-react';
 import {
     getAdminRecruiterDetails,
     updateAdminRecruiterStatus,
     toggleAdminRecruiterAutoApprove,
-    loginAsRecruiter
+    loginAsRecruiter,
+    addAdminMasterRecruiter,
+    updateAdminMasterRecruiterSeats
 } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import ChangePlanModal from './ChangePlanModal';
@@ -32,7 +34,7 @@ export default function RecruiterDetails({ recruiterId }) {
 
     const [loading, setLoading] = useState(true);
     const [recruiterData, setRecruiterData] = useState(null);
-    const [activeTab, setActiveTab] = useState('team'); // 'team' | 'history' | 'payments' | 'audit'
+    const [activeTab, setActiveTab] = useState('masters'); // 'masters' | 'team' | 'history' | 'payments' | 'audit'
 
     // Modals
     const [isChangePlanOpen, setIsChangePlanOpen] = useState(false);
@@ -41,6 +43,26 @@ export default function RecruiterDetails({ recruiterId }) {
     const [isCustomPlanOpen, setIsCustomPlanOpen] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [statusUpdating, setStatusUpdating] = useState(false);
+
+    // Master Recruiter Management State
+    const [isAddMasterOpen, setIsAddMasterOpen] = useState(false);
+    const [masterSubmitting, setMasterSubmitting] = useState(false);
+    const [showMasterPassword, setShowMasterPassword] = useState(false);
+    const [masterFormData, setMasterFormData] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        phone: '',
+        password: '',
+        allocated_seats: 1
+    });
+
+    const [editSeatsModal, setEditSeatsModal] = useState({
+        isOpen: false,
+        master: null,
+        seats: 0,
+        submitting: false
+    });
 
     const fetchDetails = async () => {
         try {
@@ -76,6 +98,10 @@ export default function RecruiterDetails({ recruiterId }) {
     }, [recruiterId]);
 
     const r = recruiterData?.recruiter || (recruiterData?.recruiter_id ? recruiterData : null);
+    const masterRecruitersList = r?.master_recruiters || [];
+    const totalCompanySeats = Number(r?.total_sub_recruiter_seats || r?.sub_recruiter_limit || 1);
+    const totalAllocatedSeats = masterRecruitersList.reduce((acc, m) => acc + Number(m.allocated_seats || 0), 0);
+    const availableUnallocatedSeats = Math.max(0, totalCompanySeats - totalAllocatedSeats);
 
     // Normalize user_active (handles MySQL BIT(1) Buffer { type: 'Buffer', data: [1] }, number, boolean, or string)
     const isUserActive = Boolean(
@@ -173,6 +199,120 @@ export default function RecruiterDetails({ recruiterId }) {
         }
     };
 
+    const handleGenerateMasterPassword = () => {
+        const randomStr = Math.random().toString(36).substring(2, 6);
+        const special = ['!', '@', '#', '$', '%'][Math.floor(Math.random() * 5)];
+        const generatedPassword = `Fast@${randomStr.toUpperCase()}${Math.floor(100 + Math.random() * 900)}${special}`;
+        setMasterFormData(prev => ({
+            ...prev,
+            password: generatedPassword
+        }));
+        setShowMasterPassword(true);
+        toast.success("Generated secure password!");
+    };
+
+    const handleAddMasterRecruiter = async (e) => {
+        e.preventDefault();
+        if (!masterFormData.first_name.trim()) return toast.error("First name is required.");
+        if (!masterFormData.email.trim()) return toast.error("Email is required.");
+        if (!masterFormData.password || masterFormData.password.length < 6) return toast.error("Password must be at least 6 characters.");
+
+        const reqSeats = Number(masterFormData.allocated_seats || 0);
+        if (reqSeats > availableUnallocatedSeats) {
+            return toast.error(`Cannot allocate ${reqSeats} seats. Only ${availableUnallocatedSeats} unallocated seats available in company pool.`);
+        }
+
+        try {
+            setMasterSubmitting(true);
+            const res = await addAdminMasterRecruiter(r?.recruiter_id || recruiterId, {
+                ...masterFormData,
+                allocated_seats: reqSeats
+            });
+            if (res.data?.success) {
+                toast.success("Master Recruiter added successfully!");
+                setIsAddMasterOpen(false);
+                setMasterFormData({
+                    first_name: '',
+                    last_name: '',
+                    email: '',
+                    phone: '',
+                    password: '',
+                    allocated_seats: 0
+                });
+                fetchDetails();
+            }
+        } catch (err) {
+            console.error("Failed to add master recruiter:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Failed to add master recruiter.");
+        } finally {
+            setMasterSubmitting(false);
+        }
+    };
+
+    const handleSaveMasterSeats = async (e) => {
+        e.preventDefault();
+        if (!editSeatsModal.master) return;
+        const newSeats = Number(editSeatsModal.seats || 0);
+        const minAllowed = Number(editSeatsModal.master?.sub_recruiters_count || 0);
+        const maxAllowed = Number(editSeatsModal.master?.allocated_seats || 0) + availableUnallocatedSeats;
+
+        if (newSeats < minAllowed) {
+            return toast.error(`Seats cannot be less than ${minAllowed} (currently active sub-recruiters for this master).`);
+        }
+        if (newSeats > maxAllowed) {
+            return toast.error(`Seats cannot exceed ${maxAllowed} (maximum available in company pool).`);
+        }
+
+        try {
+            setEditSeatsModal(prev => ({ ...prev, submitting: true }));
+            const res = await updateAdminMasterRecruiterSeats(editSeatsModal.master.id, newSeats);
+            if (res.data?.success) {
+                toast.success("Master Recruiter seat allocation updated!");
+                setEditSeatsModal({ isOpen: false, master: null, seats: 0, submitting: false });
+                fetchDetails();
+            }
+        } catch (err) {
+            console.error("Failed to update master seats:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Failed to update master seats.");
+        } finally {
+            setEditSeatsModal(prev => ({ ...prev, submitting: false }));
+        }
+    };
+
+    const handleLoginAsMaster = async (masterId, masterName) => {
+        const toastId = toast.loading(`Generating session for ${masterName}...`);
+        try {
+            const res = await loginAsRecruiter(masterId);
+            if (res.data?.success && res.data?.token) {
+                toast.success(`Opening recruiter portal as ${masterName}...`, { id: toastId });
+                const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+                const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+                const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+                const rawData = res.data?.data || {};
+                const safeData = {
+                    id: rawData.id || masterId,
+                    first_name: rawData.first_name || 'Recruiter',
+                    last_name: rawData.last_name || '',
+                    email: rawData.email || '',
+                    role_id: rawData.role_id || 3,
+                    role_name: rawData.role_name || 'recruiter',
+                    company_name: rawData.company_name || r?.company_name || 'Recruiter',
+                    organization: rawData.organization || '',
+                    company_id: rawData.company_id || null,
+                    is_email_verified: 1,
+                    impersonated_by_admin: true,
+                };
+                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(safeData))}&target=/overview`;
+                window.open(targetUrl, '_blank');
+            } else {
+                toast.error(res.data?.message || "Failed to login as recruiter.", { id: toastId });
+            }
+        } catch (err) {
+            console.error("Error logging in as master:", err);
+            toast.error(err?.response?.data?.message || err?.message || "Failed to login.", { id: toastId });
+        }
+    };
+
     if (loading) {
         return <AdminDetailSkeleton />;
     }
@@ -193,9 +333,9 @@ export default function RecruiterDetails({ recruiterId }) {
         );
     }
 
-    const historyList = recruiterData.subscription_history || [];
-    const paymentsList = recruiterData.payments || [];
-    const auditLogsList = recruiterData.audit_logs || [];
+    const historyList = recruiterData?.subscription_history || [];
+    const paymentsList = recruiterData?.payments || [];
+    const auditLogsList = recruiterData?.audit_logs || [];
 
     const planName = r.plan_name || '';
     const isCustomRaw = r.plan_type === 'custom' || /custom/i.test(planName);
@@ -516,7 +656,7 @@ export default function RecruiterDetails({ recruiterId }) {
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h2 className="text-lg font-bold text-gray-900 mb-0">{displayPlanName}</h2>
+                                        <h2 className="text-lg font-semibold text-gray-900 mb-0">{displayPlanName}</h2>
                                         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-100">
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                             {isExpired ? 'Expired' : isExpiringSoon ? 'Expiring Soon' : r.subscription_status || 'Active'}
@@ -603,26 +743,37 @@ export default function RecruiterDetails({ recruiterId }) {
 
                             {/* Row 2: Master Login & Sub-Recruiter Seats */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="bg-emerald-50/70 border-1 border-emerald-100/80 rounded-2xl p-2.5 flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                                        <User className="w-4 h-4" />
+                                <div className="bg-emerald-50/70 border-1 border-emerald-100/80 rounded-2xl p-2.5 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                            <User className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[11px] text-gray-500 block leading-tight">Master Login Capacity</span>
+                                            <span className="text-sm font-semibold text-gray-900 block mt-0.5">
+                                                {masterRecruitersList.length || 1} of {r.master_login_limit || 1} Accounts Used
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <span className="text-[11px] text-gray-500 block leading-tight">Master Login Limit</span>
-                                        <span className="text-sm font-semibold text-gray-900 block mt-0.5">
-                                            {r.master_login_limit || 1} Allowed
-                                        </span>
-                                    </div>
+                                    {(masterRecruitersList.length || 1) < (r.master_login_limit || 1) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAddMasterOpen(true)}
+                                            className="px-2.5 py-1 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-2xs transition-colors shrink-0"
+                                        >
+                                            + Add Master
+                                        </button>
+                                    )}
                                 </div>
 
-                                <div className="bg-slate-50 border-1 border-slate-100 rounded-2xl p-2.5 flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                                <div className="bg-indigo-50/70 border-1 border-indigo-100 rounded-2xl p-2.5 flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                                         <Users className="w-4 h-4" />
                                     </div>
                                     <div>
-                                        <span className="text-[11px] text-gray-500 block leading-tight">Sub-Recruiter Seats</span>
+                                        <span className="text-[11px] text-gray-500 block leading-tight">Company Sub-Seat Pool</span>
                                         <span className="text-sm font-semibold text-gray-900 block mt-0.5">
-                                            {isCustom && Number(r.sub_recruiter_limit) > 0 ? `${r.sub_recruiter_limit} Allowed` : 'Not Included'}
+                                            {totalAllocatedSeats} of {totalCompanySeats} Seats Assigned ({availableUnallocatedSeats} Available)
                                         </span>
                                     </div>
                                 </div>
@@ -706,6 +857,23 @@ export default function RecruiterDetails({ recruiterId }) {
                 <div className="bg-slate-100/80 p-1.5 rounded-2xl flex flex-wrap items-center gap-1.5">
                     <button
                         type="button"
+                        onClick={() => setActiveTab('masters')}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'masters'
+                            ? 'bg-white text-blue-600 border-1 border-slate-200/80 shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                            }`}
+                    >
+                        <UserCheck className="w-4 h-4" />
+                        <span>Master Recruiters</span>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${activeTab === 'masters'
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'bg-slate-200/80 text-slate-600'
+                            }`}>
+                            {masterRecruitersList.length || 1} / {r.master_login_limit || 1}
+                        </span>
+                    </button>
+                    <button
+                        type="button"
                         onClick={() => setActiveTab('team')}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${activeTab === 'team'
                             ? 'bg-white text-blue-600 border-1 border-slate-200/80'
@@ -713,7 +881,7 @@ export default function RecruiterDetails({ recruiterId }) {
                             }`}
                     >
                         <Users className="w-4 h-4" />
-                        <span>Team & Sub-Recruiters</span>
+                        <span>Sub-Recruiters & Team</span>
                     </button>
                     <button
                         type="button"
@@ -767,6 +935,175 @@ export default function RecruiterDetails({ recruiterId }) {
                         </span>
                     </button>
                 </div>
+
+                {/* Tab: Master Recruiters */}
+                {activeTab === 'masters' && (
+                    <div className="space-y-4">
+                        {/* Master Accounts Capacity Card */}
+                        <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80">
+                            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h3 className="text-base font-semibold text-slate-900 mb-0 flex items-center gap-2">
+                                        <Building className="w-5 h-5 text-indigo-600" />
+                                        Company Master Recruiters ({r.company_name})
+                                    </h3>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {/* Master Logins Meter */}
+                                    <div className="px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-left">
+                                        <span className="text-[10.5px] uppercase font-bold text-slate-400 block tracking-wider">Master Accounts</span>
+                                        <span className="text-xs font-bold text-slate-800">
+                                            {masterRecruitersList.length || 1} / {r.master_login_limit || 1} Used
+                                        </span>
+                                    </div>
+
+                                    {/* Sub-Seats Pool Meter */}
+                                    <div className="px-3.5 py-2 rounded-xl bg-indigo-50/70 border border-indigo-200/80 text-left">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[10.5px] uppercase font-bold text-indigo-800 block tracking-wider">Company Sub-Seat Pool</span>
+                                            <span className="px-1.5 py-0.2 rounded-full text-[9.5px] font-bold bg-indigo-200/60 text-indigo-900">
+                                                {availableUnallocatedSeats} Available
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-bold text-indigo-950">
+                                            {totalAllocatedSeats} / {totalCompanySeats} Seats Assigned
+                                        </span>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if ((masterRecruitersList.length || 1) >= (r.master_login_limit || 1)) {
+                                                toast.error(`Master Login limit of ${r.master_login_limit || 1} reached. Upgrade plan to add more.`);
+                                                return;
+                                            }
+                                            setMasterFormData({
+                                                first_name: '',
+                                                last_name: '',
+                                                email: '',
+                                                phone: '',
+                                                password: '',
+                                                allocated_seats: Math.min(1, availableUnallocatedSeats)
+                                            });
+                                            setIsAddMasterOpen(true);
+                                        }}
+                                        disabled={(masterRecruitersList.length || 1) >= (r.master_login_limit || 1)}
+                                        className={`px-3.5 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-all ${(masterRecruitersList.length || 1) >= (r.master_login_limit || 1)
+                                            ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
+                                            : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs'
+                                            }`}
+                                    >
+                                        <UserPlus className="w-4 h-4" />
+                                        <span>Add Master Recruiter</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Master Accounts Table */}
+                        <div className="bg-white rounded-2xl shadow-xs overflow-hidden border border-slate-200/80">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs min-w-[750px]">
+                                    <thead>
+                                        <tr className="border-b border-slate-100 bg-slate-50/80 text-slate-500 uppercase text-[11px] tracking-wider font-bold">
+                                            <th className="py-3 px-4">Master Recruiter</th>
+                                            <th className="py-3 px-4">Contact Details</th>
+                                            <th className="py-3 px-4">Created Date</th>
+                                            <th className="py-3 px-4">Sub-Recruiter Quota</th>
+                                            <th className="py-3 px-4">Account Status</th>
+                                            <th className="py-3 px-4 text-right">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {(masterRecruitersList.length > 0 ? masterRecruitersList : [r]).map((m, idx) => {
+                                            const mName = m.recruiter_name || `${m.first_name || ''} ${m.last_name || ''}`.trim() || 'Master Recruiter';
+                                            const isPrimary = idx === 0;
+                                            const subQuota = Number(m.allocated_seats || 0);
+                                            const subCount = Number(m.sub_recruiters_count || (isPrimary ? r.sub_recruiters_count : 0) || 0);
+
+                                            return (
+                                                <tr key={m.id || idx} className="hover:bg-slate-50/60 transition-colors">
+                                                    <td className="py-3.5 px-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                                                                {mName[0]?.toUpperCase() || 'M'}
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <span className="font-semibold text-slate-900 text-[13px]">{mName}</span>
+                                                                    {isPrimary && (
+                                                                        <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded border-1 border-emerald-200">
+                                                                            PRIMARY
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-[11px] text-slate-400">ID #{m.id}</span>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3.5 px-4 space-y-0.5">
+                                                        <div className="text-slate-800 font-medium">{m.email}</div>
+                                                        <div className="text-slate-400 text-[11px]">{m.phone || 'No phone'}</div>
+                                                    </td>
+                                                    <td className="py-3.5 px-4 text-slate-600">
+                                                        {m.created_date ? new Date(m.created_date).toLocaleDateString() : 'N/A'}
+                                                    </td>
+                                                    <td className="py-3.5 px-4">
+                                                        <div className="space-y-1">
+                                                            <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                                                                <span>{subCount}</span>
+                                                                <span className="text-slate-400 font-normal">/ {subQuota} Seats</span>
+                                                            </div>
+                                                            <div className="w-24 bg-slate-100 h-1 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className="h-full bg-indigo-600 rounded-full"
+                                                                    style={{ width: `${Math.min(Math.round((subCount / Math.max(1, subQuota)) * 100), 100)}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="py-3.5 px-4">
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                            Active
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-3.5 px-4 text-right">
+                                                        <div className="inline-flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setEditSeatsModal({
+                                                                    isOpen: true,
+                                                                    master: m,
+                                                                    seats: subQuota,
+                                                                    submitting: false
+                                                                })}
+                                                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors"
+                                                                title="Adjust Sub-Recruiter Seats for this Master"
+                                                            >
+                                                                <Sliders className="w-3.5 h-3.5" />
+                                                                <span>Edit Seats</span>
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleLoginAsMaster(m.id, mName)}
+                                                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 text-slate-700 hover:text-blue-600 font-semibold text-xs inline-flex items-center gap-1.5 transition-colors"
+                                                                title="Login as this Master Recruiter"
+                                                            >
+                                                                <LogIn className="w-3.5 h-3.5" />
+                                                                <span>Login As</span>
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Tab 0: Team & Sub-Recruiters */}
                 {activeTab === 'team' && (
@@ -978,6 +1315,7 @@ export default function RecruiterDetails({ recruiterId }) {
                 <ChangePlanModal
                     isOpen={isChangePlanOpen}
                     recruiter={{
+                        ...r,
                         id: r.recruiter_id,
                         recruiter_id: r.recruiter_id,
                         name: r.recruiter_name,
@@ -985,12 +1323,20 @@ export default function RecruiterDetails({ recruiterId }) {
                         current_plan_id: r.plan_id,
                         plan_id: r.plan_id,
                         plan_name: r.plan_name,
+                        plan_type: r.plan_type,
+                        master_login_limit: r.master_login_limit || r.max_master_recruiters || 1,
                         subscription_expiry: r.subscription_expiry,
                         billing_cycle: r.billing_cycle,
                         job_post_limit: r.job_post_limit,
                         active_job_limit: r.active_job_limit,
+                        featured_job_limit: r.featured_job_limit,
+                        urgent_job_limit: r.urgent_job_limit,
+                        sub_recruiter_limit: r.sub_recruiter_limit,
                         resume_view_limit: r.resume_view_limit,
-                        resume_download_limit: r.resume_download_limit
+                        resume_download_limit: r.resume_download_limit,
+                        email_limit: r.email_limit,
+                        whatsapp_limit: r.whatsapp_limit,
+                        excel_download_limit: r.excel_download_limit
                     }}
                     onClose={() => setIsChangePlanOpen(false)}
                     onSuccess={() => {
@@ -1040,10 +1386,14 @@ export default function RecruiterDetails({ recruiterId }) {
                 <CustomPlanModal
                     isOpen={isCustomPlanOpen}
                     recruiter={{
+                        ...r,
                         id: r.recruiter_id,
                         recruiter_id: r.recruiter_id,
                         name: r.recruiter_name,
                         company_name: r.company_name,
+                        plan_name: r.plan_name,
+                        plan_type: r.plan_type,
+                        master_login_limit: r.master_login_limit || r.max_master_recruiters || 1,
                         job_post_limit: r.job_post_limit,
                         active_job_limit: r.active_job_limit,
                         featured_job_limit: r.featured_job_limit,
@@ -1073,6 +1423,257 @@ export default function RecruiterDetails({ recruiterId }) {
                         fetchDetails();
                     }}
                 />
+            )}
+
+            {/* Add Master Recruiter Modal */}
+            {isAddMasterOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs mt-0">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                                    <UserPlus className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-slate-900 mb-0">Add Master Recruiter</h3>
+                                    <p className="text-xs text-slate-500 mb-0">Create an additional master login for {r?.company_name}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setIsAddMasterOpen(false)}
+                                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleAddMasterRecruiter} className="p-6 space-y-4">
+                            <div className="p-3.5 bg-indigo-50/70 border-1 border-indigo-200/60 rounded-xl flex items-start gap-3 text-xs text-indigo-900">
+                                <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <span className="font-semibold">Individual Seat Assignment:</span>
+                                    <p className="text-indigo-700 mt-0.5 mb-0">
+                                        Super Admin allocates independent sub-recruiter seats to this Master Login from the company total pool ({totalCompanySeats} seats total, {availableUnallocatedSeats} seats unallocated).
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                        First Name <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={masterFormData.first_name}
+                                        onChange={(e) => setMasterFormData({ ...masterFormData, first_name: e.target.value })}
+                                        placeholder="e.g. Rahul"
+                                        className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1">Last Name</label>
+                                    <input
+                                        type="text"
+                                        value={masterFormData.last_name}
+                                        onChange={(e) => setMasterFormData({ ...masterFormData, last_name: e.target.value })}
+                                        placeholder="e.g. Sharma"
+                                        className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    Official Email <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    required
+                                    value={masterFormData.email}
+                                    onChange={(e) => setMasterFormData({ ...masterFormData, email: e.target.value })}
+                                    placeholder="rahul@company.com"
+                                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="flex items-center justify-between text-sm font-semibold text-slate-700 mb-1">
+                                    <span>Sub-Recruiter Seats to Allocate</span>
+                                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                                        Max: {availableUnallocatedSeats} Available
+                                    </span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max={availableUnallocatedSeats}
+                                    value={masterFormData.allocated_seats}
+                                    onChange={(e) => setMasterFormData({ ...masterFormData, allocated_seats: e.target.value })}
+                                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold"
+                                />
+                                <span className="text-[11px] text-slate-400 mt-1 block">
+                                    {availableUnallocatedSeats} unallocated seats remain in the company total pool of {totalCompanySeats}.
+                                </span>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">Contact Phone</label>
+                                <input
+                                    type="tel"
+                                    value={masterFormData.phone}
+                                    onChange={(e) => setMasterFormData({ ...masterFormData, phone: e.target.value })}
+                                    placeholder="+91 9876543210"
+                                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="text-sm font-medium text-slate-700">
+                                        Password <span className="text-rose-500">*</span>
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateMasterPassword}
+                                        className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1"
+                                    >
+                                        <Sparkles className="w-3 h-3" />
+                                        Generate Strong Password
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type={showMasterPassword ? 'text' : 'password'}
+                                        required
+                                        minLength={6}
+                                        value={masterFormData.password}
+                                        onChange={(e) => setMasterFormData({ ...masterFormData, password: e.target.value })}
+                                        placeholder="Minimum 6 characters"
+                                        className="w-full px-3 py-2.5 pr-10 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowMasterPassword(!showMasterPassword)}
+                                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    >
+                                        {showMasterPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddMasterOpen(false)}
+                                    disabled={masterSubmitting}
+                                    className="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={masterSubmitting}
+                                    className="px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                                >
+                                    {masterSubmitting ? (
+                                        <>
+                                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                            <span>Adding Account...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus className="w-4 h-4" />
+                                            <span>Create Master Recruiter</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Master Recruiter Seats Modal */}
+            {editSeatsModal.isOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs mt-0">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                                    <Sliders className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-slate-900 mb-0">Adjust Master Seats</h3>
+                                    <p className="text-xs text-slate-500 mb-0">{editSeatsModal.master?.recruiter_name || editSeatsModal.master?.email}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setEditSeatsModal({ isOpen: false, master: null, seats: 0, submitting: false })}
+                                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveMasterSeats} className="p-6 space-y-4">
+                            <div className="p-3.5 bg-indigo-50/70 border-1 border-indigo-200/60 rounded-xl space-y-1.5 text-xs text-indigo-900">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-600 font-medium">Company Total Pool:</span>
+                                    <span className="font-bold text-slate-900">{totalCompanySeats} Seats</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-600 font-medium">Currently Active Sub-Recruiters:</span>
+                                    <span className="font-bold text-indigo-800">{editSeatsModal.master?.sub_recruiters_count || 0} Members</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-600 font-medium">Max Allowed for this Master:</span>
+                                    <span className="font-bold text-emerald-700">
+                                        {Number(editSeatsModal.master?.allocated_seats || 0) + availableUnallocatedSeats} Seats
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                                    Allocated Sub-Recruiter Seats
+                                </label>
+                                <input
+                                    type="number"
+                                    min={Number(editSeatsModal.master?.sub_recruiters_count || 0)}
+                                    max={Number(editSeatsModal.master?.allocated_seats || 0) + availableUnallocatedSeats}
+                                    value={editSeatsModal.seats}
+                                    onChange={(e) => setEditSeatsModal({ ...editSeatsModal, seats: e.target.value })}
+                                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-semibold"
+                                    required
+                                />
+                                <span className="text-[11px] text-slate-400 mt-1 block">
+                                    Cannot be less than {editSeatsModal.master?.sub_recruiters_count || 0} active members, or exceed company pool.
+                                </span>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditSeatsModal({ isOpen: false, master: null, seats: 0, submitting: false })}
+                                    className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={editSeatsModal.submitting}
+                                    className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors disabled:opacity-60 shadow-xs"
+                                >
+                                    {editSeatsModal.submitting ? "Saving..." : "Save Allocation"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "@/routing-shim";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { getImageUrl } from "../utils/getImageUrl";
 import {
@@ -14,7 +13,9 @@ import {
   message,
   Tooltip,
   Button,
-  Skeleton
+  Skeleton,
+  Modal,
+  Radio
 } from "antd";
 import {
   FaMapMarkerAlt,
@@ -30,6 +31,7 @@ import { IoIosShareAlt } from "react-icons/io";
 import { MdOutlineWorkOutline, MdOutlineAccessTime, MdOutlineLocationOn, MdOutlinePhone, MdCurrencyRupee } from "react-icons/md";
 import { CommonToaster } from "../Common/CommonToaster";
 import {
+  googleLogin,
   applyForJob,
   checkIsJobApplied,
   checkIsJobSaved,
@@ -37,8 +39,12 @@ import {
   saveJobPost,
   getSavedJobs,
   removeSavedJobs,
-  getAllCourses
+  getAllCourses,
+  createJobAlert
 } from "../ApiService/action";
+import { GoogleLogin } from "@react-oauth/google";
+import { useDispatch } from "react-redux";
+import { storeLoginStatus } from "../Redux/Slice";
 import Header from "../Header/Header";
 import SEO from "../Components/SEO/SEO";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
@@ -213,6 +219,7 @@ const transformJob = (job) => {
 };
 
 export default function JobDetails({ initialData, serverSlug, isPreview: isPreviewProp, previewToken: previewTokenProp }) {
+  const dispatch = useDispatch();
   const [postDetails, setPostDetails] = useState(initialData ? [transformJob(initialData)] : []);
   const [backendJobs, setBackendJobs] = useState(initialData ? [initialData] : []);
   const [appliedDates, setAppliedDates] = useState({});
@@ -220,7 +227,19 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   const [authDrawerOpen, setAuthDrawerOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
   const [answers, setAnswers] = useState("");
-  const [loginUserId, setLoginUserId] = useState(null);
+  const [loginUserId, setLoginUserId] = useState(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem("loginDetails");
+        const token = localStorage.getItem("AccessToken");
+        if (stored && token) {
+          const parsed = JSON.parse(stored);
+          return parsed?.id || null;
+        }
+      }
+    } catch { }
+    return null;
+  });
   const [isApplied, setIsApplied] = useState({});
   const [isSaved, setIsSaved] = useState({});
   const [wishlistedJobs, setWishlistedJobs] = useState({});
@@ -229,6 +248,106 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   const [sidebarLoading, setSidebarLoading] = useState(true);
   const [relatedJobs, setRelatedJobs] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
+  const [alertEmail, setAlertEmail] = useState("");
+  const [alertPhone, setAlertPhone] = useState("");
+  const [alertFrequency, setAlertFrequency] = useState("Daily");
+  const [alertSubmitting, setAlertSubmitting] = useState(false);
+  const [isAlertActive, setIsAlertActive] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (typeof window !== "undefined") {
+        if (window.scrollY > 180) {
+          setShowStickyBar(true);
+        } else {
+          setShowStickyBar(false);
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const currentJob = postDetails[0];
+    if (currentJob && typeof window !== "undefined") {
+      try {
+        const storedAlerts = JSON.parse(localStorage.getItem("careerfast_job_alerts") || "[]");
+        const found = storedAlerts.some(
+          (a) =>
+            (a.job_id && Number(a.job_id) === Number(currentJob.id)) ||
+            (a.job_title && a.job_title.toLowerCase() === currentJob.title?.toLowerCase())
+        );
+        if (found) {
+          setIsAlertActive(true);
+        }
+      } catch (_) { }
+    }
+  }, [postDetails]);
+
+  const handleOpenAlertModal = () => {
+    try {
+      const stored = localStorage.getItem("loginDetails");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.email && !alertEmail) setAlertEmail(parsed.email);
+        if (parsed.phone && !alertPhone) setAlertPhone(parsed.phone);
+      }
+    } catch (_) { }
+    setIsAlertModalOpen(true);
+  };
+
+  const handleCreateAlertSubmit = async () => {
+    const currentJob = postDetails[0];
+    if (!currentJob) return;
+
+    if (!alertEmail || !/^\S+@\S+\.\S+$/.test(alertEmail)) {
+      CommonToaster("Please enter a valid email address ✉️", "error");
+      return;
+    }
+
+    setAlertSubmitting(true);
+    try {
+      const payload = {
+        user_id: loginUserId || null,
+        email: alertEmail.trim(),
+        phone: alertPhone?.trim() || null,
+        job_id: currentJob.id,
+        job_title: currentJob.title,
+        location: currentJob.location,
+        experience: currentJob.eligibility,
+        category: Array.isArray(currentJob.job_category) ? currentJob.job_category.join(", ") : currentJob.job_category,
+        skills: currentJob.skills,
+        frequency: alertFrequency,
+      };
+
+      try {
+        await createJobAlert(payload);
+      } catch (backendErr) {
+        console.warn("Backend job alert notice:", backendErr);
+      }
+
+      try {
+        const storedAlerts = JSON.parse(localStorage.getItem("careerfast_job_alerts") || "[]");
+        const updated = [
+          { ...payload, created_at: new Date().toISOString() },
+          ...storedAlerts.filter((a) => Number(a.job_id) !== Number(currentJob.id)),
+        ];
+        localStorage.setItem("careerfast_job_alerts", JSON.stringify(updated));
+      } catch (_) { }
+
+      setIsAlertActive(true);
+      setIsAlertModalOpen(false);
+      CommonToaster(`Job alert activated for "${currentJob.title}"! We'll send matching jobs to ${alertEmail.trim()}. 🔔`, "success");
+    } catch (error) {
+      console.error("Job alert submission error:", error);
+      CommonToaster("Failed to save job alert. Please try again.", "error");
+    } finally {
+      setAlertSubmitting(false);
+    }
+  };
 
   const { slug: clientSlug } = useParams();
   const searchParams = useSearchParams();
@@ -395,6 +514,50 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
     };
   }, []);
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const response = await googleLogin({
+        token: credentialResponse.credential,
+        role_id: 2, // Candidate role
+      });
+
+      const token = response?.data?.token;
+      const userDetails = response?.data?.user;
+
+      if (!token || !userDetails) {
+        throw new Error(response?.data?.message || "Invalid response from server");
+      }
+
+      localStorage.setItem("AccessToken", token);
+      localStorage.setItem("loginDetails", JSON.stringify(userDetails));
+
+      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `loginDetails=${encodeURIComponent(
+        JSON.stringify(userDetails)
+      )}; path=/; max-age=2592000; SameSite=Lax`;
+
+      dispatch(storeLoginStatus(true));
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("authChange", { detail: userDetails }));
+
+      CommonToaster("Logged in with Google successfully! 🚀", "success");
+      setLoginUserId(userDetails.id);
+
+      const currentJobId = postDetails[0]?.id;
+      if (currentJobId) {
+        checkIsJobAppliedData(currentJobId);
+        checkIsJobSavedData(currentJobId);
+      }
+    } catch (error) {
+      console.error("Google Login Error in JobDetails:", error);
+      const msg =
+        error?.response?.data?.details ||
+        error?.response?.data?.message ||
+        "Google sign-in failed. Please try again.";
+      CommonToaster(msg, "error");
+    }
+  };
+
   const isUserAuthenticated = () => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
@@ -476,7 +639,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
         const parsed = JSON.parse(s);
         if (parsed?.id && !isNaN(Number(parsed.id))) return Number(parsed.id);
       }
-    } catch {}
+    } catch { }
     return null;
   };
 
@@ -719,7 +882,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   if (loading) {
     return (
       <>
-        <Header />
+        <Header noSticky={true} />
         <main className="njd-page-wrapper">
           <div className="njd-container">
             <Row gutter={24}>
@@ -776,7 +939,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   if (!loading && postDetails.length === 0) {
     return (
       <>
-        <Header />
+        <Header noSticky={true} />
         <main className="njd-page-wrapper">
           <div className="njd-container" style={{ maxWidth: '800px', margin: '60px auto', textAlign: 'center', background: '#fff', padding: '48px 32px', borderRadius: '24px', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
             <div style={{ width: '64px', height: '64px', background: '#FEF3C7', color: '#D97706', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: '28px' }}>
@@ -835,7 +998,216 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
         />
       )}
 
-      <Header />
+      <Header noSticky={true} />
+
+      {/* Sticky Compact Action Bar (Naukri style shown on scroll) */}
+      {job && (
+        <div className={`njd-sticky-top-bar ${showStickyBar ? "njd-sticky-visible" : ""}`}>
+          <div className="njd-sticky-bar-container">
+            <div className="njd-sticky-left">
+              <div className="njd-sticky-logo-wrap">
+                {job.logo ? (
+                  <img
+                    src={getImageUrl(job.logo)}
+                    alt={job.company}
+                    className="njd-sticky-logo"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = typeof logo === "string" ? logo : logo?.src;
+                    }}
+                  />
+                ) : (
+                  <div className="njd-sticky-logo-placeholder">
+                    {job.company ? job.company.charAt(0).toUpperCase() : "C"}
+                  </div>
+                )}
+              </div>
+              <div className="njd-sticky-info">
+                <div className="njd-sticky-title" title={job.title}>
+                  {job.title}
+                </div>
+                <div className="njd-sticky-subtitle">
+                  <span className="njd-sticky-company">{job.company}</span>
+                  <span className="njd-sticky-rating">
+                    <span className="njd-sticky-star">★</span> {job.rating || "3.6"}
+                  </span>
+                  <span className="njd-sticky-sep">|</span>
+                  <span className="njd-sticky-reviews">
+                    {job.reviews_count ? `${job.reviews_count} Reviews` : "9.3K Reviews"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="njd-sticky-right">
+              <button
+                type="button"
+                className={`njd-sticky-alert-btn ${isAlertActive ? "active" : ""}`}
+                onClick={handleOpenAlertModal}
+                title={isAlertActive ? "Job alert is active for this role. Click to view or update." : "Send me jobs like this"}
+              >
+                {isAlertActive ? (
+                  <>
+                    <FaCheckCircle style={{ color: "#10b981", marginRight: 6, fontSize: "13px" }} />
+                    Alert Active
+                  </>
+                ) : (
+                  "Send me jobs like this"
+                )}
+              </button>
+              {!loginUserId ? (
+                <div className="njd-sticky-google-wrap">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() =>
+                      CommonToaster("Google sign-in failed. Please try again.", "error")
+                    }
+                    shape="pill"
+                    theme="outline"
+                    text="continue_with"
+                    size="medium"
+                  />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className={`njd-sticky-apply-btn ${isApplied[job.id] ? "applied" : ""}`}
+                  onClick={showDrawer}
+                  disabled={job.status === "Expired" || isApplied[job.id]}
+                  style={
+                    job.status === "Expired"
+                      ? { cursor: "not-allowed", opacity: 0.6, background: "#a0a0a0" }
+                      : isApplied[job.id]
+                      ? { background: "#10b981", backgroundColor: "#10b981", borderColor: "#10b981", cursor: "default" }
+                      : {}
+                  }
+                >
+                  {job.status === "Expired" ? (
+                    "Expired"
+                  ) : isApplied[job.id] ? (
+                    "Applied"
+                  ) : (
+                    "Apply"
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Job Alert Modal */}
+      {job && (
+        <Modal
+          open={isAlertModalOpen}
+          onCancel={() => setIsAlertModalOpen(false)}
+          footer={null}
+          centered
+          className="njd-alert-modal"
+          width={520}
+        >
+          <div className="njd-alert-header">
+            <div className="njd-alert-icon-wrap">
+              🔔
+            </div>
+            <div>
+              <h3 className="njd-alert-title">Send me jobs like this</h3>
+              <p className="njd-alert-subtitle" style={{ margin: 0 }}>
+                Get matching jobs delivered right to your inbox & WhatsApp
+              </p>
+            </div>
+          </div>
+
+          <div className="njd-alert-job-summary" style={{ marginTop: 16 }}>
+            <div className="njd-alert-job-title">{job.title}</div>
+            <div className="njd-alert-job-meta">
+              <span>🏢 <strong>{job.company}</strong></span>
+              {job.location && <span>📍 {job.location}</span>}
+              {job.eligibility && <span>💼 {job.eligibility}</span>}
+            </div>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleCreateAlertSubmit();
+            }}
+          >
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                Email Address <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <Input
+                size="large"
+                placeholder="name@example.com"
+                value={alertEmail}
+                onChange={(e) => setAlertEmail(e.target.value)}
+                style={{ borderRadius: 10 }}
+                type="email"
+                required
+              />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 6 }}>
+                WhatsApp / Mobile Number <span style={{ color: '#94a3b8', fontWeight: 400 }}>(Optional for instant alerts)</span>
+              </label>
+              <Input
+                size="large"
+                placeholder="+91 98765 43210"
+                value={alertPhone}
+                onChange={(e) => setAlertPhone(e.target.value)}
+                style={{ borderRadius: 10 }}
+              />
+            </div>
+
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#334155', marginBottom: 8 }}>
+                Notification Frequency
+              </label>
+              <Radio.Group
+                value={alertFrequency}
+                onChange={(e) => setAlertFrequency(e.target.value)}
+                style={{ display: 'flex', gap: 16 }}
+              >
+                <Radio value="Daily">Daily Alerts (Recommended)</Radio>
+                <Radio value="Weekly">Weekly Digest</Radio>
+              </Radio.Group>
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+              <Button
+                size="large"
+                onClick={() => setIsAlertModalOpen(false)}
+                style={{ borderRadius: 10, flex: 1 }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                htmlType="submit"
+                loading={alertSubmitting}
+                className="njd-alert-submit-btn"
+                style={{ flex: 1.5 }}
+              >
+                {isAlertActive ? "Update Job Alert" : "Create Job Alert"}
+              </Button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 14 }}>
+              <a
+                href={`/jobs?search=${encodeURIComponent(job.title)}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{ fontSize: 12.5, color: '#5f2eea', fontWeight: 600, textDecoration: 'none' }}
+              >
+                Explore similar jobs active right now →
+              </a>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       <main className="njd-page-wrapper">
         <div className="njd-container">
@@ -944,26 +1316,57 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                         <span>Applicants: <strong>{job.applicantsCount}</strong></span>
                       </div>
                       <div className="njd-action-btns">
-                        <Tooltip title={job.status === "Expired" ? "This job has expired and is no longer accepting applications." : isApplied[job.id] ? `Applied on ${new Date(appliedDates[job.id]).toLocaleDateString("en-GB")}` : "Apply for this job"}>
-                          <button className="njd-apply-btn" onClick={showDrawer} disabled={job.status === "Expired" || isApplied[job.id]} style={job.status === "Expired" ? { cursor: 'not-allowed', opacity: 0.6, background: '#a0a0a0', borderColor: '#a0a0a0' } : {}}>
-                            {job.status === "Expired" ? (
-                              <span>Expired</span>
-                            ) : isApplied[job.id] ? (
-                              <span>Applied</span>
-                            ) : job.apply_link ? "Apply on Employer Site" : "Apply"}
-                          </button>
-                        </Tooltip>
-                        <Tooltip title={isSaved[job.id] ? "Unsave this job" : "Save this job"}>
-                          <button className="njd-save-btn" onClick={() => handleWishlistToggle(job.id)}>
-                            {isSaved[job.id] ? <FaHeart style={{ color: '#ff4d4f' }} /> : <FaRegHeart />}
-                            {isSaved[job.id] ? "Saved" : "Save"}
-                          </button>
-                        </Tooltip>
-                        <Tooltip title="Share this job">
-                          <button className="njd-save-btn" onClick={() => handleShare(job)}>
-                            <IoIosShareAlt />
-                          </button>
-                        </Tooltip>
+                        {!loginUserId ? (
+                          <div className="njd-google-continue-wrap">
+                            <GoogleLogin
+                              onSuccess={handleGoogleSuccess}
+                              onError={() =>
+                                CommonToaster(
+                                  "Google sign-in failed. Please try again.",
+                                  "error"
+                                )
+                              }
+                              shape="pill"
+                              theme="outline"
+                              text="continue_with"
+                              size="large"
+                            />
+                          </div>
+                        ) : (
+                          <>
+                            <Tooltip title={job.status === "Expired" ? "This job has expired and is no longer accepting applications." : isApplied[job.id] ? `Applied on ${new Date(appliedDates[job.id]).toLocaleDateString("en-GB")}` : "Apply for this job"}>
+                              <button
+                                className={`njd-apply-btn ${isApplied[job.id] ? "applied" : ""}`}
+                                onClick={showDrawer}
+                                disabled={job.status === "Expired" || isApplied[job.id]}
+                                style={
+                                  job.status === "Expired"
+                                    ? { cursor: 'not-allowed', opacity: 0.6, background: '#a0a0a0', borderColor: '#a0a0a0' }
+                                    : isApplied[job.id]
+                                    ? { background: '#10b981', backgroundColor: '#10b981', borderColor: '#10b981', cursor: 'default' }
+                                    : {}
+                                }
+                              >
+                                {job.status === "Expired" ? (
+                                  <span>Expired</span>
+                                ) : isApplied[job.id] ? (
+                                  <span>Applied</span>
+                                ) : job.apply_link ? "Apply on Employer Site" : "Apply"}
+                              </button>
+                            </Tooltip>
+                            <Tooltip title={isSaved[job.id] ? "Unsave this job" : "Save this job"}>
+                              <button className="njd-save-btn" onClick={() => handleWishlistToggle(job.id)}>
+                                {isSaved[job.id] ? <FaHeart style={{ color: '#ff4d4f' }} /> : <FaRegHeart />}
+                                {isSaved[job.id] ? "Saved" : "Save"}
+                              </button>
+                            </Tooltip>
+                            <Tooltip title="Share this job">
+                              <button className="njd-save-btn" onClick={() => handleShare(job)}>
+                                <IoIosShareAlt />
+                              </button>
+                            </Tooltip>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

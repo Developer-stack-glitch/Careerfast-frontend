@@ -479,10 +479,23 @@
   font-weight: 700;
   color: var(--naukri-text-secondary);
   cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
 .naukri-save-container:hover {
   color: var(--naukri-primary);
+  background-color: rgba(10, 102, 194, 0.06);
+}
+
+.naukri-save-container.saved-active {
+  color: #0A66C2;
+}
+
+.naukri-save-container.saved-active:hover {
+  color: #084e96;
+  background-color: rgba(10, 102, 194, 0.1);
 }
 
 /* Top Roles Carousel */

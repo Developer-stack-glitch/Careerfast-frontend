@@ -34,7 +34,7 @@ import {
 import { message, Select, Row, Col, Spin } from "antd";
 
 import "../css/HomePage.css";
-import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getSearchSuggestions, getBlogs, getAllCourses, getTopCompanies } from "../ApiService/action";
+import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getSearchSuggestions, getBlogs, getAllCourses, getTopCompanies, getUserProfile } from "../ApiService/action";
 import { getImageUrl, getPlaceholderSvg } from "../utils/getImageUrl";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -175,6 +175,89 @@ export default function HomePage() {
     const locationInputRef = useRef(null);
     const skillsDropdownRef = useRef(null);
     const locationDropdownRef = useRef(null);
+
+    // Candidate Profile Completion & HR Attention Indicator
+    const [candidateProfileStats, setCandidateProfileStats] = useState(() => {
+        let isCand = false;
+        let userFirstName = "";
+        let savedProgress = null;
+        if (typeof window !== "undefined") {
+            savedProgress = localStorage.getItem("profileProgress");
+            try {
+                const raw = localStorage.getItem("loginDetails");
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && (Number(parsed.role_id) === 2 || !parsed.role_id)) {
+                        isCand = true;
+                        userFirstName = parsed.first_name || "";
+                    }
+                }
+            } catch (e) {}
+        }
+        return {
+            isCandidate: isCand,
+            completionPercentage: savedProgress !== null ? Number(savedProgress) : null,
+            missingItems: [],
+            userName: userFirstName,
+        };
+    });
+    const [bannerDismissed, setBannerDismissed] = useState(false);
+
+    useEffect(() => {
+        const fetchCandidateProfile = async () => {
+            if (typeof window === "undefined") return;
+            try {
+                const token = localStorage.getItem("AccessToken");
+                const rawUser = localStorage.getItem("loginDetails");
+                if (!token || !rawUser) {
+                    setCandidateProfileStats(prev => ({ ...prev, isCandidate: false }));
+                    return;
+                }
+
+                const userObj = JSON.parse(rawUser);
+                if (userObj.role_id && Number(userObj.role_id) !== 2) {
+                    setCandidateProfileStats(prev => ({ ...prev, isCandidate: false }));
+                    return;
+                }
+
+                const res = await getUserProfile({ user_id: userObj.id });
+                const profile = res?.data?.data || {};
+
+                const checks = [
+                    { key: "resume", label: "Resume", done: Boolean(profile?.resume) },
+                    { key: "skills", label: "Key Skills", done: Boolean(profile?.skills && profile.skills.length > 0) },
+                    { key: "experience", label: "Experience", done: Boolean(profile?.experience && profile.experience.length > 0) },
+                    { key: "education", label: "Education", done: Boolean(profile?.education && profile.education.length > 0) },
+                    { key: "about", label: "Summary", done: Boolean(profile?.about && profile.about.trim()) },
+                    { key: "projects", label: "Projects", done: Boolean(profile?.projects && profile.projects.length > 0) },
+                    { key: "certifications", label: "Certifications", done: Boolean(profile?.certifications && profile.certifications.length > 0) },
+                    { key: "basic", label: "Basic Info", done: Boolean((profile?.first_name || userObj.first_name) && profile?.email) }
+                ];
+
+                const completedCount = checks.filter(c => c.done).length;
+                const percentage = Math.round((completedCount / checks.length) * 100);
+                localStorage.setItem("profileProgress", percentage);
+                const missing = checks.filter(c => !c.done);
+
+                setCandidateProfileStats({
+                    isCandidate: true,
+                    completionPercentage: percentage,
+                    missingItems: missing,
+                    userName: profile?.first_name || userObj?.first_name || "",
+                });
+            } catch (err) {
+                const savedProgress = localStorage.getItem("profileProgress");
+                if (savedProgress !== null) {
+                    setCandidateProfileStats(prev => ({
+                        ...prev,
+                        completionPercentage: Number(savedProgress),
+                    }));
+                }
+            }
+        };
+
+        fetchCandidateProfile();
+    }, []);
 
     // Matching query highlighter for Naukri-like bold search terms
     const highlightMatch = (text, query) => {
@@ -764,6 +847,65 @@ export default function HomePage() {
     return (
         <div className="hp-container">
             <Header />
+
+            {/* Candidate Profile Completion Alert Banner */}
+            {candidateProfileStats.isCandidate && candidateProfileStats.completionPercentage !== null && candidateProfileStats.completionPercentage < 100 && !bannerDismissed && (
+                <div className="hp-profile-alert-banner">
+                    <div className="hp-profile-alert-container">
+                        <div className="hp-profile-alert-left">
+                            <div className="hp-profile-alert-badge">
+                                <ThunderboltFilled className="hp-profile-alert-zap" />
+                                <span>GET 3X MORE HR ATTENTION</span>
+                            </div>
+                            <div className="hp-profile-alert-text">
+                                <div className="hp-profile-alert-title">
+                                    {candidateProfileStats.userName ? `Hey ${candidateProfileStats.userName}, your` : "Your"} profile is only <strong>{candidateProfileStats.completionPercentage}% complete</strong>! Reach 100% to get prioritized by top HRs.
+                                </div>
+                                <div className="hp-profile-alert-subtitle">
+                                    Profiles at 100% completeness receive up to 3x more recruiter views and direct interview invitations.
+                                    {candidateProfileStats.missingItems.length > 0 && (
+                                        <span className="hp-profile-missing-preview">
+                                            {" "}Missing: {candidateProfileStats.missingItems.slice(0, 3).map(m => m.label).join(", ")}{candidateProfileStats.missingItems.length > 3 ? ` +${candidateProfileStats.missingItems.length - 3} more` : ""}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="hp-profile-alert-right">
+                            <div className="hp-profile-progress-mini">
+                                <div className="hp-profile-progress-bar">
+                                    <div
+                                        className="hp-profile-progress-fill"
+                                        style={{ width: `${candidateProfileStats.completionPercentage}%` }}
+                                    />
+                                </div>
+                                <span className="hp-profile-progress-label">
+                                    {candidateProfileStats.completionPercentage}%
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                className="hp-profile-complete-btn"
+                                onClick={() => navigate("/candidate-profile/mainprofile")}
+                            >
+                                <span>Complete Profile</span>
+                                <RightOutlined style={{ fontSize: 11 }} />
+                            </button>
+
+                            <button
+                                type="button"
+                                className="hp-profile-dismiss-btn"
+                                onClick={() => setBannerDismissed(true)}
+                                title="Dismiss notification"
+                            >
+                                <CloseCircleFilled />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Hero Section */}
             <section className="hp-hero">
@@ -1644,18 +1786,27 @@ export default function HomePage() {
                                                     e.target.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
                                                 }}
                                             />
-                                            <span className="hp-cert-category-badge" style={{ backgroundColor: stats.tagColor }}>
-                                                {course.category || "Certification"}
-                                            </span>
                                         </div>
 
                                         <div className="hp-cert-body-v2">
                                             <div className="hp-cert-rating-row">
-                                                <div className="hp-cert-rating-pill">
-                                                    <StarOutlined style={{ color: "#eab308", marginRight: 4 }} />
-                                                    <span>{stats.rating}</span>
+                                                <div className="hp-cert-rating-left">
+                                                    <div className="hp-cert-rating-pill">
+                                                        <StarOutlined style={{ color: "#eab308", marginRight: 4 }} />
+                                                        <span>{stats.rating}</span>
+                                                    </div>
+                                                    <span className="hp-cert-learners">({stats.learners} learners)</span>
                                                 </div>
-                                                <span className="hp-cert-learners">({stats.learners} learners)</span>
+                                                <span
+                                                    className="hp-cert-category-pill"
+                                                    style={{
+                                                        color: stats.tagColor || "#5f2eea",
+                                                        backgroundColor: stats.color || "#f5f3ff",
+                                                        borderColor: stats.tagColor ? `${stats.tagColor}35` : "#e9d5ff"
+                                                    }}
+                                                >
+                                                    {course.category || "Certification"}
+                                                </span>
                                             </div>
 
                                             <h3 className="hp-cert-title-v2">{course.title}</h3>
@@ -1881,6 +2032,34 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
+
+            {/* Floating Quick Indication on HomePage when profile < 100% */}
+            {candidateProfileStats.isCandidate && candidateProfileStats.completionPercentage !== null && candidateProfileStats.completionPercentage < 100 && (
+                <div
+                    className="hp-profile-floating-pill"
+                    onClick={() => navigate("/candidate-profile/mainprofile")}
+                    title="Click to complete your profile and get 3x more HR attention"
+                >
+                    <div className="hp-floating-donut">
+                        <svg viewBox="0 0 36 36" className="hp-donut-svg">
+                            <path
+                                className="hp-donut-bg"
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path
+                                className="hp-donut-fill"
+                                strokeDasharray={`${candidateProfileStats.completionPercentage}, 100`}
+                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                        </svg>
+                        <span className="hp-donut-text">{candidateProfileStats.completionPercentage}%</span>
+                    </div>
+                    <div className="hp-floating-info">
+                        <span className="hp-floating-title">Complete Profile</span>
+                        <span className="hp-floating-subtitle">Get 3x HR Reach 🚀</span>
+                    </div>
+                </div>
+            )}
 
             <Footer />
         </div>

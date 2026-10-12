@@ -165,8 +165,8 @@ export default function SuperadminLogin() {
             localStorage.setItem('loginDetails', JSON.stringify(superadminDetails));
 
             // Cookie synchronization for Next.js SSR / middleware consistency
-            document.cookie = `AccessToken=${token}; path=/; max-age=86400`;
-            document.cookie = `loginDetails=${encodeURIComponent(JSON.stringify(superadminDetails))}; path=/; max-age=86400`;
+            document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`;
+            document.cookie = `loginDetails=${encodeURIComponent(JSON.stringify(superadminDetails))}; path=/; max-age=2592000; SameSite=Lax`;
 
             if (dispatch) {
                 dispatch(storeLoginStatus(true));

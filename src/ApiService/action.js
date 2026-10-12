@@ -200,11 +200,16 @@ export const getUsers = async (payload) => {
 
 export const googleLogin = async (data) => {
   try {
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_API_URL}/auth/google`,
-      data
-    );
-    return response;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
+    try {
+      const response = await axios.post(`${baseUrl}/auth/google`, data);
+      return response;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        return await axios.post(`${baseUrl}/api/auth/google`, data);
+      }
+      throw err;
+    }
   } catch (error) {
     throw error;
   }
@@ -885,6 +890,15 @@ export const saveJobPost = async (payload) => {
   try {
     const response = await api.post("/api/saveJobPost", payload);
     return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createJobAlert = async (payload) => {
+  try {
+    const response = await api.post("/api/createJobAlert", payload);
+    return response.data;
   } catch (error) {
     throw error;
   }
@@ -1982,6 +1996,35 @@ export const loginAsRecruiter = async (id) => {
 export const deleteAdminRecruiter = async (id) => {
   try {
     const response = await api.delete(`/api/admin/recruiters/${id}`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getAdminMasterRecruiters = async (id) => {
+  try {
+    const response = await api.get(`/api/admin/recruiters/${id}/master-recruiters`);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addAdminMasterRecruiter = async (id, payload) => {
+  try {
+    const response = await api.post(`/api/admin/recruiters/${id}/master-recruiters`, payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateAdminMasterRecruiterSeats = async (masterId, seats) => {
+  try {
+    const response = await api.put(`/api/admin/recruiters/master-recruiters/${masterId}/seats`, {
+      allocated_seats: seats
+    });
     return response;
   } catch (error) {
     throw error;

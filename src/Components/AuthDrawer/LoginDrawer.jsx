@@ -129,8 +129,8 @@ export default function LoginDrawer({
       localStorage.setItem("AccessToken", token);
       localStorage.setItem("loginDetails", JSON.stringify(loginDetails));
 
-      document.cookie = `AccessToken=${token}; path=/; max-age=86400`;
-      document.cookie = `loginDetails=${encodeURIComponent(JSON.stringify(loginDetails))}; path=/; max-age=86400`;
+      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `loginDetails=${encodeURIComponent(JSON.stringify(loginDetails))}; path=/; max-age=2592000; SameSite=Lax`;
 
       // Update Redux
       dispatch(storeLoginStatus(true));
@@ -172,8 +172,8 @@ export default function LoginDrawer({
       localStorage.setItem("AccessToken", token);
       localStorage.setItem("loginDetails", JSON.stringify(userDetails));
 
-      document.cookie = `AccessToken=${token}; path=/; max-age=86400`;
-      document.cookie = `loginDetails=${encodeURIComponent(JSON.stringify(userDetails))}; path=/; max-age=86400`;
+      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `loginDetails=${encodeURIComponent(JSON.stringify(userDetails))}; path=/; max-age=2592000; SameSite=Lax`;
 
       dispatch(storeLoginStatus(true));
       window.dispatchEvent(new Event("storage"));

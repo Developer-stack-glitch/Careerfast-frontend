@@ -52,9 +52,12 @@ import {
 } from "../ApiService/action";
 import { GoogleLogin } from "@react-oauth/google";
 import { requestForToken } from "../firebase/fireBase";
+import { useDispatch } from "react-redux";
+import { storeLoginStatus } from "../Redux/Slice";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // States
   const [formData, setFormData] = useState({
@@ -156,10 +159,14 @@ const LoginPage = () => {
       localStorage.setItem("loginDetails", JSON.stringify(loginDetails));
 
       // Set cookies for cross-app synchronization (shared across ports on localhost)
-      document.cookie = `AccessToken=${token}; path=/; max-age=86400`; // 24 hours
+      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`; // 30 days
       document.cookie = `loginDetails=${encodeURIComponent(
         JSON.stringify(loginDetails)
-      )}; path=/; max-age=86400`;
+      )}; path=/; max-age=2592000; SameSite=Lax`;
+
+      dispatch(storeLoginStatus(true));
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("authChange", { detail: loginDetails }));
 
       CommonToaster("Logged in successfully!", "success");
 
@@ -183,33 +190,66 @@ const LoginPage = () => {
 
   const handleGoogleLogin = async (res) => {
     try {
-      const response = await googleLogin({ token: res.credential });
+      setIsLoading(true);
+      let fcm_token = null;
+      try {
+        fcm_token = await requestForToken();
+        if (fcm_token) localStorage.setItem("fcm_token", fcm_token);
+      } catch (err) {}
 
-      const token = response.data.token;
-      const userDetails = response.data.user;
+      const candidateRoleId =
+        roleId || roleOptions.find((r) => r.name === "CANDIDATE")?.id || 2;
+
+      const response = await googleLogin({
+        token: res.credential,
+        role_id: candidateRoleId,
+        fcm_token: fcm_token || localStorage.getItem("fcm_token"),
+      });
+
+      const token = response?.data?.token;
+      const userDetails = response?.data?.user;
+
+      if (!token || !userDetails) {
+        throw new Error(response?.data?.message || "Invalid response from server");
+      }
 
       localStorage.setItem("AccessToken", token);
       localStorage.setItem("loginDetails", JSON.stringify(userDetails));
 
       // Set cookies for cross-app synchronization
-      document.cookie = `AccessToken=${token}; path=/; max-age=86400`;
+      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`; // 30 days
       document.cookie = `loginDetails=${encodeURIComponent(
         JSON.stringify(userDetails)
-      )}; path=/; max-age=86400`;
+      )}; path=/; max-age=2592000; SameSite=Lax`;
+
+      dispatch(storeLoginStatus(true));
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("authChange", { detail: userDetails }));
 
       CommonToaster("Google login successful!", "success");
 
       if (userDetails?.role_id === 1) {
         navigate("/admin");
       } else {
-        const profileCheck = await isProfileUpdated({
-          email: response.data.user.email,
-        });
-        navigate(profileCheck?.data?.data === true ? "/" : "/profiledetails");
+        try {
+          const profileCheck = await isProfileUpdated({
+            email: userDetails.email,
+          });
+          navigate(profileCheck?.data?.data === true ? "/" : "/profiledetails");
+        } catch (checkErr) {
+          console.warn("Could not check profile status, default redirect:", checkErr);
+          navigate("/");
+        }
       }
     } catch (error) {
       console.error("Google Login Error", error);
-      CommonToaster("Google login failed.", "error");
+      const msg =
+        error?.response?.data?.details ||
+        error?.response?.data?.message ||
+        "Google login failed.";
+      CommonToaster(msg, "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 

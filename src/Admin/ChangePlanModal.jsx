@@ -12,17 +12,37 @@ import toast from 'react-hot-toast';
 export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onSuccess, onOpenCustomPlan }) {
     const [plans, setPlans] = useState([]);
     const [loadingPlans, setLoadingPlans] = useState(true);
-    const [selectedPlanId, setSelectedPlanId] = useState('');
+    const rawPlanName = recruiter?.plan_name || 'Current Plan';
+    const isOnlyJobPostPlan = /only job post/i.test(rawPlanName) || (
+        /custom/i.test(rawPlanName) &&
+        Number(recruiter?.resume_view_limit || 0) === 0 &&
+        Number(recruiter?.resume_download_limit || 0) === 0 &&
+        Number(recruiter?.email_limit || 0) === 0 &&
+        Number(recruiter?.whatsapp_limit || 0) === 0 &&
+        Number(recruiter?.excel_download_limit || 0) === 0
+    );
+    const isCustom = /custom/i.test(rawPlanName) ||
+        /user\s*\d+/i.test(rawPlanName) ||
+        recruiter?.plan_type?.toLowerCase() === 'custom' ||
+        recruiter?.is_custom ||
+        Boolean(recruiter?.custom_limits);
+    const currentPlanName = isOnlyJobPostPlan ? 'Only Job Post' : isCustom ? 'Custom Plan' : rawPlanName.replace(/\s*-\s*User\s*\d+/i, '').trim();
+    const currentExpiryFormatted = recruiter?.subscription_expiry ? new Date(recruiter.subscription_expiry).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
+
+    const [selectedPlanId, setSelectedPlanId] = useState(() => (isCustom ? '__custom__' : ''));
     const [effectiveType, setEffectiveType] = useState('immediately'); // 'immediately' | 'next_renewal'
     const [reason, setReason] = useState('Plan updated by Super Admin');
     const [submitting, setSubmitting] = useState(false);
     const [showInternalCustomModal, setShowInternalCustomModal] = useState(false);
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && recruiter) {
+            if (isCustom) {
+                setSelectedPlanId('__custom__');
+            }
             fetchPlans();
         }
-    }, [isOpen]);
+    }, [isOpen, recruiter]);
 
     const fetchPlans = async () => {
         try {
@@ -38,10 +58,14 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                 );
                 setPlans(list);
 
-                // Select first standard plan different from current, or first available
-                const currentId = recruiter?.current_plan_id || recruiter?.plan_id;
-                const diff = list.find(p => p.id !== currentId) || list[0];
-                if (diff) setSelectedPlanId(diff.id);
+                if (isCustom) {
+                    setSelectedPlanId('__custom__');
+                } else {
+                    // Select first standard plan different from current, or first available
+                    const currentId = recruiter?.current_plan_id || recruiter?.plan_id;
+                    const diff = list.find(p => p.id !== currentId) || list[0];
+                    if (diff) setSelectedPlanId(String(diff.id));
+                }
             }
         } catch (err) {
             console.error(err);
@@ -80,23 +104,34 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
         );
     }
 
-    const rawPlanName = recruiter.plan_name || 'Current Plan';
-    const isOnlyJobPostPlan = /only job post/i.test(rawPlanName);
-    const isCustom = /custom/i.test(rawPlanName) || /user\s*\d+/i.test(rawPlanName) || recruiter.plan_type === 'custom';
-    const currentPlanName = isOnlyJobPostPlan ? 'Only Job Post' : isCustom ? 'Custom Plan' : rawPlanName.replace(/\s*-\s*User\s*\d+/i, '').trim();
-    const currentExpiryFormatted = recruiter.subscription_expiry ? new Date(recruiter.subscription_expiry).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
     const selectedPlan = plans.find(p => String(p.id) === String(selectedPlanId));
 
-    const planOptions = [
-        ...plans.map((p) => ({
-            value: String(p.id),
-            label: `${p.name} – ₹${Number(p.price).toLocaleString()} / ${p.plan_type} (${p.job_post_limit} Jobs, ${p.active_job_limit} Active)`
-        })),
-        {
-            value: '__custom__',
-            label: '⚙️ Custom Plan — Configure Custom Quotas & Limits...'
-        }
-    ];
+    const customLabel = isOnlyJobPostPlan
+        ? `Only Job Post (Custom) – (${recruiter.job_post_limit || 0} Jobs, ${recruiter.active_job_limit || 0} Active)`
+        : isCustom
+            ? `Custom Plan – (${recruiter.job_post_limit || 0} Jobs, ${recruiter.active_job_limit || 0} Active)`
+            : '⚙️ Custom Plan — Configure Custom Quotas & Limits...';
+
+    const customOption = {
+        value: '__custom__',
+        label: customLabel
+    };
+
+    const planOptions = isCustom
+        ? [
+            customOption,
+            ...plans.map((p) => ({
+                value: String(p.id),
+                label: `${p.name} – ₹${Number(p.price).toLocaleString()} / ${p.plan_type} (${p.job_post_limit} Jobs, ${p.active_job_limit} Active)`
+            }))
+        ]
+        : [
+            ...plans.map((p) => ({
+                value: String(p.id),
+                label: `${p.name} – ₹${Number(p.price).toLocaleString()} / ${p.plan_type} (${p.job_post_limit} Jobs, ${p.active_job_limit} Active)`
+            })),
+            customOption
+        ];
 
     const handleSubmit = async (e) => {
         e?.preventDefault();
@@ -185,6 +220,25 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                                     <div>Resume Views: <strong>{selectedPlan.resume_view_limit?.toLocaleString()}</strong></div>
                                 </div>
                             </>
+                        ) : selectedPlanId === '__custom__' ? (
+                            <>
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-lg font-semibold text-blue-900 mt-1 mb-0">
+                                        {currentPlanName || 'Custom Plan'}
+                                    </h4>
+                                    <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-md border border-amber-200">
+                                        Custom
+                                    </span>
+                                </div>
+                                <p className="text-[12px] text-blue-700 mt-0.5">
+                                    Validity: <strong>{recruiter.validity_days || 30} Days</strong>
+                                </p>
+                                <div className="mt-3 pt-3 border-t border-blue-200 text-[12px] space-y-1 text-blue-900">
+                                    <div>Job Posts: <strong>{recruiter.job_post_limit || 0}/mo</strong></div>
+                                    <div>Active Jobs: <strong>{recruiter.active_job_limit || 0} max</strong></div>
+                                    <div>Resume Views: <strong>{Number(recruiter.resume_view_limit || 0).toLocaleString()}</strong></div>
+                                </div>
+                            </>
                         ) : (
                             <p className="text-[13px] text-gray-400 mt-2">Select a plan below</p>
                         )}
@@ -206,11 +260,7 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                             <AdminSelect
                                 value={String(selectedPlanId)}
                                 onChange={(val) => {
-                                    if (val === '__custom__') {
-                                        handleTriggerCustomPlan();
-                                    } else {
-                                        setSelectedPlanId(val);
-                                    }
+                                    setSelectedPlanId(val);
                                 }}
                                 options={planOptions}
                                 placeholder="Select a subscription plan"
@@ -315,7 +365,14 @@ export default function ChangePlanModal({ recruiter, isOpen = true, onClose, onS
                             className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[13px] font-medium transition-colors shadow-sm flex items-center gap-2"
                         >
                             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                            Confirm Plan Change
+                            {selectedPlanId === '__custom__' ? (
+                                <>
+                                    <Settings className="w-4 h-4" />
+                                    <span>Configure Custom Limits</span>
+                                </>
+                            ) : (
+                                <span>Confirm Plan Change</span>
+                            )}
                         </button>
                     </div>
                 </form>

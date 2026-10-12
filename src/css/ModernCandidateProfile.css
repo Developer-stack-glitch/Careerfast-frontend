@@ -1500,3 +1500,441 @@
 .profile-social-item-add:hover {
   background: #f3e8ff;
 }
+
+/* ==========================================================================
+   Professional Profile Completion Banner (Rich Colorful Edition)
+   ========================================================================== */
+.profile-completion-pro-banner {
+  background: linear-gradient(135deg, #ffffff 0%, #fcfaff 30%, #f6effe 70%, #ede6ff 100%);
+  border: 1px solid #d8b4fe;
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-completion-pro-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3.5px;
+  background: linear-gradient(90deg, #ff7300 0%, #ec4899 35%, #8b5cf6 70%, #5f2eea 100%);
+}
+
+.profile-completion-pro-banner:hover {
+  border-color: #c084fc;
+  transform: translateY(-1px);
+}
+
+.pro-banner-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.pro-banner-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.pro-banner-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #7c3aed 0%, #9333ea 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3.5px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.pro-zap-icon {
+  color: #fde047;
+  animation: zapPulse 2s infinite ease-in-out;
+}
+
+.pro-banner-missing-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #c2410c;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  padding: 3px 10px;
+  border-radius: 12px;
+}
+
+.pro-banner-title {
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 4px 0 4px 0;
+  line-height: 1.35;
+}
+
+.pro-banner-desc {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 11px 0;
+  line-height: 1.5;
+  max-width: 760px;
+}
+
+.pro-highlight-purple {
+  color: #6b21a8;
+  font-weight: 700;
+}
+
+.pro-highlight-orange {
+  color: #c2410c;
+  font-weight: 700;
+}
+
+.pro-banner-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pro-banner-chips-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.pro-banner-chips-list {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pro-banner-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1.5px solid #c084fc;
+  color: #6b21a8;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.08);
+}
+
+.pro-banner-chip-btn .chip-plus-circle {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ede9fe;
+  color: #7c3aed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.pro-banner-chip-btn:hover {
+  background: linear-gradient(135deg, #7c3aed 0%, #5f2eea 100%);
+  border-color: #5f2eea;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(95, 46, 234, 0.25);
+}
+
+.pro-banner-chip-btn:hover .chip-plus-circle {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.pro-banner-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.pro-banner-metric-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pro-banner-donut-wrap {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.pro-banner-donut-svg {
+  width: 48px;
+  height: 48px;
+  transform: rotate(-90deg);
+}
+
+.pro-donut-bg-circle {
+  fill: none;
+  stroke: #ede9fe;
+  stroke-width: 4;
+}
+
+.pro-donut-fill-circle {
+  fill: none;
+  stroke: #ff7300;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s ease;
+  filter: drop-shadow(0 2px 4px rgba(255, 115, 0, 0.35));
+}
+
+.pro-banner-donut-num {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e1b4b;
+}
+
+.pro-banner-metric-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.pro-banner-metric-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+}
+
+.pro-banner-metric-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #d97706;
+  margin-top: 1px;
+}
+
+.pro-banner-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #ff7300 0%, #ff5238 50%, #7c3aed 100%);
+  color: #ffffff;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.pro-banner-cta-btn:hover {
+  background: linear-gradient(135deg, #e66700 0%, #f43f5e 50%, #6d28d9 100%);
+  transform: translateY(-1.5px);
+}
+
+@media (max-width: 860px) {
+  .profile-completion-pro-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .pro-banner-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pro-banner-cta-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* 100% All-Star Banner */
+.profile-completion-allstar-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 60%, #e0e7ff 100%);
+  border: 1px solid #a7f3d0;
+  border-left: 5px solid #10b981;
+  border-radius: 16px;
+  padding: 20px 26px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+}
+
+.allstar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+
+.allstar-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3);
+}
+
+.allstar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #065f46;
+  background: #d1fae5;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.allstar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #064e3b;
+  margin: 0 0 4px 0;
+}
+
+.allstar-subtitle {
+  font-size: 13px;
+  color: #374151;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.allstar-edit-btn {
+  background: #ffffff;
+  color: #065f46;
+  border: 1.5px solid #a7f3d0;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.allstar-edit-btn:hover {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
+
+/* Right column checklist enhancements */
+.checklist-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.checklist-item:hover {
+  background: #f8fafc;
+}
+
+.checklist-label-text {
+  flex: 1;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.checklist-add-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5f2eea;
+  background: #f5effc;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid #e9d5ff;
+  transition: all 0.15s ease;
+}
+
+.checklist-item:hover .checklist-add-badge {
+  background: #5f2eea;
+  color: #ffffff;
+}
+
+.completeness-hr-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  color: #92400e;
+  line-height: 1.45;
+  margin-top: 14px;
+}
+
+.hr-tip-icon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+@media (max-width: 768px) {
+  .profile-completion-alert-card {
+    padding: 18px 16px;
+  }
+
+  .btn-complete-next-section {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .allstar-left {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .allstar-edit-btn {
+    width: 100%;
+  }
+}

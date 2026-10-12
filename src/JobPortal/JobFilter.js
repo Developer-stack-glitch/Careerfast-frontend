@@ -47,11 +47,13 @@ import CommonSelectField from "../Common/CommonSelectField";
 import SEO from "../Components/SEO/SEO";
 import { CommonToaster } from "../Common/CommonToaster";
 
-import { getAllCourses, getJobCategoryData, getJobPosts, getUniqueCompanies } from "../ApiService/action";
+import { getAllCourses, getJobCategoryData, getJobPosts, getUniqueCompanies, saveJobPost, getSavedJobs, removeSavedJobs } from "../ApiService/action";
+import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { CgWorkAlt } from "react-icons/cg";
 import { BiCategoryAlt } from "react-icons/bi";
+import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
 
 import "../css/JobFilter.css";
 import "../css/naukri-ui-styles.css";
@@ -138,6 +140,142 @@ export default function JobFilter() {
   const fetchRequestId = React.useRef(0);
   const skipUrlSyncRef = React.useRef(false);
   const [jobCategoryOptions, setJobCategoryOptions] = useState([]);
+
+  // Saved Jobs tracking & Login Drawer integration
+  const [savedJobs, setSavedJobs] = useState({});
+  const [savingJobIds, setSavingJobIds] = useState({});
+  const [authDrawerOpen, setAuthDrawerOpen] = useState(false);
+  const [pendingSaveJob, setPendingSaveJob] = useState(null);
+  const [loginUserId, setLoginUserId] = useState(null);
+
+  const getCleanUserId = React.useCallback((overrideId) => {
+    if (typeof overrideId === "number" || (typeof overrideId === "string" && !isNaN(Number(overrideId)) && overrideId.trim() !== "")) {
+      return Number(overrideId);
+    }
+    if (loginUserId && (typeof loginUserId === "number" || (typeof loginUserId === "string" && !isNaN(Number(loginUserId))))) {
+      return Number(loginUserId);
+    }
+    try {
+      const s = typeof window !== "undefined" ? localStorage.getItem("loginDetails") : null;
+      if (s) {
+        const parsed = JSON.parse(s);
+        if (parsed?.id && !isNaN(Number(parsed.id))) return Number(parsed.id);
+      }
+    } catch { }
+    return null;
+  }, [loginUserId]);
+
+  const fetchSavedJobs = React.useCallback(async (userId) => {
+    const effectiveId = getCleanUserId(userId);
+    const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+    if (!token || !effectiveId) return;
+    try {
+      const res = await getSavedJobs({ user_id: effectiveId });
+      const list = res?.data?.data || [];
+      const map = {};
+      list.forEach((item) => {
+        if (item.job_post_id) {
+          map[item.job_post_id] = item.id || true;
+        }
+      });
+      setSavedJobs(map);
+    } catch (err) {
+      console.warn("Could not fetch saved jobs:", err?.message);
+    }
+  }, [getCleanUserId]);
+
+  useEffect(() => {
+    const id = getCleanUserId();
+    if (id) {
+      setLoginUserId(id);
+      fetchSavedJobs(id);
+    }
+
+    const handleAuthChange = () => {
+      const updatedId = getCleanUserId();
+      setLoginUserId(updatedId);
+      if (updatedId) {
+        fetchSavedJobs(updatedId);
+      } else {
+        setSavedJobs({});
+      }
+    };
+
+    window.addEventListener("authChange", handleAuthChange);
+    window.addEventListener("storage", handleAuthChange);
+    return () => {
+      window.removeEventListener("authChange", handleAuthChange);
+      window.removeEventListener("storage", handleAuthChange);
+    };
+  }, [fetchSavedJobs, getCleanUserId]);
+
+  const handleSaveJobToggle = async (e, job) => {
+    if (e && e.stopPropagation) {
+      e.stopPropagation();
+    }
+
+    const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+    const currentUserId = getCleanUserId();
+
+    if (!token || !currentUserId) {
+      setPendingSaveJob(job);
+      setAuthDrawerOpen(true);
+      return;
+    }
+
+    const targetJobId = job.id;
+    const isAlreadySaved = Boolean(savedJobs[targetJobId]);
+
+    // Optimistic UI update
+    setSavedJobs((prev) => {
+      const updated = { ...prev };
+      if (isAlreadySaved) {
+        delete updated[targetJobId];
+      } else {
+        updated[targetJobId] = true;
+      }
+      return updated;
+    });
+
+    setSavingJobIds((prev) => ({ ...prev, [targetJobId]: true }));
+
+    try {
+      if (isAlreadySaved) {
+        await removeSavedJobs({ user_id: currentUserId, job_post_id: targetJobId });
+        CommonToaster("Job removed from saved jobs", "info");
+      } else {
+        await saveJobPost({ user_id: currentUserId, job_post_id: targetJobId });
+        CommonToaster("Job saved to your watchlist! ❤️", "success");
+      }
+      await fetchSavedJobs(currentUserId);
+    } catch (err) {
+      console.error("Save job error:", err);
+      // Revert optimistic update
+      setSavedJobs((prev) => ({
+        ...prev,
+        [targetJobId]: isAlreadySaved,
+      }));
+      const errorMsg = err?.response?.status === 401 ? "Please log in to save jobs" : "Failed to update saved job";
+      CommonToaster(errorMsg, "error");
+    } finally {
+      setSavingJobIds((prev) => ({ ...prev, [targetJobId]: false }));
+    }
+  };
+
+  const handleLoginSuccess = async (userDetails) => {
+    const newUserId = userDetails?.id;
+    if (newUserId) {
+      setLoginUserId(newUserId);
+      await fetchSavedJobs(newUserId);
+    }
+    if (pendingSaveJob) {
+      const jobToSave = pendingSaveJob;
+      setPendingSaveJob(null);
+      setTimeout(() => {
+        handleSaveJobToggle({ stopPropagation: () => { } }, jobToSave);
+      }, 350);
+    }
+  };
 
   // Pagination
   const [page, setPage] = useState(1);
@@ -1319,9 +1457,29 @@ export default function JobFilter() {
         <div className="naukri-posted-time">
           <span>Posted: {job.date_posted || "Just now"}</span>
         </div>
-        <div className="naukri-save-container">
-          <ClockCircleOutlined />
-          <span>Save Job</span>
+        <div
+          className={`naukri-save-container ${savedJobs[job.id] ? "saved-active" : ""}`}
+          onClick={(e) => handleSaveJobToggle(e, job)}
+          title={savedJobs[job.id] ? "Remove from saved jobs" : "Save this job"}
+          style={{
+            cursor: 'pointer',
+            userSelect: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            color: savedJobs[job.id] ? '#47b749' : undefined,
+            fontWeight: 600,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {savingJobIds[job.id] ? (
+            <SyncOutlined spin style={{ color: '#47b749', fontSize: '14px' }} />
+          ) : savedJobs[job.id] ? (
+            <BsBookmarkFill style={{ color: '#47b749', fontSize: '14px' }} />
+          ) : (
+            <BsBookmark style={{ fontSize: '14px' }} />
+          )}
+          <span>{savedJobs[job.id] ? "Saved" : "Save Job"}</span>
         </div>
       </div>
     </div>
@@ -1806,6 +1964,17 @@ export default function JobFilter() {
           </div>
         </div>
       </Modal>
+
+      <LoginDrawer
+        open={authDrawerOpen}
+        onClose={() => {
+          setAuthDrawerOpen(false);
+          setPendingSaveJob(null);
+        }}
+        job={pendingSaveJob}
+        actionType="save"
+        onLoginSuccess={handleLoginSuccess}
+      />
 
       <Footer />
     </>

@@ -31,7 +31,7 @@ const WizardHeader = () => {
       <div className="flex items-center gap-4">
         <button
           type="button"
-          onClick={() => window.open('mailto:support@careerfast.in', '_blank')}
+          onClick={() => window.open('mailto:careerfastcontact@gmail.com', '_blank')}
           className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors"
         >
           <QuestionCircleOutlined className="text-sm" />

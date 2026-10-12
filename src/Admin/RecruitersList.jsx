@@ -742,7 +742,7 @@ export default function RecruitersList() {
                                     const resumeDownloadPercent = resumeDownloadLimit > 0 ? Math.round((resumeDownloadsUsed / resumeDownloadLimit) * 100) : 0;
 
                                     const subRecruitersCount = Number(rec.sub_recruiters_count || 0);
-                                    const subRecruiterLimit = hasPlan ? Number(rec.sub_recruiter_limit || 1) : 0;
+                                    const subRecruiterLimit = hasPlan ? Number(rec.total_sub_recruiter_seats ?? rec.sub_recruiter_limit ?? 1) : 0;
                                     const subPercent = subRecruiterLimit > 0 ? Math.round((subRecruitersCount / subRecruiterLimit) * 100) : 0;
 
                                     const emailsUsed = Number(rec.emails_used || 0);
@@ -856,7 +856,7 @@ export default function RecruitersList() {
                                                         {/* Plan Badge (Static display, no changing option) */}
                                                         <div className="mt-1 flex items-center">
                                                             <span
-                                                                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-semibold tracking-tight border-1 ${isOnlyJobPostPlan
+                                                                className={`inline-flex items-center px-1 py-0 rounded-md text-[10.5px] font-semibold tracking-tight border-1 ${isOnlyJobPostPlan
                                                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200/90'
                                                                     : isCustom
                                                                         ? 'bg-amber-50 text-amber-800 border-amber-200/90'
@@ -897,39 +897,37 @@ export default function RecruitersList() {
                                             <td className="py-3.5 px-4 whitespace-nowrap">
                                                 {(() => {
                                                     const masterLimit = Number(rec.master_login_limit || 1);
+                                                    const mastersUsed = Number(rec.master_recruiters_count || 1);
+                                                    const masterPercent = Math.min(Math.round((mastersUsed / masterLimit) * 100), 100);
+
                                                     return (
-                                                        <>
-                                                            <div className="text-xs">
-                                                                <span className="font-bold text-slate-800">{masterLimit}</span>
-                                                                <span className="text-slate-500 font-medium"> Master Login{masterLimit > 1 ? 's' : ''}</span>
+                                                        <div className="space-y-1.5">
+                                                            {/* Master Logins */}
+                                                            <div>
+                                                                <div className="flex items-center gap-1.5 text-xs">
+                                                                    <span className="font-bold text-slate-800">{mastersUsed}</span>
+                                                                    <span className="text-slate-400 font-normal">/ {masterLimit}</span>
+                                                                    <span className="text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] border-1 border-emerald-100">Masters</span>
+                                                                </div>
+                                                                <div className="w-24 bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
+                                                                    <div
+                                                                        className={`h-full rounded-full transition-all ${masterPercent >= 100 ? 'bg-emerald-600' : 'bg-emerald-500'}`}
+                                                                        style={{ width: `${masterPercent}%` }}
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                            {isCustom && subRecruiterLimit > 1 ? (
-                                                                <div className="mt-1">
-                                                                    <div className="text-[11px] text-slate-600 font-medium">
-                                                                        <span className="font-bold text-slate-800">{subRecruitersCount}</span>
-                                                                        <span className="text-slate-400 font-normal"> / {subRecruiterLimit} Seats</span>
-                                                                    </div>
-                                                                    <div className="w-20 bg-slate-100 h-1.5 rounded-full mt-1 overflow-hidden">
-                                                                        <div
-                                                                            className={`h-full rounded-full transition-all ${subPercent >= 100
-                                                                                ? 'bg-rose-500'
-                                                                                : subPercent >= 75
-                                                                                    ? 'bg-amber-500'
-                                                                                    : 'bg-indigo-600'
-                                                                                }`}
-                                                                            style={{ width: `${Math.min(subPercent, 100)}%` }}
-                                                                        />
-                                                                    </div>
-                                                                    <div className="text-[10px] text-slate-400 mt-0.5">
-                                                                        Team logins
-                                                                    </div>
+
+                                                            {/* Sub-Recruiter Seats */}
+                                                            <div>
+                                                                <div className="text-[11px] text-slate-600 font-medium flex items-center gap-1">
+                                                                    <span className="font-bold text-indigo-700">{subRecruiterLimit}</span>
+                                                                    <span className="text-slate-500 font-normal">Total Sub-Seats</span>
                                                                 </div>
-                                                            ) : (
-                                                                <div className="text-[10px] text-slate-400 mt-0.5 font-normal">
-                                                                    Single account
+                                                                <div className="text-[10px] text-slate-400 mt-0.5">
+                                                                    {subRecruitersCount} total sub-recruiters
                                                                 </div>
-                                                            )}
-                                                        </>
+                                                            </div>
+                                                        </div>
                                                     );
                                                 })()}
                                             </td>

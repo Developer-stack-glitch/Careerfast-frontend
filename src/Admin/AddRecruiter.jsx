@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-    Building, User, Mail, Phone, Lock, Eye, EyeOff,
+    Building, User, Users, Mail, Phone, Lock, Eye, EyeOff,
     Check, Copy, Sparkles, CreditCard,
     AlertCircle, ArrowLeft, Loader2, CheckCircle2,
     Settings, X
@@ -35,7 +35,7 @@ export default function AddRecruiter() {
         master_login_limit: 1,
         resume_view_limit: '',
         resume_download_limit: '',
-        sub_recruiter_limit: '',
+        sub_recruiter_limit: 5,
         email_sent_count: '',
         whatsapp_message_count: ''
     });
@@ -67,7 +67,7 @@ export default function AddRecruiter() {
         password: '',
         confirm_password: '',
 
-        // 3. Subscription
+        // 3. Subscription & Limits
         plan_id: '',
         billing_cycle: 'monthly',
         start_date: new Date().toISOString().split('T')[0],
@@ -75,7 +75,9 @@ export default function AddRecruiter() {
         payment_status: 'Paid',
         payment_notes: '',
         send_welcome_email: true,
-        subscription_status: 'Active'
+        subscription_status: 'Active',
+        master_login_limit: 1,
+        sub_recruiter_limit: 5
     });
 
     // Fetch active plans on mount
@@ -94,21 +96,32 @@ export default function AddRecruiter() {
                     name: 'Custom (Build your own plan)',
                     price: 0,
                     plan_type: 'Custom',
-                    validity_days: 30
+                    validity_days: 30,
+                    master_login_limit: 1,
+                    sub_recruiter_limit: 5
                 });
 
                 setPlans(finalPlans);
 
                 if (fetchedPlans.length > 0) {
                     const defaultPlan = fetchedPlans[0];
+                    const defMaster = defaultPlan.master_login_limit || 1;
+                    const defSub = defaultPlan.sub_recruiter_limit !== undefined ? defaultPlan.sub_recruiter_limit : 5;
                     setFormData(prev => {
                         const nextExpiry = calculateExpiry(prev.start_date, prev.billing_cycle, defaultPlan.validity_days);
                         return {
                             ...prev,
                             plan_id: defaultPlan.id,
-                            expiry_date: nextExpiry
+                            expiry_date: nextExpiry,
+                            master_login_limit: defMaster,
+                            sub_recruiter_limit: defSub
                         };
                     });
+                    setCustomLimits(prev => ({
+                        ...prev,
+                        master_login_limit: defMaster,
+                        sub_recruiter_limit: defSub
+                    }));
                 }
             } catch (err) {
                 console.error("Failed to load plans:", err);
@@ -141,10 +154,20 @@ export default function AddRecruiter() {
         const selected = plans.find(p => String(p.id) === String(planId));
         const validity = selected?.validity_days || 30;
         const newExpiry = calculateExpiry(formData.start_date, formData.billing_cycle, validity);
+        const mLimit = selected?.master_login_limit || 1;
+        const sLimit = selected?.sub_recruiter_limit !== undefined ? selected.sub_recruiter_limit : 5;
+
         setFormData(prev => ({
             ...prev,
             plan_id: planId,
-            expiry_date: newExpiry
+            expiry_date: newExpiry,
+            master_login_limit: mLimit,
+            sub_recruiter_limit: sLimit
+        }));
+        setCustomLimits(prev => ({
+            ...prev,
+            master_login_limit: mLimit,
+            sub_recruiter_limit: sLimit
         }));
     };
 
@@ -239,8 +262,17 @@ export default function AddRecruiter() {
             setSubmitting(true);
             const payload = {
                 ...formData,
+                master_login_limit: Math.max(1, Number(formData.master_login_limit) || 1),
+                sub_recruiter_limit: Math.max(0, Number(formData.sub_recruiter_limit) || 0),
                 subscription_status: saveAsDraft ? 'Inactive' : 'Active',
-                custom_limits: formData.plan_id === 'custom' ? customLimits : undefined
+                custom_limits: formData.plan_id === 'custom' ? {
+                    ...customLimits,
+                    master_login_limit: Math.max(1, Number(formData.master_login_limit) || 1),
+                    sub_recruiter_limit: Math.max(0, Number(formData.sub_recruiter_limit) || 0)
+                } : {
+                    master_login_limit: Math.max(1, Number(formData.master_login_limit) || 1),
+                    sub_recruiter_limit: Math.max(0, Number(formData.sub_recruiter_limit) || 0)
+                }
             };
 
             const res = await createAdminRecruiter(payload);
@@ -258,7 +290,9 @@ export default function AddRecruiter() {
                 password: formData.password,
                 plan_name: selectedPlan?.name || 'Custom Plan',
                 expiry_date: formData.expiry_date,
-                status: saveAsDraft ? 'Inactive' : 'Active'
+                status: saveAsDraft ? 'Inactive' : 'Active',
+                master_login_limit: Math.max(1, Number(formData.master_login_limit) || 1),
+                sub_recruiter_limit: Math.max(0, Number(formData.sub_recruiter_limit) || 0)
             });
         } catch (err) {
             console.error("Failed to create recruiter:", err);
@@ -287,7 +321,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
     };
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6 pb-16">
+        <div className="max-w-7xl mx-auto space-y-6 pb-0">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl">
                 <div className="flex items-center gap-3">
@@ -301,7 +335,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                     </button>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-xl font-bold text-gray-900 mb-0">Add New Recruiter & Company</h1>
+                            <h1 className="text-xl font-semibold text-gray-900 mb-0">Add New Recruiter & Company</h1>
                             <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200">
                                 Direct Setup
                             </span>
@@ -310,35 +344,6 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                             Create company profile, recruiter credentials, and assign a subscription plan.
                         </p>
                     </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => handleSubmit(null, true)}
-                        disabled={submitting}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
-                    >
-                        Save as Inactive
-                    </button>
-                    <button
-                        type="button"
-                        onClick={(e) => handleSubmit(e, false)}
-                        disabled={submitting}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors disabled:opacity-50"
-                    >
-                        {submitting ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span>Creating Account...</span>
-                            </>
-                        ) : (
-                            <>
-                                <CheckCircle2 className="w-4 h-4" />
-                                <span>Create Recruiter</span>
-                            </>
-                        )}
-                    </button>
                 </div>
             </div>
 
@@ -354,7 +359,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                 <CreditCard className="w-5 h-5" />
                             </div>
                             <div>
-                                <h2 className="text-base font-bold text-gray-900 mb-0">1. Subscription Plan Assignment</h2>
+                                <h2 className="text-base font-semibold text-gray-900 mb-0">1. Subscription Plan Assignment</h2>
                                 <p className="text-xs text-gray-500 mb-0">Attach initial quota, duration, and billing parameters</p>
                             </div>
                         </div>
@@ -439,7 +444,62 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                         </div>
                     </div>
 
-                    {/* SECTION 1.5: Custom Limits Configuration (Conditional) */}
+                    {/* SECTION 1.5: Account Capacity & Team Limits */}
+                    <div className="bg-white p-6 rounded-2xl border-1 border-gray-100 space-y-5">
+                        <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                                <Users className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h2 className="text-base font-semibold text-gray-900 mb-0">1. Account Capacity & Team Limits</h2>
+                                <p className="text-xs text-gray-500 mb-0">Configure Master Recruiter logins and independent Sub-Recruiter seat quotas</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="flex items-center justify-between text-xs font-semibold text-gray-700 mb-1">
+                                    <span>Master Login Count <span className="text-rose-500">*</span></span>
+                                    <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded border-1 border-emerald-100">COMPANY LIMIT</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    required
+                                    value={formData.master_login_limit}
+                                    onChange={(e) => {
+                                        const val = Math.max(1, parseInt(e.target.value) || 1);
+                                        setFormData(prev => ({ ...prev, master_login_limit: val }));
+                                        setCustomLimits(prev => ({ ...prev, master_login_limit: val }));
+                                    }}
+                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                                />
+                                <span className="text-[11px] text-gray-400 mt-1 block">Maximum Master Recruiter accounts allowed for this company</span>
+                            </div>
+
+                            <div>
+                                <label className="flex items-center justify-between text-xs font-semibold text-gray-700 mb-1">
+                                    <span>Sub-Recruiter Seats per Master Login <span className="text-rose-500">*</span></span>
+                                    <span className="text-[10px] text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded border-1 border-blue-100">PER MASTER LOGIN</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    required
+                                    value={formData.sub_recruiter_limit}
+                                    onChange={(e) => {
+                                        const val = Math.max(0, parseInt(e.target.value) || 0);
+                                        setFormData(prev => ({ ...prev, sub_recruiter_limit: val }));
+                                        setCustomLimits(prev => ({ ...prev, sub_recruiter_limit: val }));
+                                    }}
+                                    className="w-full px-3.5 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:bg-white focus:border-indigo-500 transition-all"
+                                />
+                                <span className="text-[11px] text-gray-400 mt-1 block">Independent seats each Master Recruiter can create</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SECTION 1.6: Custom Limits Configuration (Conditional) */}
                     {formData.plan_id === 'custom' && (
                         <div className="bg-emerald-50/50 p-6 rounded-2xl border-1 border-emerald-100 space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="flex items-center gap-3 pb-3 border-b border-emerald-100/60">
@@ -447,7 +507,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                     <Settings className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base font-bold text-gray-900 mb-0">Custom Plan Entitlements</h2>
+                                    <h2 className="text-base font-semibold text-gray-900 mb-0">Custom Plan Entitlements</h2>
                                     <p className="text-xs text-gray-500 mb-0">Set manual quotas for this recruiter's custom plan</p>
                                 </div>
                             </div>
@@ -504,17 +564,25 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                 <div>
                                     <label className="block text-[13px] font-semibold text-slate-700 mb-2">Master Login Count</label>
                                     <input
-                                        type="number" min="1" value={customLimits.master_login_limit}
-                                        onChange={(e) => setCustomLimits({ ...customLimits, master_login_limit: e.target.value })}
-                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                        type="number" min="1" value={formData.master_login_limit}
+                                        onChange={(e) => {
+                                            const val = Math.max(1, parseInt(e.target.value) || 1);
+                                            setFormData(prev => ({ ...prev, master_login_limit: val }));
+                                            setCustomLimits(prev => ({ ...prev, master_login_limit: val }));
+                                        }}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 font-semibold"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Sub-Recruiters</label>
+                                    <label className="block text-[13px] font-semibold text-slate-700 mb-2">Sub-Recruiters / Master</label>
                                     <input
-                                        type="number" min="1" value={customLimits.sub_recruiter_limit}
-                                        onChange={(e) => setCustomLimits({ ...customLimits, sub_recruiter_limit: e.target.value })}
-                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                                        type="number" min="0" value={formData.sub_recruiter_limit}
+                                        onChange={(e) => {
+                                            const val = Math.max(0, parseInt(e.target.value) || 0);
+                                            setFormData(prev => ({ ...prev, sub_recruiter_limit: val }));
+                                            setCustomLimits(prev => ({ ...prev, sub_recruiter_limit: val }));
+                                        }}
+                                        className="w-full px-3 py-2 bg-white border border-emerald-200/80 rounded-xl text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 font-semibold"
                                     />
                                 </div>
                                 <div>
@@ -543,7 +611,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                 <Building className="w-5 h-5" />
                             </div>
                             <div>
-                                <h2 className="text-base font-bold text-gray-900 mb-0">2. Company Information</h2>
+                                <h2 className="text-base font-semibold text-gray-900 mb-0">2. Company Information</h2>
                                 <p className="text-xs text-gray-500 mb-0">Corporate organization details and billing address</p>
                             </div>
                         </div>
@@ -729,7 +797,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h2 className="text-base font-bold text-gray-900 mb-0">3. Recruiter Account & Credentials</h2>
+                                    <h2 className="text-base font-semibold text-gray-900 mb-0">3. Recruiter Account & Credentials</h2>
                                     <p className="text-xs text-gray-500 mb-0">Sign-in details and primary point of contact</p>
                                 </div>
                             </div>
@@ -925,15 +993,22 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                                 </div>
                                             </>
                                         )}
-                                        <div className="p-2.5 bg-indigo-50/70 border-1 border-indigo-100 rounded-xl col-span-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-indigo-600 font-semibold block text-[11px]">Sub-Recruiters Allowed</span>
-                                                <span className="text-[10px] text-indigo-700 bg-white font-bold px-2 py-0.5 rounded shadow-xs border-1 border-indigo-100">
-                                                    Team Access
-                                                </span>
-                                            </div>
-                                            <span className="text-sm font-semibold text-indigo-950 mt-0.5 block">
-                                                {formData.plan_id === 'custom' ? customLimits.sub_recruiter_limit || 1 : selectedPlan.sub_recruiter_limit || 1} Seats
+                                        <div className="p-2.5 bg-emerald-50/70 border-1 border-emerald-100 rounded-xl">
+                                            <span className="text-emerald-700 font-semibold block text-[11px]">Master Logins</span>
+                                            <span className="text-sm font-bold text-emerald-950 mt-0.5 block">
+                                                {formData.master_login_limit || 1} Accounts
+                                            </span>
+                                        </div>
+                                        <div className="p-2.5 bg-indigo-50/70 border-1 border-indigo-100 rounded-xl">
+                                            <span className="text-indigo-600 font-semibold block text-[11px]">Seats / Master</span>
+                                            <span className="text-sm font-bold text-indigo-950 mt-0.5 block">
+                                                {formData.sub_recruiter_limit || 0} Seats (Indep.)
+                                            </span>
+                                        </div>
+                                        <div className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl col-span-2 flex items-center justify-between text-xs">
+                                            <span className="text-slate-500 font-medium">Total Company Capacity:</span>
+                                            <span className="font-bold text-slate-800">
+                                                {Number(formData.master_login_limit || 1) * Number(formData.sub_recruiter_limit || 0)} Total Team Seats
                                             </span>
                                         </div>
                                     </div>
@@ -947,7 +1022,7 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                         <li className="flex items-center gap-2">
                                             <Check className="w-4 h-4 text-emerald-500" />
                                             <span className="text-gray-900 font-medium">
-                                                Sub-Recruiter Delegation ({selectedPlan.sub_recruiter_limit || 1} seats included)
+                                                Independent Sub-Recruiter Delegation ({formData.sub_recruiter_limit || 1} seats / master)
                                             </span>
                                         </li>
                                         <li className="flex items-center gap-2">
@@ -989,6 +1064,69 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                 </div>
             </div>
 
+            {/* Fixed / Sticky Bottom Action Bar */}
+            <div className="sticky bottom-[-20px] z-30 bg-white/95 rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                        <Building className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-semibold text-gray-900">
+                                {formData.company_name.trim() ? formData.company_name : 'New Recruiter Setup'}
+                            </span>
+                            {selectedPlan && (
+                                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                    {selectedPlan.name}
+                                </span>
+                            )}
+                            <span className="text-[11px] font-medium text-gray-500">
+                                • {formData.master_login_limit} Master / {formData.sub_recruiter_limit} Sub-Recruiter Seats
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5 mb-0">
+                            {formData.email.trim() ? `Contact: ${formData.recruiter_name || 'Admin'} (${formData.email})` : 'Fill required details to create account and assign plan'}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end shrink-0">
+                    <button
+                        type="button"
+                        onClick={() => router.push('/admin/recruiters')}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => handleSubmit(null, true)}
+                        disabled={submitting}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-2xs"
+                    >
+                        Save as Inactive
+                    </button>
+                    <button
+                        type="button"
+                        onClick={(e) => handleSubmit(e, false)}
+                        disabled={submitting}
+                        className="flex items-center gap-2 px-6 py-2.5 text-sm sm:text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all hover:shadow-lg active:scale-98 disabled:opacity-50 cursor-pointer"
+                    >
+                        {submitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Creating Account...</span>
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="w-4 h-4 stroke-[2.3]" />
+                                <span>Create Recruiter</span>
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
+
             {/* Success Credential Modal */}
             {createdModalData && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 mt-0">
@@ -998,8 +1136,8 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                             <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-3">
                                 <Check className="w-6 h-6 text-white stroke-[3]" />
                             </div>
-                            <h3 className="text-xl font-bold">Recruiter Account Created!</h3>
-                            <p className="text-xs text-emerald-100 mt-1">
+                            <h3 className="text-2xl font-semibold mb-0">Recruiter Account Created!</h3>
+                            <p className="text-sm text-emerald-100 mt-1 mb-0">
                                 Company profile and subscription have been configured.
                             </p>
                         </div>
@@ -1025,16 +1163,30 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                         {createdModalData.password}
                                     </span>
                                 </div>
-                                <div className="flex justify-between items-center">
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-200">
                                     <span className="text-gray-500">Assigned Plan:</span>
                                     <span className="font-semibold text-gray-900">{createdModalData.plan_name}</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                                    <span className="text-gray-500">Master Login Limit:</span>
+                                    <span className="font-bold text-emerald-700">{createdModalData.master_login_limit || 1} Master Accounts</span>
+                                </div>
+                                <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                                    <span className="text-gray-500">Sub-Recruiters / Master:</span>
+                                    <span className="font-bold text-blue-700">{createdModalData.sub_recruiter_limit || 0} Seats (Independent)</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-500">Total Company Capacity:</span>
+                                    <span className="font-semibold text-indigo-900">
+                                        {(createdModalData.master_login_limit || 1) * (createdModalData.sub_recruiter_limit || 0)} Total Sub-Recruiter Seats
+                                    </span>
                                 </div>
                             </div>
 
                             <button
                                 type="button"
                                 onClick={copyCredentialsToClipboard}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors"
+                                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 border border-gray-300 transition-colors"
                             >
                                 {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                                 <span>{copied ? 'Credentials Copied to Clipboard!' : 'Copy Credentials to Clipboard'}</span>
@@ -1044,14 +1196,14 @@ Plan: ${createdModalData.plan_name} (Valid till: ${createdModalData.expiry_date 
                                 <button
                                     type="button"
                                     onClick={() => router.push(`/admin/recruiters/${createdModalData.recruiter_id}`)}
-                                    className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors text-center"
+                                    className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors text-center"
                                 >
                                     View Recruiter Profile
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => router.push('/admin/recruiters')}
-                                    className="flex-1 py-2.5 px-4 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-center"
+                                    className="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors text-center"
                                 >
                                     All Recruiters
                                 </button>
