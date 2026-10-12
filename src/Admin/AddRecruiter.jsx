@@ -305,10 +305,14 @@ export default function AddRecruiter() {
 
     const copyCredentialsToClipboard = () => {
         if (!createdModalData) return;
+        const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+        const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+        const hrPortalUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+
         const text = `CareerFast Recruiter Portal Credentials:
 Company: ${createdModalData.company_name}
 Name: ${createdModalData.recruiter_name}
-Portal URL: ${window.location.origin}/employer/login
+Portal URL: ${hrPortalUrl}/login
 Email: ${createdModalData.email}
 Username: ${createdModalData.username}
 Password: ${createdModalData.password}
