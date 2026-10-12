@@ -200,6 +200,7 @@ export default function Footer() {
             <ul className="footer-menu-list">
               <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/about")} className="footer-menu-link">About Us</a></li>
               <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/jobs")} className="footer-menu-link">Careers</a></li>
+              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/pricing")} className="footer-menu-link">Recruiter Pricing</a></li>
               <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/blogs")} className="footer-menu-link">Blog</a></li>
             </ul>
           </div>

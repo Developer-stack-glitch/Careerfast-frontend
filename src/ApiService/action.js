@@ -17,9 +17,25 @@ api.interceptors.request.use(
       const expired = isTokenExpired(AccessToken);
 
       if (expired) {
-        ShowModal();
-
         localStorage.removeItem("AccessToken");
+        localStorage.removeItem("loginDetails");
+
+        // Only show session expired modal on protected routes, never disrupt public visitors
+        const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+        const isPublicPath =
+          !currentPath ||
+          currentPath === "/" ||
+          currentPath.startsWith("/pricing") ||
+          currentPath.startsWith("/recruiter-pricing") ||
+          currentPath.startsWith("/about") ||
+          currentPath.startsWith("/login") ||
+          currentPath.startsWith("/register") ||
+          currentPath.startsWith("/help") ||
+          currentPath.startsWith("/support");
+
+        if (!isPublicPath) {
+          ShowModal();
+        }
 
         // ❌ Cancel request — do NOT continue
         return Promise.reject({
@@ -128,17 +144,16 @@ export const ShowModal = () => {
   }
 
   const modalHtml = `
-    <div id="session-expired-modal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center animate-in zoom-in-95 duration-200">
-        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
-          <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
+    <div id="session-expired-modal" style="position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px);">
+      <div id="session-modal-card" style="background:#fff; border-radius:16px; width:100%; max-width:380px; padding:24px; text-align:center; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.2);">
+        <button id="session-close-btn" type="button" style="position:absolute; top:12px; right:14px; background:none; border:none; font-size:22px; color:#94a3b8; cursor:pointer; line-height:1;">&times;</button>
+        <div style="width:48px; height:48px; border-radius:50%; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:22px;">
+          ⚠
         </div>
-        <h3 class="text-lg font-bold text-gray-900 mb-2">Session Expired</h3>
-        <p class="text-sm text-gray-500 mb-6">Your session has expired. Please log in again to continue.</p>
-        <button id="session-login-btn" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors">
-          Login
+        <h3 style="font-size:18px; font-weight:700; color:#0f172a; margin-bottom:8px;">Session Expired</h3>
+        <p style="font-size:14px; color:#64748b; margin-bottom:20px;">Your session has expired. Please log in again to continue.</p>
+        <button id="session-login-btn" style="width:100%; padding:12px 16px; background:#4f46e5; color:#fff; font-weight:600; border-radius:10px; border:none; cursor:pointer; font-size:15px;">
+          Log In
         </button>
       </div>
     </div>
@@ -148,9 +163,22 @@ export const ShowModal = () => {
   div.innerHTML = modalHtml;
   document.body.appendChild(div);
 
-  document.getElementById('session-login-btn').addEventListener('click', () => {
+  const cleanup = () => {
     div.remove();
+    isModalVisible = false;
+  };
+
+  document.getElementById('session-login-btn')?.addEventListener('click', () => {
+    cleanup();
     handleSessionModal();
+  });
+
+  document.getElementById('session-close-btn')?.addEventListener('click', cleanup);
+
+  div.querySelector('#session-expired-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'session-expired-modal') {
+      cleanup();
+    }
   });
 };
 
@@ -908,9 +936,17 @@ export const createJobAlert = async (payload) => {
 
 export const getBillingPlans = async (token) => {
   try {
-    const response = await api.get("/api/getBillingPlans", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await api.get("/api/getBillingPlans", { headers });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getPublicPricingPlans = async () => {
+  try {
+    const response = await api.get("/api/pricing/plans");
     return response;
   } catch (error) {
     throw error;

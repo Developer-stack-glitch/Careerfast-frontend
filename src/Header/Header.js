@@ -519,6 +519,17 @@ export default function Header({ noSticky = false }) {
       ),
       onClick: () => smartNavigate("/blogs"),
     },
+    {
+      key: "Pricing",
+      path: "/pricing",
+      label: (
+        <div className="menu-item">
+          <CrownFilled className="menu-icon" style={{ color: "#FB6202" }} />
+          <span>Recruiter Pricing</span>
+        </div>
+      ),
+      onClick: () => smartNavigate("/pricing"),
+    },
   ];
 
   const moreMenuContent = (
@@ -537,16 +548,26 @@ export default function Header({ noSticky = false }) {
       ))}
     </div>
   );
+
+  const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const defaultHrUrl = isLocalHost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+  const hrPortalUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+
   const employerItems = [
     {
       key: '1',
-      label: <div className="employer-menu-item">Buy online</div>,
-      onClick: () => smartNavigate("https://recruit.careerfast.in/checkout")
+      label: <div className="employer-menu-item">Recruiter Pricing & Plans</div>,
+      onClick: () => smartNavigate("/pricing")
     },
     {
       key: '2',
+      label: <div className="employer-menu-item">Post a Job (Free)</div>,
+      onClick: () => { window.location.href = `${hrPortalUrl}/register`; }
+    },
+    {
+      key: '3',
       label: <div className="employer-menu-item">Employer Login</div>,
-      onClick: () => smartNavigate("https://recruit.careerfast.in/login")
+      onClick: () => { window.location.href = `${hrPortalUrl}/login`; }
     }
   ];
 
