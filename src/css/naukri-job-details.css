@@ -175,12 +175,15 @@
     transition: background 0.2s, box-shadow 0.2s;
 }
 
-.njd-apply-btn.applied {
+.njd-apply-btn.applied,
+.njd-apply-btn:disabled.applied {
     background-color: #10b981 !important;
     background: #10b981 !important;
     border-color: #10b981 !important;
     color: #ffffff !important;
     cursor: default !important;
+    opacity: 1 !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
 }
 
 .njd-apply-btn.applied:hover {
@@ -1023,12 +1026,15 @@
     transform: translateY(0);
 }
 
-.njd-sticky-apply-btn.applied {
+.njd-sticky-apply-btn.applied,
+.njd-sticky-apply-btn:disabled.applied {
     background-color: #10b981 !important;
     background: #10b981 !important;
     border-color: #10b981 !important;
     color: #ffffff !important;
     cursor: default !important;
+    opacity: 1 !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
 }
 
 .njd-sticky-apply-btn.applied:hover {

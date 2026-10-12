@@ -1078,7 +1078,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                     job.status === "Expired"
                       ? { cursor: "not-allowed", opacity: 0.6, background: "#a0a0a0" }
                       : isApplied[job.id]
-                      ? { background: "#10b981", backgroundColor: "#10b981", borderColor: "#10b981", cursor: "default" }
+                      ? { background: "#10b981", backgroundColor: "#10b981", borderColor: "#10b981", color: "#ffffff", opacity: 1, cursor: "default" }
                       : {}
                   }
                 >
@@ -1343,7 +1343,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                                   job.status === "Expired"
                                     ? { cursor: 'not-allowed', opacity: 0.6, background: '#a0a0a0', borderColor: '#a0a0a0' }
                                     : isApplied[job.id]
-                                    ? { background: '#10b981', backgroundColor: '#10b981', borderColor: '#10b981', cursor: 'default' }
+                                    ? { background: '#10b981', backgroundColor: '#10b981', borderColor: '#10b981', color: '#ffffff', opacity: 1, cursor: 'default' }
                                     : {}
                                 }
                               >
