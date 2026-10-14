@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    Ticket, Search, MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight,
-    MessageSquare, AlertCircle, CheckCircle2, Clock, X, Filter, RefreshCw, Send
+    Ticket, Search, MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    MessageSquare, AlertCircle, CheckCircle2, Clock, X, Filter, RefreshCw, Send,
+    Building2, Building, User, Users
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminSelect from './AdminSelect';
@@ -36,6 +37,20 @@ const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
     </div>
 );
 
+// ── User Type Badge ──
+const UserTypeBadge = ({ type, organization }) => {
+    const isRecruiter = (type || '').toLowerCase() === 'recruiter';
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border-1 ${isRecruiter
+            ? 'bg-purple-50 text-purple-700 border-purple-200/70'
+            : 'bg-blue-50 text-blue-700 border-blue-200/70'
+            }`}>
+            {isRecruiter ? <Building2 className="w-3 h-3 text-purple-600" /> : <User className="w-3 h-3 text-blue-600" />}
+            <span>{isRecruiter ? 'Recruiter' : 'Candidate'}</span>
+        </span>
+    );
+};
+
 // ── Badge Components ──
 const StatusBadge = ({ status }) => {
     const styles = {
@@ -63,7 +78,7 @@ const PriorityBadge = ({ priority }) => {
         'Urgent': 'bg-red-100 text-red-700'
     };
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${styles[priority] || styles['Medium']}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider ${styles[priority] || styles['Medium']}`}>
             {priority}
         </span>
     );
@@ -124,13 +139,13 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/70">
+                <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-gray-50/70">
                     <div>
                         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-0">
                             #{ticket.ticket_number || ticket.id}
                             <PriorityBadge priority={ticket.priority} />
                             {ticket.category && (
-                                <span className="bg-purple-50 text-purple-700 text-xs px-2.5 py-0.5 rounded-full font-semibold border border-purple-100">
+                                <span className="bg-purple-50 text-purple-700 text-xs px-2.5 py-0.5 rounded-full font-semibold border-1 border-purple-100">
                                     {ticket.category}
                                 </span>
                             )}
@@ -147,7 +162,7 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                 {/* Content */}
                 <div className="p-6 overflow-y-auto flex-1 bg-gray-50/30 space-y-6">
                     {/* Subject & Status selector */}
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1">
                             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Subject</span>
                             <h3 className="text-lg font-semibold text-gray-900 mb-0">{ticket.subject}</h3>
@@ -171,14 +186,47 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                     </div>
 
                     {/* User Info */}
-                    <div className="bg-white p-3.5 rounded-xl flex items-center justify-between mt-0">
+                    <div className="bg-white p-3.5 rounded-xl flex items-center justify-between mt-0 border border-gray-100 shadow-2xs">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-700 font-bold text-base border border-indigo-100">
-                                {(ticket.user?.name || ticket.name || 'U').charAt(0).toUpperCase()}
+                            <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base border overflow-hidden shrink-0 shadow-2xs ${(ticket.user_type || '').toLowerCase() === 'recruiter' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                                }`}>
+                                {ticket.user?.avatar ? (
+                                    <img
+                                        src={ticket.user.avatar}
+                                        alt={ticket.user?.name || ticket.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.currentTarget.style.display = 'none';
+                                            if (e.currentTarget.nextSibling) {
+                                                e.currentTarget.nextSibling.style.display = 'flex';
+                                            }
+                                        }}
+                                    />
+                                ) : null}
+                                <span
+                                    style={{ display: ticket.user?.avatar ? 'none' : 'flex' }}
+                                    className="w-full h-full items-center justify-center select-none"
+                                >
+                                    {(ticket.user?.name || ticket.name || 'U').charAt(0).toUpperCase()}
+                                </span>
                             </div>
                             <div>
-                                <div className="font-semibold text-gray-900 text-sm">{ticket.user?.name || ticket.name}</div>
-                                <div className="text-xs text-gray-500">{ticket.user?.email || ticket.email}</div>
+                                <div className="flex items-center gap-2">
+                                    <span className="font-semibold text-gray-900 text-sm">{ticket.user?.name || ticket.name}</span>
+                                    <UserTypeBadge type={ticket.user_type} organization={ticket.user?.organization} />
+                                </div>
+                                <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                    <span>{ticket.user?.email || ticket.email}</span>
+                                    {ticket.user?.organization && (
+                                        <>
+                                            <span className="text-gray-300">•</span>
+                                            <span className="inline-flex items-center gap-1 font-medium text-purple-700 bg-purple-50/60 px-1.5 py-0.2 rounded text-[11px]">
+                                                <Building className="w-3 h-3 text-purple-500" />
+                                                {ticket.user.organization}
+                                            </span>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                         {(ticket.user?.phone || ticket.phone) && (
@@ -262,9 +310,10 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
 
 export default function SupportTicket() {
     const [tickets, setTickets] = useState([]);
-    const [stats, setStats] = useState({ total: 0, open: 0, inprogress: 0, closed: 0 });
+    const [stats, setStats] = useState({ total: 0, open: 0, inprogress: 0, closed: 0, recruiter: { total: 0, open: 0, inprogress: 0, closed: 0 }, candidate: { total: 0, open: 0, inprogress: 0, closed: 0 } });
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeUserType, setActiveUserType] = useState('All'); // 'All' | 'recruiter' | 'candidate'
     const [activeStatusFilter, setActiveStatusFilter] = useState('All');
     const [activePriorityFilter, setActivePriorityFilter] = useState('All');
 
@@ -282,7 +331,8 @@ export default function SupportTicket() {
                 getSupportTickets({
                     search: searchTerm,
                     status: activeStatusFilter,
-                    priority: activePriorityFilter
+                    priority: activePriorityFilter,
+                    user_type: activeUserType
                 }),
                 getSupportTicketStats()
             ]);
@@ -299,7 +349,7 @@ export default function SupportTicket() {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, activeStatusFilter, activePriorityFilter]);
+    }, [searchTerm, activeStatusFilter, activePriorityFilter, activeUserType]);
 
     useEffect(() => {
         fetchTicketsData();
@@ -378,15 +428,24 @@ export default function SupportTicket() {
         }
     };
 
+    // Calculate active stats dynamically for current user type selection
+    const currentStats = activeUserType === 'recruiter'
+        ? (stats.recruiter || { total: 0, open: 0, inprogress: 0, closed: 0 })
+        : activeUserType === 'candidate'
+            ? (stats.candidate || { total: 0, open: 0, inprogress: 0, closed: 0 })
+            : stats;
+
     // Filter Logic for client-side search fine tuning if any
     const filteredTickets = tickets.filter(ticket => {
+        const matchType = activeUserType === 'All' || (ticket.user_type || 'candidate').toLowerCase() === activeUserType.toLowerCase();
         const matchSearch = (ticket.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (ticket.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (ticket.user?.name || ticket.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (ticket.user?.email || ticket.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (ticket.user?.email || ticket.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (ticket.user?.organization || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchStatus = activeStatusFilter === 'All' || ticket.status === activeStatusFilter;
         const matchPriority = activePriorityFilter === 'All' || ticket.priority === activePriorityFilter;
-        return matchSearch && matchStatus && matchPriority;
+        return matchType && matchSearch && matchStatus && matchPriority;
     });
 
     // Pagination Logic
@@ -395,32 +454,90 @@ export default function SupportTicket() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, activeStatusFilter, activePriorityFilter]);
+    }, [searchTerm, activeStatusFilter, activePriorityFilter, activeUserType]);
 
     return (
         <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full p-2 md:p-4 lg:p-4">
             {/* Header Section */}
-            <div className="mb-8 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-2xl font-bold text-gray-900 mb-1">Support Tickets</h1>
+                    <h1 className="text-2xl md:text-2xl font-semibold text-gray-900 mb-1">Support Tickets</h1>
                     <p className="text-sm text-gray-500 mb-0">Manage user inquiries, issues, and support requests in real-time.</p>
                 </div>
                 <button
                     type="button"
                     onClick={() => fetchTicketsData()}
-                    className="inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition-all self-start sm:self-auto"
+                    className="inline-flex items-center gap-2 bg-white border-1 border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-semibold transition-all self-start sm:self-auto cursor-pointer"
                 >
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-600' : ''}`} />
                     <span>Refresh Data</span>
                 </button>
             </div>
 
+            {/* Dynamic Recruiter vs Candidate Type Selector Tabs */}
+            <div className="mb-6 flex flex-wrap items-center gap-2.5 p-1.5 bg-gray-100/80 rounded-2xl w-fit border border-gray-200/60 shadow-2xs">
+                <button
+                    type="button"
+                    onClick={() => { setActiveUserType('All'); setActiveStatusFilter('All'); }}
+                    className={`px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${activeUserType === 'All'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-500 hover:text-gray-900'
+                        }`}
+                >
+                    <Ticket className="w-4 h-4 text-gray-500" />
+                    <span>All Tickets</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeUserType === 'All' ? 'bg-gray-100 text-gray-800' : 'bg-gray-200/70 text-gray-600'
+                        }`}>
+                        {stats.total || 0}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => { setActiveUserType('recruiter'); setActiveStatusFilter('All'); }}
+                    className={`px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${activeUserType === 'recruiter'
+                        ? 'bg-white text-purple-700 shadow-sm ring-1 ring-purple-100'
+                        : 'text-gray-500 hover:text-purple-700'
+                        }`}
+                >
+                    <Building2 className={`w-4 h-4 ${activeUserType === 'recruiter' ? 'text-purple-600' : 'text-gray-400'}`} />
+                    <span>Recruiter Tickets</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeUserType === 'recruiter' ? 'bg-purple-100 text-purple-800' : 'bg-gray-200/70 text-gray-600'
+                        }`}>
+                        {stats.recruiter?.total || 0}
+                    </span>
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => { setActiveUserType('candidate'); setActiveStatusFilter('All'); }}
+                    className={`px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${activeUserType === 'candidate'
+                        ? 'bg-white text-blue-700 shadow-sm ring-1 ring-blue-100'
+                        : 'text-gray-500 hover:text-blue-700'
+                        }`}
+                >
+                    <User className={`w-4 h-4 ${activeUserType === 'candidate' ? 'text-blue-600' : 'text-gray-400'}`} />
+                    <span>Candidate Tickets</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeUserType === 'candidate' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200/70 text-gray-600'
+                        }`}>
+                        {stats.candidate?.total || 0}
+                    </span>
+                </button>
+            </div>
+
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                <StatCard title="Total Tickets" value={stats.total} icon={Ticket} color="text-indigo-600" bg="bg-indigo-50" accent="ring-indigo-100" />
-                <StatCard title="Open" value={stats.open} icon={AlertCircle} color="text-blue-600" bg="bg-blue-50" accent="ring-blue-100" />
-                <StatCard title="In Progress" value={stats.inprogress} icon={Clock} color="text-amber-600" bg="bg-amber-50" accent="ring-amber-100" />
-                <StatCard title="Closed" value={stats.closed} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" accent="ring-emerald-100" />
+                <StatCard
+                    title={activeUserType === 'recruiter' ? 'Recruiter Tickets' : activeUserType === 'candidate' ? 'Candidate Tickets' : 'Total Tickets'}
+                    value={currentStats.total || 0}
+                    icon={activeUserType === 'recruiter' ? Building2 : activeUserType === 'candidate' ? User : Ticket}
+                    color={activeUserType === 'recruiter' ? 'text-purple-600' : activeUserType === 'candidate' ? 'text-blue-600' : 'text-indigo-600'}
+                    bg={activeUserType === 'recruiter' ? 'bg-purple-50' : activeUserType === 'candidate' ? 'bg-blue-50' : 'bg-indigo-50'}
+                    accent={activeUserType === 'recruiter' ? 'ring-purple-100' : activeUserType === 'candidate' ? 'ring-blue-100' : 'ring-indigo-100'}
+                />
+                <StatCard title="Open" value={currentStats.open || 0} icon={AlertCircle} color="text-blue-600" bg="bg-blue-50" accent="ring-blue-100" />
+                <StatCard title="In Progress" value={currentStats.inprogress || 0} icon={Clock} color="text-amber-600" bg="bg-amber-50" accent="ring-amber-100" />
+                <StatCard title="Closed" value={currentStats.closed || 0} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" accent="ring-emerald-100" />
             </div>
 
             {/* Filters and Search Bar Row */}
@@ -429,17 +546,17 @@ export default function SupportTicket() {
                 {/* Status Filters */}
                 <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
                     {['All', 'Open', 'In Progress', 'Closed'].map(status => {
-                        const count = status === 'All' ? stats.total : stats[status.toLowerCase().replace(' ', '')];
+                        const count = status === 'All' ? currentStats.total : currentStats[status.toLowerCase().replace(' ', '')];
                         return (
                             <button
                                 key={status}
                                 onClick={() => setActiveStatusFilter(status)}
-                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeStatusFilter === status
-                                    ? 'bg-indigo-600 text-white shadow-sm'
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${activeStatusFilter === status
+                                    ? activeUserType === 'recruiter' ? 'bg-purple-600 text-white shadow-sm' : 'bg-indigo-600 text-white shadow-sm'
                                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
                                     }`}
                             >
-                                {status} {status !== 'All' && `(${count || 0})`}
+                                {status} {`(${count || 0})`}
                             </button>
                         );
                     })}
@@ -480,7 +597,10 @@ export default function SupportTicket() {
                                     Ticket Details
                                 </th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
-                                    User
+                                    User / Sender
+                                </th>
+                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Type
                                 </th>
                                 <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
                                     Priority
@@ -506,6 +626,7 @@ export default function SupportTicket() {
                                                 <div className="space-y-2"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-3 w-32 bg-gray-200 rounded"></div></div>
                                             </div>
                                         </td>
+                                        <td className="px-6 py-4"><div className="h-5 w-20 bg-gray-200 rounded-full"></div></td>
                                         <td className="px-6 py-4"><div className="h-5 w-16 bg-gray-200 rounded"></div></td>
                                         <td className="px-6 py-4"><div className="h-6 w-24 bg-gray-200 rounded-full"></div></td>
                                         <td className="px-6 py-4 text-center"><div className="h-8 w-8 bg-gray-200 rounded-lg mx-auto"></div></td>
@@ -513,17 +634,18 @@ export default function SupportTicket() {
                                 ))
                             ) : paginatedTickets.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-20 text-center">
+                                    <td colSpan={6} className="px-6 py-20 text-center">
                                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4 border border-gray-100">
                                             <Ticket className="w-8 h-8 text-gray-400" />
                                         </div>
                                         <h3 className="text-gray-900 font-semibold text-lg">No tickets found</h3>
-                                        <p className="text-gray-500 text-sm mt-1">Try adjusting your filters or search criteria.</p>
+                                        <p className="text-gray-500 text-sm mt-1">Try adjusting your type tabs, filters or search criteria.</p>
                                     </td>
                                 </tr>
                             ) : (
                                 paginatedTickets.map((ticket, idx) => {
                                     const isBottom = idx >= paginatedTickets.length - 2 && paginatedTickets.length > 3;
+                                    const isRecruiter = (ticket.user_type || '').toLowerCase() === 'recruiter';
 
                                     return (
                                         <tr key={ticket.id} className="hover:bg-gray-50/80 transition-colors group">
@@ -545,14 +667,47 @@ export default function SupportTicket() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs border border-indigo-100">
-                                                        {(ticket.user?.name || ticket.name || 'U').charAt(0).toUpperCase()}
+                                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border overflow-hidden shrink-0 shadow-2xs ${isRecruiter ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                                                        }`}>
+                                                        {ticket.user?.avatar ? (
+                                                            <img
+                                                                src={ticket.user.avatar}
+                                                                alt={ticket.user?.name || ticket.name}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    if (e.currentTarget.nextSibling) {
+                                                                        e.currentTarget.nextSibling.style.display = 'flex';
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <span
+                                                            style={{ display: ticket.user?.avatar ? 'none' : 'flex' }}
+                                                            className="w-full h-full items-center justify-center select-none"
+                                                        >
+                                                            {(ticket.user?.name || ticket.name || 'U').charAt(0).toUpperCase()}
+                                                        </span>
                                                     </div>
                                                     <div>
                                                         <div className="font-semibold text-gray-900 text-sm">{ticket.user?.name || ticket.name}</div>
-                                                        <div className="text-xs text-gray-500">{ticket.user?.email || ticket.email}</div>
+                                                        <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                            <span>{ticket.user?.email || ticket.email}</span>
+                                                            {ticket.user?.organization && (
+                                                                <>
+                                                                    <span className="text-gray-300">•</span>
+                                                                    <span className="inline-flex items-center gap-1 font-medium text-purple-700 bg-purple-50/60 px-1.5 py-0.2 rounded text-[11px]">
+                                                                        <Building className="w-3 h-3 text-purple-500" />
+                                                                        {ticket.user.organization}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <UserTypeBadge type={ticket.user_type} organization={ticket.user?.organization} />
                                             </td>
                                             <td className="px-6 py-4">
                                                 <PriorityBadge priority={ticket.priority} />
@@ -564,7 +719,7 @@ export default function SupportTicket() {
                                                 <div className="relative inline-block text-left">
                                                     <button
                                                         onClick={() => setOpenDropdown(openDropdown === ticket.id ? null : ticket.id)}
-                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all focus:outline-none"
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all focus:outline-none cursor-pointer"
                                                     >
                                                         <MoreVertical className="w-5 h-5" />
                                                     </button>
@@ -596,9 +751,19 @@ export default function SupportTicket() {
                         </div>
                         <div className="flex items-center gap-2">
                             <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                title="Go to first page"
+                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent border border-transparent hover:border-gray-200 cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsLeft className="w-4 h-4" />
+                            </button>
+
+                            <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent border border-transparent hover:border-gray-200"
+                                title="Previous page"
+                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent border border-transparent hover:border-gray-200 cursor-pointer disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft className="w-4 h-4" />
                             </button>
@@ -615,7 +780,7 @@ export default function SupportTicket() {
                                         <button
                                             key={pageNum}
                                             onClick={() => setCurrentPage(pageNum)}
-                                            className={`w-8 h-8 flex items-center justify-center text-sm font-semibold rounded-lg transition-all ${currentPage === pageNum
+                                            className={`w-8 h-8 flex items-center justify-center text-sm font-semibold rounded-lg transition-all cursor-pointer ${currentPage === pageNum
                                                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
                                                 : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                                 }`}
@@ -629,9 +794,19 @@ export default function SupportTicket() {
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent border border-transparent hover:border-gray-200"
+                                title="Next page"
+                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent border border-transparent hover:border-gray-200 cursor-pointer disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-4 h-4" />
+                            </button>
+
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                title="Go to last page"
+                                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent border border-transparent hover:border-gray-200 cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsRight className="w-4 h-4" />
                             </button>
                         </div>
                     </div>

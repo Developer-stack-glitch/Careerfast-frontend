@@ -76,6 +76,7 @@ export default function SupportPage() {
     name: '',
     email: '',
     phone: '',
+    user_type: 'candidate', // 'candidate' | 'recruiter'
     category: 'General Inquiry',
     priority: 'Medium',
     subject: '',
@@ -106,11 +107,13 @@ export default function SupportPage() {
       const stored = localStorage.getItem('loginDetails');
       if (stored) {
         const user = JSON.parse(stored);
+        const resolvedRole = user.role_id === 3 ? 'recruiter' : 'candidate';
         setFormData(prev => ({
           ...prev,
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.name || prev.name,
           email: user.email || prev.email,
-          phone: user.mobile_number || user.phone || prev.phone
+          phone: user.mobile_number || user.phone || prev.phone,
+          user_type: resolvedRole
         }));
       }
     } catch (e) {
@@ -440,6 +443,32 @@ export default function SupportPage() {
                   </div>
 
                   <form onSubmit={handleCreateTicket} className="cf-ticket-form">
+                    {/* User Type Toggle */}
+                    <div className="mb-6 p-1 bg-gray-100/90 rounded-2xl flex items-center max-w-md border border-gray-200/60 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, user_type: 'candidate' }))}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${formData.user_type === 'candidate'
+                          ? 'bg-white text-blue-700 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-900'
+                          }`}
+                      >
+                        <User className="w-4 h-4 text-blue-500" />
+                        <span>Candidate / Job Seeker</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData(p => ({ ...p, user_type: 'recruiter' }))}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${formData.user_type === 'recruiter'
+                          ? 'bg-white text-purple-700 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-900'
+                          }`}
+                      >
+                        <Building2 className="w-4 h-4 text-purple-500" />
+                        <span>Recruiter / Employer</span>
+                      </button>
+                    </div>
+
                     {/* Section 1: Issue Category */}
                     <div className="cf-form-section">
                       <label className="cf-section-label">
@@ -454,7 +483,14 @@ export default function SupportPage() {
                             <button
                               type="button"
                               key={cat.id}
-                              onClick={() => setFormData(p => ({ ...p, category: cat.id }))}
+                              onClick={() => {
+                                const recruiterCats = ['Recruiter Verification', 'Job Posting', 'Payment & Billing'];
+                                setFormData(p => ({
+                                  ...p,
+                                  category: cat.id,
+                                  user_type: recruiterCats.includes(cat.id) ? 'recruiter' : p.user_type
+                                }));
+                              }}
                               className={`cf-category-card ${isSelected ? 'selected' : ''}`}
                             >
                               <div className="cf-cat-icon-wrap">

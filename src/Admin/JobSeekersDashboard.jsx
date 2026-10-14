@@ -12,8 +12,9 @@ import {
 } from 'recharts';
 import { getSuperAdminDashboardStats } from '../ApiService/action';
 import { useRouter } from 'next/navigation';
-import AdminSelect from './AdminSelect';
+import AdminDateFilter from './AdminDateFilter';
 import { JobSeekersDashboardSkeleton } from './AdminSkeletons';
+import CandidateProfileModal from './CandidateProfileModal';
 
 export { JobSeekersDashboardSkeleton };
 
@@ -31,7 +32,7 @@ const StatCard = ({ title, value, change, isPositive, icon: Icon, color, bg }) =
             )}
         </div>
         <div>
-            <h4 className="text-gray-500 text-[12px] font-medium mb-0.5">{title}</h4>
+            <h4 className="text-gray-500 text-[13px] font-medium mb-0.5">{title}</h4>
             <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">{value}</h2>
         </div>
     </div>
@@ -59,17 +60,23 @@ export default function JobSeekersDashboard() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [timeFilter, setTimeFilter] = useState('This Quarter');
+    const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
     // Active Tab for Recent Section: 'candidates', 'applications', 'activity'
     const [activeRecentTab, setActiveRecentTab] = useState('candidates');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCandidate, setSelectedCandidate] = useState(null);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
                 setLoading(true);
-                const response = await getSuperAdminDashboardStats(timeFilter);
+                const timeFilterParam = dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined;
+                const extraParams = {
+                    start_date: dateFilter.preset === 'Custom Range' ? (dateFilter.startDate || undefined) : undefined,
+                    end_date: dateFilter.preset === 'Custom Range' ? (dateFilter.endDate || undefined) : undefined
+                };
+                const response = await getSuperAdminDashboardStats(timeFilterParam, extraParams);
                 setData(response.data?.data || response.data);
             } catch (err) {
                 console.error("Failed to fetch job seekers dashboard stats", err);
@@ -80,7 +87,7 @@ export default function JobSeekersDashboard() {
         };
 
         fetchDashboardData();
-    }, [timeFilter]);
+    }, [dateFilter]);
 
     const handleExport = () => {
         if (!data || !data.counts) return;
@@ -97,7 +104,8 @@ export default function JobSeekersDashboard() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `job_seekers_dashboard_stats_${timeFilter.replace(/\s+/g, '_').toLowerCase()}.csv`);
+        const filterSlug = (dateFilter.label || dateFilter.preset || 'all_time').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+        link.setAttribute("download", `job_seekers_dashboard_stats_${filterSlug}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -197,7 +205,7 @@ export default function JobSeekersDashboard() {
         }));
     };
 
-    // Formatted Lists for Recent Candidates
+    // Formatted Lists for Recently Logged In Candidates
     const formattedRecentCandidates = (lists?.candidates || []).map(c => ({
         id: c.id,
         name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Candidate',
@@ -205,19 +213,21 @@ export default function JobSeekersDashboard() {
         phone: c.phone || c.mobile || '-',
         location: c.location || 'Not Specified',
         profileImage: c.profile_image || null,
-        timeRaw: c.created_date,
-        timeAgo: formatTimeAgo(c.created_date),
+        timeRaw: c.last_login || c.created_date,
+        timeAgo: formatTimeAgo(c.last_login || c.created_date),
         status: c.is_active ? 'Active' : 'Pending'
     }));
 
     // Formatted Lists for Recent Applications
     const formattedRecentApplications = (lists?.applications || []).map(a => ({
         id: a.applied_jobs_id,
+        userId: a.user_id,
         candidateName: `${a.first_name || ''} ${a.last_name || ''}`.trim() || 'Applicant',
         email: a.email || '-',
         jobTitle: a.job_title || 'Applied Position',
         companyName: a.company_name || 'Organization',
         status: a.status || 'Pending',
+        profileImage: a.profile_image || null,
         timeRaw: a.created_at,
         timeAgo: formatTimeAgo(a.created_at)
     }));
@@ -290,17 +300,10 @@ export default function JobSeekersDashboard() {
                     <p className="text-[13px] text-gray-500 mt-0.5 mb-0">Monitor candidate registrations, talent pool growth, job application velocity, and career engagements.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <AdminSelect
-                        value={timeFilter}
-                        onChange={(val) => setTimeFilter(val)}
-                        options={[
-                            { value: 'Last 7 Days', label: 'Last 7 Days' },
-                            { value: 'Last 30 Days', label: 'Last 30 Days' },
-                            { value: 'This Quarter', label: 'This Quarter' },
-                            { value: 'This Year', label: 'This Year' },
-                            { value: 'All Time', label: 'All Time' },
-                        ]}
-                        className="w-36"
+                    <AdminDateFilter
+                        value={dateFilter}
+                        onChange={(newFilter) => setDateFilter(newFilter)}
+                        presets={['All Time', 'Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'This Month', 'Last Month', 'This Quarter', 'This Year']}
                     />
                     <button
                         onClick={handleExport}
@@ -464,8 +467,8 @@ export default function JobSeekersDashboard() {
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
                                 }`}
                         >
-                            <Users className="w-4 h-4 text-blue-600" />
-                            <span>Recently Registered Candidates</span>
+                            <UserCheck className="w-4 h-4 text-blue-600" />
+                            <span>Recently Logged In Candidates</span>
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'candidates' ? 'bg-blue-200/70 text-blue-800' : 'bg-gray-100 text-gray-600'
                                 }`}>
                                 {formattedRecentCandidates.length}
@@ -528,7 +531,7 @@ export default function JobSeekersDashboard() {
                     </div>
                 </div>
 
-                {/* TAB 1: RECENTLY REGISTERED CANDIDATES TABLE */}
+                {/* TAB 1: RECENTLY LOGGED IN CANDIDATES TABLE */}
                 {activeRecentTab === 'candidates' && (
                     <div className="overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-gray-50 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
                         <table className="w-full text-left border-collapse">
@@ -538,7 +541,7 @@ export default function JobSeekersDashboard() {
                                     <th className="px-4 py-3">Email Address</th>
                                     <th className="px-4 py-3">Phone Number</th>
                                     <th className="px-4 py-3">Location</th>
-                                    <th className="px-4 py-3">Registered Time</th>
+                                    <th className="px-4 py-3">Logged In Time</th>
                                     <th className="px-4 py-3">Status</th>
                                     <th className="px-4 py-3 text-right">Action</th>
                                 </tr>
@@ -549,18 +552,32 @@ export default function JobSeekersDashboard() {
                                         <td className="px-4 py-3.5 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    onClick={() => router.push('/admin/job-seekers')}
+                                                    onClick={() => setSelectedCandidate(candidate)}
                                                     className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                                                 >
                                                     {candidate.profileImage ? (
-                                                        <img src={candidate.profileImage} alt={candidate.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
-                                                    ) : (
-                                                        candidate.name.charAt(0).toUpperCase()
-                                                    )}
+                                                        <img
+                                                            src={candidate.profileImage}
+                                                            alt={candidate.name}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                if (e.currentTarget.nextSibling) {
+                                                                    e.currentTarget.nextSibling.style.display = 'flex';
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <span
+                                                        style={{ display: candidate.profileImage ? 'none' : 'flex' }}
+                                                        className="w-full h-full items-center justify-center select-none"
+                                                    >
+                                                        {candidate.name.charAt(0).toUpperCase()}
+                                                    </span>
                                                 </div>
                                                 <div>
                                                     <button
-                                                        onClick={() => router.push('/admin/job-seekers')}
+                                                        onClick={() => setSelectedCandidate(candidate)}
                                                         className="text-[13px] font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left focus:outline-none cursor-pointer"
                                                     >
                                                         {candidate.name}
@@ -603,7 +620,7 @@ export default function JobSeekersDashboard() {
                                         </td>
                                         <td className="px-4 py-3.5 whitespace-nowrap text-right">
                                             <button
-                                                onClick={() => router.push('/admin/job-seekers')}
+                                                onClick={() => setSelectedCandidate(candidate)}
                                                 className="text-[12px] font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
                                             >
                                                 View Profile
@@ -646,14 +663,32 @@ export default function JobSeekersDashboard() {
                                         <td className="px-4 py-3.5 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
                                                 <div
-                                                    onClick={() => router.push('/admin/applications')}
-                                                    className="w-9 h-9 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0 border border-purple-100 shadow-2xs cursor-pointer hover:opacity-85 transition-opacity"
+                                                    onClick={() => app.userId ? setSelectedCandidate({ id: app.userId, name: app.candidateName, email: app.email, profileImage: app.profileImage }) : router.push('/admin/applications')}
+                                                    className="w-9 h-9 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0 border border-purple-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                                                 >
-                                                    {app.candidateName.charAt(0).toUpperCase()}
+                                                    {app.profileImage ? (
+                                                        <img
+                                                            src={app.profileImage}
+                                                            alt={app.candidateName}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                if (e.currentTarget.nextSibling) {
+                                                                    e.currentTarget.nextSibling.style.display = 'flex';
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <span
+                                                        style={{ display: app.profileImage ? 'none' : 'flex' }}
+                                                        className="w-full h-full items-center justify-center select-none"
+                                                    >
+                                                        {app.candidateName.charAt(0).toUpperCase()}
+                                                    </span>
                                                 </div>
                                                 <div>
                                                     <button
-                                                        onClick={() => router.push('/admin/applications')}
+                                                        onClick={() => app.userId ? setSelectedCandidate({ id: app.userId, name: app.candidateName, email: app.email, profileImage: app.profileImage }) : router.push('/admin/applications')}
                                                         className="text-[13px] font-semibold text-gray-900 hover:text-purple-600 transition-colors text-left focus:outline-none cursor-pointer"
                                                     >
                                                         {app.candidateName}
@@ -741,15 +776,29 @@ export default function JobSeekersDashboard() {
                                             <div className="flex items-center gap-2.5">
                                                 <div
                                                     onClick={() => router.push(act.entityType === 'application' ? '/admin/applications' : '/admin/job-seekers')}
-                                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 border cursor-pointer hover:opacity-85 transition-opacity ${act.entityType === 'application' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 border overflow-hidden cursor-pointer hover:opacity-85 transition-opacity ${act.entityType === 'application' ? 'bg-purple-50 text-purple-600 border-purple-100' :
                                                         'bg-blue-50 text-blue-600 border-blue-100'
                                                         }`}
                                                 >
                                                     {act.profileImage ? (
-                                                        <img src={act.profileImage} alt={act.user} className="w-full h-full object-cover rounded-full" onError={(e) => { e.target.style.display = 'none'; }} />
-                                                    ) : (
-                                                        act.user.charAt(0).toUpperCase()
-                                                    )}
+                                                        <img
+                                                            src={act.profileImage}
+                                                            alt={act.user}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                if (e.currentTarget.nextSibling) {
+                                                                    e.currentTarget.nextSibling.style.display = 'flex';
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : null}
+                                                    <span
+                                                        style={{ display: act.profileImage ? 'none' : 'flex' }}
+                                                        className="w-full h-full items-center justify-center select-none"
+                                                    >
+                                                        {act.user.charAt(0).toUpperCase()}
+                                                    </span>
                                                 </div>
                                                 <button
                                                     onClick={() => router.push(act.entityType === 'application' ? '/admin/applications' : '/admin/job-seekers')}
@@ -942,8 +991,8 @@ export default function JobSeekersDashboard() {
                 <div className="bg-white rounded-xl p-4 shadow-2xs hover:shadow-xs transition-shadow">
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2 text-blue-700 font-semibold text-[13px]">
-                            <Users className="w-4 h-4" />
-                            <span>Latest Registered Candidate</span>
+                            <UserCheck className="w-4 h-4" />
+                            <span>Recently Logged In Candidate</span>
                         </div>
                         <span className="text-[11px] text-gray-400 font-medium">
                             {formattedRecentCandidates[0]?.timeAgo || '-'}
@@ -1024,6 +1073,15 @@ export default function JobSeekersDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* Candidate Profile Details Modal */}
+            {selectedCandidate && (
+                <CandidateProfileModal
+                    userId={selectedCandidate.id}
+                    candidateSummary={selectedCandidate}
+                    onClose={() => setSelectedCandidate(null)}
+                />
+            )}
         </div>
     );
 }

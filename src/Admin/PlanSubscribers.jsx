@@ -7,7 +7,7 @@ import {
     Clock, CheckCircle2, Sliders,
     ArrowUpDown, Download, ExternalLink,
     Check, X, ArrowUpRight, Zap,
-    BarChart3, UserCheck, UserX, ChevronLeft, ChevronRight
+    BarChart3, UserCheck, UserX, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import {
     getAdminPlans,
@@ -923,6 +923,14 @@ export default function PlanSubscribers({ planId = null }) {
                         {totalPages > 1 && (
                             <div className="flex items-center gap-1">
                                 <button
+                                    onClick={() => setCurrentPage(1)}
+                                    disabled={currentPage === 1}
+                                    className="p-1 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    title="First Page"
+                                >
+                                    <ChevronsLeft className="w-4 h-4" />
+                                </button>
+                                <button
                                     onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
                                     className="p-1 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
@@ -964,6 +972,14 @@ export default function PlanSubscribers({ planId = null }) {
                                     title="Next Page"
                                 >
                                     <ChevronRight className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    disabled={currentPage === totalPages}
+                                    className="p-1 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    title="Last Page"
+                                >
+                                    <ChevronsRight className="w-4 h-4" />
                                 </button>
                             </div>
                         )}

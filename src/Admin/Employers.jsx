@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
     Users, UserCheck, Briefcase, UserPlus, Search,
-    MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight,
+    MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     MapPin, GraduationCap, CheckCircle2, XCircle, X, Mail, Phone, Calendar,
     ChevronsUpDown, ChevronUp, ChevronDown, Clock, FileText, Download
 } from 'lucide-react';
@@ -49,21 +49,6 @@ const formatLastActive = (dateString) => {
     return { relative: `${diffInYears}y ago`, exact, isOnline: false };
 };
 
-// ── Stat Card Component ──
-const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
-    <div className="bg-white rounded-xl p-4 group transition-all duration-300 relative overflow-hidden">
-        <div className={`absolute top-0 right-0 w-24 h-24 rounded-full ${bg} opacity-60 -translate-y-8 translate-x-8 group-hover:scale-125 transition-transform duration-500`}></div>
-        <div className="flex items-start justify-between mb-3 relative z-10">
-            <div className={`p-2.5 rounded-xl ${bg} ${color} ring-1 ring-inset ${accent}`}>
-                <Icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
-            </div>
-        </div>
-        <div className="relative z-10">
-            <h4 className="text-gray-500 text-[14px] font-medium mb-1">{title}</h4>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">{value}</h2>
-        </div>
-    </div>
-);
 
 // ── Actions Dropdown ──
 const ActionsDropdown = ({ user, onClose, onDelete, onViewProfile, onToggleStatus, isBottom }) => {
@@ -322,43 +307,12 @@ export default function Employers() {
             }
             return { key, direction: 'asc' };
         });
+        setCurrentPage(1);
     };
 
     const displayedUsers = useMemo(() => {
-        if (!sortConfig.key) return users;
-        return [...users].sort((a, b) => {
-            switch (sortConfig.key) {
-                case 'employer': {
-                    const nameA = (a.name || `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.company_name || a.email || '').toLowerCase();
-                    const nameB = (b.name || `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.company_name || b.email || '').toLowerCase();
-                    return sortConfig.direction === 'asc'
-                        ? nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' })
-                        : nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
-                }
-                case 'education': {
-                    const eduA = (a.college_name || a.college || a.class || a.city || a.location || '').toLowerCase();
-                    const eduB = (b.college_name || b.college || b.class || b.city || b.location || '').toLowerCase();
-                    return sortConfig.direction === 'asc'
-                        ? eduA.localeCompare(eduB, undefined, { numeric: true, sensitivity: 'base' })
-                        : eduB.localeCompare(eduA, undefined, { numeric: true, sensitivity: 'base' });
-                }
-                case 'status': {
-                    const statusA = (a.status || '').toLowerCase();
-                    const statusB = (b.status || '').toLowerCase();
-                    return sortConfig.direction === 'asc'
-                        ? statusA.localeCompare(statusB)
-                        : statusB.localeCompare(statusA);
-                }
-                case 'last_active': {
-                    const timeA = a.last_active ? new Date(a.last_active).getTime() : 0;
-                    const timeB = b.last_active ? new Date(b.last_active).getTime() : 0;
-                    return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
-                }
-                default:
-                    return 0;
-            }
-        });
-    }, [users, sortConfig]);
+        return users;
+    }, [users]);
 
     const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
@@ -371,7 +325,7 @@ export default function Employers() {
 
     useEffect(() => {
         fetchUsers();
-    }, [currentPage, debouncedSearch, activeFilter, dateFilter]);
+    }, [currentPage, debouncedSearch, activeFilter, dateFilter, sortConfig]);
 
     const fetchUsers = async () => {
         try {
@@ -385,7 +339,9 @@ export default function Employers() {
                 role: "1,3",
                 start_date: dateFilter.startDate || undefined,
                 end_date: dateFilter.endDate || undefined,
-                timeFilter: dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined
+                timeFilter: dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined,
+                sortBy: sortConfig.key || undefined,
+                sortOrder: sortConfig.direction || undefined
             };
             const response = await getUsers(payload);
             const responseData = response?.data?.data;
@@ -603,13 +559,13 @@ export default function Employers() {
                                     </div>
                                 </th>
                                 <th
-                                    onClick={() => handleSort('last_active')}
+                                    onClick={() => handleSort('last_login')}
                                     className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
-                                    title="Click to sort by Last Active"
+                                    title="Click to sort by Last Login"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <span className={sortConfig.key === 'last_active' ? 'text-indigo-600 font-bold' : ''}>LAST ACTIVE</span>
-                                        {sortConfig.key !== 'last_active' ? (
+                                        <span className={sortConfig.key === 'last_login' ? 'text-indigo-600 font-bold' : ''}>LAST LOGIN</span>
+                                        {sortConfig.key !== 'last_login' ? (
                                             <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
                                         ) : sortConfig.direction === 'asc' ? (
                                             <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
@@ -651,7 +607,7 @@ export default function Employers() {
                                 displayedUsers.map((user, idx) => {
                                     const isBottom = idx >= displayedUsers.length - 2 && displayedUsers.length > 3;
                                     const name = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown';
-                                    const activity = formatLastActive(user.last_active);
+                                    const activity = formatLastActive(user.last_login || user.created_date);
 
                                     return (
                                         <tr key={user.id || user._id || idx} className="hover:bg-gray-50/80 transition-colors group">
@@ -747,11 +703,20 @@ export default function Employers() {
                         </div>
                         <div className="flex items-center justify-center gap-1.5 w-1/3">
                             <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                title="Go to first page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsLeft className="w-4 h-4" />
+                            </button>
+                            <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Previous page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
-                                <ChevronLeft className="w-5 h-5" />
+                                <ChevronLeft className="w-4 h-4" />
                             </button>
                             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                                 let pageNum;
@@ -768,7 +733,7 @@ export default function Employers() {
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all ${currentPage === pageNum
+                                        className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all cursor-pointer ${currentPage === pageNum
                                             ? 'text-white border border-indigo-600 bg-indigo-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-gray-50 bg-white border border-transparent hover:border-gray-200'
                                             }`}
@@ -778,12 +743,12 @@ export default function Employers() {
                                 );
                             })}
                             {totalPages > 5 && currentPage < totalPages - 2 && (
-                                <span className="text-gray-400 px-1">...</span>
+                                <span className="text-gray-400 px-1 select-none">...</span>
                             )}
                             {totalPages > 5 && currentPage < totalPages - 2 && (
                                 <button
                                     onClick={() => setCurrentPage(totalPages)}
-                                    className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-50`}
+                                    className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-50 cursor-pointer`}
                                 >
                                     {totalPages}
                                 </button>
@@ -791,9 +756,18 @@ export default function Employers() {
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Next page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
-                                <ChevronRight className="w-5 h-5" />
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                title="Go to last page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsRight className="w-4 h-4" />
                             </button>
                         </div>
                         <div className="flex items-center justify-end gap-2 text-[13px] text-gray-500 w-1/3">

@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-    Users, UserCheck, Briefcase, UserPlus, Search,
-    MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight,
-    MapPin, GraduationCap, CheckCircle2, XCircle, X, Mail, Phone, Calendar,
-    ChevronsUpDown, ChevronUp, ChevronDown, Clock, FileText, Download, ExternalLink
+    Users, Search,
+    MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+    MapPin, GraduationCap, CheckCircle2, XCircle,
+    ChevronsUpDown, ChevronUp, ChevronDown, Clock
 } from 'lucide-react';
 import { getUsers, getUserProfile, updateUserStatus } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
-import { downloadResumeFile, viewResumeFile } from '../utils/downloadResume';
+import CandidateProfileModal from './CandidateProfileModal';
 
 // ── Format Last Active Dynamically ──
 const formatLastActive = (dateString) => {
@@ -79,229 +79,22 @@ const ActionsDropdown = ({ user, onClose, onDelete, onViewProfile, onToggleStatu
 
     return (
         <div ref={ref} className={`absolute right-0 ${isBottom ? 'bottom-full mb-1' : 'top-full mt-1'} w-48 bg-white rounded-xl shadow-lg border border-gray-200/80 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150`}>
-            <button onClick={() => { onViewProfile(user.id || user._id); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
+            <button onClick={() => { onViewProfile(user); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors cursor-pointer">
                 <Eye className="w-3.5 h-3.5" /> View Profile
             </button>
-            <button onClick={() => { onToggleStatus(user); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-gray-100 transition-colors">
+            <button onClick={() => { onToggleStatus(user); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer">
                 {user.status === 'Disabled' ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> : <XCircle className="w-3.5 h-3.5 text-amber-600" />}
                 {user.status === 'Disabled' ? 'Enable User' : 'Disable User'}
             </button>
             <div className="my-1 border-t border-gray-100"></div>
-            <button onClick={() => { onDelete(user); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors">
+            <button onClick={() => { onDelete(user); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
                 <Trash2 className="w-3.5 h-3.5" /> Remove User
             </button>
         </div>
     );
 };
 
-// ── Profile Modal Component ──
-const ProfileModal = ({ userId, onClose }) => {
-    const [profile, setProfile] = useState(null);
-    const [loadingProfile, setLoadingProfile] = useState(true);
 
-    useEffect(() => {
-        if (!userId) return;
-        const fetchProfile = async () => {
-            try {
-                setLoadingProfile(true);
-                const res = await getUserProfile({ user_id: userId });
-                setProfile(res?.data?.data || null);
-            } catch (err) {
-                console.error(err);
-                toast.error("Failed to load profile details");
-            } finally {
-                setLoadingProfile(false);
-            }
-        };
-        fetchProfile();
-    }, [userId]);
-
-    if (!userId) return null;
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-0">Candidate Profile</h2>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition-colors">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <div className="p-6 overflow-y-auto flex-1 hide-scrollbar">
-                    {loadingProfile ? (
-                        <div className="flex flex-col items-center justify-center py-12">
-                            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                            <p className="text-gray-500 text-sm">Loading profile data...</p>
-                        </div>
-                    ) : profile ? (
-                        <div className="space-y-8">
-                            <div className="flex flex-col sm:flex-row gap-6 items-start">
-                                {profile.profile_image ? (
-                                    <img src={profile.profile_image} className="w-24 h-24 rounded-full object-contain p-2 border border-gray-100" alt="Profile" />
-                                ) : (
-                                    <div className="w-24 h-24 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-3xl font-bold border-4 border-white shadow-md">
-                                        {(profile.first_name || 'U')[0].toUpperCase()}
-                                    </div>
-                                )}
-                                <div className="flex-1">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
-                                        <div>
-                                            <h3 className="text-2xl font-bold text-gray-900 mb-0.5">{profile.first_name} {profile.last_name}</h3>
-                                            <p className="text-blue-600 font-semibold text-sm mb-0">{profile.role_name || 'CANDIDATE'}</p>
-                                        </div>
-
-                                        {profile.resume && profile.resume !== 'Resume' && profile.resume !== '#' && profile.resume !== 'null' && (
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => viewResumeFile(profile.resume)}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 rounded-xl text-xs font-semibold transition-all shadow-2xs"
-                                                >
-                                                    <Eye className="w-3.5 h-3.5" />
-                                                    View Resume
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => downloadResumeFile(profile.resume, `${profile.first_name || ''}_${profile.last_name || ''}`)}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-xs"
-                                                >
-                                                    <Download className="w-3.5 h-3.5" />
-                                                    Download
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-gray-600 mt-3">
-                                        <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-gray-400" /> {profile.email}</div>
-                                        <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-gray-400" /> {profile.phone_code} {profile.phone}</div>
-                                        <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-gray-400" /> {profile.location || 'Location not specified'}</div>
-                                        <div className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-gray-400" /> {profile.experince_type || 'N/A'} {profile.total_years ? `(${profile.total_years})` : ''}</div>
-                                        <div className="flex items-center gap-2">
-                                            <Clock className="w-4 h-4 text-gray-400" />
-                                            <span>Last Active: <strong className="text-gray-900 font-semibold">{formatLastActive(profile.last_active).relative}</strong> {profile.last_active && formatLastActive(profile.last_active).exact ? `(${formatLastActive(profile.last_active).exact})` : ''}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Resume Card Section */}
-                            <div>
-                                <h4 className="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                                    <FileText className="w-4 h-4 text-indigo-600" />
-                                    Resume / CV
-                                </h4>
-                                {profile.resume && profile.resume !== 'Resume' && profile.resume !== '#' && profile.resume !== 'null' ? (
-                                    <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3.5">
-                                            <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 border border-red-200/80 flex items-center justify-center shrink-0 shadow-2xs">
-                                                <FileText className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <h5 className="text-[13px] font-bold text-gray-900 mb-2">
-                                                    {typeof profile.resume === 'string' && !profile.resume.startsWith('data:')
-                                                        ? (profile.resume.split('/').pop().split('\\').pop() || `${profile.first_name || 'Candidate'}_Resume.pdf`)
-                                                        : `${profile.first_name || 'Candidate'}_Resume.pdf`}
-                                                </h5>
-                                                <p className="text-[11px] text-gray-500 mb-0 flex items-center gap-2">
-                                                    <span className="inline-flex items-center text-emerald-700 font-bold bg-emerald-100/70 border-1 border-emerald-200/60 px-1.5 py-0.2 rounded text-[10px]">
-                                                        PDF DOCUMENT
-                                                    </span>
-                                                    <span>Uploaded by candidate</span>
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                                            <button
-                                                type="button"
-                                                onClick={() => viewResumeFile(profile.resume)}
-                                                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold transition-all shadow-2xs"
-                                            >
-                                                <Eye className="w-3.5 h-3.5 text-slate-600" />
-                                                View
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => downloadResumeFile(profile.resume, `${profile.first_name || ''}_${profile.last_name || ''}`)}
-                                                className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-xs"
-                                            >
-                                                <Download className="w-3.5 h-3.5" />
-                                                Download
-                                            </button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-center">
-                                        <p className="text-xs text-gray-400 mb-0 italic">No resume document uploaded by this candidate.</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            {profile.about && (
-                                <div>
-                                    <h4 className="text-base font-semibold text-gray-900 mb-2">About</h4>
-                                    <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">{profile.about}</p>
-                                </div>
-                            )}
-
-                            {profile.skills && profile.skills.length > 0 && (
-                                <div>
-                                    <h4 className="text-base font-semibold text-gray-900 mb-3">Skills</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {profile.skills.map((skill, idx) => (
-                                            <span key={idx} className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs font-medium border border-gray-200">
-                                                {skill}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {profile.education && profile.education.length > 0 && (
-                                <div>
-                                    <h4 className="text-base font-semibold text-gray-900 mb-3">Education</h4>
-                                    <div className="space-y-4">
-                                        {profile.education.map((edu, idx) => (
-                                            <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
-                                                <h5 className="font-semibold text-gray-900">{edu.qualification} - {edu.course}</h5>
-                                                <p className="text-sm text-gray-600 mt-1 mb-0">{edu.college}</p>
-                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1.5 mb-0"><Calendar className="w-3.5 h-3.5" /> {edu.start_date ? new Date(edu.start_date).getFullYear() : ''} - {edu.end_date ? new Date(edu.end_date).getFullYear() : 'Present'}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {profile.professional && profile.professional.length > 0 && (
-                                <div>
-                                    <h4 className="text-base font-semibold text-gray-900 mb-3">Professional Experience</h4>
-                                    <div className="space-y-4">
-                                        {profile.professional.map((exp, idx) => (
-                                            <div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden">
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
-                                                <h5 className="font-semibold text-gray-900">{exp.job_title}</h5>
-                                                <p className="text-sm text-gray-600 mt-1 mb-0">{exp.company_name}</p>
-                                                <p className="text-xs text-gray-400 mt-2 flex items-center gap-1.5 mb-0"><Calendar className="w-3.5 h-3.5" /> {exp.start_date ? new Date(exp.start_date).toLocaleDateString() : ''} - {exp.currently_working ? 'Present' : (exp.end_date ? new Date(exp.end_date).toLocaleDateString() : '')}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                        </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <p className="text-gray-500">No profile data available.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 export default function JobSeekers() {
     const [users, setUsers] = useState([]);
@@ -310,7 +103,24 @@ export default function JobSeekers() {
     const [activeFilter, setActiveFilter] = useState('All');
     const [openDropdown, setOpenDropdown] = useState(null);
     const [selectedProfileId, setSelectedProfileId] = useState(null);
+    const [selectedCandidateSummary, setSelectedCandidateSummary] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+
+    const handleViewProfile = (candidate) => {
+        if (!candidate) return;
+        const userId = candidate.id || candidate._id;
+        setSelectedProfileId(userId);
+        setSelectedCandidateSummary({
+            id: userId,
+            name: candidate.name || `${candidate.first_name || ''} ${candidate.last_name || ''}`.trim() || 'Candidate',
+            email: candidate.email,
+            phone: candidate.phone,
+            location: candidate.city || candidate.location,
+            profileImage: candidate.profile_image || candidate.profileImage || candidate.profile_picture || null,
+            status: candidate.status,
+            timeRaw: candidate.created_date || candidate.last_active
+        });
+    };
     const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, new: 0 });
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' }); // 'candidate' | 'education' | 'status' | 'last_active'
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
@@ -330,43 +140,12 @@ export default function JobSeekers() {
             }
             return { key, direction: 'asc' };
         });
+        setCurrentPage(1);
     };
 
     const displayedUsers = useMemo(() => {
-        if (!sortConfig.key) return users;
-        return [...users].sort((a, b) => {
-            switch (sortConfig.key) {
-                case 'candidate': {
-                    const nameA = (a.name || `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.email || '').toLowerCase();
-                    const nameB = (b.name || `${b.first_name || ''} ${b.last_name || ''}`.trim() || b.email || '').toLowerCase();
-                    return sortConfig.direction === 'asc'
-                        ? nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' })
-                        : nameB.localeCompare(nameA, undefined, { numeric: true, sensitivity: 'base' });
-                }
-                case 'education': {
-                    const eduA = (a.college_name || a.college || a.class || a.city || a.location || '').toLowerCase();
-                    const eduB = (b.college_name || b.college || b.class || b.city || b.location || '').toLowerCase();
-                    return sortConfig.direction === 'asc'
-                        ? eduA.localeCompare(eduB, undefined, { numeric: true, sensitivity: 'base' })
-                        : eduB.localeCompare(eduA, undefined, { numeric: true, sensitivity: 'base' });
-                }
-                case 'status': {
-                    const statusA = (a.status || '').toLowerCase();
-                    const statusB = (b.status || '').toLowerCase();
-                    return sortConfig.direction === 'asc'
-                        ? statusA.localeCompare(statusB)
-                        : statusB.localeCompare(statusA);
-                }
-                case 'last_active': {
-                    const timeA = a.last_active ? new Date(a.last_active).getTime() : 0;
-                    const timeB = b.last_active ? new Date(b.last_active).getTime() : 0;
-                    return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA;
-                }
-                default:
-                    return 0;
-            }
-        });
-    }, [users, sortConfig]);
+        return users;
+    }, [users]);
 
     const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
@@ -379,7 +158,7 @@ export default function JobSeekers() {
 
     useEffect(() => {
         fetchUsers();
-    }, [currentPage, debouncedSearch, activeFilter, dateFilter]);
+    }, [currentPage, debouncedSearch, activeFilter, dateFilter, sortConfig]);
 
     const fetchUsers = async () => {
         try {
@@ -393,7 +172,9 @@ export default function JobSeekers() {
                 role: 2,
                 start_date: dateFilter.startDate || undefined,
                 end_date: dateFilter.endDate || undefined,
-                timeFilter: dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined
+                timeFilter: dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined,
+                sortBy: sortConfig.key || undefined,
+                sortOrder: sortConfig.direction || undefined
             };
             const response = await getUsers(payload);
             const responseData = response?.data?.data;
@@ -611,13 +392,13 @@ export default function JobSeekers() {
                                     </div>
                                 </th>
                                 <th
-                                    onClick={() => handleSort('last_active')}
+                                    onClick={() => handleSort('last_login')}
                                     className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
-                                    title="Click to sort by Last Active"
+                                    title="Click to sort by Last Login"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <span className={sortConfig.key === 'last_active' ? 'text-indigo-600 font-bold' : ''}>LAST ACTIVE</span>
-                                        {sortConfig.key !== 'last_active' ? (
+                                        <span className={sortConfig.key === 'last_login' ? 'text-indigo-600 font-bold' : ''}>LAST LOGIN</span>
+                                        {sortConfig.key !== 'last_login' ? (
                                             <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
                                         ) : sortConfig.direction === 'asc' ? (
                                             <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
@@ -659,33 +440,61 @@ export default function JobSeekers() {
                                 displayedUsers.map((user, idx) => {
                                     const isBottom = idx >= displayedUsers.length - 2 && displayedUsers.length > 3;
                                     const name = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown';
-                                    const activity = formatLastActive(user.last_active);
+                                    const activity = formatLastActive(user.last_login || user.created_date);
+                                    const candidateAvatar = user.profile_image || user.profileImage || user.profile_picture || user.avatar;
 
                                     return (
                                         <tr key={user.id || user._id || idx} className="hover:bg-gray-50/80 transition-colors group">
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
-                                                    {user.profileImage || user.profile_picture ? (
-                                                        <img src={user.profileImage || user.profile_picture} alt="" className="w-10 h-10 rounded-full object-cover border border-gray-100" />
-                                                    ) : (
-                                                        <div className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm border border-indigo-100">
+                                                    <div
+                                                        onClick={() => handleViewProfile(user)}
+                                                        className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm border border-indigo-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity shrink-0"
+                                                        title="View candidate profile"
+                                                    >
+                                                        {candidateAvatar && candidateAvatar !== 'null' && candidateAvatar !== '#' ? (
+                                                            <img
+                                                                src={candidateAvatar}
+                                                                alt={name}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    e.currentTarget.style.display = 'none';
+                                                                    if (e.currentTarget.nextSibling) {
+                                                                        e.currentTarget.nextSibling.style.display = 'flex';
+                                                                    }
+                                                                }}
+                                                            />
+                                                        ) : null}
+                                                        <span
+                                                            style={{ display: candidateAvatar && candidateAvatar !== 'null' && candidateAvatar !== '#' ? 'none' : 'flex' }}
+                                                            className="w-full h-full items-center justify-center select-none"
+                                                        >
                                                             {name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                    )}
-                                                    <div>
-                                                        <div className="font-semibold text-gray-900 text-[14px]">{name}</div>
-                                                        <div className="text-[12px] text-gray-500">{user.email}</div>
+                                                        </span>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleViewProfile(user)}
+                                                            className="font-semibold text-gray-900 text-[14px] hover:text-indigo-600 transition-colors cursor-pointer text-left focus:outline-none block truncate max-w-xs"
+                                                            title="View candidate profile"
+                                                        >
+                                                            {name}
+                                                        </button>
+                                                        <div className="text-[12px] text-gray-500 truncate max-w-xs">{user.email}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-col gap-1.5">
                                                     <div className="flex items-center gap-1.5 text-[13px] text-gray-700">
-                                                        <GraduationCap className="w-3.5 h-3.5 text-gray-400" />
-                                                        <span className="truncate max-w-[200px]">{user.college_name || user.college || user.class || 'Not provided'}</span>
+                                                        <GraduationCap className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                                        <span className="truncate max-w-[200px]" title={user.display_education || user.education_college || user.education_course || user.college_name || user.college || user.course || user.class || 'Not provided'}>
+                                                            {user.display_education || user.education_college || user.education_course || user.college_name || user.college || user.course || user.class || 'Not provided'}
+                                                        </span>
                                                     </div>
                                                     <div className="flex items-center gap-1.5 text-[12px] text-gray-500">
-                                                        <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                                        <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                                         <span>{user.city || user.location || 'Location N/A'}</span>
                                                     </div>
                                                 </div>
@@ -723,7 +532,7 @@ export default function JobSeekers() {
                                                 <div className="relative inline-block text-left">
                                                     <button
                                                         onClick={() => setOpenDropdown(openDropdown === user.id ? null : user.id)}
-                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 bg-white border border-gray-200 hover:border-gray-300 transition-all"
+                                                        className="p-1.5 rounded-lg text-gray-400 hover:text-gray-900 bg-white border border-gray-200 hover:border-gray-300 transition-all cursor-pointer"
                                                     >
                                                         <MoreVertical className="w-4 h-4" />
                                                     </button>
@@ -732,7 +541,7 @@ export default function JobSeekers() {
                                                             user={user}
                                                             onClose={() => setOpenDropdown(null)}
                                                             onDelete={handleDeleteUser}
-                                                            onViewProfile={setSelectedProfileId}
+                                                            onViewProfile={handleViewProfile}
                                                             onToggleStatus={handleToggleStatus}
                                                             isBottom={isBottom}
                                                         />
@@ -755,11 +564,20 @@ export default function JobSeekers() {
                         </div>
                         <div className="flex items-center justify-center gap-1.5 w-1/3">
                             <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                title="Go to first page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsLeft className="w-4 h-4" />
+                            </button>
+                            <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Previous page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
-                                <ChevronLeft className="w-5 h-5" />
+                                <ChevronLeft className="w-4 h-4" />
                             </button>
                             {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
                                 let pageNum;
@@ -776,7 +594,7 @@ export default function JobSeekers() {
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all ${currentPage === pageNum
+                                        className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all cursor-pointer ${currentPage === pageNum
                                             ? 'text-white border border-indigo-600 bg-indigo-600 shadow-sm'
                                             : 'text-gray-600 hover:bg-gray-50 bg-white border border-transparent hover:border-gray-200'
                                             }`}
@@ -786,12 +604,12 @@ export default function JobSeekers() {
                                 );
                             })}
                             {totalPages > 5 && currentPage < totalPages - 2 && (
-                                <span className="text-gray-400 px-1">...</span>
+                                <span className="text-gray-400 px-1 select-none">...</span>
                             )}
                             {totalPages > 5 && currentPage < totalPages - 2 && (
                                 <button
                                     onClick={() => setCurrentPage(totalPages)}
-                                    className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-50`}
+                                    className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-50 cursor-pointer`}
                                 >
                                     {totalPages}
                                 </button>
@@ -799,9 +617,18 @@ export default function JobSeekers() {
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Next page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
-                                <ChevronRight className="w-5 h-5" />
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                title="Go to last page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsRight className="w-4 h-4" />
                             </button>
                         </div>
                         <div className="flex items-center justify-end gap-2 text-[13px] text-gray-500 w-1/3">
@@ -822,10 +649,16 @@ export default function JobSeekers() {
             </div>
 
             {/* Profile Modal */}
-            <ProfileModal
-                userId={selectedProfileId}
-                onClose={() => setSelectedProfileId(null)}
-            />
+            {selectedProfileId && (
+                <CandidateProfileModal
+                    userId={selectedProfileId}
+                    candidateSummary={selectedCandidateSummary}
+                    onClose={() => {
+                        setSelectedProfileId(null);
+                        setSelectedCandidateSummary(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

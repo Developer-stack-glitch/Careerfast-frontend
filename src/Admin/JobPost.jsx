@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Briefcase, Building2, MapPin, Search,
     MoreVertical, CheckCircle2, CheckCircle, XCircle, FileText, Download,
-    Eye, Trash2, ExternalLink, ChevronLeft, ChevronRight, SlidersHorizontal, Clock,
+    Eye, Trash2, ExternalLink, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, SlidersHorizontal, Clock,
     ChevronsUpDown, Folder, GraduationCap, ClipboardList, Users, User, Calendar,
-    Layers, Filter, RotateCcw, ChevronDown, Sparkles
+    Layers, Filter, RotateCcw, ChevronDown, Sparkles, LogIn, X
 } from 'lucide-react';
 import {
     getJobPosts,
@@ -21,7 +21,6 @@ import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
 import AdminSelect from './AdminSelect';
 import { formatDistanceToNow } from 'date-fns';
-import Link from 'next/link';
 import { getJobDetailsUrl } from '../utils/slug';
 import { Modal } from 'antd';
 
@@ -91,7 +90,7 @@ const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
 );
 
 // ── Actions Dropdown (for Standard Table) ──
-const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, onReject, onViewPreview, isBottom }) => {
+const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, onReject, onViewPreview, onViewApplied, isBottom }) => {
     const ref = useRef(null);
 
     useEffect(() => {
@@ -110,7 +109,7 @@ const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, on
             <button onClick={() => { onViewPreview(job); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
                 <Eye className="w-3.5 h-3.5 text-blue-500" /> View / Preview
             </button>
-            <button onClick={() => { window.location.href = `/admin/applications?search=${encodeURIComponent(job.job_title || '')}`; onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
+            <button onClick={() => { if (onViewApplied) onViewApplied(job); else window.location.href = `/admin/applications?search=${encodeURIComponent(job.job_title || '')}`; onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition-colors">
                 <Users className="w-3.5 h-3.5 text-indigo-500" /> View Applied ({job.applicants_count || 0})
             </button>
             <button onClick={() => { window.open(job.apply_link || getJobDetailsUrl(job, true), '_blank'); onClose(); }} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">
@@ -178,6 +177,10 @@ export default function JobPost() {
     // Approval action modals
     const [actionModal, setActionModal] = useState({ isOpen: false, type: '', id: null, title: '' });
     const [rejectReason, setRejectReason] = useState('');
+
+    // Applied Candidates Recruiter Login Modal
+    const [appliedModalJob, setAppliedModalJob] = useState(null);
+    const [isLoggingInRecruiter, setIsLoggingInRecruiter] = useState(false);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -362,6 +365,19 @@ export default function JobPost() {
             console.error("Error in handleViewPreview:", err);
             toast.error(err?.response?.data?.message || err?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
             window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
+        }
+    };
+
+    const handleLoginAsRecruiterForApplicants = async (job) => {
+        if (!job) return;
+        setIsLoggingInRecruiter(true);
+        try {
+            await handleViewPreview(job);
+            setAppliedModalJob(null);
+        } catch (err) {
+            console.error("Error logging in as recruiter for applicants:", err);
+        } finally {
+            setIsLoggingInRecruiter(false);
         }
     };
 
@@ -1157,20 +1173,21 @@ export default function JobPost() {
 
                                                 {/* Applied Candidates Count */}
                                                 <td className="px-4 py-3.5 whitespace-nowrap">
-                                                    <a
-                                                        href={`/admin/applications?search=${encodeURIComponent(jobTitleText)}`}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all ${(Number(job.applicants_count) > 0)
-                                                            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border-1 border-indigo-200/80 shadow-2xs'
-                                                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100 border border-gray-200/60'
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setAppliedModalJob(job)}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-all cursor-pointer ${(Number(job.applicants_count) > 0)
+                                                            ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 border-1 border-indigo-200/80 shadow-2xs hover:scale-105 active:scale-95'
+                                                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700 border border-gray-200/60 hover:scale-105 active:scale-95'
                                                             }`}
-                                                        title={`View ${job.applicants_count || 0} applied candidates`}
+                                                        title={`Click to view applied candidates for "${jobTitleText}"`}
                                                     >
                                                         <Users className={`w-3.5 h-3.5 ${Number(job.applicants_count) > 0 ? 'text-indigo-600' : 'text-gray-400'}`} />
                                                         <span>{job.applicants_count || 0}</span>
                                                         <span className="text-[11px] font-medium opacity-80">
                                                             Applied
                                                         </span>
-                                                    </a>
+                                                    </button>
                                                 </td>
 
                                                 {/* Status */}
@@ -1202,6 +1219,7 @@ export default function JobPost() {
                                                                 onApprove={(j) => openModal('approve', j.id, j.job_title)}
                                                                 onReject={(j) => openModal('reject', j.id, j.job_title)}
                                                                 onViewPreview={handleViewPreview}
+                                                                onViewApplied={(j) => setAppliedModalJob(j)}
                                                                 isBottom={index >= paginatedJobs.length - 2 && paginatedJobs.length > 2}
                                                             />
                                                         )}
@@ -1224,9 +1242,18 @@ export default function JobPost() {
                         </div>
                         <div className="flex items-center justify-center gap-1.5 sm:w-1/3">
                             <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                title="Go to first page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsLeft className="w-5 h-5" />
+                            </button>
+                            <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Previous page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
@@ -1245,7 +1272,7 @@ export default function JobPost() {
                                     <button
                                         key={pageNum}
                                         onClick={() => setCurrentPage(pageNum)}
-                                        className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all ${currentPage === pageNum
+                                        className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all cursor-pointer ${currentPage === pageNum
                                             ? 'text-indigo-600 border border-indigo-200 bg-indigo-50 font-bold'
                                             : 'text-gray-600 hover:bg-gray-50'
                                             }`}
@@ -1255,12 +1282,12 @@ export default function JobPost() {
                                 );
                             })}
                             {totalPages > 5 && currentPage < totalPages - 2 && (
-                                <span className="text-gray-400 px-1">...</span>
+                                <span className="text-gray-400 px-1 select-none">...</span>
                             )}
                             {totalPages > 5 && currentPage < totalPages - 2 && (
                                 <button
                                     onClick={() => setCurrentPage(totalPages)}
-                                    className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-50`}
+                                    className={`w-8 h-8 flex items-center justify-center text-[13px] font-medium rounded-lg transition-all text-gray-600 hover:bg-gray-50 cursor-pointer`}
                                 >
                                     {totalPages}
                                 </button>
@@ -1268,9 +1295,18 @@ export default function JobPost() {
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Next page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                title="Go to last page"
+                                className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsRight className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="flex items-center justify-end gap-2 text-[13px] text-gray-500 sm:w-1/3">
@@ -1379,6 +1415,142 @@ export default function JobPost() {
                     )}
                 </div>
             </Modal>
+
+            {/* Applied Candidates / Recruiter Login Prompt Modal */}
+            {appliedModalJob && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget && !isLoggingInRecruiter) {
+                            setAppliedModalJob(null);
+                        }
+                    }}
+                >
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="px-6 pt-4 pb-4 flex items-center justify-between border-b border-gray-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-semibold text-gray-900 mb-0">
+                                        View Applied Candidates
+                                    </h3>
+                                    <p className="text-[12px] text-gray-500 mb-0">
+                                        Recruiter Portal Access Required
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setAppliedModalJob(null)}
+                                disabled={isLoggingInRecruiter}
+                                className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-3 space-y-4">
+                            {/* Job info card */}
+                            <div className="bg-slate-50 rounded-xl p-3 flex items-center gap-3.5">
+                                {appliedModalJob.company_logo ? (
+                                    <img
+                                        src={appliedModalJob.company_logo}
+                                        alt=""
+                                        className="w-12 h-12 rounded-xl object-contain bg-white p-1 border border-gray-200 shrink-0"
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                    />
+                                ) : (
+                                    <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm border border-indigo-100 shrink-0">
+                                        {(appliedModalJob.company_name || 'J').slice(0, 2).toUpperCase()}
+                                    </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                    <h4 className="text-[14px] font-bold text-gray-900 truncate mb-0.5">
+                                        {appliedModalJob.job_title || 'Untitled Role'}
+                                    </h4>
+                                    <div className="flex items-center gap-2 text-[12px] text-gray-600 truncate">
+                                        <span className="font-medium text-gray-700">{appliedModalJob.company_name || '-'}</span>
+                                        {appliedModalJob.work_location && (
+                                            <>
+                                                <span>•</span>
+                                                <span className="truncate">{appliedModalJob.work_location}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className="mt-1.5 flex items-center gap-2">
+                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100/80 text-blue-800 border-1 border-blue-200">
+                                            <Users className="w-3 h-3" />
+                                            {appliedModalJob.applicants_count || 0} Applied
+                                        </span>
+                                        <span className="text-[11px] text-gray-400">
+                                            Job ID: #{appliedModalJob.id}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Core Prompt Notice */}
+                            <div className="bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-white rounded-xl p-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5">
+                                        <LogIn className="w-4 h-4" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[13px] font-semibold text-gray-900 leading-snug mb-1">
+                                            When you want to see the applied candidate, you need to log in into the recruiter page.
+                                        </p>
+                                        <p className="text-[12px] text-gray-600 leading-relaxed mb-0">
+                                            Candidate applications, resumes, profiles, and hiring workflows are securely managed inside the Recruiter Portal.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Target Route preview */}
+                            <div className="text-[11px] text-gray-500 bg-gray-50 px-3.5 py-2.5 rounded-lg border border-gray-100 flex items-center justify-between">
+                                <span className="text-gray-500 font-medium">Destination:</span>
+                                <span className="font-mono text-xs font-semibold text-indigo-600 bg-indigo-50/80 px-2 py-0.5 rounded border-1 border-indigo-100">
+                                    recruit.careerfast.in/applicants/{appliedModalJob.id}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Footer Actions */}
+                        <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setAppliedModalJob(null)}
+                                disabled={isLoggingInRecruiter}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200/70 bg-white border border-gray-200 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleLoginAsRecruiterForApplicants(appliedModalJob)}
+                                disabled={isLoggingInRecruiter}
+                                className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 rounded-xl transition-all shadow-sm shadow-blue-500/25 flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                            >
+                                {isLoggingInRecruiter ? (
+                                    <>
+                                        <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Logging in as Recruiter...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <LogIn className="w-3.5 h-3.5" />
+                                        <span>Login as Recruiter</span>
+                                        <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

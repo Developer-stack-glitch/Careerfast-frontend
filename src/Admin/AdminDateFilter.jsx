@@ -47,6 +47,12 @@ export const getPresetDateRange = (preset) => {
             return { startDate: formatDateYYYYMMDD(start), endDate: formatDateYYYYMMDD(end), label: 'Last Month' };
         }
 
+        case 'This Quarter': {
+            const quarterMonth = Math.floor(now.getMonth() / 3) * 3;
+            const start = new Date(now.getFullYear(), quarterMonth, 1);
+            return { startDate: formatDateYYYYMMDD(start), endDate: todayStr, label: 'This Quarter' };
+        }
+
         case 'This Year': {
             const start = new Date(now.getFullYear(), 0, 1);
             return { startDate: formatDateYYYYMMDD(start), endDate: todayStr, label: 'This Year' };
@@ -61,7 +67,7 @@ export const getPresetDateRange = (preset) => {
 export default function AdminDateFilter({
     value = { preset: 'All Time', startDate: '', endDate: '', label: 'All Time' },
     onChange,
-    presets = ['All Time', 'Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'This Month', 'Last Month'],
+    presets = ['All Time', 'Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'This Month', 'Last Month', 'This Quarter', 'This Year'],
     className = ''
 }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -138,7 +144,7 @@ export default function AdminDateFilter({
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all outline-none select-none ${isFiltered
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all outline-none select-none h-[42px] cursor-pointer ${isFiltered
                         ? 'bg-blue-50/80 border-blue-200 text-blue-700 hover:bg-blue-100/70 hover:border-blue-300'
                         : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-white hover:border-blue-500'
                     }`}
@@ -146,17 +152,16 @@ export default function AdminDateFilter({
                 <Calendar className={`w-4 h-4 shrink-0 ${isFiltered ? 'text-blue-600' : 'text-gray-400'}`} />
                 <span className="truncate max-w-[170px]">{value.label || 'Date Filter'}</span>
 
-                {isFiltered ? (
+                {isFiltered && (
                     <span
                         onClick={handleClear}
                         title="Clear date filter"
-                        className="p-0.5 rounded-full hover:bg-blue-200/70 text-blue-600 transition-colors ml-0.5"
+                        className="p-0.5 rounded-full hover:bg-blue-200/70 text-blue-600 transition-colors ml-0.5 cursor-pointer"
                     >
                         <X className="w-3.5 h-3.5" />
                     </span>
-                ) : (
-                    <ChevronDown className={`w-3.5 h-3.5 shrink-0 text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                 )}
+                <ChevronDown className={`w-3.5 h-3.5 shrink-0 ${isFiltered ? 'text-blue-600' : 'text-gray-400'} transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {/* Dropdown Menu */}

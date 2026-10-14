@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import {
-    FileCheck, Search, Calendar, ChevronsUpDown, ChevronLeft, ChevronRight, Briefcase, MoreVertical, Eye, Trash2, X, Mail, Phone, MapPin, User
+    FileCheck, Search, Calendar, ChevronsUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Briefcase, MoreVertical, Eye, Trash2, X, Mail, Phone, MapPin, User
 } from 'lucide-react';
 import { getAllAppliedCandidates, getUserProfile } from '../ApiService/action';
 import { getJobDetailsUrl } from '../utils/slug';
@@ -486,9 +486,18 @@ export default function Applications() {
                         </div>
                         <div className="flex items-center justify-center gap-1.5 w-1/3">
                             <button
+                                onClick={() => setCurrentPage(1)}
+                                disabled={currentPage === 1}
+                                title="Go to first page"
+                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsLeft className="w-5 h-5" />
+                            </button>
+                            <button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Previous page"
+                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
@@ -530,9 +539,18 @@ export default function Applications() {
                             <button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
-                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent"
+                                title="Next page"
+                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
                             >
                                 <ChevronRight className="w-5 h-5" />
+                            </button>
+                            <button
+                                onClick={() => setCurrentPage(totalPages)}
+                                disabled={currentPage === totalPages}
+                                title="Go to last page"
+                                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-all disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                            >
+                                <ChevronsRight className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="flex items-center justify-end gap-2 text-[13px] text-gray-500 w-1/3">

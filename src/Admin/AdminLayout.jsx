@@ -79,7 +79,7 @@ const checkIsActive = (itemHref, currentPath) => {
 
 const WorkspaceSwitcher = memo(function WorkspaceSwitcher() {
     return (
-        <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
             <Link href="/admin/dashboard/recruiter" className="flex items-center justify-center w-full cursor-pointer group no-underline">
                 <div className="flex items-center gap-2">
                     <img src={getImageUrl(defaultLogo)} alt="CareerFast" className="w-[180px] h-auto object-contain" />

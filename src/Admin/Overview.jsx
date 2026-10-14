@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { getSuperAdminDashboardStats } from '../ApiService/action';
 import { useRouter } from 'next/navigation';
-import AdminSelect from './AdminSelect';
+import AdminDateFilter from './AdminDateFilter';
 
 const StatCard = ({ title, value, change, isPositive, icon: Icon, color, bg }) => (
     <div className="bg-white rounded-xl shadow-xs p-4 transition-all hover:shadow-sm">
@@ -56,7 +56,7 @@ export default function Overview() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [timeFilter, setTimeFilter] = useState('This Quarter');
+    const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
     // Active Tab for Recent Section: 'recruiters', 'jobs', 'activity'
     const [activeRecentTab, setActiveRecentTab] = useState('recruiters');
@@ -66,7 +66,12 @@ export default function Overview() {
         const fetchDashboardData = async () => {
             try {
                 setLoading(true);
-                const response = await getSuperAdminDashboardStats(timeFilter);
+                const timeFilterParam = dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined;
+                const extraParams = {
+                    start_date: dateFilter.preset === 'Custom Range' ? (dateFilter.startDate || undefined) : undefined,
+                    end_date: dateFilter.preset === 'Custom Range' ? (dateFilter.endDate || undefined) : undefined
+                };
+                const response = await getSuperAdminDashboardStats(timeFilterParam, extraParams);
                 setData(response.data?.data || response.data);
             } catch (err) {
                 console.error("Failed to fetch dashboard stats", err);
@@ -77,7 +82,7 @@ export default function Overview() {
         };
 
         fetchDashboardData();
-    }, [timeFilter]);
+    }, [dateFilter]);
 
     const handleExport = () => {
         if (!data || !data.counts) return;
@@ -93,7 +98,8 @@ export default function Overview() {
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `recruiter_dashboard_stats_${timeFilter.replace(/\s+/g, '_').toLowerCase()}.csv`);
+        const filterSlug = (dateFilter.label || dateFilter.preset || 'all_time').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+        link.setAttribute("download", `recruiter_dashboard_stats_${filterSlug}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -392,17 +398,10 @@ export default function Overview() {
                     <p className="text-[13px] text-gray-500 mt-0.5 mb-0">Monitor recruiter metrics, company onboarding, active job postings, and employer activity.</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <AdminSelect
-                        value={timeFilter}
-                        onChange={(val) => setTimeFilter(val)}
-                        options={[
-                            { value: 'Last 7 Days', label: 'Last 7 Days' },
-                            { value: 'Last 30 Days', label: 'Last 30 Days' },
-                            { value: 'This Quarter', label: 'This Quarter' },
-                            { value: 'This Year', label: 'This Year' },
-                            { value: 'All Time', label: 'All Time' },
-                        ]}
-                        className="w-36"
+                    <AdminDateFilter
+                        value={dateFilter}
+                        onChange={(newFilter) => setDateFilter(newFilter)}
+                        presets={['All Time', 'Today', 'Yesterday', 'Last 7 Days', 'Last 30 Days', 'This Month', 'Last Month', 'This Quarter', 'This Year']}
                     />
                     <button
                         onClick={handleExport}
