@@ -818,8 +818,8 @@ export default function Employers() {
             {userToDelete && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200 flex flex-col">
-                        <div className="p-5 pb-0 flex items-start justify-between">
-                            <div className="w-11 h-11 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
+                        <div className="p-4 pb-0 flex items-start justify-between">
+                            <div className="w-11 h-11 rounded-2xl bg-rose-50 border-1 border-rose-100 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
                                 <Trash2 className="w-5 h-5" />
                             </div>
                             <button
@@ -831,7 +831,7 @@ export default function Employers() {
                             </button>
                         </div>
 
-                        <div className="p-5 pt-3">
+                        <div className="p-4 pt-3">
                             <h3 className="text-base font-bold text-gray-900 mb-1">
                                 Remove Employer & Login Account?
                             </h3>
@@ -855,7 +855,7 @@ export default function Employers() {
                                 </div>
                             </div>
 
-                            <div className="bg-amber-50/70 border border-amber-200/60 rounded-xl p-3 text-[12px] text-amber-800 flex items-start gap-2.5">
+                            <div className="bg-amber-50/70 border-1 border-amber-200/60 rounded-xl p-3 text-[12px] text-amber-800 flex items-start gap-2.5">
                                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                                 <div>
                                     <span className="font-semibold text-amber-900">Notice:</span> This action is permanent and completely deletes all login credentials and user data.
@@ -863,12 +863,12 @@ export default function Employers() {
                             </div>
                         </div>
 
-                        <div className="px-5 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-end gap-2.5">
+                        <div className="px-4 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-end gap-2.5">
                             <button
                                 type="button"
                                 onClick={() => setUserToDelete(null)}
                                 disabled={isDeletingUser}
-                                className="px-4 py-2 rounded-xl text-[13px] font-medium text-gray-700 hover:bg-gray-200/70 bg-white border border-gray-200 transition-colors disabled:opacity-40 cursor-pointer"
+                                className="px-4 py-2 rounded-xl text-[15px] font-medium text-gray-700 hover:bg-gray-200/70 bg-white border border-gray-200 transition-colors disabled:opacity-40 cursor-pointer"
                             >
                                 Cancel
                             </button>
@@ -876,7 +876,7 @@ export default function Employers() {
                                 type="button"
                                 onClick={confirmDeleteUser}
                                 disabled={isDeletingUser}
-                                className="px-4 py-2 rounded-xl text-[13px] font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                                className="px-4 py-2 rounded-xl text-[15px] font-medium text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                             >
                                 {isDeletingUser ? (
                                     <>
