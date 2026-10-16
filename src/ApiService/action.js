@@ -1796,6 +1796,17 @@ export const updateUserStatus = async (id, payload) => {
   }
 };
 
+export const deleteUser = async (id) => {
+  try {
+    const token = localStorage.getItem("AccessToken");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await api.delete(`/api/deleteUser/${id}`, { headers });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const searchCandidatesAPI = async (payload) => {
   try {
     const response = await api.get("/api/candidates/search", { params: payload });

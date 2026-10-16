@@ -4,9 +4,9 @@ import {
     MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     MapPin, GraduationCap, CheckCircle2, XCircle,
     ChevronsUpDown, ChevronUp, ChevronDown, Clock,
-    Sparkles, Calendar, UserPlus
+    Sparkles, Calendar, UserPlus, AlertTriangle, X, Loader2
 } from 'lucide-react';
-import { getUsers, getUserProfile, updateUserStatus } from '../ApiService/action';
+import { getUsers, getUserProfile, updateUserStatus, deleteUser } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
 import CandidateProfileModal from './CandidateProfileModal';
@@ -115,6 +115,8 @@ export default function JobSeekers() {
     const [selectedProfileId, setSelectedProfileId] = useState(null);
     const [selectedCandidateSummary, setSelectedCandidateSummary] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [userToDelete, setUserToDelete] = useState(null);
+    const [isDeletingUser, setIsDeletingUser] = useState(false);
 
     const handleViewProfile = (candidate) => {
         if (!candidate) return;
@@ -243,9 +245,27 @@ export default function JobSeekers() {
     };
 
     const handleDeleteUser = (user) => {
-        // Mock delete functionality
-        toast.success(`User ${user.first_name || user.name || 'deleted'} successfully`);
-        fetchUsers();
+        setUserToDelete(user);
+        setOpenDropdown(null);
+    };
+
+    const confirmDeleteUser = async () => {
+        if (!userToDelete) return;
+        try {
+            setIsDeletingUser(true);
+            const userId = userToDelete.id || userToDelete._id;
+            await deleteUser(userId);
+            const userName = userToDelete.name || `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || 'Candidate';
+            toast.success(`User ${userName} and login account removed successfully`);
+            setUserToDelete(null);
+            fetchUsers();
+        } catch (error) {
+            console.error("Error removing candidate:", error);
+            const errorMsg = error.response?.data?.details || error.response?.data?.message || "Failed to remove candidate. Please try again.";
+            toast.error(errorMsg);
+        } finally {
+            setIsDeletingUser(false);
+        }
     };
 
     const handleToggleStatus = async (user) => {
@@ -699,6 +719,101 @@ export default function JobSeekers() {
                         setSelectedCandidateSummary(null);
                     }}
                 />
+            )}
+
+            {/* Remove User & Login Confirmation Popup */}
+            {userToDelete && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200 flex flex-col">
+                        {/* Header with Close */}
+                        <div className="p-5 pb-0 flex items-start justify-between">
+                            <div className="w-11 h-11 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
+                                <Trash2 className="w-5 h-5" />
+                            </div>
+                            <button
+                                onClick={() => !isDeletingUser && setUserToDelete(null)}
+                                disabled={isDeletingUser}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-40 cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Body Content */}
+                        <div className="p-5 pt-3">
+                            <h3 className="text-base font-bold text-gray-900 mb-1">
+                                Remove Candidate & Login Account?
+                            </h3>
+                            <p className="text-[13px] text-gray-500 mb-4 leading-relaxed">
+                                Are you sure you want to remove this user? This will delete their login credentials, active sessions, and all platform profile data.
+                            </p>
+
+                            {/* Candidate Summary Card */}
+                            <div className="bg-gray-50 border border-gray-200/80 rounded-xl p-3 flex items-center gap-3 mb-4">
+                                <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-700 font-bold text-sm flex items-center justify-center shrink-0 overflow-hidden">
+                                    {userToDelete.profile_image || userToDelete.profileImage ? (
+                                        <img
+                                            src={userToDelete.profile_image || userToDelete.profileImage}
+                                            alt={userToDelete.name || userToDelete.first_name}
+                                            className="w-full h-full object-cover"
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
+                                    ) : (
+                                        (userToDelete.name || userToDelete.first_name || 'C').charAt(0).toUpperCase()
+                                    )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-[13px] font-semibold text-gray-900 truncate">
+                                        {userToDelete.name || `${userToDelete.first_name || ''} ${userToDelete.last_name || ''}`.trim() || 'Candidate'}
+                                    </div>
+                                    <div className="text-[11.5px] text-gray-500 truncate flex items-center gap-1.5 mt-0.5">
+                                        <span>{userToDelete.email || 'No email provided'}</span>
+                                        <span>•</span>
+                                        <span className="font-mono text-gray-400">ID: #{userToDelete.id}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Warning Note */}
+                            <div className="bg-amber-50/70 border border-amber-200/60 rounded-xl p-3 text-[12px] text-amber-800 flex items-start gap-2.5">
+                                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <span className="font-semibold text-amber-900">Notice:</span> All application history, login credentials, and saved profile content will be completely removed. This action cannot be undone.
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer Buttons */}
+                        <div className="px-5 py-4 bg-gray-50/80 border-t border-gray-100 flex items-center justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setUserToDelete(null)}
+                                disabled={isDeletingUser}
+                                className="px-4 py-2 rounded-xl text-[13px] font-medium text-gray-700 hover:bg-gray-200/70 bg-white border border-gray-200 transition-colors disabled:opacity-40 cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmDeleteUser}
+                                disabled={isDeletingUser}
+                                className="px-4 py-2 rounded-xl text-[13px] font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                            >
+                                {isDeletingUser ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        <span>Removing User...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Trash2 className="w-4 h-4" />
+                                        <span>Yes, Remove User</span>
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
