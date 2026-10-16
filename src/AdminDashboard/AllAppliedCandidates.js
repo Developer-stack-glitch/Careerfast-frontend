@@ -110,7 +110,7 @@ export default function AllAppliedCandidates() {
           <Text>{record.email}</Text>
           <br />
           <Text type="secondary">
-            {record.phone_code} {record.phone || "No phone"}
+            {record.phone ? `${record.phone_code ? `${record.phone_code} ` : ""}${record.phone}` : "N/A"}
           </Text>
         </div>
       ),

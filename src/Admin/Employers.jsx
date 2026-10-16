@@ -160,7 +160,7 @@ const ProfileModal = ({ userId, onClose }) => {
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-6 text-sm text-gray-600 mt-3">
                                         <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-gray-400" /> {profile.email}</div>
-                                        <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-gray-400" /> {profile.phone_code} {profile.phone}</div>
+                                        <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-gray-400" /> {profile.phone && String(profile.phone).trim() ? `${profile.phone_code ? `${profile.phone_code} ` : ''}${profile.phone}` : 'N/A'}</div>
                                         <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-gray-400" /> {profile.location || 'Location not specified'}</div>
                                         <div className="flex items-center gap-2"><Briefcase className="w-4 h-4 text-gray-400" /> {profile.experince_type || 'N/A'} {profile.total_years ? `(${profile.total_years})` : ''}</div>
                                     </div>

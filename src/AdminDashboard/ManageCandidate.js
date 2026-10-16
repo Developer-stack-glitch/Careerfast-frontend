@@ -689,7 +689,7 @@ export default function ManageCandidate() {
                                 <div className="info-item-icon-wrapper"><PhoneOutlined /></div>
                                 <div>
                                   <div className="info-item-label">Phone</div>
-                                  <div className="info-item-value">{selectedUser.phone_code ? `${selectedUser.phone_code} ` : ""}{selectedUser.phone || "N/A"}</div>
+                                  <div className="info-item-value">{selectedUser.phone ? `${selectedUser.phone_code ? `${selectedUser.phone_code} ` : ""}${selectedUser.phone}` : "N/A"}</div>
                                 </div>
                               </div>
                               <div className="info-item-box">

@@ -205,7 +205,49 @@ export default function CandidateProfileModal({ userId, candidateSummary, onClos
         : candidateSummary?.name || 'Candidate Details';
 
     const displayEmail = profile?.email || candidateSummary?.email || '';
-    const displayPhone = profile ? `${profile.phone_code || ''} ${profile.phone || ''}`.trim() : (candidateSummary?.phone || '');
+
+    // Format phone number cleanly; show 'N/A' if missing, empty, or only country code
+    const getFormattedPhone = () => {
+        const rawPhone = profile?.phone !== undefined && profile?.phone !== null
+            ? String(profile.phone).trim()
+            : (candidateSummary?.phone ? String(candidateSummary.phone).trim() : '');
+
+        const phoneCode = profile?.phone_code
+            ? String(profile.phone_code).trim()
+            : (candidateSummary?.phone_code ? String(candidateSummary.phone_code).trim() : '');
+
+        // If explicitly empty, null, undefined, n/a strings, or dash
+        if (!rawPhone || ['null', 'undefined', 'n/a', '-', 'none', ''].includes(rawPhone.toLowerCase())) {
+            return 'N/A';
+        }
+
+        // Extract digits only
+        const phoneDigits = rawPhone.replace(/\D/g, '');
+        const codeDigits = phoneCode.replace(/\D/g, '');
+
+        // If no phone digits exist, or the digits only match the country code
+        if (!phoneDigits || phoneDigits.length === 0 || phoneDigits === codeDigits) {
+            return 'N/A';
+        }
+
+        // Need at least 5 digits for a valid telephone number, and not all zeroes
+        if (phoneDigits.length < 5 || /^0+$/.test(phoneDigits)) {
+            return 'N/A';
+        }
+
+        // If phone already starts with '+' or includes the country code
+        if (rawPhone.startsWith('+')) {
+            return rawPhone;
+        }
+
+        if (phoneCode) {
+            return `${phoneCode} ${rawPhone}`;
+        }
+
+        return rawPhone;
+    };
+
+    const displayPhone = getFormattedPhone();
     const displayLocation = profile?.location || candidateSummary?.location || 'Not Specified';
     const displayImage = profile?.profile_image || candidateSummary?.profileImage || null;
     const displayRole = profile?.role_name || profile?.headline || 'CANDIDATE';
@@ -382,7 +424,7 @@ export default function CandidateProfileModal({ userId, candidateSummary, onClos
                             <div className="min-w-0">
                                 <p className="text-[12px] font-semibold text-gray-600 mb-0">Phone</p>
                                 <p className="text-[13px] font-semibold text-gray-800 truncate mb-0">
-                                    {displayPhone || 'Not Provided'}
+                                    {displayPhone || 'N/A'}
                                 </p>
                             </div>
                         </div>
