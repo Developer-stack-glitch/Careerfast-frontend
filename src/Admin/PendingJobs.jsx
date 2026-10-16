@@ -1,13 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import {
-    Briefcase, Search, Calendar, ChevronLeft, ChevronRight, CheckCircle, XCircle, Eye, Loader, MapPin, ArrowUpDown, User, Clock, MoreVertical, ChevronDown
+    Briefcase, Search, Calendar, ChevronLeft, ChevronRight, CheckCircle, XCircle, Eye, MapPin, User, Clock
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { getPendingJobs, approveJobPost, rejectJobPost, approveAllPendingJobs, loginAsRecruiter } from '../ApiService/action';
+import { getPendingJobs, approveJobPost, rejectJobPost, approveAllPendingJobs } from '../ApiService/action';
 import { getImageUrl } from '../utils/getImageUrl';
 import toast from 'react-hot-toast';
-import Link from 'next/link';
 import { Modal } from 'antd';
 import AdminDateFilter from './AdminDateFilter';
 import { getJobDetailsUrl } from '../utils/slug';
@@ -139,49 +138,9 @@ const PendingJobs = () => {
         }
     };
 
-    const handleViewPreview = async (job) => {
-        const recruiterId = job.user_id || job.recruiter_id;
-        const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-        const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
-        const hrBaseUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
-
-        if (!recruiterId) {
-            window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
-            return;
-        }
-
-        const recName = job.recruiter_name?.trim() || job.company_name || 'Recruiter';
-        const toastId = toast.loading(`Generating recruiter session for ${recName}...`);
-        try {
-            const res = await loginAsRecruiter(recruiterId);
-            if (res.data?.success && res.data?.token) {
-                toast.success(`Opening Recruiter Portal (Applicants #${job.id})...`, { id: toastId });
-                const rawData = res.data?.data || {};
-                const safeData = {
-                    id: rawData.id || recruiterId,
-                    first_name: rawData.first_name || 'Recruiter',
-                    last_name: rawData.last_name || '',
-                    email: rawData.email || '',
-                    role_id: rawData.role_id || 3,
-                    role_name: rawData.role_name || 'recruiter',
-                    company_name: rawData.company_name || job.company_name || 'Recruiter',
-                    organization: rawData.organization || '',
-                    company_id: rawData.company_id || null,
-                    is_email_verified: 1,
-                    impersonated_by_admin: true,
-                };
-                const targetPath = `/applicants/${job.id}`;
-                const targetUrl = `${hrBaseUrl}/login?impersonate_token=${encodeURIComponent(res.data.token)}&impersonate_data=${encodeURIComponent(JSON.stringify(safeData))}&target=${encodeURIComponent(targetPath)}`;
-                window.open(targetUrl, '_blank');
-            } else {
-                toast.error(res.data?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
-                window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
-            }
-        } catch (err) {
-            console.error("Error in handleViewPreview:", err);
-            toast.error(err?.response?.data?.message || err?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
-            window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
-        }
+    const handleViewPreview = (job) => {
+        if (!job) return;
+        window.open(getJobDetailsUrl(job, true), '_blank');
     };
 
     const totalPages = Math.ceil(total / limit) || 1;
@@ -189,10 +148,10 @@ const PendingJobs = () => {
     // Filter by search term and date locally if backend doesn't support search/date on this endpoint yet
     const filteredJobs = jobs.filter(job => {
         const term = searchTerm.toLowerCase();
-        const matchesSearch = !term || 
+        const matchesSearch = !term ||
             job.job_title?.toLowerCase().includes(term) ||
             job.company_name?.toLowerCase().includes(term);
-        
+
         let matchesDate = true;
         if (dateFilter?.startDate && dateFilter?.endDate) {
             const d = new Date(job.created_at);

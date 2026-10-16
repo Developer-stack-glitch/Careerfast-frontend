@@ -336,6 +336,15 @@
     background: #f6f0ff;
 }
 
+.njd-save-btn-share {
+    background: white;
+    color: var(--njd-primary);
+    font-size: 22px;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
 /* Main Content Card Styling */
 .njd-main-card {
     background: var(--njd-card-bg);
@@ -414,21 +423,99 @@
     height: auto;
 }
 
-.njd-jd-text ul {
-    list-style-type: disc;
-    padding-left: 20px;
-    margin-top: 10px;
+/* Lists styling for rich text job description and company description */
+.njd-jd-text ul,
+.njd-jd-text ol,
+.njd-company-desc ul,
+.njd-company-desc ol {
+    margin: 12px 0 16px 0 !important;
+    padding-left: 28px !important;
 }
 
-.njd-jd-text ol {
-    list-style-type: decimal;
-    padding-left: 20px;
-    margin-top: 10px;
+.njd-jd-text ul,
+.njd-company-desc ul {
+    list-style-type: disc !important;
+    list-style: disc !important;
 }
 
-.njd-jd-text li {
-    display: list-item;
-    margin-bottom: 8px;
+.njd-jd-text ol,
+.njd-company-desc ol {
+    list-style-type: decimal !important;
+    list-style: decimal !important;
+}
+
+.njd-jd-text ul>li,
+.njd-company-desc ul>li {
+    list-style-type: disc !important;
+    list-style: disc !important;
+    display: list-item !important;
+    margin-bottom: 8px !important;
+    padding-left: 4px !important;
+}
+
+.njd-jd-text ol>li:not([data-list]),
+.njd-company-desc ol>li:not([data-list]) {
+    list-style-type: decimal !important;
+    list-style: decimal !important;
+    display: list-item !important;
+    margin-bottom: 8px !important;
+    padding-left: 4px !important;
+}
+
+/* Quill 2.0+ list support (Quill outputs <ol><li data-list="bullet">) */
+.njd-jd-text ol:has(> li[data-list="bullet"]),
+.njd-company-desc ol:has(> li[data-list="bullet"]) {
+    list-style-type: disc !important;
+    list-style: disc !important;
+    padding-left: 28px !important;
+}
+
+.njd-jd-text li[data-list="bullet"],
+.njd-company-desc li[data-list="bullet"] {
+    list-style-type: disc !important;
+    list-style: disc !important;
+    display: list-item !important;
+    margin-bottom: 8px !important;
+    padding-left: 4px !important;
+}
+
+.njd-jd-text li[data-list="bullet"]::marker,
+.njd-company-desc li[data-list="bullet"]::marker {
+    content: "• " !important;
+    font-size: 1.15em !important;
+}
+
+.njd-jd-text li[data-list="bullet"]>.ql-ui,
+.njd-company-desc li[data-list="bullet"]>.ql-ui {
+    display: none !important;
+}
+
+.njd-jd-text ol:has(> li[data-list="ordered"]),
+.njd-company-desc ol:has(> li[data-list="ordered"]) {
+    list-style-type: decimal !important;
+    list-style: decimal !important;
+    padding-left: 28px !important;
+}
+
+.njd-jd-text li[data-list="ordered"],
+.njd-company-desc li[data-list="ordered"] {
+    list-style-type: decimal !important;
+    list-style: decimal !important;
+    display: list-item !important;
+    margin-bottom: 8px !important;
+    padding-left: 4px !important;
+}
+
+.njd-jd-text li[data-list="ordered"]>.ql-ui,
+.njd-company-desc li[data-list="ordered"]>.ql-ui {
+    display: none !important;
+}
+
+.njd-jd-text.ql-editor {
+    height: auto !important;
+    overflow-y: visible !important;
+    padding: 0 !important;
+    white-space: normal !important;
 }
 
 .njd-role-details {
@@ -673,7 +760,7 @@
 }
 
 .njd-related-item:hover {
-    border-color: var(--njd-primary);
+    border-color: #dfdfdf;
     box-shadow: 0 4px 12px rgba(95, 46, 234, 0.08);
 }
 
@@ -1017,8 +1104,7 @@
 }
 
 .njd-sticky-apply-btn:hover:not(:disabled) {
-    background: #1550d0;
-    box-shadow: 0 4px 12px rgba(30, 96, 248, 0.35);
+    background: #5f2eea;
     transform: translateY(-1px);
 }
 

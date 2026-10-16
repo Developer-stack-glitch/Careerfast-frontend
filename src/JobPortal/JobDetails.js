@@ -52,6 +52,7 @@ import { getJobSlug, getJobDetailsUrl, generateSlug } from "../utils/slug";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
 import "../css/naukri-job-details.css";
+import "react-quill-new/dist/quill.snow.css";
 import logo from "../images/careerfastlogofinal.png";
 
 const getCurrencySymbol = (currencyCode) => {
@@ -1078,8 +1079,8 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                     job.status === "Expired"
                       ? { cursor: "not-allowed", opacity: 0.6, background: "#a0a0a0" }
                       : isApplied[job.id]
-                      ? { background: "#10b981", backgroundColor: "#10b981", borderColor: "#10b981", color: "#ffffff", opacity: 1, cursor: "default" }
-                      : {}
+                        ? { background: "#10b981", backgroundColor: "#10b981", borderColor: "#10b981", color: "#ffffff", opacity: 1, cursor: "default" }
+                        : {}
                   }
                 >
                   {job.status === "Expired" ? (
@@ -1343,8 +1344,8 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                                   job.status === "Expired"
                                     ? { cursor: 'not-allowed', opacity: 0.6, background: '#a0a0a0', borderColor: '#a0a0a0' }
                                     : isApplied[job.id]
-                                    ? { background: '#10b981', backgroundColor: '#10b981', borderColor: '#10b981', color: '#ffffff', opacity: 1, cursor: 'default' }
-                                    : {}
+                                      ? { background: '#10b981', backgroundColor: '#10b981', borderColor: '#10b981', color: '#ffffff', opacity: 1, cursor: 'default' }
+                                      : {}
                                 }
                               >
                                 {job.status === "Expired" ? (
@@ -1361,7 +1362,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                               </button>
                             </Tooltip>
                             <Tooltip title="Share this job">
-                              <button className="njd-save-btn" onClick={() => handleShare(job)}>
+                              <button className="njd-save-btn-share" onClick={() => handleShare(job)}>
                                 <IoIosShareAlt />
                               </button>
                             </Tooltip>
@@ -1373,7 +1374,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
 
                   <div className="njd-main-card">
                     <h2 className="njd-section-title">Job description:</h2>
-                    <div className="njd-jd-text" dangerouslySetInnerHTML={{ __html: job.job_description }} />
+                    <div className="njd-jd-text ql-editor rich-text" dangerouslySetInnerHTML={{ __html: job.job_description }} />
                     <h3 className="njd-section-title" style={{ marginTop: '30px' }}>Job Details</h3>
                     <div className="njd-role-details">
                       {job.role && <div className="njd-role-item"><span className="njd-role-label">Role:</span><span className="njd-role-value">{job.role}</span></div>}

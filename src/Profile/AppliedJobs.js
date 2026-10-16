@@ -1,27 +1,31 @@
 'use client';
 import React, { useEffect, useState, useMemo } from "react";
-import { Input, Typography, Button, Table, Space, Select } from "antd";
-import {
-  SearchOutlined,
-  EyeOutlined,
-} from "@ant-design/icons";
+import { Table, Select, Tooltip } from "antd";
 import { useNavigate } from "@/routing-shim";
 import {
   getUserAppliedJobs,
   getUserJobPostStatus,
 } from "../ApiService/action";
-import { FiClock, FiMapPin, FiBriefcase, FiXCircle, FiFileText, FiCheckCircle, FiCalendar } from "react-icons/fi";
+import {
+  FiClock,
+  FiMapPin,
+  FiBriefcase,
+  FiXCircle,
+  FiFileText,
+  FiCheckCircle,
+  FiCalendar,
+  FiSearch,
+  FiX,
+  FiChevronDown,
+  FiChevronLeft,
+  FiChevronRight,
+  FiRotateCcw,
+  FiArrowUpRight,
+  FiExternalLink,
+  FiCheck
+} from "react-icons/fi";
 import { BsBriefcaseFill, BsBuilding } from "react-icons/bs";
-
-const { Title, Text } = Typography;
-
-const debounce = (func, wait) => {
-  let timeout;
-  return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func.apply(this, args), wait);
-  };
-};
+import "../css/AppliedJobsTracker.css";
 
 const generateSlug = (text) => {
   return text
@@ -32,67 +36,101 @@ const generateSlug = (text) => {
 
 const getCurrencySymbol = (currencyCode) => {
   const currencyMap = {
-    'INR': '₹',
-    'USD': '$',
-    'EUR': '€',
-    'GBP': '£',
-    'JPY': '¥',
-    'AUD': 'A$',
-    'CAD': 'C$',
+    INR: '₹',
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    JPY: '¥',
+    AUD: 'A$',
+    CAD: 'C$',
   };
-  return currencyMap[currencyCode] || currencyCode;
+  return currencyMap[currencyCode] || currencyCode || '₹';
 };
 
-const StatCard = ({ icon, title, value, color, bg }) => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    padding: '24px',
-    background: '#fff',
-    borderRadius: '16px',
-    border: '1px solid #f1f5f9',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-    gap: '20px',
-    flex: 1,
-    minWidth: '220px'
-  }}>
-    <div style={{
-      width: '50px',
-      height: '50px',
-      borderRadius: '14px',
-      background: bg,
-      color: color,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '26px'
-    }}>
-      {icon}
+const formatRelativeTime = (dateString) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Applied today";
+  if (diffDays === 1) return "Applied 1 day ago";
+  if (diffDays < 30) return `Applied ${diffDays} days ago`;
+  const diffMonths = Math.floor(diffDays / 30);
+  if (diffMonths === 1) return "Applied 1 mo ago";
+  if (diffMonths < 12) return `Applied ${diffMonths} mos ago`;
+  return `Applied ${Math.floor(diffMonths / 12)} yr(s) ago`;
+};
+
+// Company Logo component with graceful initials fallback
+const CompanyLogo = ({ logo, name }) => {
+  const [hasError, setHasError] = useState(false);
+
+  const getInitials = (n) => {
+    if (!n) return "CF";
+    const parts = n.trim().split(" ");
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return n.slice(0, 2).toUpperCase();
+  };
+
+  const getGradient = (n) => {
+    const gradients = [
+      'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+      'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
+      'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)',
+      'linear-gradient(135deg, #10b981 0%, #0d9488 100%)',
+      'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
+    ];
+    let hash = 0;
+    for (let i = 0; i < (n || "").length; i++) {
+      hash = n.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return gradients[Math.abs(hash) % gradients.length];
+  };
+
+  if (!logo || hasError) {
+    return (
+      <div
+        className="tracker-company-avatar"
+        style={{ background: getGradient(name) }}
+      >
+        <span>{getInitials(name)}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="tracker-company-logo-box">
+      <img
+        src={logo}
+        alt={name || "Company"}
+        onError={() => setHasError(true)}
+        className="tracker-company-logo-img"
+      />
     </div>
-    <div>
-      <div style={{ fontSize: '28px', fontWeight: 700, color: '#0f172a', lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: '14px', color: '#64748b', marginTop: '6px', fontWeight: 500 }}>{title}</div>
-    </div>
-  </div>
-);
+  );
+};
 
 export default function AppliedJobs() {
   const [opportunities, setOpportunities] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [loginUserId, setLoginUserId] = useState(null);
   const [appliedJobIds, setAppliedJobIds] = useState([]);
   const [jobStatusMap, setJobStatusMap] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Filters State
+  const [statusFilter, setStatusFilter] = useState("All"); // All | Active | Pending | Rejected
   const [roleFilter, setRoleFilter] = useState("All Roles");
   const [companyFilter, setCompanyFilter] = useState("All Companies");
   const [locationFilter, setLocationFilter] = useState("All Locations");
-  const [dateFilter, setDateFilter] = useState("Applied Date");
+  const [dateFilter, setDateFilter] = useState("All Time");
 
   const navigate = useNavigate();
-  const themeColor = "#5f2eea"; // CareerFast purple
 
   useEffect(() => {
     const stored = localStorage.getItem("loginDetails");
@@ -120,6 +158,7 @@ export default function AppliedJobs() {
 
   const fetchAppliedJobs = async () => {
     try {
+      setLoading(true);
       const response = await getUserAppliedJobs({ userId: loginUserId });
       const jobs = response?.data?.data || [];
       const sortedJobs = jobs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
@@ -129,7 +168,17 @@ export default function AppliedJobs() {
       console.error("Error fetching applied jobs:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchAppliedJobs();
+    if (appliedJobIds.length > 0) {
+      await getUserJobPostStatusData();
+    }
+    setRefreshing(false);
   };
 
   const getUserJobPostStatusData = async () => {
@@ -156,31 +205,48 @@ export default function AppliedJobs() {
     }
   };
 
+  // Helper to categorize job status
+  const getNormalizedStatus = (oppId) => {
+    const status = jobStatusMap[oppId];
+    if (status === "Rejected") return "Rejected";
+    if (!status || status === "Pending") return "Pending";
+    return "Active"; // Shortlisted, Mail Sent, Interview, In Process
+  };
+
+  // Extract filter options
   const uniqueRoles = useMemo(() => {
     const roles = new Set(opportunities.map(opp => opp.job_title).filter(Boolean));
-    return ['All Roles', ...Array.from(roles)];
+    return ['All Roles', ...Array.from(roles).sort()];
   }, [opportunities]);
 
   const uniqueCompanies = useMemo(() => {
     const companies = new Set(opportunities.map(opp => opp.company_name || opp.company).filter(Boolean));
-    return ['All Companies', ...Array.from(companies)];
+    return ['All Companies', ...Array.from(companies).sort()];
   }, [opportunities]);
 
   const uniqueLocations = useMemo(() => {
     const locations = new Set();
     opportunities.forEach(opp => {
       let loc = opp.work_location;
-      if (!loc || loc === "[]" || loc === '[""]') loc = opp.workplace_type || "Remote";
-      else if (loc === "Work From Home") loc = "Remote (WFH)";
-      else {
+      if (!loc || loc === "[]" || loc === '[""]') {
+        if (opp.workplace_type) locations.add(opp.workplace_type);
+        else locations.add("Remote");
+      } else if (loc === "Work From Home") {
+        locations.add("Remote (WFH)");
+      } else {
         try {
           const parsed = JSON.parse(loc);
-          if (Array.isArray(parsed)) loc = parsed.join(", ");
-        } catch { }
+          if (Array.isArray(parsed)) {
+            parsed.forEach(p => { if (p && p.trim()) locations.add(p.trim()); });
+          } else if (parsed && String(parsed).trim()) {
+            locations.add(String(parsed).trim());
+          }
+        } catch {
+          if (loc.trim()) locations.add(loc.trim());
+        }
       }
-      if (loc && loc !== '[]' && loc !== '[""]') locations.add(loc);
     });
-    return ['All Locations', ...Array.from(locations)];
+    return ['All Locations', ...Array.from(locations).sort()];
   }, [opportunities]);
 
   const handleSearchChange = (e) => {
@@ -188,31 +254,66 @@ export default function AppliedJobs() {
     setCurrentPage(1);
   };
 
-  const hasFilters = roleFilter !== "All Roles" || companyFilter !== "All Companies" || locationFilter !== "All Locations" || dateFilter !== "Applied Date" || searchQuery !== "";
+  const handleClearAllFilters = () => {
+    setSearchQuery("");
+    setStatusFilter("All");
+    setRoleFilter("All Roles");
+    setCompanyFilter("All Companies");
+    setLocationFilter("All Locations");
+    setDateFilter("All Time");
+    setCurrentPage(1);
+  };
 
+  const hasFilters =
+    searchQuery !== "" ||
+    statusFilter !== "All" ||
+    roleFilter !== "All Roles" ||
+    companyFilter !== "All Companies" ||
+    locationFilter !== "All Locations" ||
+    dateFilter !== "All Time";
+
+  // Filtered dataset
   const filteredOpportunities = useMemo(() => {
     return opportunities.filter((opp) => {
-      const target = `${opp.job_title} ${opp.company_name || opp.company}`.toLowerCase();
+      // 1. Search filter
+      const target = `${opp.job_title || ""} ${opp.company_name || opp.company || ""}`.toLowerCase();
       const matchesSearch = searchQuery ? target.includes(searchQuery.toLowerCase()) : true;
 
+      // 2. Status filter
+      const currentStatus = getNormalizedStatus(opp.id);
+      const matchesStatus = statusFilter === "All" || currentStatus === statusFilter;
+
+      // 3. Role filter
       const matchesRole = roleFilter === "All Roles" || opp.job_title === roleFilter;
 
+      // 4. Company filter
       const oppCompany = opp.company_name || opp.company;
       const matchesCompany = companyFilter === "All Companies" || oppCompany === companyFilter;
 
-      let loc = opp.work_location;
-      if (!loc || loc === "[]" || loc === '[""]') loc = opp.workplace_type || "Remote";
-      else if (loc === "Work From Home") loc = "Remote (WFH)";
-      else {
-        try {
-          const parsed = JSON.parse(loc);
-          if (Array.isArray(parsed)) loc = parsed.join(", ");
-        } catch { }
+      // 5. Location filter
+      let matchesLocation = true;
+      if (locationFilter !== "All Locations") {
+        let locStr = "";
+        let loc = opp.work_location;
+        if (!loc || loc === "[]" || loc === '[""]') {
+          locStr = opp.workplace_type || "Remote";
+        } else if (loc === "Work From Home") {
+          locStr = "Remote (WFH)";
+        } else {
+          try {
+            const parsed = JSON.parse(loc);
+            if (Array.isArray(parsed)) locStr = parsed.join(", ");
+            else locStr = String(parsed);
+          } catch {
+            locStr = String(loc);
+          }
+        }
+        matchesLocation = locStr.toLowerCase().includes(locationFilter.toLowerCase());
       }
-      const matchesLocation = locationFilter === "All Locations" || loc === locationFilter;
 
+      // 6. Date filter
       let matchesDate = true;
-      if (dateFilter !== "Applied Date") {
+      if (dateFilter !== "All Time") {
         const appliedDate = new Date(opp.created_at);
         const now = new Date();
         const diffTime = Math.abs(now - appliedDate);
@@ -223,10 +324,17 @@ export default function AppliedJobs() {
         else if (dateFilter === "Last 6 Months") matchesDate = diffDays <= 180;
       }
 
-      return matchesSearch && matchesRole && matchesCompany && matchesLocation && matchesDate;
+      return matchesSearch && matchesStatus && matchesRole && matchesCompany && matchesLocation && matchesDate;
     });
-  }, [opportunities, searchQuery, roleFilter, companyFilter, locationFilter, dateFilter]);
+  }, [opportunities, searchQuery, statusFilter, roleFilter, companyFilter, locationFilter, dateFilter, jobStatusMap]);
 
+  // Sliced data for pagination
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredOpportunities.slice(start, start + pageSize);
+  }, [filteredOpportunities, currentPage, pageSize]);
+
+  // Overall Stats
   const stats = useMemo(() => {
     let total = opportunities.length;
     let active = 0;
@@ -234,61 +342,87 @@ export default function AppliedJobs() {
     let rejected = 0;
 
     opportunities.forEach(opp => {
-      const status = jobStatusMap[opp.id];
+      const status = getNormalizedStatus(opp.id);
       if (status === "Rejected") rejected++;
-      else if (!status || status === "Pending") pending++;
-      else active++; // Shortlisted, Mail Sent, Interview, etc.
+      else if (status === "Pending") pending++;
+      else active++;
     });
 
     return { total, active, pending, rejected };
   }, [opportunities, jobStatusMap]);
 
+  const totalPages = Math.ceil(filteredOpportunities.length / pageSize) || 1;
+
+  // Open Job Details logic
+  const handleViewJob = (record) => {
+    const safeSlug = (val) => {
+      if (!val) return "";
+      if (Array.isArray(val)) return generateSlug(val.join(" "));
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
+        return generateSlug(parsed);
+      } catch {
+        return generateSlug(val);
+      }
+    };
+    const jobNature = generateSlug(record.job_nature || "");
+    const jobTitle = generateSlug(record.job_title || "");
+    const companyName = generateSlug(record.company_name || "");
+    const locationSlug = safeSlug(record.work_location);
+    const workplaceType = generateSlug(record.workplace_type || "");
+    const experienceType = generateSlug(record.experience_type || "");
+    const experienceRequired = safeSlug(record.experience_required);
+
+    let basePath = "/job-details";
+    if (record.job_nature === "Internship") basePath = "/internship-details";
+    if (record.job_nature === "Scholarship") basePath = "/scholarship-details";
+
+    const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${record.post_id}`;
+    window.open(finalUrl, "_blank");
+  };
+
+  // Table Columns
   const columns = [
     {
       title: '#',
       key: 'index',
-      width: 60,
+      width: 55,
+      align: 'center',
       render: (text, record, index) => (
-        <span style={{ color: '#94a3b8', fontWeight: 500 }}>
+        <span className="tracker-index-col">
           {String((currentPage - 1) * pageSize + index + 1).padStart(2, '0')}
         </span>
       ),
     },
     {
-      title: 'ROLE & COMPANY',
+      title: 'Role & Company',
       dataIndex: 'job',
       key: 'job',
       render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{
-            flexShrink: 0,
-            width: 48,
-            height: 48,
-            borderRadius: '12px',
-            border: '1px solid #f1f5f9',
-            padding: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#fff',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
-          }}>
-            <img
-              src={record.company_logo || '/favicon.png'}
-              alt={record.company_name}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/favicon.png'; }}
-            />
-          </div>
+        <div className="tracker-role-company-cell">
+          <CompanyLogo
+            logo={record.company_logo}
+            name={record.company_name}
+          />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: '#0f172a', marginBottom: 2 }}>{record.job_title}</div>
-            <div style={{ color: '#64748b', fontSize: 13, fontWeight: 500 }}>{record.company_name}</div>
+            <div
+              className="tracker-job-title"
+              onClick={() => handleViewJob(record)}
+              title={record.job_title}
+            >
+              {record.job_title}
+            </div>
+            <div className="tracker-company-name-row">
+              <BsBuilding size={12} style={{ color: '#94a3b8' }} />
+              <span>{record.company_name || "Company"}</span>
+            </div>
           </div>
         </div>
       )
     },
     {
-      title: 'DETAILS',
+      title: 'Details',
       key: 'details',
       render: (_, record) => {
         let location = record.work_location;
@@ -304,405 +438,601 @@ export default function AppliedJobs() {
         }
 
         return (
-          <Space direction="vertical" size={4}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#64748b', fontSize: 13, fontWeight: 500 }}>
-              <FiMapPin size={14} style={{ color: '#94a3b8' }} /> {location}
+          <div className="tracker-details-cell">
+            <div className="tracker-detail-item">
+              <FiMapPin size={13} style={{ color: '#6366f1', flexShrink: 0 }} />
+              <span title={location}>{location}</span>
             </div>
             {record.job_nature && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#64748b', fontSize: 13, fontWeight: 500 }}>
-                <FiBriefcase size={14} style={{ color: '#94a3b8' }} /> {record.job_nature}
-              </div>
+              <span className="tracker-nature-badge">
+                <FiBriefcase size={11} /> {record.job_nature}
+              </span>
             )}
-          </Space>
-        )
+          </div>
+        );
       }
     },
     {
-      title: 'SALARY',
+      title: 'Salary',
       key: 'salary',
       render: (_, record) => {
         let salaryText = "Not Disclosed";
+        let isDisclosed = false;
+
         if (record.salary_type === "Fixed" && record.min_salary && String(record.min_salary) !== "0") {
-          salaryText = `${getCurrencySymbol(record.currency)}${record.min_salary} ${record.salary_duration?.toLowerCase() === "monthly" ? "Per Month" : "LPA"}`;
+          salaryText = `${getCurrencySymbol(record.currency)}${record.min_salary} ${record.salary_duration?.toLowerCase() === "monthly" ? "/mo" : "LPA"}`;
+          isDisclosed = true;
         } else if (record.salary_type === "Range" && (record.min_salary || record.max_salary) && (String(record.min_salary) !== "0" || String(record.max_salary) !== "0")) {
-          salaryText = `${getCurrencySymbol(record.currency)}${record.min_salary || 0} - ${getCurrencySymbol(record.currency)}${record.max_salary || 0} ${record.salary_duration?.toLowerCase() === "monthly" ? "Per Month" : "LPA"}`;
+          salaryText = `${getCurrencySymbol(record.currency)}${record.min_salary || 0} - ${getCurrencySymbol(record.currency)}${record.max_salary || 0} ${record.salary_duration?.toLowerCase() === "monthly" ? "/mo" : "LPA"}`;
+          isDisclosed = true;
         }
+
         return (
-          <span style={{
-            fontWeight: 600,
-            color: '#16a34a',
-            background: '#f0fdf4',
-            padding: '6px 12px',
-            borderRadius: '8px',
-            fontSize: '13px'
-          }}>
+          <span className={`tracker-salary-badge ${isDisclosed ? 'disclosed' : 'not-disclosed'}`}>
             {salaryText}
           </span>
         );
       }
     },
     {
-      title: 'APPLIED ON',
+      title: 'Applied On',
       dataIndex: 'created_at',
       key: 'created_at',
+      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
       render: (date) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#64748b', fontWeight: 500, fontSize: '13px' }}>
-          <FiCalendar size={14} style={{ color: '#94a3b8' }} />
-          {new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+        <div className="tracker-date-cell">
+          <div className="tracker-date-primary">
+            <FiCalendar size={13} style={{ color: '#94a3b8' }} />
+            <span>
+              {new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            </span>
+          </div>
+          <div className="tracker-date-relative">
+            {formatRelativeTime(date)}
+          </div>
         </div>
       ),
-      sorter: (a, b) => new Date(a.created_at) - new Date(b.created_at),
     },
     {
-      title: 'STATUS',
+      title: 'Status',
       key: 'status',
       render: (_, record) => {
         const status = jobStatusMap[record.id];
+        let pillClass = "pending";
+        let displayLabel = status || "Pending";
 
-        let color = "#d97706", bg = "#fef3c7", icon = <FiClock size={14} />; // Pending (Yellow)
         if (status === "Shortlisted" || status === "Mail Sent") {
-          color = "#059669"; bg = "#d1fae5"; icon = <FiCheckCircle size={14} />; // Success (Green)
-        }
-        else if (status === "Rejected") {
-          color = "#dc2626"; bg = "#fee2e2"; icon = <FiXCircle size={14} />; // Error (Red)
-        }
-        else if (status === "Interview" || status === "In Process") {
-          color = themeColor; bg = "#f3e8ff"; icon = <FiFileText size={14} />; // Purple (Theme)
+          pillClass = "active";
+        } else if (status === "Rejected") {
+          pillClass = "rejected";
+        } else if (status === "Interview" || status === "In Process") {
+          pillClass = "interview";
         }
 
         return (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '6px',
-            backgroundColor: bg,
-            color: color,
-            padding: "6px 14px",
-            borderRadius: "20px",
-            fontSize: "13px",
-            fontWeight: 600,
-          }}>
-            {icon}
-            {status ? status : "Pending"}
+          <div className={`tracker-status-pill ${pillClass}`}>
+            <span className="tracker-status-dot" />
+            <span>{displayLabel}</span>
           </div>
         );
       }
     },
     {
-      title: 'ACTION',
+      title: 'Action',
       key: 'action',
+      align: 'center',
       render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Button
-            type="text"
-            icon={<EyeOutlined />}
-            style={{
-              borderRadius: '20px',
-              fontWeight: 600,
-              color: themeColor,
-              background: '#f8fafc',
-              border: '1px solid #8547f8ff',
-              padding: '4px 16px',
-              display: 'flex',
-              alignItems: 'center'
-            }}
-            onClick={() => {
-              const safeSlug = (val) => {
-                if (!val) return "";
-                if (Array.isArray(val)) return generateSlug(val.join(" "));
-                try {
-                  const parsed = JSON.parse(val);
-                  if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
-                  return generateSlug(parsed);
-                } catch {
-                  return generateSlug(val);
-                }
-              };
-              const jobNature = generateSlug(record.job_nature || "");
-              const jobTitle = generateSlug(record.job_title || "");
-              const companyName = generateSlug(record.company_name || "");
-              const locationSlug = safeSlug(record.work_location);
-              const workplaceType = generateSlug(record.workplace_type || "");
-              const experienceType = generateSlug(record.experience_type || "");
-              const experienceRequired = safeSlug(record.experience_required);
-
-              let basePath = "/job-details";
-              if (record.job_nature === "Internship") basePath = "/internship-details";
-              if (record.job_nature === "Scholarship") basePath = "/scholarship-details";
-
-              const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${record.post_id}`;
-              window.open(finalUrl, "_blank");
-            }}
-          >
-            View
-          </Button>
-        </div>
+        <button
+          type="button"
+          className="tracker-view-btn"
+          onClick={() => handleViewJob(record)}
+          title="View full job posting"
+        >
+          <span>View</span>
+          <FiArrowUpRight size={14} />
+        </button>
       )
     }
   ];
 
   return (
-    <div className="applied-jobs-tracker-wrapper" style={{ padding: "40px" }}>
-      <style>
-        {`
-          .custom-table .ant-table {
-            background: transparent;
-            font-family: 'Inter', sans-serif;
-          }
-          .custom-table .ant-table-thead > tr > th {
-            background: #f8fafc !important;
-            color: #64748b !important;
-            font-weight: 700 !important;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 1px solid #e2e8f0 !important;
-            padding: 16px 24px !important;
-          }
-          .custom-table .ant-table-thead > tr > th::before {
-            display: none !important;
-          }
-          .custom-table .ant-table-tbody > tr > td {
-            padding: 20px 24px !important;
-            border-bottom: 1px solid #f1f5f9 !important;
-            vertical-align: middle;
-          }
-          .custom-table .ant-table-tbody > tr:hover > td {
-            background: #f8fafc !important;
-          }
-          
-          /* Custom Pagination Styling */
-          .custom-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 24px;
-            background: #fff;
-            border-bottom-left-radius: 16px;
-            border-bottom-right-radius: 16px;
-          }
-          .ant-pagination-item-active {
-            border-color: ${themeColor} !important;
-            background-color: ${themeColor} !important;
-          }
-          .ant-pagination-item-active a {
-            color: white !important;
-          }
-          
-          .ant-select-selector {
-            border-radius: 8px !important;
-            height: 40px !important;
-            align-items: center !important;
-            background: #f8fafc !important;
-            border: 1px solid #e2e8f0 !important;
-          }
-          
-          .ant-input-affix-wrapper {
-            background: #fff !important;
-            border: 1px solid #e2e8f0 !important;
-          }
-          .ant-input-affix-wrapper-focused {
-            border-color: ${themeColor} !important;
-            box-shadow: 0 0 0 2px rgba(95, 46, 234, 0.1) !important;
-          }
-        `}
-      </style>
-
+    <div className="applied-jobs-tracker-wrapper">
       {/* Header Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            borderRadius: '16px',
-            background: '#e0e7ff', // Soft blue/purple background
-            color: themeColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '24px'
-          }}>
+      <div className="tracker-header-section">
+        <div className="tracker-header-left">
+          <div className="tracker-header-icon-box">
             <BsBriefcaseFill />
           </div>
           <div>
-            <Title level={2} style={{ margin: 0, color: '#0f172a', fontWeight: 600, fontSize: '28px' }}>
-              Application Tracker
-            </Title>
-            <Text style={{ color: '#64748b', fontSize: '15px', fontWeight: 500, marginTop: '2px', display: 'block' }}>
-              Monitor and manage the status of all your job applications
-            </Text>
+            <div className="tracker-title-row">
+              <h1 className="tracker-main-title">Application Tracker</h1>
+              <span className="tracker-live-badge">
+                <span className="tracker-live-dot" />
+                Live Status
+              </span>
+            </div>
+            <div className="tracker-subtitle">
+              Monitor and manage the real-time progress of all your job applications
+            </div>
+          </div>
+        </div>
+
+        <div className="tracker-header-actions">
+          <button
+            type="button"
+            className="tracker-action-btn-secondary"
+            onClick={handleRefresh}
+            title="Refresh application statuses"
+          >
+            <FiRotateCcw className={refreshing ? "spin-animation" : ""} size={14} />
+            <span>{refreshing ? "Updating..." : "Refresh"}</span>
+          </button>
+          <button
+            type="button"
+            className="tracker-action-btn-primary"
+            onClick={() => navigate("/job-filter")}
+          >
+            <FiBriefcase size={14} />
+            <span>Explore Jobs</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Interactive Metric Cards */}
+      <div className="tracker-stats-grid">
+        <div
+          className={`tracker-stat-card ${statusFilter === "All" ? "active-filter" : ""}`}
+          style={{ "--card-color": "#5f2eea", "--card-bg-tint": "#faf5ff" }}
+          onClick={() => { setStatusFilter("All"); setCurrentPage(1); }}
+          title="Filter by all applications"
+        >
+          <div className="stat-card-icon-box total">
+            <FiFileText />
+          </div>
+          <div className="stat-card-content">
+            <div className="stat-card-number">{stats.total}</div>
+            <div className="stat-card-label">Total Applied</div>
+          </div>
+          <div className="stat-card-badge">All</div>
+        </div>
+
+        <div
+          className={`tracker-stat-card ${statusFilter === "Active" ? "active-filter" : ""}`}
+          style={{ "--card-color": "#16a34a", "--card-bg-tint": "#f0fdf4" }}
+          onClick={() => {
+            setStatusFilter(statusFilter === "Active" ? "All" : "Active");
+            setCurrentPage(1);
+          }}
+          title="Filter by active and in-process applications"
+        >
+          <div className="stat-card-icon-box active">
+            <FiCheckCircle />
+          </div>
+          <div className="stat-card-content">
+            <div className="stat-card-number">{stats.active}</div>
+            <div className="stat-card-label">Active / In Process</div>
+          </div>
+          <div className="stat-card-badge active">
+            {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}%
+          </div>
+        </div>
+
+        <div
+          className={`tracker-stat-card ${statusFilter === "Pending" ? "active-filter" : ""}`}
+          style={{ "--card-color": "#ca8a04", "--card-bg-tint": "#fefce8" }}
+          onClick={() => {
+            setStatusFilter(statusFilter === "Pending" ? "All" : "Pending");
+            setCurrentPage(1);
+          }}
+          title="Filter by pending applications"
+        >
+          <div className="stat-card-icon-box pending">
+            <FiClock />
+          </div>
+          <div className="stat-card-content">
+            <div className="stat-card-number">{stats.pending}</div>
+            <div className="stat-card-label">Pending Review</div>
+          </div>
+          <div className="stat-card-badge pending">
+            {stats.total > 0 ? Math.round((stats.pending / stats.total) * 100) : 0}%
+          </div>
+        </div>
+
+        <div
+          className={`tracker-stat-card ${statusFilter === "Rejected" ? "active-filter" : ""}`}
+          style={{ "--card-color": "#dc2626", "--card-bg-tint": "#fef2f2" }}
+          onClick={() => {
+            setStatusFilter(statusFilter === "Rejected" ? "All" : "Rejected");
+            setCurrentPage(1);
+          }}
+          title="Filter by rejected applications"
+        >
+          <div className="stat-card-icon-box rejected">
+            <FiXCircle />
+          </div>
+          <div className="stat-card-content">
+            <div className="stat-card-number">{stats.rejected}</div>
+            <div className="stat-card-label">Not Selected</div>
+          </div>
+          <div className="stat-card-badge rejected">
+            {stats.total > 0 ? Math.round((stats.rejected / stats.total) * 100) : 0}%
           </div>
         </div>
       </div>
 
-      {/* Stat Cards */}
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '32px', flexWrap: 'wrap' }}>
-        <StatCard
-          icon={<FiFileText />}
-          title="Total Applied"
-          value={stats.total}
-          bg="#eff6ff"
-          color="#3b82f6"
-        />
-        <StatCard
-          icon={<FiCheckCircle />}
-          title="Active / In Process"
-          value={stats.active}
-          bg="#f0fdf4"
-          color="#22c55e"
-        />
-        <StatCard
-          icon={<FiClock />}
-          title="Pending"
-          value={stats.pending}
-          bg="#fefce8"
-          color="#eab308"
-        />
-        <StatCard
-          icon={<FiXCircle />}
-          title="Rejected"
-          value={stats.rejected}
-          bg="#fef2f2"
-          color="#ef4444"
-        />
-      </div>
-
-      {/* Main Table Container */}
-      <div style={{
-        background: '#fff',
-        borderRadius: '16px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
-        border: '1px solid #f1f5f9'
-      }}>
-
-        {/* Filters Row */}
-        <div style={{ display: 'flex', gap: '16px', padding: '24px', flexWrap: 'wrap' }}>
-          <Input
-            size="large"
-            placeholder="Search by job title, company, or location..."
-            prefix={<SearchOutlined style={{ color: "#94a3b8", fontSize: 18 }} />}
-            style={{
-              borderRadius: '8px',
-              height: '44px',
-              flex: 1,
-              minWidth: '280px',
-              fontSize: '15px'
-            }}
-            value={searchQuery}
-            onChange={handleSearchChange}
-            allowClear
-          />
-
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <Select
-              value={roleFilter}
-              onChange={(v) => { setRoleFilter(v); setCurrentPage(1); }}
-              style={{ width: 160 }}
-              suffixIcon={null}
-              options={uniqueRoles.map(r => ({ value: r, label: <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><BsBriefcaseFill color="#94a3b8" /> {r}</span> }))}
-            />
-            <Select
-              value={companyFilter}
-              onChange={(v) => { setCompanyFilter(v); setCurrentPage(1); }}
-              style={{ width: 170 }}
-              suffixIcon={null}
-              options={uniqueCompanies.map(c => ({ value: c, label: <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><BsBuilding color="#94a3b8" /> {c}</span> }))}
-            />
-            <Select
-              value={locationFilter}
-              onChange={(v) => { setLocationFilter(v); setCurrentPage(1); }}
-              style={{ width: 160 }}
-              suffixIcon={null}
-              options={uniqueLocations.map(l => ({ value: l, label: <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><FiMapPin color="#94a3b8" /> {l}</span> }))}
-            />
-            <Select
-              value={dateFilter}
-              onChange={(v) => { setDateFilter(v); setCurrentPage(1); }}
-              style={{ width: 150 }}
-              suffixIcon={null}
-              options={[
-                { value: 'Applied Date', label: <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><FiCalendar color="#94a3b8" /> Applied Date</span> },
-                { value: 'Last 7 Days', label: <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><FiCalendar color="#94a3b8" /> Last 7 Days</span> },
-                { value: 'Last 30 Days', label: <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><FiCalendar color="#94a3b8" /> Last 30 Days</span> },
-                { value: 'Last 6 Months', label: <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#475569', fontWeight: 500 }}><FiCalendar color="#94a3b8" /> Last 6 Months</span> },
-              ]}
-            />
-
-            {hasFilters && (
-              <Button
+      {/* Main Table & Filter Container */}
+      <div className="tracker-main-container">
+        {/* Modern Filter Section */}
+        <div className="tracker-filters-wrapper">
+          {/* Tier 1: Search & Quick Status Switcher */}
+          <div className="tracker-search-row">
+            <div className="tracker-search-input-box">
+              <FiSearch className="tracker-search-icon" />
+              <input
                 type="text"
-                onClick={() => {
-                  setSearchQuery("");
-                  setRoleFilter("All Roles");
-                  setCompanyFilter("All Companies");
-                  setLocationFilter("All Locations");
-                  setDateFilter("Applied Date");
-                  setCurrentPage(1);
-                }}
-                style={{ color: '#ef4444', fontWeight: 600, padding: '0 8px' }}
+                placeholder="Search by job title, company, or keywords..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="tracker-search-input"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  className="tracker-clear-btn"
+                  onClick={() => { setSearchQuery(""); setCurrentPage(1); }}
+                  title="Clear search text"
+                >
+                  <FiX size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Status Segmented Tabs */}
+            <div className="tracker-status-tabs">
+              {[
+                { key: "All", label: "All", count: stats.total },
+                { key: "Active", label: "Active", count: stats.active },
+                { key: "Pending", label: "Pending", count: stats.pending },
+                { key: "Rejected", label: "Rejected", count: stats.rejected },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  className={`tracker-status-tab-btn ${statusFilter === tab.key ? "active" : ""}`}
+                  onClick={() => { setStatusFilter(tab.key); setCurrentPage(1); }}
+                >
+                  <span>{tab.label}</span>
+                  <span className="tracker-tab-pill">{tab.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tier 2: Dedicated Dropdown Filters */}
+          <div className="tracker-dropdowns-row">
+            {/* Role Filter */}
+            <div className="tracker-filter-dropdown-container">
+              <div className={`tracker-select-wrapper ${roleFilter !== "All Roles" ? "is-filtered" : ""}`}>
+                <Select
+                  value={roleFilter}
+                  onChange={(v) => { setRoleFilter(v); setCurrentPage(1); }}
+                  prefix={<FiBriefcase size={14} style={{ color: roleFilter !== 'All Roles' ? '#5f2eea' : '#64748b' }} />}
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
+                  showSearch
+                  popupMatchSelectWidth={false}
+                  popupClassName="tracker-dropdown-popup"
+                  placeholder="All Roles"
+                  filterOption={(input, option) =>
+                    String(option?.value ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={uniqueRoles.map(r => ({
+                    value: r,
+                    label: r,
+                  }))}
+                  optionRender={(option) => (
+                    <div className="tracker-option-item">
+                      <span className="tracker-option-text">{option.data.label}</span>
+                      {option.data.value === roleFilter && (
+                        <FiCheck className="tracker-option-check" size={14} />
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Company Filter */}
+            <div className="tracker-filter-dropdown-container">
+              <div className={`tracker-select-wrapper ${companyFilter !== "All Companies" ? "is-filtered" : ""}`}>
+                <Select
+                  value={companyFilter}
+                  onChange={(v) => { setCompanyFilter(v); setCurrentPage(1); }}
+                  prefix={<BsBuilding size={14} style={{ color: companyFilter !== 'All Companies' ? '#5f2eea' : '#64748b' }} />}
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
+                  showSearch
+                  popupMatchSelectWidth={false}
+                  popupClassName="tracker-dropdown-popup"
+                  placeholder="All Companies"
+                  filterOption={(input, option) =>
+                    String(option?.value ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={uniqueCompanies.map(c => ({
+                    value: c,
+                    label: c,
+                  }))}
+                  optionRender={(option) => (
+                    <div className="tracker-option-item">
+                      <span className="tracker-option-text">{option.data.label}</span>
+                      {option.data.value === companyFilter && (
+                        <FiCheck className="tracker-option-check" size={14} />
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Location Filter */}
+            <div className="tracker-filter-dropdown-container">
+              <div className={`tracker-select-wrapper ${locationFilter !== "All Locations" ? "is-filtered" : ""}`}>
+                <Select
+                  value={locationFilter}
+                  onChange={(v) => { setLocationFilter(v); setCurrentPage(1); }}
+                  prefix={<FiMapPin size={14} style={{ color: locationFilter !== 'All Locations' ? '#5f2eea' : '#64748b' }} />}
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
+                  showSearch
+                  popupMatchSelectWidth={false}
+                  popupClassName="tracker-dropdown-popup"
+                  placeholder="All Locations"
+                  filterOption={(input, option) =>
+                    String(option?.value ?? "").toLowerCase().includes(input.toLowerCase())
+                  }
+                  options={uniqueLocations.map(l => ({
+                    value: l,
+                    label: l,
+                  }))}
+                  optionRender={(option) => (
+                    <div className="tracker-option-item">
+                      <span className="tracker-option-text">{option.data.label}</span>
+                      {option.data.value === locationFilter && (
+                        <FiCheck className="tracker-option-check" size={14} />
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Date Applied Filter */}
+            <div className="tracker-filter-dropdown-container">
+              <div className={`tracker-select-wrapper ${dateFilter !== "All Time" ? "is-filtered" : ""}`}>
+                <Select
+                  value={dateFilter}
+                  onChange={(v) => { setDateFilter(v); setCurrentPage(1); }}
+                  prefix={<FiCalendar size={14} style={{ color: dateFilter !== 'All Time' ? '#5f2eea' : '#64748b' }} />}
+                  suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
+                  popupMatchSelectWidth={false}
+                  popupClassName="tracker-dropdown-popup"
+                  options={[
+                    { value: 'All Time', label: 'All Time' },
+                    { value: 'Last 7 Days', label: 'Last 7 Days' },
+                    { value: 'Last 30 Days', label: 'Last 30 Days' },
+                    { value: 'Last 6 Months', label: 'Last 6 Months' },
+                  ]}
+                  optionRender={(option) => (
+                    <div className="tracker-option-item">
+                      <span className="tracker-option-text">{option.data.label}</span>
+                      {option.data.value === dateFilter && (
+                        <FiCheck className="tracker-option-check" size={14} />
+                      )}
+                    </div>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Reset Button */}
+            {hasFilters && (
+              <button
+                type="button"
+                className="tracker-reset-filters-btn"
+                onClick={handleClearAllFilters}
+                title="Reset all applied filters"
               >
-                Clear All
-              </Button>
+                <FiRotateCcw size={13} />
+                <span>Reset</span>
+              </button>
             )}
           </div>
+
+          {/* Tier 3: Active Filters Summary Chips Bar */}
+          {hasFilters && (
+            <div className="tracker-active-chips-bar">
+              <div className="tracker-results-count">
+                Showing <strong>{filteredOpportunities.length}</strong> of {opportunities.length} applications
+              </div>
+              <div className="tracker-chips-list">
+                {searchQuery && (
+                  <span className="tracker-chip">
+                    Search: "{searchQuery}"
+                    <span
+                      className="tracker-chip-close"
+                      onClick={() => { setSearchQuery(""); setCurrentPage(1); }}
+                    >
+                      <FiX size={12} />
+                    </span>
+                  </span>
+                )}
+                {statusFilter !== "All" && (
+                  <span className="tracker-chip">
+                    Status: {statusFilter}
+                    <span
+                      className="tracker-chip-close"
+                      onClick={() => { setStatusFilter("All"); setCurrentPage(1); }}
+                    >
+                      <FiX size={12} />
+                    </span>
+                  </span>
+                )}
+                {roleFilter !== "All Roles" && (
+                  <span className="tracker-chip">
+                    Role: {roleFilter}
+                    <span
+                      className="tracker-chip-close"
+                      onClick={() => { setRoleFilter("All Roles"); setCurrentPage(1); }}
+                    >
+                      <FiX size={12} />
+                    </span>
+                  </span>
+                )}
+                {companyFilter !== "All Companies" && (
+                  <span className="tracker-chip">
+                    Company: {companyFilter}
+                    <span
+                      className="tracker-chip-close"
+                      onClick={() => { setCompanyFilter("All Companies"); setCurrentPage(1); }}
+                    >
+                      <FiX size={12} />
+                    </span>
+                  </span>
+                )}
+                {locationFilter !== "All Locations" && (
+                  <span className="tracker-chip">
+                    Location: {locationFilter}
+                    <span
+                      className="tracker-chip-close"
+                      onClick={() => { setLocationFilter("All Locations"); setCurrentPage(1); }}
+                    >
+                      <FiX size={12} />
+                    </span>
+                  </span>
+                )}
+                {dateFilter !== "All Time" && (
+                  <span className="tracker-chip">
+                    Date: {dateFilter}
+                    <span
+                      className="tracker-chip-close"
+                      onClick={() => { setDateFilter("All Time"); setCurrentPage(1); }}
+                    >
+                      <FiX size={12} />
+                    </span>
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className="tracker-clear-all-link"
+                  onClick={handleClearAllFilters}
+                >
+                  Clear all
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Table */}
         <Table
           className="custom-table"
           columns={columns}
-          dataSource={filteredOpportunities}
+          dataSource={paginatedData}
           rowKey={(record) => record.id}
           loading={loading}
           pagination={false}
           locale={{
             emptyText: (
-              <div style={{ padding: "60px 0", textAlign: "center" }}>
-                <Title level={4} style={{ color: "#94a3b8" }}>No applications found</Title>
-                <Button
-                  type="primary"
-                  onClick={() => navigate("/job-filter")}
-                  style={{ marginTop: 16, background: themeColor, borderRadius: 8 }}
-                >
-                  Browse Jobs
-                </Button>
+              <div className="tracker-empty-state">
+                <div className="tracker-empty-icon">
+                  <FiBriefcase />
+                </div>
+                <h3 className="tracker-empty-title">No applications found</h3>
+                <p className="tracker-empty-desc">
+                  {hasFilters
+                    ? "We couldn't find any job applications matching your current filter criteria."
+                    : "You haven't applied to any job postings yet. Discover opportunities matching your career goals."}
+                </p>
+                {hasFilters ? (
+                  <button
+                    type="button"
+                    className="tracker-empty-btn"
+                    onClick={handleClearAllFilters}
+                  >
+                    <FiRotateCcw size={14} />
+                    <span>Reset All Filters</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="tracker-empty-btn"
+                    onClick={() => navigate("/job-filter")}
+                  >
+                    <span>Browse Job Openings</span>
+                  </button>
+                )}
               </div>
             )
           }}
         />
 
-        {/* Custom Footer Pagination */}
+        {/* Custom Pagination Footer */}
         {filteredOpportunities.length > 0 && (
-          <div className="custom-pagination">
-            <div style={{ color: '#64748b', fontSize: '14px', fontWeight: 500 }}>
-              Showing {(currentPage - 1) * pageSize + 1} to {Math.min(currentPage * pageSize, filteredOpportunities.length)} of {filteredOpportunities.length} applications
+          <div className="tracker-pagination-bar">
+            <div className="tracker-pagination-info">
+              Showing <strong>{(currentPage - 1) * pageSize + 1}</strong> to <strong>{Math.min(currentPage * pageSize, filteredOpportunities.length)}</strong> of <strong>{filteredOpportunities.length}</strong> applications
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button
+
+            <div className="tracker-pagination-controls">
+              <button
+                type="button"
+                className="tracker-page-nav-btn"
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => p - 1)}
-                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', color: '#64748b' }}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                title="Previous page"
               >
-                &lt;
-              </Button>
-              <Button
-                type="primary"
-                style={{ borderRadius: '8px', background: themeColor, borderColor: themeColor }}
+                <FiChevronLeft size={16} />
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                // Show first, last, current, and adjacent pages
+                if (
+                  pageNum === 1 ||
+                  pageNum === totalPages ||
+                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pageNum}
+                      type="button"
+                      className={`tracker-page-number-btn ${currentPage === pageNum ? "active" : ""}`}
+                      onClick={() => setCurrentPage(pageNum)}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                } else if (
+                  (pageNum === currentPage - 2 && pageNum > 1) ||
+                  (pageNum === currentPage + 2 && pageNum < totalPages)
+                ) {
+                  return (
+                    <span key={pageNum} style={{ padding: '0 4px', color: '#94a3b8' }}>
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+
+              <button
+                type="button"
+                className="tracker-page-nav-btn"
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                title="Next page"
               >
-                {currentPage}
-              </Button>
-              <Button
-                disabled={currentPage * pageSize >= filteredOpportunities.length}
-                onClick={() => setCurrentPage(p => p + 1)}
-                style={{ borderRadius: '8px', border: '1px solid #e2e8f0', color: '#64748b' }}
-              >
-                &gt;
-              </Button>
+                <FiChevronRight size={16} />
+              </button>
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

@@ -63,6 +63,7 @@ import {
   getGenderData,
   getBenifitsData,
   updateJobDescription,
+  searchLocationsAPI
 } from "../ApiService/action";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
@@ -256,21 +257,79 @@ const EditOpportunity = () => {
     getSalaryDataType();
   }, []);
 
+  const [defaultLocations, setDefaultLocations] = useState([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [locationSearchTimeout, setLocationSearchTimeout] = useState(null);
+
   useEffect(() => {
-    const loadCities = () => {
-      const states = State.getStatesOfCountry("IN");
-      const cities = states.flatMap((state) =>
-        City.getCitiesOfState("IN", state.isoCode)
-      );
-      const formatted = cities.map((city) => ({
-        label: city.name,
-        value: city.name,
-      }));
-      setWorkLocationOption(formatted);
+    const loadCities = async () => {
+      try {
+        const locs = await searchLocationsAPI("");
+        if (locs && locs.length > 0) {
+          setDefaultLocations(locs);
+          setWorkLocationOption(locs);
+          return;
+        }
+      } catch (e) {
+        console.warn("Could not load default locations:", e);
+      }
     };
 
     loadCities();
   }, []);
+
+  const handleLocationSearch = (value) => {
+    if (locationSearchTimeout) clearTimeout(locationSearchTimeout);
+    const term = (value || "").trim();
+
+    if (!term || term.length < 2) {
+      const preserved = (specificLocation || []).map(val => ({
+        label: val,
+        value: val,
+        mainText: val,
+        subText: ""
+      }));
+      const combined = [...preserved, ...defaultLocations];
+      const unique = [];
+      const seen = new Set();
+      for (const item of combined) {
+        if (!seen.has(item.value)) {
+          seen.add(item.value);
+          unique.push(item);
+        }
+      }
+      setWorkLocationOption(unique);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    setLocationSearchTimeout(setTimeout(async () => {
+      try {
+        const results = await searchLocationsAPI(term);
+        const preserved = (specificLocation || []).map(val => ({
+          label: val,
+          value: val,
+          mainText: val,
+          subText: ""
+        }));
+        const combined = [...preserved, ...(results || [])];
+        const unique = [];
+        const seen = new Set();
+        for (const item of combined) {
+          if (!seen.has(item.value)) {
+            seen.add(item.value);
+            unique.push(item);
+          }
+        }
+        setWorkLocationOption(unique);
+      } catch (err) {
+        console.error("Location search error:", err);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250));
+  };
 
   const getSalaryDataType = async () => {
     try {
@@ -1512,11 +1571,19 @@ const EditOpportunity = () => {
                       style={{ marginTop: "20px" }}
                       showSearch={true}
                       mode="multiple"
-                      placeholder={"Select location"}
+                      showSearch={true}
+                      placeholder={"Search worldwide city, area, country (e.g. Kochi, Guindy, London)..."}
                       value={specificLocation}
-                      onChange={(value, option) => {
+                      onChange={(value) => {
                         setSpecificLocation(value);
                       }}
+                      onSearch={handleLocationSearch}
+                      filterOption={false}
+                      notFoundContent={isSearchingLocation ? (
+                        <div style={{ padding: "8px 12px", color: "#666", textAlign: "center" }}>
+                          Searching worldwide locations...
+                        </div>
+                      ) : null}
                       options={workLocationOption}
                     />
                   ) : null}

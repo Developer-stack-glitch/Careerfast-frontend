@@ -92,38 +92,37 @@
   background: #f1f3f7;
 }
 
-/* Suggestion Dropdown Popover (Naukri style) */
+/* Suggestion Dropdown Popover */
 .hp-suggestions-dropdown {
   position: absolute;
-  top: calc(100% + 12px);
+  top: calc(100% + 8px);
   left: 0;
-  min-width: 360px;
-  max-width: 440px;
-  max-height: 290px;
+  min-width: 280px;
+  max-width: 400px;
+  max-height: 280px;
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 20px 48px rgba(18, 38, 63, 0.22), 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
   z-index: 99999;
   overflow-y: auto;
-  padding: 8px 0;
-  animation: hpDropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 6px 0;
+  animation: hpDropdownFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: left;
 }
 
 .hp-suggestions-dropdown-location {
   left: auto;
   right: 0;
-  min-width: 320px;
+  min-width: 290px;
   max-width: 360px;
 }
 
 @keyframes hpDropdownFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-6px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -131,7 +130,7 @@
 }
 
 .hp-suggestions-dropdown::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .hp-suggestions-dropdown::-webkit-scrollbar-track {
@@ -139,107 +138,75 @@
 }
 
 .hp-suggestions-dropdown::-webkit-scrollbar-thumb {
-  background: #e2e8f0;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 
 .hp-suggestions-dropdown::-webkit-scrollbar-thumb:hover {
-  background: #cbd5e1;
-}
-
-.hp-suggestion-header {
-  padding: 10px 18px 6px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #718096;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.hp-suggestion-header-trending {
-  color: #ea580c;
+  background: #94a3b8;
 }
 
 .hp-suggestion-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 9px 18px;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.12s ease, color 0.12s ease;
   font-size: 14px;
-  color: #2d3748;
+  color: #334155;
+  line-height: 1.4;
 }
 
 .hp-suggestion-item:hover,
 .hp-suggestion-item.active {
-  background-color: #f4f6fb;
-  color: #5f2eea;
-}
-
-.hp-suggestion-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-}
-
-.hp-suggestion-icon {
-  font-size: 14px;
-  color: #8292b4;
-  flex-shrink: 0;
-}
-
-.hp-suggestion-item:hover .hp-suggestion-icon,
-.hp-suggestion-item.active .hp-suggestion-icon {
-  color: #5f2eea;
+  background-color: #f8fafc;
+  color: #1e40af;
 }
 
 .hp-suggestion-text {
-  white-space: nowrap;
+  font-size: 14px;
+  color: #1e293b;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 14px;
+  white-space: nowrap;
 }
 
 .hp-suggestion-text .matched-text {
   font-weight: 700;
-  color: #1a202c;
+  color: #0f172a;
 }
 
-.hp-suggestion-badge {
+.hp-suggestion-text-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  min-width: 0;
+}
+
+.hp-suggestion-subtext {
   font-size: 11px;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 12px;
-  background: #edf2f7;
-  color: #4a5568;
-  margin-left: 8px;
-  flex-shrink: 0;
+  color: #64748b;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.hp-suggestion-badge-role {
-  background: #ede9fe;
-  color: #6d28d9;
+.hp-suggestion-loading {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #64748b;
 }
 
-.hp-suggestion-badge-skill {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.hp-suggestion-badge-company {
-  background: #fef3c7;
-  color: #b45309;
-}
-
-.hp-suggestion-badge-location {
-  background: #dcfce7;
-  color: #15803d;
+.hp-suggestion-empty {
+  padding: 14px 18px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .hp-suggestion-divider {

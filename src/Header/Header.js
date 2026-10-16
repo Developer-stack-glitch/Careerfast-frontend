@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from "react";
 import logo from "../images/careerfastlogofinal.png";
 import { useNavigate } from "@/routing-shim";
-import GlobalSearch from "./GlobalSearch";
-import { getImageUrl, getPlaceholderSvg } from "../utils/getImageUrl";
+import { getImageUrl } from "../utils/getImageUrl";
 // Header.css already in layout.jsx
 import { useDispatch, useSelector } from "react-redux";
 import { storeLoginStatus } from "../Redux/Slice";
@@ -20,14 +19,13 @@ import {
   Popover,
   message,
   Button as AntButton,
+  Modal,
 } from "antd";
 import { usePathname } from "@/routing-shim";
 
 import {
   UserOutlined,
   PlusOutlined,
-  SearchOutlined,
-  BookOutlined,
   SettingOutlined,
   AppstoreOutlined,
   UserAddOutlined,
@@ -36,12 +34,10 @@ import {
   LogoutOutlined,
   RightOutlined,
   HeartOutlined,
-  TrophyOutlined,
   ShoppingOutlined,
   ProfileOutlined,
   LockOutlined,
   ReadOutlined,
-  CodeOutlined,
   MailOutlined,
   PhoneOutlined,
   CustomerServiceOutlined,
@@ -56,9 +52,8 @@ import {
 } from "@ant-design/icons";
 import { getUserProfile, searchByKeyword } from "../ApiService/action";
 import { IoChevronDownOutline } from "react-icons/io5";
-import { FcApproval } from "react-icons/fc";
 import { FaBookOpen, FaCalendarAlt, FaChalkboardTeacher, FaGraduationCap } from "react-icons/fa";
-import { Blocks, Book, BookAlert, LayoutDashboard, Briefcase, GraduationCap as LucideGraduationCap, Users, Menu } from "lucide-react";
+import { Blocks, Book, BookAlert, LayoutDashboard, Briefcase, GraduationCap as LucideGraduationCap, Users, Menu, ShieldCheck, Building2, LogIn, CheckCircle2 } from "lucide-react";
 
 const { Title, Text } = Typography;
 
@@ -81,6 +76,7 @@ export default function Header({ noSticky = false }) {
   const navigate = useNavigate();
   const [headerProgress, setHeaderProgress] = useState(0);
   const [megaTab, setMegaTab] = useState("locations");
+  const [candidateModalVisible, setCandidateModalVisible] = useState(false);
   const COURSE_URL = process.env.NEXT_PUBLIC_COURSE_URL || "";
 
   const smartNavigate = (path) => {
@@ -202,79 +198,6 @@ export default function Header({ noSticky = false }) {
     }
   };
 
-  const handleSearch = async (value) => {
-    setSearchText(value);
-    if (!value) {
-      setSuggestions([]);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const payload = { searchTerm: value };
-      const response = await searchByKeyword(payload);
-      const data = response?.data?.data || [];
-
-      const formattedSuggestions = data.map((item) => ({
-        value: item.id,
-        jobData: item,
-        label: (
-          <div className={`elite-suggestion-item ${item.isPremium ? "elite-premium" : ""}`}>
-            <div className="elite-content-wrapper">
-              <div className="elite-logo-container">
-                <div className="elite-logo-frame">
-                  <img
-                    src={getImageUrl(item.company_logo)}
-                    alt={item.company_name}
-                    className="elite-company-logo"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = getPlaceholderSvg("Logo", 48, 48);
-                    }}
-                  />
-                </div>
-                {item.isPremium && (
-                  <div className="elite-premium-badge">
-                    <CrownFilled className="elite-premium-icon" />
-                    <span>Elite</span>
-                  </div>
-                )}
-              </div>
-              <div className="elite-suggestion-content">
-                <div className="elite-job-title-header">
-                  {item.job_title}
-                  {item.isFeatured && <StarFilled className="elite-featured-icon" />}
-                </div>
-                <div className="elite-company-name-header">{item.company_name}</div>
-                <div className="elite-job-meta-header">
-                  <Tag
-                    icon={<EnvironmentOutlined />}
-                    className="elite-location-tag"
-                  >
-                    {item.work_location}
-                  </Tag>
-                  <Tag
-                    className={`elite-workplace-tag ${item.workplace_type === "Remote" ? "elite-remote" : "elite-onsite"}`}
-                  >
-                    {item.workplace_type}
-                  </Tag>
-                </div>
-              </div>
-            </div>
-            <div className="elite-view-btn">
-              <RightOutlined />
-            </div>
-          </div>
-        ),
-      }));
-
-      setSuggestions(formattedSuggestions);
-    } catch (error) {
-      console.error("Search failed", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const calculateCompletion = (profile) => {
     let score = 0;
@@ -293,38 +216,6 @@ export default function Header({ noSticky = false }) {
 
     localStorage.setItem("profileProgress", percentage);
     setHeaderProgress(percentage);
-  };
-
-  const handleSelect = (value, option) => {
-    const job = option.jobData; // full job object
-
-    const safeSlug = (val) => {
-      if (!val) return "";
-      if (Array.isArray(val)) return generateSlug(val.join(" "));
-      try {
-        const parsed = JSON.parse(val);
-        if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
-        return generateSlug(parsed);
-      } catch {
-        return generateSlug(val);
-      }
-    };
-
-    const jobNature = generateSlug(job.job_nature || "");
-    const jobTitle = generateSlug(job.job_title || "");
-    const companyName = generateSlug(job.company_name || "");
-    const locationSlug = safeSlug(job.work_location);
-    const workplaceType = generateSlug(job.workplace_type || "");
-    const experienceType = generateSlug(job.experience_type || "");
-    const experienceRequired = safeSlug(job.experience_required);
-
-    let basePath = "/job-details";
-    if (job.job_nature === "Internship") basePath = "/internship-details";
-    if (job.job_nature === "Scholarship") basePath = "/scholarship-details";
-
-    const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
-
-    smartNavigate(finalUrl);
   };
 
   const jobsMenuContent = (
@@ -550,8 +441,10 @@ export default function Header({ noSticky = false }) {
   );
 
   const isLocalHost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  const defaultHrUrl = isLocalHost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
-  const hrPortalUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
+  const defaultHrUrl = isLocalHost ? (typeof window !== 'undefined' && window.location.port === '3001' ? 'http://localhost:3000' : 'http://localhost:3001') : 'https://recruit.careerfast.in';
+  const hrPortalUrl = isLocalHost
+    ? (typeof window !== 'undefined' && window.location.port === '3001' ? 'http://localhost:3000' : (process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'http://localhost:3000'))
+    : (process.env.NEXT_PUBLIC_HR_PORTAL_URL || 'https://recruit.careerfast.in');
 
   const employerItems = [
     {
@@ -575,74 +468,41 @@ export default function Header({ noSticky = false }) {
 
   return (
     <>
-      <div className="top-bar-custom d-none d-md-block">
-        <div className="container-fluid" style={{ paddingLeft: 35, paddingRight: 35 }}>
-          <div className="d-flex justify-content-between align-items-center w-100 top-bar-inner">
-            <div className="d-flex align-items-center gap-3">
-              <div className="top-bar-item top-bar-contact"><MailOutlined /> <a href="mailto:careerfastcontact@gmail.com">careerfastcontact@gmail.com</a></div>
-              <div className="top-bar-divider">|</div>
-              <div className="top-bar-item top-bar-contact"><PhoneOutlined /> <a href="tel:+918122738034">+91 81227 38034</a></div>
+      <div className="top-bar-custom">
+        <div className="trust-marquee-wrapper-full">
+          <div className="trust-marquee-track">
+            <div className="trust-marquee-content">
+              <span className="marquee-item"><span className="marquee-star">★</span> Trusted by <strong className="marquee-accent">10,000+</strong> Top Companies worldwide</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🚀</span> <strong className="marquee-accent">500,000+</strong> Students & Job Seekers Placed</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">💼</span> <strong className="marquee-accent">#1</strong> Verified Career & Job Platform in India</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🎓</span> Top Rated <strong className="marquee-accent">Internship</strong> & Mentorship Programs</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🛡️</span> <strong className="marquee-accent">100% Verified</strong> Recruiter Postings & Anti-Scam Protection</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">⚡</span> Direct HR Hiring & <strong className="marquee-accent">Zero Hidden Fees</strong></span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🏢</span> Partnered with <strong className="marquee-accent">Fortune 500</strong> & Unicorn Startups</span>
+              <span className="marquee-divider">•</span>
             </div>
-
-            <div className="d-none d-lg-flex align-items-center justify-content-center" style={{ flex: 1, overflow: 'hidden', padding: '0px 20px 0px 0px' }}>
-              <div style={{
-                fontSize: '13px',
-                color: '#f8fafc',
-                display: 'flex',
-                alignItems: 'center',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-                maxWidth: '750px',
-                width: '100%',
-                overflow: 'hidden'
-              }}>
-                <div className="trust-marquee-wrapper">
-                  <div className="trust-marquee-content">
-                    <span style={{ color: '#facc15', fontSize: '14px', marginRight: '6px' }}>★</span>
-                    <span style={{ marginRight: '40px' }}>Trusted by <strong style={{ color: '#ff7b00', fontWeight: '600' }}>10,000+</strong> Top Companies worldwide</span>
-
-                    <span style={{ fontSize: '14px', marginRight: '6px' }}>🚀</span>
-                    <span style={{ marginRight: '40px' }}><strong style={{ color: '#ff7b00', fontWeight: '600' }}>500,000+</strong> Students Placed</span>
-
-                    <span style={{ fontSize: '14px', marginRight: '6px' }}>💼</span>
-                    <span style={{ marginRight: '40px' }}><strong style={{ color: '#ff7b00', fontWeight: '600' }}>#1</strong> Job Platform in India</span>
-
-                    <span style={{ fontSize: '14px', marginRight: '6px' }}>🎓</span>
-                    <span style={{ marginRight: '40px' }}>Top Rated <strong style={{ color: '#ff7b00', fontWeight: '600' }}>Internship</strong> Programs</span>
-                  </div>
-                  <div className="trust-marquee-content" aria-hidden="true">
-                    <span style={{ color: '#facc15', fontSize: '14px', marginRight: '6px' }}>★</span>
-                    <span style={{ marginRight: '40px' }}>Trusted by <strong style={{ color: '#ff7b00', fontWeight: '600' }}>10,000+</strong> Top Companies worldwide</span>
-
-                    <span style={{ fontSize: '14px', marginRight: '6px' }}>🚀</span>
-                    <span style={{ marginRight: '40px' }}><strong style={{ color: '#ff7b00', fontWeight: '600' }}>500,000+</strong> Students Placed</span>
-
-                    <span style={{ fontSize: '14px', marginRight: '6px' }}>💼</span>
-                    <span style={{ marginRight: '40px' }}><strong style={{ color: '#ff7b00', fontWeight: '600' }}>#1</strong> Job Platform in India</span>
-
-                    <span style={{ fontSize: '14px', marginRight: '6px' }}>🎓</span>
-                    <span style={{ marginRight: '40px' }}>Top Rated <strong style={{ color: '#ff7b00', fontWeight: '600' }}>Internship</strong> Programs</span>
-                  </div>
-                </div>
-              </div>
+            <div className="trust-marquee-content" aria-hidden="true">
+              <span className="marquee-item"><span className="marquee-star">★</span> Trusted by <strong className="marquee-accent">10,000+</strong> Top Companies worldwide</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🚀</span> <strong className="marquee-accent">500,000+</strong> Students & Job Seekers Placed</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">💼</span> <strong className="marquee-accent">#1</strong> Verified Career & Job Platform in India</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🎓</span> Top Rated <strong className="marquee-accent">Internship</strong> & Mentorship Programs</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🛡️</span> <strong className="marquee-accent">100% Verified</strong> Recruiter Postings & Anti-Scam Protection</span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">⚡</span> Direct HR Hiring & <strong className="marquee-accent">Zero Hidden Fees</strong></span>
+              <span className="marquee-divider">•</span>
+              <span className="marquee-item"><span className="marquee-emoji">🏢</span> Partnered with <strong className="marquee-accent">Fortune 500</strong> & Unicorn Startups</span>
+              <span className="marquee-divider">•</span>
             </div>
-
-            <div className="d-flex align-items-center gap-3">
-              <button
-                type="button"
-                onClick={() => smartNavigate("/support")}
-                className="top-bar-support-btn"
-                title="24/7 Helpdesk & Ticket Support"
-              >
-                <span className="support-icon-pulse">
-                  <CustomerServiceOutlined />
-                </span>
-                <span className="support-btn-text">Raise Support</span>
-                <span className="support-badge-live">24/7</span>
-              </button>
-              <div className="top-bar-divider">|</div>
-              <div className="top-bar-item" style={{ cursor: 'pointer' }}><AppstoreOutlined /> EN <IoChevronDownOutline /></div>
-            </div>
-
           </div>
         </div>
       </div>
@@ -729,13 +589,12 @@ export default function Header({ noSticky = false }) {
                   </div>
                   {!currentPath.includes("/candidate-profile") && (
                     roleId === 2 ? (
-                      <Tooltip title="You don't have permission to post jobs">
-                        <span>
-                          <AntButton className="host-button">
-                            <PlusOutlined /> Post a Job
-                          </AntButton>
-                        </span>
-                      </Tooltip>
+                      <AntButton
+                        className="host-button"
+                        onClick={() => setCandidateModalVisible(true)}
+                      >
+                        <PlusOutlined /> Post a Job
+                      </AntButton>
                     ) : (
                       <Popover
                         placement="bottomRight"
@@ -976,6 +835,127 @@ export default function Header({ noSticky = false }) {
           </AntButton>
         </div>
       </Drawer>
+
+      {/* Candidate Post a Job Regulation Modal */}
+      <Modal
+        open={candidateModalVisible}
+        onCancel={() => setCandidateModalVisible(false)}
+        footer={null}
+        centered
+        width={530}
+        className="candidate-recruiter-modal"
+        destroyOnHidden
+      >
+        <div className="crm-modal-content">
+          {/* Header Banner */}
+          <div className="crm-header">
+            <div className="crm-tag">
+              <ShieldCheck size={13} style={{ marginRight: 5 }} /> Recruiter Verification Policy
+            </div>
+            <h3 className="crm-title">Job Posting Regulations & Recruiter Access</h3>
+            <p className="crm-subtitle">
+              Careerfast enforces corporate verification to protect candidates from unverified listings.
+            </p>
+          </div>
+
+          <div className="crm-body">
+            {/* Current Session Alert Box */}
+            <div className="crm-session-badge">
+              <div className="crm-session-left">
+                <span className="crm-pulse-dot"></span>
+                <span className="crm-session-label">Current Account:</span>
+                <span className="crm-session-value">Candidate Profile</span>
+              </div>
+              <span className="crm-session-note">Job Seeker Mode</span>
+            </div>
+
+            {/* Regulation Details */}
+            <div className="crm-regulation-box">
+              <div className="crm-box-title">
+                Platform Regulations & Policy
+              </div>
+              <div className="crm-rule-list">
+                <div className="crm-rule-item">
+                  <div className="crm-rule-icon">
+                    <CheckCircle2 size={15} />
+                  </div>
+                  <div className="crm-rule-text">
+                    <strong>Fraud Prevention & Safety:</strong> Only verified corporate recruiters can post jobs. Candidate accounts cannot publish listings.
+                  </div>
+                </div>
+                <div className="crm-rule-item">
+                  <div className="crm-rule-icon">
+                    <CheckCircle2 size={15} />
+                  </div>
+                  <div className="crm-rule-text">
+                    <strong>Employer Verification:</strong> Official corporate credentials (GST/CIN, corporate email) are required to unlock posting tools.
+                  </div>
+                </div>
+                <div className="crm-rule-item">
+                  <div className="crm-rule-icon">
+                    <CheckCircle2 size={15} />
+                  </div>
+                  <div className="crm-rule-text">
+                    <strong>Dedicated Recruiter Portal:</strong> Job posts, applicant tracking (ATS), and candidate resumes are managed on the <strong>Recruiter Portal</strong>.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Call to Action Box */}
+            <div className="crm-cta-section">
+              <div className="crm-cta-header">
+                <Building2 size={16} className="crm-cta-icon" />
+                <span>Are you an Employer or Hiring Manager?</span>
+              </div>
+              <p className="crm-cta-desc">
+                Log in with your recruiter account or register your organization to post jobs:
+              </p>
+
+              <div className="crm-btn-group">
+                <button
+                  type="button"
+                  className="crm-primary-btn"
+                  onClick={() => {
+                    setCandidateModalVisible(false);
+                    window.location.href = `${hrPortalUrl}/login`;
+                  }}
+                >
+                  <LogIn size={15} />
+                  <span>Log In as Recruiter</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="crm-secondary-btn"
+                  onClick={() => {
+                    setCandidateModalVisible(false);
+                    window.location.href = `${hrPortalUrl}/register`;
+                  }}
+                >
+                  <Building2 size={15} />
+                  <span>Register Employer</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Dismiss & Helpdesk */}
+          <div className="crm-footer">
+            <button
+              type="button"
+              className="crm-dismiss-btn"
+              onClick={() => setCandidateModalVisible(false)}
+            >
+              Continue Job Search as Candidate
+            </button>
+            <div className="crm-help-text">
+              Need corporate verification assistance? Email{" "}
+              <a href="mailto:careerfastcontact@gmail.com">careerfastcontact@gmail.com</a>
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add CSS for elite search dropdown */}
       <style>

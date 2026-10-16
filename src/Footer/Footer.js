@@ -5,6 +5,13 @@ import { useNavigate } from "@/routing-shim";
 // Footer.css already in layout.jsx
 import { getImageUrl } from "../utils/getImageUrl";
 import { getAllCourses } from "../ApiService/action";
+import {
+  MailOutlined,
+  PhoneOutlined,
+  CustomerServiceOutlined,
+  GlobalOutlined,
+  ArrowRightOutlined,
+} from "@ant-design/icons";
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -243,11 +250,71 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Quick Connect & 24/7 Support Strip */}
+        <div className="footer-quick-connect-bar">
+          <div className="fqc-card fqc-support-card" onClick={() => navigate("/support")}>
+            <div className="fqc-icon-badge">
+              <CustomerServiceOutlined />
+              <span className="fqc-live-dot"></span>
+            </div>
+            <div className="fqc-content">
+              <div className="fqc-title">
+                <span>24/7 Live Support</span>
+                <span className="fqc-pill-tag">Online</span>
+              </div>
+              <div className="fqc-subtitle">Raise a ticket or talk to helpdesk</div>
+            </div>
+            <button type="button" className="fqc-action-btn">
+              Raise Support <ArrowRightOutlined style={{ fontSize: 11 }} />
+            </button>
+          </div>
+
+          <div className="fqc-card">
+            <div className="fqc-icon-badge fqc-email-badge">
+              <MailOutlined />
+            </div>
+            <div className="fqc-content">
+              <div className="fqc-label">Official Support Email</div>
+              <a href="mailto:careerfastcontact@gmail.com" className="fqc-value">
+                careerfastcontact@gmail.com
+              </a>
+            </div>
+          </div>
+
+          <div className="fqc-card">
+            <div className="fqc-icon-badge fqc-phone-badge">
+              <PhoneOutlined />
+            </div>
+            <div className="fqc-content">
+              <div className="fqc-label">Toll-Free & Helpline</div>
+              <a href="tel:+918122738034" className="fqc-value">
+                +91 81227 38034
+              </a>
+            </div>
+          </div>
+
+          <div className="fqc-card fqc-lang-card">
+            <div className="fqc-icon-badge fqc-lang-badge">
+              <GlobalOutlined />
+            </div>
+            <div className="fqc-content">
+              <div className="fqc-label">Language & Region</div>
+              <div className="fqc-lang-selector">
+                <span className="fqc-flag">🇮🇳</span>
+                <span className="fqc-lang-name">English (EN)</span>
+                <span className="fqc-region-code">• India</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Bottom Bar */}
         <div className="footer-bottom">
-          <p className="footer-copyright">
-            © 2026 All rights reserved by <a href="https://careerfast.in" style={{ color: "#818cf8", cursor: "pointer" }} target="_blank" rel="noopener noreferrer">Careerfast.in</a>.
-          </p>
+          <div className="footer-bottom-left">
+            <p className="footer-copyright">
+              © 2026 All rights reserved by <a href="https://careerfast.in" style={{ color: "#818cf8", cursor: "pointer" }} target="_blank" rel="noopener noreferrer">Careerfast.in</a>.
+            </p>
+          </div>
 
           <div className="footer-legal">
             <a style={{ cursor: "pointer" }} onClick={() => navigate("/privacy")} className="footer-legal-link">Privacy Policy</a>

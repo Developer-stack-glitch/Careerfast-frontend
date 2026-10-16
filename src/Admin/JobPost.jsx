@@ -323,7 +323,15 @@ export default function JobPost() {
         }
     };
 
-    const handleViewPreview = async (job) => {
+    const handleViewPreview = (job) => {
+        if (!job) return;
+        const url = getJobDetailsUrl(job, true);
+        window.open(url, '_blank');
+    };
+
+    const handleLoginAsRecruiterForApplicants = async (job) => {
+        if (!job) return;
+        setIsLoggingInRecruiter(true);
         const recruiterId = job.user_id || job.recruiter_id;
         const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
@@ -331,6 +339,8 @@ export default function JobPost() {
 
         if (!recruiterId) {
             window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
+            setIsLoggingInRecruiter(false);
+            setAppliedModalJob(null);
             return;
         }
 
@@ -362,22 +372,12 @@ export default function JobPost() {
                 window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
             }
         } catch (err) {
-            console.error("Error in handleViewPreview:", err);
+            console.error("Error in handleLoginAsRecruiterForApplicants:", err);
             toast.error(err?.response?.data?.message || err?.message || "Failed to login as recruiter. Opening page directly.", { id: toastId });
             window.open(`${hrBaseUrl}/applicants/${job.id}`, '_blank');
-        }
-    };
-
-    const handleLoginAsRecruiterForApplicants = async (job) => {
-        if (!job) return;
-        setIsLoggingInRecruiter(true);
-        try {
-            await handleViewPreview(job);
-            setAppliedModalJob(null);
-        } catch (err) {
-            console.error("Error logging in as recruiter for applicants:", err);
         } finally {
             setIsLoggingInRecruiter(false);
+            setAppliedModalJob(null);
         }
     };
 

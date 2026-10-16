@@ -12,7 +12,6 @@ import {
     HistoryOutlined,
     RightOutlined,
     ThunderboltFilled,
-    ThunderboltOutlined,
     HomeOutlined,
     BuildOutlined,
     LineChartOutlined,
@@ -27,14 +26,11 @@ import {
     SolutionOutlined,
     ClockCircleOutlined,
     CloseCircleFilled,
-    FireFilled,
-    BankOutlined,
-    CompassOutlined,
 } from "@ant-design/icons";
 import { message, Select, Row, Col, Spin } from "antd";
 
 import "../css/HomePage.css";
-import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getSearchSuggestions, getBlogs, getAllCourses, getTopCompanies, getUserProfile } from "../ApiService/action";
+import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getSearchSuggestions, getBlogs, getAllCourses, getTopCompanies, getUserProfile, searchLocationsAPI } from "../ApiService/action";
 import { getImageUrl, getPlaceholderSvg } from "../utils/getImageUrl";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
@@ -125,6 +121,8 @@ export default function HomePage() {
     const navigate = useNavigate();
     const [skills, setSkills] = useState("");
     const [location, setLocation] = useState("");
+    const [defaultLocations, setDefaultLocations] = useState([]);
+    const [isSearchingLocation, setIsSearchingLocation] = useState(false);
     const [experience, setExperience] = useState(null);
     const [categories, setCategories] = useState([]);
     const [fresherCategories, setFresherCategories] = useState([]);
@@ -192,7 +190,7 @@ export default function HomePage() {
                         userFirstName = parsed.first_name || "";
                     }
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
         return {
             isCandidate: isCand,
@@ -259,14 +257,37 @@ export default function HomePage() {
         fetchCandidateProfile();
     }, []);
 
-    // Matching query highlighter for Naukri-like bold search terms
+    // Helper to get the active term after the last comma
+    const getLastQueryTerm = (val) => {
+        if (!val) return "";
+        const parts = val.split(",");
+        return parts[parts.length - 1].trim();
+    };
+
+    // Helper to cleanly append or replace the active term with selected suggestion
+    const appendSuggestionToInput = (currentVal, suggestion) => {
+        if (!currentVal || !currentVal.trim()) {
+            return suggestion + ", ";
+        }
+        const parts = currentVal.split(",");
+        parts.pop(); // remove whatever was typed after the last comma
+        const cleanPrefix = parts.map(p => p.trim()).filter(Boolean);
+        if (!cleanPrefix.some(p => p.toLowerCase() === suggestion.toLowerCase())) {
+            cleanPrefix.push(suggestion);
+        }
+        return cleanPrefix.join(", ") + ", ";
+    };
+
+    // Matching query highlighter for bold search terms
     const highlightMatch = (text, query) => {
         if (!query || !text) return text;
-        const index = text.toLowerCase().indexOf(query.toLowerCase());
+        const cleanQ = query.trim();
+        if (!cleanQ) return text;
+        const index = text.toLowerCase().indexOf(cleanQ.toLowerCase());
         if (index === -1) return text;
         const before = text.substring(0, index);
-        const match = text.substring(index, index + query.length);
-        const after = text.substring(index + query.length);
+        const match = text.substring(index, index + cleanQ.length);
+        const after = text.substring(index + cleanQ.length);
         return (
             <span className="hp-suggestion-text-inner">
                 {before}
@@ -278,9 +299,15 @@ export default function HomePage() {
 
     // Real-time suggestions debounced fetch for Skills / Roles / Companies
     useEffect(() => {
+        const activeTerm = getLastQueryTerm(skills);
+        if (!activeTerm || activeTerm.length < 2) {
+            setSkillsSuggestions({});
+            return;
+        }
+
         const timer = setTimeout(async () => {
             try {
-                const res = await getSearchSuggestions({ q: skills, type: "all" });
+                const res = await getSearchSuggestions({ q: activeTerm, type: "all" });
                 if (res?.data?.data) {
                     setSkillsSuggestions(res.data.data);
                 }
@@ -292,21 +319,33 @@ export default function HomePage() {
         return () => clearTimeout(timer);
     }, [skills]);
 
-    // Real-time suggestions debounced fetch for Locations
+    // Real-time suggestions debounced fetch for Locations (Worldwide)
     useEffect(() => {
+        const activeTerm = getLastQueryTerm(location);
+        if (!activeTerm || activeTerm.length < 2) {
+            setLocationSuggestions(defaultLocations);
+            setIsSearchingLocation(false);
+            return;
+        }
+
+        setIsSearchingLocation(true);
         const timer = setTimeout(async () => {
             try {
-                const res = await getSearchSuggestions({ q: location, type: "locations" });
-                if (res?.data?.data?.locations) {
-                    setLocationSuggestions(res.data.data.locations);
+                const res = await searchLocationsAPI(activeTerm);
+                if (Array.isArray(res) && res.length > 0) {
+                    setLocationSuggestions(res);
+                } else {
+                    setLocationSuggestions([]);
                 }
             } catch (err) {
                 console.error("Failed to fetch location suggestions", err);
+            } finally {
+                setIsSearchingLocation(false);
             }
-        }, 120);
+        }, 150);
 
         return () => clearTimeout(timer);
-    }, [location]);
+    }, [location, defaultLocations]);
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -334,27 +373,72 @@ export default function HomePage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleSelectSkillsSuggestion = (item) => {
-        const label = typeof item === "string" ? item : item.label;
-        setSkills(label);
-        setShowSkillsDropdown(false);
-        setSkillsActiveIndex(-1);
-    };
-
-    const handleSelectLocationSuggestion = (item) => {
-        const label = typeof item === "string" ? item : item.label;
-        setLocation(label);
-        setShowLocationDropdown(false);
-        setLocationActiveIndex(-1);
-    };
-
+    // Flattened clean list of skills suggestions
     const flattenedSkillsSuggestions = [
         ...(skillsSuggestions.roles || []),
         ...(skillsSuggestions.skills || []),
         ...(skillsSuggestions.companies || []),
+    ].slice(0, 8);
+
+    const defaultPopularSkills = [
+        { label: "Java Developer" },
+        { label: "React Developer" },
+        { label: "Full Stack Developer" },
+        { label: "Python Developer" },
+        { label: "Frontend Developer" },
+        { label: "Backend Developer" },
+        { label: "Data Analyst" },
+        { label: "UI/UX Designer" }
     ];
 
+    const currentSkillsList = flattenedSkillsSuggestions.length > 0 ? flattenedSkillsSuggestions : defaultPopularSkills;
+
+    const handleSelectSkillsSuggestion = (item) => {
+        const label = typeof item === "string" ? item : item.label;
+        if (label) {
+            setSkills(prev => appendSuggestionToInput(prev, label));
+        }
+        setShowSkillsDropdown(false);
+        setSkillsActiveIndex(-1);
+        skillsInputRef.current?.focus();
+    };
+
+    const handleSelectLocationSuggestion = (item) => {
+        const rawVal = item.mainText || item.city || item.label || item;
+        const locName = typeof rawVal === "string" ? rawVal.trim() : String(rawVal);
+        if (locName) {
+            setLocation(prev => appendSuggestionToInput(prev, locName));
+        }
+        setShowLocationDropdown(false);
+        setLocationActiveIndex(-1);
+        locationInputRef.current?.focus();
+    };
+
     const handleSkillsKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (showSkillsDropdown && skillsActiveIndex >= 0 && currentSkillsList[skillsActiveIndex]) {
+                const item = currentSkillsList[skillsActiveIndex];
+                const label = typeof item === "string" ? item : item.label;
+                const newSkills = appendSuggestionToInput(skills, label);
+                setSkills(newSkills);
+                setShowSkillsDropdown(false);
+                setSkillsActiveIndex(-1);
+                handleSearch({ skills: newSkills });
+            } else {
+                setShowSkillsDropdown(false);
+                setSkillsActiveIndex(-1);
+                handleSearch();
+            }
+            return;
+        }
+
+        if (e.key === "Escape") {
+            setShowSkillsDropdown(false);
+            setSkillsActiveIndex(-1);
+            return;
+        }
+
         if (!showSkillsDropdown) {
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 setShowSkillsDropdown(true);
@@ -365,27 +449,42 @@ export default function HomePage() {
         if (e.key === "ArrowDown") {
             e.preventDefault();
             setSkillsActiveIndex((prev) =>
-                prev < flattenedSkillsSuggestions.length - 1 ? prev + 1 : 0
+                prev < currentSkillsList.length - 1 ? prev + 1 : 0
             );
         } else if (e.key === "ArrowUp") {
             e.preventDefault();
             setSkillsActiveIndex((prev) =>
-                prev > 0 ? prev - 1 : flattenedSkillsSuggestions.length - 1
+                prev > 0 ? prev - 1 : currentSkillsList.length - 1
             );
-        } else if (e.key === "Enter") {
-            if (skillsActiveIndex >= 0 && flattenedSkillsSuggestions[skillsActiveIndex]) {
-                e.preventDefault();
-                handleSelectSkillsSuggestion(flattenedSkillsSuggestions[skillsActiveIndex]);
-            } else {
-                setShowSkillsDropdown(false);
-                handleSearch();
-            }
-        } else if (e.key === "Escape") {
-            setShowSkillsDropdown(false);
         }
     };
 
     const handleLocationKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            if (showLocationDropdown && locationActiveIndex >= 0 && locationSuggestions[locationActiveIndex]) {
+                const item = locationSuggestions[locationActiveIndex];
+                const rawVal = item.mainText || item.city || item.label || item;
+                const locName = typeof rawVal === "string" ? rawVal.trim() : String(rawVal);
+                const newLocation = appendSuggestionToInput(location, locName);
+                setLocation(newLocation);
+                setShowLocationDropdown(false);
+                setLocationActiveIndex(-1);
+                handleSearch({ location: newLocation });
+            } else {
+                setShowLocationDropdown(false);
+                setLocationActiveIndex(-1);
+                handleSearch();
+            }
+            return;
+        }
+
+        if (e.key === "Escape") {
+            setShowLocationDropdown(false);
+            setLocationActiveIndex(-1);
+            return;
+        }
+
         if (!showLocationDropdown) {
             if (e.key === "ArrowDown" || e.key === "ArrowUp") {
                 setShowLocationDropdown(true);
@@ -403,16 +502,6 @@ export default function HomePage() {
             setLocationActiveIndex((prev) =>
                 prev > 0 ? prev - 1 : locationSuggestions.length - 1
             );
-        } else if (e.key === "Enter") {
-            if (locationActiveIndex >= 0 && locationSuggestions[locationActiveIndex]) {
-                e.preventDefault();
-                handleSelectLocationSuggestion(locationSuggestions[locationActiveIndex]);
-            } else {
-                setShowLocationDropdown(false);
-                handleSearch();
-            }
-        } else if (e.key === "Escape") {
-            setShowLocationDropdown(false);
         }
     };
 
@@ -530,6 +619,17 @@ export default function HomePage() {
                 setCoursesList(Array.isArray(courses) ? courses : []);
             }
 
+            // Locations initial top cities
+            try {
+                const defLocs = await searchLocationsAPI("");
+                if (Array.isArray(defLocs) && defLocs.length > 0) {
+                    setDefaultLocations(defLocs);
+                    setLocationSuggestions(defLocs);
+                }
+            } catch (locErr) {
+                console.warn("Could not load default locations:", locErr);
+            }
+
             // Categories (All)
             const catData = catRes.status === 'fulfilled' ? (catRes.value?.data?.data || []) : [];
             const seenCats = new Set();
@@ -622,16 +722,33 @@ export default function HomePage() {
         return <BuildOutlined />;
     };
 
-    const handleSearch = () => {
-        if (!skills && !location && experience === null) {
+    const handleSearch = (overrides = {}) => {
+        const skillsToUse = overrides.hasOwnProperty('skills') ? overrides.skills : skills;
+        const locationToUse = overrides.hasOwnProperty('location') ? overrides.location : location;
+        const experienceToUse = overrides.hasOwnProperty('experience') ? overrides.experience : experience;
+
+        const locParts = locationToUse
+            .split(",")
+            .map(l => l.trim())
+            .filter(Boolean);
+
+        const skillTrimmed = skillsToUse
+            .split(",")
+            .map(s => s.trim())
+            .filter(Boolean)
+            .join(", ");
+
+        if (!skillTrimmed && locParts.length === 0 && experienceToUse === null) {
             message.info("Please enter some search criteria");
             return;
         }
 
         let queryParams = [];
-        if (skills) queryParams.push(`q=${encodeURIComponent(skills)}`);
-        if (location) queryParams.push(`l=${encodeURIComponent(location)}`);
-        if (experience !== null) queryParams.push(`experience=${experience}`);
+        if (skillTrimmed) queryParams.push(`q=${encodeURIComponent(skillTrimmed)}`);
+        locParts.forEach(loc => {
+            queryParams.push(`l=${encodeURIComponent(loc)}`);
+        });
+        if (experienceToUse !== null) queryParams.push(`experience=${experienceToUse}`);
 
         const searchUrl = `/job-filter?${queryParams.join("&")}`;
         navigate(searchUrl);
@@ -960,150 +1077,26 @@ export default function HomePage() {
                                 )}
                             </div>
 
-                            {/* Naukri-style Suggestion Dropdown */}
-                            {showSkillsDropdown && (
+                            {/* Clean Skills Suggestion Dropdown */}
+                            {showSkillsDropdown && currentSkillsList.length > 0 && (
                                 <div className="hp-suggestions-dropdown" ref={skillsDropdownRef}>
-                                    {!skills.trim() ? (
-                                        <>
-                                            <div className="hp-suggestion-header hp-suggestion-header-trending">
-                                                <FireFilled style={{ color: "#ea580c" }} /> POPULAR SEARCHES
+                                    {currentSkillsList.map((item, idx) => {
+                                        const isHighlighted = skillsActiveIndex === idx;
+                                        return (
+                                            <div
+                                                key={`skill-${idx}`}
+                                                className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault();
+                                                    handleSelectSkillsSuggestion(item);
+                                                }}
+                                            >
+                                                <span className="hp-suggestion-text">
+                                                    {highlightMatch(item.label, getLastQueryTerm(skills))}
+                                                </span>
                                             </div>
-                                            {(skillsSuggestions.roles || []).slice(0, 6).map((role, idx) => {
-                                                const isHighlighted = skillsActiveIndex === idx;
-                                                return (
-                                                    <div
-                                                        key={`pop-role-${idx}`}
-                                                        className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                                                        onMouseDown={(e) => {
-                                                            e.preventDefault();
-                                                            handleSelectSkillsSuggestion(role);
-                                                        }}
-                                                    >
-                                                        <div className="hp-suggestion-left">
-                                                            <ThunderboltOutlined className="hp-suggestion-icon" />
-                                                            <span className="hp-suggestion-text">{role.label}</span>
-                                                        </div>
-                                                        <span className="hp-suggestion-badge hp-suggestion-badge-role">Trending</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </>
-                                    ) : (
-                                        <>
-                                            {/* Designations / Job Roles */}
-                                            {skillsSuggestions.roles && skillsSuggestions.roles.length > 0 && (
-                                                <div className="hp-suggestion-group">
-                                                    <div className="hp-suggestion-header">
-                                                        <SolutionOutlined /> DESIGNATIONS & ROLES
-                                                    </div>
-                                                    {skillsSuggestions.roles.map((item, idx) => {
-                                                        const flatIdx = idx;
-                                                        const isHighlighted = skillsActiveIndex === flatIdx;
-                                                        return (
-                                                            <div
-                                                                key={`role-${idx}`}
-                                                                className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                                                                onMouseDown={(e) => {
-                                                                    e.preventDefault();
-                                                                    handleSelectSkillsSuggestion(item);
-                                                                }}
-                                                            >
-                                                                <div className="hp-suggestion-left">
-                                                                    <SolutionOutlined className="hp-suggestion-icon" />
-                                                                    <span className="hp-suggestion-text">
-                                                                        {highlightMatch(item.label, skills)}
-                                                                    </span>
-                                                                </div>
-                                                                <span className="hp-suggestion-badge hp-suggestion-badge-role">
-                                                                    {item.count ? `${item.count} Jobs` : "Designation"}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-
-                                            {/* Skills */}
-                                            {skillsSuggestions.skills && skillsSuggestions.skills.length > 0 && (
-                                                <div className="hp-suggestion-group">
-                                                    {skillsSuggestions.roles && skillsSuggestions.roles.length > 0 && (
-                                                        <div className="hp-suggestion-divider"></div>
-                                                    )}
-                                                    <div className="hp-suggestion-header">
-                                                        <CodeOutlined /> SKILLS & TECHNOLOGIES
-                                                    </div>
-                                                    {skillsSuggestions.skills.map((item, idx) => {
-                                                        const flatIdx = (skillsSuggestions.roles?.length || 0) + idx;
-                                                        const isHighlighted = skillsActiveIndex === flatIdx;
-                                                        return (
-                                                            <div
-                                                                key={`skill-${idx}`}
-                                                                className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                                                                onMouseDown={(e) => {
-                                                                    e.preventDefault();
-                                                                    handleSelectSkillsSuggestion(item);
-                                                                }}
-                                                            >
-                                                                <div className="hp-suggestion-left">
-                                                                    <CodeOutlined className="hp-suggestion-icon" />
-                                                                    <span className="hp-suggestion-text">
-                                                                        {highlightMatch(item.label, skills)}
-                                                                    </span>
-                                                                </div>
-                                                                <span className="hp-suggestion-badge hp-suggestion-badge-skill">
-                                                                    Skill
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-
-                                            {/* Companies */}
-                                            {skillsSuggestions.companies && skillsSuggestions.companies.length > 0 && (
-                                                <div className="hp-suggestion-group">
-                                                    {((skillsSuggestions.roles?.length || 0) > 0 || (skillsSuggestions.skills?.length || 0) > 0) && (
-                                                        <div className="hp-suggestion-divider"></div>
-                                                    )}
-                                                    <div className="hp-suggestion-header">
-                                                        <BankOutlined /> COMPANIES
-                                                    </div>
-                                                    {skillsSuggestions.companies.map((item, idx) => {
-                                                        const flatIdx = (skillsSuggestions.roles?.length || 0) + (skillsSuggestions.skills?.length || 0) + idx;
-                                                        const isHighlighted = skillsActiveIndex === flatIdx;
-                                                        return (
-                                                            <div
-                                                                key={`comp-${idx}`}
-                                                                className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                                                                onMouseDown={(e) => {
-                                                                    e.preventDefault();
-                                                                    handleSelectSkillsSuggestion(item);
-                                                                }}
-                                                            >
-                                                                <div className="hp-suggestion-left">
-                                                                    <BankOutlined className="hp-suggestion-icon" />
-                                                                    <span className="hp-suggestion-text">
-                                                                        {highlightMatch(item.label, skills)}
-                                                                    </span>
-                                                                </div>
-                                                                <span className="hp-suggestion-badge hp-suggestion-badge-company">
-                                                                    {item.count ? `${item.count} Openings` : "Company"}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            )}
-
-                                            {(!skillsSuggestions.roles || skillsSuggestions.roles.length === 0) &&
-                                                (!skillsSuggestions.skills || skillsSuggestions.skills.length === 0) &&
-                                                (!skillsSuggestions.companies || skillsSuggestions.companies.length === 0) && (
-                                                    <div className="hp-suggestion-empty">
-                                                        Press Enter to search for "<strong>{skills}</strong>"
-                                                    </div>
-                                                )}
-                                        </>
-                                    )}
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -1164,15 +1157,17 @@ export default function HomePage() {
                                 )}
                             </div>
 
-                            {/* Location Suggestions Dropdown */}
+                            {/* Clean Location Suggestions Dropdown */}
                             {showLocationDropdown && (
                                 <div className="hp-suggestions-dropdown hp-suggestions-dropdown-location" ref={locationDropdownRef}>
-                                    <div className="hp-suggestion-header">
-                                        <CompassOutlined /> {location.trim() ? "MATCHING LOCATIONS" : "POPULAR CITIES"}
-                                    </div>
-                                    {locationSuggestions && locationSuggestions.length > 0 ? (
+                                    {isSearchingLocation ? (
+                                        <div className="hp-suggestion-loading">
+                                            <Spin size="small" /> Searching worldwide locations...
+                                        </div>
+                                    ) : locationSuggestions && locationSuggestions.length > 0 ? (
                                         locationSuggestions.map((item, idx) => {
                                             const isHighlighted = locationActiveIndex === idx;
+                                            const labelText = item.mainText || item.label;
                                             return (
                                                 <div
                                                     key={`loc-${idx}`}
@@ -1182,21 +1177,32 @@ export default function HomePage() {
                                                         handleSelectLocationSuggestion(item);
                                                     }}
                                                 >
-                                                    <div className="hp-suggestion-left">
-                                                        <EnvironmentOutlined className="hp-suggestion-icon" />
+                                                    <div className="hp-suggestion-text-col">
                                                         <span className="hp-suggestion-text">
-                                                            {highlightMatch(item.label, location)}
+                                                            {highlightMatch(labelText, getLastQueryTerm(location))}
                                                         </span>
+                                                        {(item.subText || item.state) && (
+                                                            <span className="hp-suggestion-subtext">
+                                                                {item.subText || item.state}
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    <span className="hp-suggestion-badge hp-suggestion-badge-location">
-                                                        Location
-                                                    </span>
                                                 </div>
                                             );
                                         })
                                     ) : (
-                                        <div className="hp-suggestion-empty">
-                                            Press Enter to search for "<strong>{location}</strong>"
+                                        <div
+                                            className="hp-suggestion-empty"
+                                            style={{ cursor: getLastQueryTerm(location) ? "pointer" : "default" }}
+                                            onMouseDown={(e) => {
+                                                e.preventDefault();
+                                                const lastQ = getLastQueryTerm(location);
+                                                if (lastQ) {
+                                                    handleSelectLocationSuggestion(lastQ);
+                                                }
+                                            }}
+                                        >
+                                            Press Enter to add "<strong>{getLastQueryTerm(location)}</strong>"
                                         </div>
                                     )}
                                 </div>

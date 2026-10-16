@@ -69,7 +69,8 @@ import {
   getYears,
   getSkillsData,
   getJobCategoryData,
-  createJobPost
+  createJobPost,
+  searchLocationsAPI
 } from "../ApiService/action";
 import Header from "../Header/Header";
 import currencySymbol from "currency-symbols";
@@ -175,6 +176,9 @@ export default function PostJobs() {
   const [value, setValue] = useState(DEFAULT_CONTENT);
 
   const [workLocationOption, setWorkLocationOption] = useState([]);
+  const [defaultLocations, setDefaultLocations] = useState([]);
+  const [isSearchingLocation, setIsSearchingLocation] = useState(false);
+  const [locationSearchTimeout, setLocationSearchTimeout] = useState(null);
   const [openQuestionModal, setOpenQuestionModal] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -195,14 +199,70 @@ export default function PostJobs() {
     loadCitiesAPI();
   }, []);
 
-  const loadCitiesAPI = () => {
-    const allCities = Object.keys(cities).map((city) => ({
-      label: city,
-      value: city,
-      country: cities[city].country,
-    }));
+  const loadCitiesAPI = async () => {
+    try {
+      const locs = await searchLocationsAPI("");
+      if (locs && locs.length > 0) {
+        setDefaultLocations(locs);
+        setWorkLocationOption(locs);
+        return;
+      }
+    } catch (e) {
+      console.warn("Could not load default locations:", e);
+    }
+  };
 
-    setWorkLocationOption(allCities); // ✅ replace your previous city list
+  const handleLocationSearch = (value) => {
+    if (locationSearchTimeout) clearTimeout(locationSearchTimeout);
+    const term = (value || "").trim();
+
+    if (!term || term.length < 2) {
+      const preserved = (specificLocation || []).map(val => ({
+        label: val,
+        value: val,
+        mainText: val,
+        subText: ""
+      }));
+      const combined = [...preserved, ...defaultLocations];
+      const unique = [];
+      const seen = new Set();
+      for (const item of combined) {
+        if (!seen.has(item.value)) {
+          seen.add(item.value);
+          unique.push(item);
+        }
+      }
+      setWorkLocationOption(unique);
+      setIsSearchingLocation(false);
+      return;
+    }
+
+    setIsSearchingLocation(true);
+    setLocationSearchTimeout(setTimeout(async () => {
+      try {
+        const results = await searchLocationsAPI(term);
+        const preserved = (specificLocation || []).map(val => ({
+          label: val,
+          value: val,
+          mainText: val,
+          subText: ""
+        }));
+        const combined = [...preserved, ...(results || [])];
+        const unique = [];
+        const seen = new Set();
+        for (const item of combined) {
+          if (!seen.has(item.value)) {
+            seen.add(item.value);
+            unique.push(item);
+          }
+        }
+        setWorkLocationOption(unique);
+      } catch (err) {
+        console.error("Location search error:", err);
+      } finally {
+        setIsSearchingLocation(false);
+      }
+    }, 250));
   };
 
 
@@ -1187,15 +1247,19 @@ export default function PostJobs() {
                               className="ant-select ant-select-in-form-item premium-input main_select"
                               style={{ width: "100%" }}
                               showSearch={true}
-                              placeholder={"Select multiple locations"}
+                              placeholder={"Search worldwide city, area, country (e.g. Kochi, Guindy, London)..."}
                               value={specificLocation}
                               onChange={(value) => {
                                 setSpecificLocation(value);
                               }}
+                              onSearch={handleLocationSearch}
+                              filterOption={false}
+                              notFoundContent={isSearchingLocation ? (
+                                <div style={{ padding: "8px 12px", color: "#666", textAlign: "center" }}>
+                                  Searching worldwide locations...
+                                </div>
+                              ) : null}
                               options={workLocationOption}
-                              filterOption={(input, option) =>
-                                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                              }
                             />
                           </>
                         ) : null}

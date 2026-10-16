@@ -25,6 +25,7 @@ if (typeof window !== "undefined") {
       msg.includes("[GSI_LOGGER]") ||
       msg.includes("[antd: compatible]") ||
       msg.includes("[antd: message]") ||
+      msg.includes("[antd: Modal]") ||
       msg.includes("src attribute")
     ) {
       return;
@@ -37,6 +38,7 @@ if (typeof window !== "undefined") {
     if (
       msg.includes("[antd: compatible]") ||
       msg.includes("[antd: message]") ||
+      msg.includes("[antd: Modal]") ||
       msg.includes("antd v5 support React") ||
       msg.includes("src attribute")
     ) {
