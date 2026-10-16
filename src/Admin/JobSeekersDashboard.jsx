@@ -467,8 +467,8 @@ export default function JobSeekersDashboard() {
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
                                 }`}
                         >
-                            <UserCheck className="w-4 h-4 text-blue-600" />
-                            <span>Recently Logged In Candidates</span>
+                            <Sparkles className="w-4 h-4 text-blue-600" />
+                            <span>Recently Registered Candidates</span>
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'candidates' ? 'bg-blue-200/70 text-blue-800' : 'bg-gray-100 text-gray-600'
                                 }`}>
                                 {formattedRecentCandidates.length}
@@ -541,7 +541,7 @@ export default function JobSeekersDashboard() {
                                     <th className="px-4 py-3">Email Address</th>
                                     <th className="px-4 py-3">Phone Number</th>
                                     <th className="px-4 py-3">Location</th>
-                                    <th className="px-4 py-3">Logged In Time</th>
+                                    <th className="px-4 py-3">Registered Time</th>
                                     <th className="px-4 py-3">Status</th>
                                     <th className="px-4 py-3 text-right">Action</th>
                                 </tr>

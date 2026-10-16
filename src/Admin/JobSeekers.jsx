@@ -3,7 +3,8 @@ import {
     Users, Search,
     MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     MapPin, GraduationCap, CheckCircle2, XCircle,
-    ChevronsUpDown, ChevronUp, ChevronDown, Clock
+    ChevronsUpDown, ChevronUp, ChevronDown, Clock,
+    Sparkles, Calendar, UserPlus
 } from 'lucide-react';
 import { getUsers, getUserProfile, updateUserStatus } from '../ApiService/action';
 import toast from 'react-hot-toast';
@@ -47,6 +48,15 @@ const formatLastActive = (dateString) => {
 
     const diffInYears = Math.floor(diffInDays / 365);
     return { relative: `${diffInYears}y ago`, exact, isOnline: false };
+};
+
+// ── Check if Candidate Registered Recently (within 7 days) ──
+const isRecentRegistration = (dateString) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return false;
+    const diffDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 7;
 };
 
 // ── Stat Card Component ──
@@ -121,8 +131,8 @@ export default function JobSeekers() {
             timeRaw: candidate.created_date || candidate.last_active
         });
     };
-    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, new: 0 });
-    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' }); // 'candidate' | 'education' | 'status' | 'last_active'
+    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, recent: 0, new: 0 });
+    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' }); // 'candidate' | 'education' | 'status' | 'last_login' | 'created_date'
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
     // Pagination state
@@ -163,7 +173,7 @@ export default function JobSeekers() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const statusFilter = activeFilter !== 'All' ? activeFilter : '';
+            const statusFilter = activeFilter === 'Recent' ? 'Recent' : (activeFilter !== 'All' ? activeFilter : '');
             const payload = {
                 page: currentPage,
                 limit: itemsPerPage,
@@ -173,8 +183,8 @@ export default function JobSeekers() {
                 start_date: dateFilter.startDate || undefined,
                 end_date: dateFilter.endDate || undefined,
                 timeFilter: dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined,
-                sortBy: sortConfig.key || undefined,
-                sortOrder: sortConfig.direction || undefined
+                sortBy: sortConfig.key || (activeFilter === 'Recent' ? 'created_date' : undefined),
+                sortOrder: sortConfig.direction || (activeFilter === 'Recent' ? 'desc' : undefined)
             };
             const response = await getUsers(payload);
             const responseData = response?.data?.data;
@@ -203,14 +213,13 @@ export default function JobSeekers() {
                 };
             });
 
-            // We no longer need to compute global stats accurately from 'allCandidates' if we paginate. 
-            // If the user wants global stats, we should ideally fetch it in a separate call or return it in the pagination object.
-            // For now, let's just keep what we have or update based on what's visible, or set to 0.
+            const recentCount = allCandidates.filter(u => isRecentRegistration(u.created_date)).length;
             if (!responseData?.users) {
                 setGlobalStats({
                     total: allCandidates.length,
                     active: allCandidates.filter(u => u.status === 'Active').length,
                     pending: allCandidates.filter(u => u.status === 'Disabled').length,
+                    recent: recentCount,
                     new: allCandidates.length > 5 ? 5 : allCandidates.length
                 });
             } else {
@@ -218,7 +227,8 @@ export default function JobSeekers() {
                     ...prev,
                     total: responseData.stats?.total || responseData.total || 0,
                     active: responseData.stats?.active || 0,
-                    pending: responseData.stats?.pending || 0
+                    pending: responseData.stats?.pending || 0,
+                    recent: responseData.stats?.recent !== undefined ? responseData.stats.recent : (recentCount || prev.recent || 0)
                 }));
             }
 
@@ -250,7 +260,7 @@ export default function JobSeekers() {
         }
     };
 
-    const filters = ['All', 'Active', 'Disabled'];
+    const filters = ['All', 'Recent', 'Active', 'Disabled'];
 
     return (
         <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full">
@@ -268,7 +278,7 @@ export default function JobSeekers() {
                     {/* All Candidates Tab */}
                     <button
                         onClick={() => { setActiveFilter('All'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all ${activeFilter === 'All'
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeFilter === 'All'
                             ? 'bg-indigo-50 text-indigo-700 border border-indigo-100'
                             : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                             }`}
@@ -278,6 +288,22 @@ export default function JobSeekers() {
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'All' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-600'
                             }`}>
                             {globalStats.total !== undefined ? globalStats.total : matchedUsers}
+                        </span>
+                    </button>
+
+                    {/* Recently Registered Tab */}
+                    <button
+                        onClick={() => { setActiveFilter('Recent'); setCurrentPage(1); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeFilter === 'Recent'
+                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        <Sparkles className="w-4 h-4 text-blue-500" />
+                        <span>Recently Registered</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Recent' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {globalStats.recent !== undefined ? globalStats.recent : 0}
                         </span>
                     </button>
 
@@ -392,13 +418,15 @@ export default function JobSeekers() {
                                     </div>
                                 </th>
                                 <th
-                                    onClick={() => handleSort('last_login')}
+                                    onClick={() => handleSort(activeFilter === 'Recent' ? 'created_date' : 'last_login')}
                                     className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
-                                    title="Click to sort by Last Login"
+                                    title="Click to sort by date"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <span className={sortConfig.key === 'last_login' ? 'text-indigo-600 font-bold' : ''}>LAST LOGIN</span>
-                                        {sortConfig.key !== 'last_login' ? (
+                                        <span className={sortConfig.key === 'last_login' || sortConfig.key === 'created_date' ? 'text-indigo-600 font-bold' : ''}>
+                                            {activeFilter === 'Recent' ? 'REGISTERED DATE' : 'LAST LOGIN / REGISTERED'}
+                                        </span>
+                                        {sortConfig.key !== 'last_login' && sortConfig.key !== 'created_date' ? (
                                             <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
                                         ) : sortConfig.direction === 'asc' ? (
                                             <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
@@ -473,14 +501,22 @@ export default function JobSeekers() {
                                                         </span>
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleViewProfile(user)}
-                                                            className="font-semibold text-gray-900 text-[14px] hover:text-indigo-600 transition-colors cursor-pointer text-left focus:outline-none block truncate max-w-xs"
-                                                            title="View candidate profile"
-                                                        >
-                                                            {name}
-                                                        </button>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleViewProfile(user)}
+                                                                className="font-semibold text-gray-900 text-[14px] hover:text-indigo-600 transition-colors cursor-pointer text-left focus:outline-none block truncate max-w-xs"
+                                                                title="View candidate profile"
+                                                            >
+                                                                {name}
+                                                            </button>
+                                                            {isRecentRegistration(user.created_date) && (
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10.5px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200/80 shrink-0">
+                                                                    <Sparkles className="w-2.5 h-2.5 text-indigo-500" />
+                                                                    New
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                         <div className="text-[12px] text-gray-500 truncate max-w-xs">{user.email}</div>
                                                     </div>
                                                 </div>
@@ -522,11 +558,16 @@ export default function JobSeekers() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                {activity.exact && !activity.isOnline && (
+                                                {user.created_date ? (
+                                                    <div className="text-[11px] text-gray-500 flex items-center gap-1 mt-1 pl-0.5">
+                                                        <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+                                                        <span>Joined: {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                                    </div>
+                                                ) : activity.exact && !activity.isOnline ? (
                                                     <span className="text-[11px] text-gray-400 block mt-0.5 pl-5">
                                                         {activity.exact}
                                                     </span>
-                                                )}
+                                                ) : null}
                                             </td>
                                             <td className="px-4 py-4 text-center">
                                                 <div className="relative inline-block text-left">

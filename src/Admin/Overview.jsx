@@ -4,7 +4,7 @@ import {
     Briefcase, FileText, TrendingUp, TrendingDown,
     Activity, Building2, Download, FileCheck2,
     Mail, Phone, MapPin,
-    Clock, ChevronRight, Building, Sparkles
+    Clock, ChevronRight, Building, Sparkles, Users, Search
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -13,6 +13,7 @@ import {
 import { getSuperAdminDashboardStats } from '../ApiService/action';
 import { useRouter } from 'next/navigation';
 import AdminDateFilter from './AdminDateFilter';
+import CandidateProfileModal from './CandidateProfileModal';
 
 const StatCard = ({ title, value, change, isPositive, icon: Icon, color, bg }) => (
     <div className="bg-white rounded-xl shadow-xs p-4 transition-all hover:shadow-sm">
@@ -58,9 +59,10 @@ export default function Overview() {
     const [error, setError] = useState(null);
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
-    // Active Tab for Recent Section: 'recruiters', 'jobs', 'activity'
-    const [activeRecentTab, setActiveRecentTab] = useState('recruiters');
+    // Active Tab for Recent Section: 'candidates', 'recruiters', 'jobs', 'activity'
+    const [activeRecentTab, setActiveRecentTab] = useState('candidates');
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCandidate, setSelectedCandidate] = useState(null);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -328,8 +330,36 @@ export default function Overview() {
         status: r.is_active ? 'Active' : 'Pending'
     }));
 
-    // Combined Recruiter & Job Activity Stream
+    const formattedRecentCandidates = (lists?.candidates || []).map(c => ({
+        id: c.id,
+        name: `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Candidate',
+        email: c.email || '-',
+        phone: c.phone || c.mobile || '-',
+        location: c.location || 'Not Specified',
+        profileImage: c.profile_image || null,
+        timeRaw: c.created_date || c.last_login,
+        timeAgo: formatTimeAgo(c.created_date || c.last_login),
+        status: c.is_active ? 'Active' : 'Pending'
+    }));
+
+    // Combined Activity Stream
     const combinedActivity = [
+        ...formattedRecentCandidates.map(c => ({
+            id: `can_${c.id}`,
+            entityType: 'candidate',
+            user: c.name,
+            title: c.name,
+            action: 'Registered as candidate',
+            target: c.location,
+            company: 'Candidate',
+            email: c.email,
+            phone: c.phone,
+            timeRaw: c.timeRaw,
+            timeAgo: c.timeAgo,
+            status: c.status,
+            profileImage: c.profileImage,
+            rawItem: c
+        })),
         ...formattedRecentJobs.map(j => ({
             id: `job_${j.id}`,
             entityType: 'job',
@@ -366,6 +396,13 @@ export default function Overview() {
 
     // Filtered lists
     const q = (searchQuery || '').trim().toLowerCase();
+
+    const filteredCandidates = !q ? formattedRecentCandidates : formattedRecentCandidates.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        c.phone.toLowerCase().includes(q) ||
+        c.location.toLowerCase().includes(q)
+    );
 
     const filteredJobs = !q ? formattedRecentJobs : formattedRecentJobs.filter(j =>
         j.title.toLowerCase().includes(q) ||
@@ -553,6 +590,21 @@ export default function Overview() {
                 <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                         <button
+                            onClick={() => { setActiveRecentTab('candidates'); setSearchQuery(''); }}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeRecentTab === 'candidates'
+                                ? 'bg-blue-50 text-blue-700 border-1 border-blue-200/80 shadow-2xs'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
+                                }`}
+                        >
+                            <Users className="w-4 h-4 text-blue-600" />
+                            <span>Recently Registered Candidates</span>
+                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'candidates' ? 'bg-blue-200/70 text-blue-800' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                {formattedRecentCandidates.length}
+                            </span>
+                        </button>
+
+                        <button
                             onClick={() => { setActiveRecentTab('recruiters'); setSearchQuery(''); }}
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeRecentTab === 'recruiters'
                                 ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/80 shadow-2xs'
@@ -590,7 +642,7 @@ export default function Overview() {
                                 }`}
                         >
                             <Activity className="w-4 h-4 text-amber-600" />
-                            <span>Recruiter Activity Feed</span>
+                            <span>Activity Feed</span>
                             <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'activity' ? 'bg-amber-200/70 text-amber-900' : 'bg-gray-100 text-gray-600'
                                 }`}>
                                 {combinedActivity.length}
@@ -600,9 +652,20 @@ export default function Overview() {
 
                     {/* Search & View All Actions */}
                     <div className="flex items-center gap-2.5 self-end lg:self-auto w-full lg:w-auto">
+                        <div className="relative flex-1 sm:w-60">
+                            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                placeholder={`Search ${activeRecentTab}...`}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-400"
+                            />
+                        </div>
                         <button
                             onClick={() => {
                                 if (activeRecentTab === 'jobs') router.push('/admin/job-post');
+                                else if (activeRecentTab === 'candidates') router.push('/admin/job-seekers');
                                 else router.push('/admin/recruiters');
                             }}
                             className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
@@ -612,6 +675,114 @@ export default function Overview() {
                         </button>
                     </div>
                 </div>
+
+                {/* TAB 0: RECENTLY REGISTERED CANDIDATES TABLE */}
+                {activeRecentTab === 'candidates' && (
+                    <div className="overflow-x-auto pb-1 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-gray-50 [&::-webkit-scrollbar-thumb]:bg-gray-200 [&::-webkit-scrollbar-thumb]:rounded-full">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-gray-50/70 border-b border-gray-100 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+                                    <th className="px-4 py-3">Candidate</th>
+                                    <th className="px-4 py-3">Location</th>
+                                    <th className="px-4 py-3">Email Address</th>
+                                    <th className="px-4 py-3">Phone Number</th>
+                                    <th className="px-4 py-3">Registered Time</th>
+                                    <th className="px-4 py-3">Status</th>
+                                    <th className="px-4 py-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                                {filteredCandidates.map((candidate) => (
+                                    <tr key={candidate.id} className="hover:bg-gray-50/60 transition-colors group">
+                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    onClick={() => setSelectedCandidate(candidate)}
+                                                    className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                                                >
+                                                    {candidate.profileImage ? (
+                                                        <img src={candidate.profileImage} alt={candidate.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
+                                                    ) : (
+                                                        candidate.name.charAt(0).toUpperCase()
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            onClick={() => setSelectedCandidate(candidate)}
+                                                            className="text-[13px] font-semibold text-gray-900 hover:text-blue-600 transition-colors text-left focus:outline-none cursor-pointer"
+                                                        >
+                                                            {candidate.name}
+                                                        </button>
+                                                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-md bg-blue-50 border border-blue-200/60 text-blue-700 text-[10px] font-medium">
+                                                            <Sparkles className="w-2.5 h-2.5 text-blue-500" />
+                                                            New
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-[11px] text-gray-400 font-normal">Candidate ID: #{candidate.id}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                            <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-700">
+                                                <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                                <span>{candidate.location}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                            <div className="flex items-center gap-1.5 text-[13px] text-gray-700">
+                                                <Mail className="w-3.5 h-3.5 text-gray-400" />
+                                                <span>{candidate.email}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                            <div className="flex items-center gap-1.5 text-[13px] text-gray-700">
+                                                <Phone className="w-3.5 h-3.5 text-gray-400" />
+                                                <span>{candidate.phone}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                            <div className="flex items-center gap-1 text-[12px] text-gray-600 font-medium">
+                                                <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                                <span>{candidate.timeAgo}</span>
+                                            </div>
+                                            {candidate.timeRaw && (
+                                                <div className="text-[10.5px] text-gray-400 mt-0.5">
+                                                    {new Date(candidate.timeRaw).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${candidate.status === 'Active'
+                                                ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/60'
+                                                : 'bg-amber-50 text-amber-700 border-1 border-amber-200/60'
+                                                }`}>
+                                                {candidate.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3.5 whitespace-nowrap text-right">
+                                            <button
+                                                onClick={() => setSelectedCandidate(candidate)}
+                                                className="text-[12px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 px-2.5 py-1 rounded-md transition-colors cursor-pointer"
+                                            >
+                                                View Profile
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {filteredCandidates.length === 0 && (
+                                    <tr>
+                                        <td colSpan="7" className="px-5 py-12 text-center text-gray-500 text-[13px]">
+                                            <Users className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                            No candidates found matching your search.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
                 {/* TAB 1: RECENTLY REGISTERED RECRUITERS TABLE */}
                 {activeRecentTab === 'recruiters' && (
@@ -1140,6 +1311,15 @@ export default function Overview() {
                     )}
                 </div>
             </div>
+
+            {/* Candidate Profile Modal */}
+            {selectedCandidate && (
+                <CandidateProfileModal
+                    userId={selectedCandidate.id}
+                    candidateSummary={selectedCandidate}
+                    onClose={() => setSelectedCandidate(null)}
+                />
+            )}
         </div>
     );
 }
