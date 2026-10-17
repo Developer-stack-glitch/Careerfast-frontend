@@ -125,11 +125,15 @@ export function Providers({ children }) {
           </App>
           <Toaster 
             position="top-center"
+            containerStyle={{
+              zIndex: 99999999,
+            }}
             toastOptions={{
               duration: 1500,
               style: {
                 background: '#fff',
                 color: '#363636',
+                zIndex: 99999999,
               },
             }}
           />

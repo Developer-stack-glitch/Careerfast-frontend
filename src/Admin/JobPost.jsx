@@ -878,9 +878,17 @@ export default function JobPost() {
                                                             </div>
                                                         )}
                                                         <div className="flex flex-col gap-0.5 min-w-0">
-                                                            <h3 className="text-[15px] font-bold text-blue-950 group-hover:text-blue-600 transition-colors line-clamp-1 mb-0">
-                                                                {job.job_title}
-                                                            </h3>
+                                                            <a
+                                                                href={getJobDetailsUrl(job, true)}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                title="Open in Admin Preview Mode"
+                                                                className="no-underline hover:no-underline"
+                                                            >
+                                                                <h3 className="text-[15px] font-bold text-blue-950 hover:text-blue-600 transition-colors line-clamp-1 mb-0 cursor-pointer">
+                                                                    {job.job_title}
+                                                                </h3>
+                                                            </a>
                                                             <div className="flex items-center gap-2 flex-wrap mt-0.5">
                                                                 <p className="text-sm font-semibold text-gray-700 mb-0">{compName}</p>
                                                             </div>

@@ -289,11 +289,11 @@ export default function CandidateProfileModal({ userId, candidateSummary, onClos
                 {/* Modal Header Bar */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white/90 backdrop-blur-md sticky top-0 z-20">
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                            <User className="w-4 h-4" />
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                            <User className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-[16px] font-bold text-gray-900 leading-tight mb-0 truncate">Candidate Profile</h2>
+                            <h2 className="text-[20px] font-semibold text-gray-900 leading-tight mb-0 truncate">Candidate Profile</h2>
                             <p className="text-[11px] text-gray-400 font-medium mb-0">Candidate ID: #{userId}</p>
                         </div>
                     </div>

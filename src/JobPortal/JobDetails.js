@@ -40,8 +40,10 @@ import {
   getSavedJobs,
   removeSavedJobs,
   getAllCourses,
-  createJobAlert
+  createJobAlert,
+  getUserProfile
 } from "../ApiService/action";
+import ConversationalApplyDrawer from "./ConversationalApplyDrawer";
 import { GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
 import { storeLoginStatus } from "../Redux/Slice";
@@ -187,11 +189,24 @@ const transformJob = (job) => {
     raw_experience_required: job.experience_required,
     questions: job.questions?.map((q) => q.question) || [],
     questions_with_ids:
-      job.questions?.map((q) => ({
-        id: q.id,
-        question: q.question,
-        isrequired: q.isrequired,
-      })) || [],
+      job.questions?.map((q) => {
+        let parsedOpts = [];
+        if (q.options) {
+          try {
+            parsedOpts = typeof q.options === 'string' ? JSON.parse(q.options) : q.options;
+            if (!Array.isArray(parsedOpts)) parsedOpts = [];
+          } catch (e) {
+            parsedOpts = [];
+          }
+        }
+        return {
+          id: q.id,
+          question: q.question,
+          isrequired: q.isrequired === 1 || q.isrequired === true,
+          type: q.type || q.question_type || "Short answer",
+          options: parsedOpts
+        };
+      }) || [],
     role: job.role,
     industry: job.industry,
     employment_type: job.employment_type,
@@ -216,6 +231,8 @@ const transformJob = (job) => {
     google_maps_url: job.google_maps_url,
     team_members: typeof job.team_members === 'string' ? JSON.parse(job.team_members) : job.team_members,
     apply_link: job.apply_link,
+    approval_status: job.approval_status,
+    is_approved: job.is_approved,
   };
 };
 
@@ -227,6 +244,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   const [openApplyNow, setOpenApplyNow] = useState(false);
   const [authDrawerOpen, setAuthDrawerOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
+  const [userResume, setUserResume] = useState(null);
   const [answers, setAnswers] = useState("");
   const [loginUserId, setLoginUserId] = useState(() => {
     try {
@@ -712,22 +730,75 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
     }
   };
 
-  const showDrawer = () => {
+  const checkCandidateResume = async (uid) => {
+    try {
+      const stored = typeof window !== "undefined" ? localStorage.getItem("loginDetails") : null;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed?.resume && parsed.resume !== "null" && parsed.resume !== "undefined" && parsed.resume !== "#" && parsed.resume.trim() !== "") {
+          setUserResume(parsed.resume);
+          return parsed.resume;
+        }
+      }
+      const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
+      const cleanUid = getCleanUserId(uid);
+      if (token && cleanUid) {
+        const res = await getUserProfile({ user_id: cleanUid });
+        const prof = res?.data?.data?.[0];
+        if (prof?.resume && prof.resume !== "null" && prof.resume !== "undefined" && prof.resume !== "#" && prof.resume.trim() !== "") {
+          setUserResume(prof.resume);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored);
+              parsed.resume = prof.resume;
+              localStorage.setItem("loginDetails", JSON.stringify(parsed));
+            } catch { }
+          }
+          return prof.resume;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not check candidate resume:", err);
+    }
+    setUserResume(null);
+    return null;
+  };
+
+  useEffect(() => {
+    if (loginUserId) {
+      checkCandidateResume(loginUserId);
+    }
+  }, [loginUserId]);
+
+  const showDrawer = async () => {
     if (!isUserAuthenticated()) {
       setPendingAction("apply");
       setAuthDrawerOpen(true);
       return;
     }
 
-    if (postDetails[0]?.apply_link) {
-      handleExternalEmployerApply(postDetails[0].apply_link);
+    const effectiveUserId = getCleanUserId();
+    const existingResume = await checkCandidateResume(effectiveUserId);
+    const hasScreeningQuestions = (postDetails[0]?.questions_with_ids?.length > 0) || (postDetails[0]?.questions?.length > 0);
+
+    // If candidate does NOT have a resume, ALWAYS open conversational apply drawer to prompt upload resume (even for employer site jobs!)
+    if (!existingResume) {
+      setOpenApplyNow(true);
       return;
     }
-    if (postDetails[0]?.questions?.length > 0) {
+
+    // If candidate HAS a resume and it's an external employer link:
+    if (postDetails[0]?.apply_link) {
+      handleExternalEmployerApply(postDetails[0].apply_link, effectiveUserId);
+      return;
+    }
+
+    // If internal job has screening questions, open conversational apply drawer
+    if (hasScreeningQuestions) {
       setOpenApplyNow(true);
-      CommonToaster("Please complete the screening questions", "info");
     } else {
-      applyForJobData();
+      // User already has a resume and no screening questions
+      applyForJobData(effectiveUserId);
     }
   };
 
@@ -751,12 +822,17 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
     setPendingAction(null);
 
     if (actionToPerform === "apply") {
-      setTimeout(() => {
-        if (postDetails[0]?.apply_link) {
-          handleExternalEmployerApply(postDetails[0].apply_link, newUserId);
-        } else if (postDetails[0]?.questions?.length > 0) {
+      setTimeout(async () => {
+        const existingResume = await checkCandidateResume(newUserId);
+        const hasScreeningQuestions = (postDetails[0]?.questions_with_ids?.length > 0) || (postDetails[0]?.questions?.length > 0);
+
+        if (!existingResume) {
+          // If candidate does not have a resume, open conversational drawer (even for employer site jobs!)
           setOpenApplyNow(true);
-          CommonToaster("Please complete the screening questions", "info");
+        } else if (postDetails[0]?.apply_link) {
+          handleExternalEmployerApply(postDetails[0].apply_link, newUserId);
+        } else if (hasScreeningQuestions) {
+          setOpenApplyNow(true);
         } else {
           applyForJobData(newUserId);
         }
@@ -1236,7 +1312,11 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                           Admin Preview Mode
                         </span>
                         <span style={{ fontSize: '13.5px', color: '#1E40AF', fontWeight: 600 }}>
-                          This job post is currently <span style={{ color: "#b45309 ", fontWeight: 700 }}>Pending Approval</span> and visible only with this secure preview token.
+                          {(job.approval_status === 'pending' || job.approval_status === 'Pending' || job.is_approved === 0) ? (
+                            <>This job post is currently <span style={{ color: "#b45309 ", fontWeight: 700 }}>Pending Approval</span> and visible only with this secure preview token.</>
+                          ) : (
+                            <>Viewing job post in <span style={{ color: "#0A66C2", fontWeight: 700 }}>Admin Preview Mode</span> (Status: <span style={{ color: job.status === 'Live' || job.approval_status === 'approved' ? '#047857' : '#b45309', fontWeight: 700 }}>{job.approval_status || job.status || 'Active'}</span>).</>
+                          )}
                         </span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1551,15 +1631,25 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
         </div>
       </main>
 
-      <Drawer title="Apply for Job" placement="right" onClose={onClose} open={openApplyNow} width={400} zIndex={10000}>
-        {job?.questions_with_ids?.map((q, index) => (
-          <div key={q.id ? `q-${q.id}-${index}` : index} style={{ marginBottom: 20 }}>
-            <p style={{ fontWeight: 600 }}>{q.question} {q.isrequired && <span style={{ color: "red" }}>*</span>}</p>
-            <Input.TextArea rows={4} value={answers[index]} onChange={(e) => { const newAnswers = { ...answers }; newAnswers[index] = e.target.value; setAnswers(newAnswers); }} placeholder="Your answer..." />
-          </div>
-        ))}
-        <Button type="primary" block size="large" onClick={() => applyForJobData()} style={{ marginTop: 20, background: '#5f2eea' }}>Submit Application</Button>
-      </Drawer>
+      {/* Conversational Apply Drawer with Resume Upload */}
+      <ConversationalApplyDrawer
+        open={openApplyNow}
+        onClose={onClose}
+        job={postDetails[0]}
+        userId={getCleanUserId()}
+        userResume={userResume}
+        onApplySuccess={(appliedDate) => {
+          const currentJobId = postDetails[0]?.id;
+          if (currentJobId) {
+            setIsApplied((prev) => ({ ...prev, [currentJobId]: true }));
+            setAppliedDates((prev) => ({ ...prev, [currentJobId]: appliedDate || new Date().toISOString() }));
+          }
+          setOpenApplyNow(false);
+        }}
+        onUploadResumeSuccess={(resumeName) => {
+          setUserResume(resumeName);
+        }}
+      />
 
       <LoginDrawer
         open={authDrawerOpen}

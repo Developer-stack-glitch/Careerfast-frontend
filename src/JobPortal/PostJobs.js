@@ -419,10 +419,12 @@ export default function PostJobs() {
     try {
       const response = await getSkillsData();
       const formattedOptions =
-        response?.data?.data?.map((skill) => ({
-          label: skill.name,
-          value: skill.name,
-        })) || [];
+        (response?.data?.data || [])
+          .filter((skill) => skill && skill.name != null && String(skill.name).trim() !== '')
+          .map((skill) => ({
+            label: String(skill.name).trim(),
+            value: String(skill.name).trim(),
+          }));
       setSkillsRequiredOption(formattedOptions);
     } catch (error) {
       console.log("skills error", error);
@@ -1311,7 +1313,7 @@ export default function PostJobs() {
                         value={skillsRequired}
                         placeholder="Select or add skills"
                         style={{ width: "100%", marginBottom: 10 }}
-                        options={skillsRequiredOptions}
+                        options={(skillsRequiredOptions || []).filter(opt => opt && opt.value != null && opt.value !== '')}
                         onChange={(value) => {
                           setSkillsRequired(value);
                           const newOnes = value.filter(

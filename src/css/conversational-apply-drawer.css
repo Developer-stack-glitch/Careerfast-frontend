@@ -1,0 +1,695 @@
+/* Conversational Apply Drawer - Naukri 360 Style */
+
+.cad-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 10000;
+  display: flex;
+  justify-content: flex-end;
+  animation: cadFadeIn 0.25s ease-out;
+}
+
+@keyframes cadFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.cad-drawer-container {
+  width: 100%;
+  max-width: 440px;
+  height: 100%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
+  animation: cadSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+@keyframes cadSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Header */
+.cad-header {
+  padding: 16px 20px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: #ffffff;
+  border-bottom: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.cad-close-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: #334155;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cad-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: scale(1.05);
+}
+
+/* Body / Chat Stream */
+.cad-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+.cad-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cad-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cad-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.cad-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Message Item */
+.cad-message-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: cadMsgAppear 0.25s ease-out;
+}
+
+@keyframes cadMsgAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Bot Message Bubble */
+.cad-bot-bubble {
+  align-self: flex-start;
+  max-width: 84%;
+  background: #f4f5f7;
+  color: #1f2937;
+  font-size: 13px;
+  line-height: 1.48;
+  font-weight: 450;
+  padding: 8px 10px;
+  border-radius: 18px 18px 18px 4px;
+  word-break: break-word;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+/* User Message Bubble */
+.cad-user-bubble {
+  align-self: flex-end;
+  max-width: 80%;
+  background: #eaf2fe;
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 18px 18px 4px 18px;
+  word-break: break-word;
+  animation: cadMsgAppear 0.2s ease-out;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Options / Pills Container */
+.cad-options-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+  animation: cadMsgAppear 0.25s ease-out;
+}
+
+/* Standard Chip / Pill */
+.cad-chip-btn {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  border-radius: 9999px;
+  padding: 7px 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cad-chip-btn:hover {
+  border-color: #5f2eea;
+  color: #5f2eea;
+  background: #f0f7ff;
+}
+
+.cad-chip-btn.skip {
+  color: #64748b;
+  border-color: #cbd5e1;
+}
+
+.cad-chip-btn.skip:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #334155;
+}
+
+/* Resume Action Buttons (Upload Resume & I'll do it later) */
+.cad-resume-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 2px;
+  animation: cadMsgAppear 0.25s ease-out;
+}
+
+.cad-upload-resume-btn {
+  background: #ffffff;
+  border: 1.5px solid #5f2eea;
+  color: #5f2eea;
+  border-radius: 9999px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cad-upload-resume-btn:hover {
+  border-color: #5f2eea;
+  color: #5f2eea;
+  transform: translateY(-1px);
+}
+
+.cad-upload-resume-btn:active {
+  transform: translateY(0);
+}
+
+.cad-upload-resume-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cad-later-btn {
+  background: #ffffff;
+  border: 1.5px solid #94a3b8;
+  color: #475569;
+  border-radius: 9999px;
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.cad-later-btn:hover {
+  background: #f8fafc;
+  border-color: #64748b;
+  color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.cad-later-btn:active {
+  transform: translateY(0);
+}
+
+/* Inline Input Section (for entering CTC or custom city or text answer) */
+.cad-input-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  animation: cadMsgAppear 0.25s ease-out;
+}
+
+.cad-text-input {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 9px 14px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.cad-text-input:focus {
+  border-color: #5f2eea;
+  box-shadow: 0 0 0 3px rgba(95, 46, 234, 0.12);
+}
+
+.cad-textarea-input {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.2s;
+}
+
+.cad-textarea-input:focus {
+  border-color: #5f2eea;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.cad-send-btn {
+  background: #5f2eea;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cad-send-btn:hover {
+  background: #4920c8;
+}
+
+.cad-send-btn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Typing Indicator */
+.cad-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #f4f5f7;
+  border-radius: 16px 16px 16px 4px;
+  width: fit-content;
+}
+
+.cad-typing-dot {
+  width: 6px;
+  height: 6px;
+  background: #94a3b8;
+  border-radius: 50%;
+  animation: cadBlink 1.4s infinite ease-in-out both;
+}
+
+.cad-typing-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.cad-typing-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes cadBlink {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Footer / Save Button */
+.cad-footer {
+  padding: 14px 20px 18px;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+}
+
+.cad-save-btn {
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 28px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Disabled / Pending Save Button (Light Lavender matching screenshot) */
+.cad-save-btn.pending {
+  background: #b5c4fb;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.cad-save-btn.pending:hover {
+  background: #a3b5fa;
+}
+
+/* Active Ready Save Button (Vibrant gradient) */
+.cad-save-btn.active {
+  background: linear-gradient(135deg, #5f2eea 0%, #4a1ec2 100%);
+  color: #ffffff;
+}
+
+.cad-save-btn.active:hover {
+  background: linear-gradient(135deg, #4d1fd0 0%, #3e16aa 100%);
+  transform: translateY(-1px);
+}
+
+.cad-save-btn.active:active {
+  transform: translateY(0);
+}
+
+.cad-save-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Uploading Spinner inside Button */
+.cad-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: cadSpin 0.7s linear infinite;
+  display: inline-block;
+}
+
+.cad-spinner-blue {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(59, 130, 246, 0.25);
+  border-top-color: #5f2eea;
+  border-radius: 50%;
+  animation: cadSpin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes cadSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Attached resume badge */
+.cad-resume-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+/* Required Question Star */
+.cad-required-star {
+  color: #ef4444;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* Choice Question Container & Chips (Single & Multiple Choice) */
+.cad-choice-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 4px;
+  margin-bottom: 6px;
+  animation: cadMsgAppear 0.25s ease-out;
+}
+
+.cad-choice-chips-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.cad-choice-chip {
+  background: #ffffff;
+  border: 1.5px solid #d1d5db;
+  color: #1f2937;
+  border-radius: 9999px;
+  padding: 3px 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cad-choice-chip:hover {
+  border-color: #5f2eea;
+  color: #5f2eea;
+  transform: translateY(-1px);
+}
+
+.cad-choice-chip:active {
+  transform: translateY(0);
+}
+
+.cad-choice-chip.multi {
+  padding: 8px 16px;
+}
+
+.cad-choice-chip.multi.selected {
+  border-color: #5f2eea;
+  color: #5f2eea;
+  font-weight: 600;
+}
+
+.cad-checkbox-indicator {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  border: 1.5px solid #9ca3af;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  color: #ffffff;
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.cad-choice-chip.multi.selected .cad-checkbox-indicator {
+  background: #5f2eea;
+  border-color: #5f2eea;
+}
+
+/* User Bubble Container & Editable states */
+.cad-user-bubble-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.cad-user-bubble.editable {
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.cad-user-bubble.editable:hover {
+  background: #e0e7ff;
+  color: #3730a3;
+  box-shadow: 0 2px 8px rgba(95, 46, 234, 0.12);
+}
+
+.cad-bubble-edit-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  transition: all 0.2s ease;
+  opacity: 0.65;
+}
+
+.cad-user-bubble:hover .cad-bubble-edit-btn {
+  opacity: 1;
+  color: #5f2eea;
+  transform: scale(1.15);
+}
+
+/* Inline Edit Card */
+.cad-inline-edit-card {
+  width: 100%;
+  max-width: 100%;
+  align-self: flex-end;
+  background: #ffffff;
+  border: 1.5px solid #5f2eea;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 6px;
+  animation: cadMsgAppear 0.2s ease-out;
+}
+
+.cad-inline-edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cad-inline-edit-title {
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+  display: inline-block;
+  max-width: 85%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cad-inline-close-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 2px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.cad-inline-close-btn:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.cad-inline-edit-body {
+  width: 100%;
+}
+
+.cad-inline-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.cad-send-btn.small {
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+.cad-chip-btn.small {
+  padding: 5px 12px;
+  font-size: 12.5px;
+}
+
+.cad-restart-link-btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-left: auto;
+  transition: color 0.15s;
+  padding: 4px 6px;
+}
+
+.cad-restart-link-btn:hover {
+  color: #ef4444;
+}
+
+/* Ensure Toasts always display above blur screen and drawer overlay */
+div:has(> [data-hot-toast-container="true"]),
+div[data-hot-toast-container="true"],
+.react-hot-toast,
+div[role="status"] {
+  z-index: 99999999 !important;
+}

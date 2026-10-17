@@ -178,12 +178,11 @@
 .njd-apply-btn.applied,
 .njd-apply-btn:disabled.applied {
     background-color: #10b981 !important;
-    background: #10b981 !important;
+    background: #05a53fcf !important;
     border-color: #10b981 !important;
     color: #ffffff !important;
     cursor: default !important;
     opacity: 1 !important;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
 }
 
 .njd-apply-btn.applied:hover {
