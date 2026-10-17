@@ -56,13 +56,29 @@ export default function ConversationalApplyDrawer({
     })
     .filter((q) => q.question && q.question.trim().length > 0);
 
-  const hasExistingResume = Boolean(
-    userResume &&
-    userResume !== 'null' &&
-    userResume !== 'undefined' &&
-    userResume !== '#' &&
-    userResume.trim() !== ''
-  );
+  const isValidResume = (val) => {
+    if (!val) return false;
+    const str = String(val).trim();
+    return str !== '' && str !== 'null' && str !== 'undefined' && str !== '#' && str !== 'false';
+  };
+
+  const getCandidateResume = () => {
+    if (isValidResume(userResume)) {
+      return String(userResume).trim();
+    }
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem('loginDetails') : null;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (isValidResume(parsed?.resume)) {
+          return String(parsed.resume).trim();
+        }
+      }
+    } catch {}
+    return null;
+  };
+
+  const hasExistingResume = Boolean(getCandidateResume());
 
   // Auto-scroll chat body
   const scrollToBottom = () => {
@@ -80,6 +96,9 @@ export default function ConversationalApplyDrawer({
   // Initialize conversation when drawer opens
   useEffect(() => {
     if (open) {
+      const activeResume = getCandidateResume();
+      const hasResume = Boolean(activeResume);
+
       setEmployerAnswers({});
       setCurrentEmployerQIndex(0);
       setEmployerAnswerInput('');
@@ -87,7 +106,7 @@ export default function ConversationalApplyDrawer({
       setEditingQIndex(null);
       setEditAnswerInput('');
       setEditSelectedMulti([]);
-      setResumeActionTaken(hasExistingResume);
+      setResumeActionTaken(hasResume);
       setIsUploading(false);
       setIsSubmitting(false);
 
@@ -105,8 +124,8 @@ export default function ConversationalApplyDrawer({
             isEmployerQ: true
           }
         ]);
-      } else {
-        // No recruiter questions: directly show "Please upload your resume."
+      } else if (!hasResume) {
+        // No recruiter questions AND no resume: show "Please upload your resume."
         setCurrentStep('resume');
         setMessages([
           {
@@ -114,6 +133,18 @@ export default function ConversationalApplyDrawer({
             sender: 'bot',
             text: 'Please upload your resume.',
             isResumePrompt: true
+          }
+        ]);
+      } else {
+        // Resume already exists and no recruiter questions:
+        setCurrentStep('ready');
+        setMessages([
+          {
+            id: 'bot-ready-existing',
+            sender: 'bot',
+            text: job?.apply_link
+              ? "Your resume is attached. Click 'Save & Apply on Employer Site' to continue to the employer application."
+              : 'Your resume is attached. Click Save to complete your application.'
           }
         ]);
       }
@@ -178,8 +209,11 @@ export default function ConversationalApplyDrawer({
       setIsTyping(true);
       setTimeout(() => {
         setIsTyping(false);
+        const activeResume = getCandidateResume();
+        const hasResume = Boolean(activeResume) || resumeActionTaken;
+
         // If candidate doesn't have resume, show "Please upload your resume."
-        if (!hasExistingResume) {
+        if (!hasResume) {
           setCurrentStep('resume');
           setMessages((prev) => [
             ...prev,
@@ -191,7 +225,7 @@ export default function ConversationalApplyDrawer({
             }
           ]);
         } else {
-          // Already has resume
+          // Already has resume: don't show resume upload prompt!
           setCurrentStep('ready');
           setMessages((prev) => [
             ...prev,
@@ -199,8 +233,8 @@ export default function ConversationalApplyDrawer({
               id: 'bot-ready-existing',
               sender: 'bot',
               text: job?.apply_link
-                ? "Your resume is attached. Click 'Save & Apply on Employer Site' to continue to the employer application."
-                : 'Your resume is attached. Click Save to complete your application.'
+                ? "Your answers have been recorded. Click 'Save & Apply on Employer Site' to continue to the employer application."
+                : 'Your answers have been recorded. Click Save to complete your application.'
             }
           ]);
         }
@@ -503,11 +537,15 @@ export default function ConversationalApplyDrawer({
 
   // Is Save button ready?
   // Ready when recruiter questions are finished and resume prompt is shown or completed
+  const allRequiredAnswered = employerQuestions.every((q, idx) => {
+    if (!q.isrequired) return true;
+    const ans = employerAnswers[idx];
+    return ans !== undefined && ans !== null && String(ans).trim() !== '';
+  });
+
   const isReadyToSave =
     currentStep === 'ready' ||
-    currentStep === 'resume' ||
-    resumeActionTaken ||
-    (employerQuestions.length === 0);
+    (currentStep === 'resume' && (employerQuestions.length === 0 || allRequiredAnswered));
 
   return (
     <div className="cad-drawer-overlay" onClick={onClose}>

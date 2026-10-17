@@ -667,8 +667,19 @@ export default function MainProfile() {
           ? `url(${response.data.data.banner_image})`
           : "none",
       });
-      setIsResume(response?.data?.data?.resume || "");
+      const resumeVal = response?.data?.data?.resume || "";
+      setIsResume(resumeVal);
       setIsSkills(response?.data?.data?.skills || []);
+      try {
+        const stored = localStorage.getItem("loginDetails");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (resumeVal && resumeVal !== "null" && resumeVal !== "undefined" && resumeVal !== "#") {
+            parsed.resume = resumeVal;
+            localStorage.setItem("loginDetails", JSON.stringify(parsed));
+          }
+        }
+      } catch { }
       setIsWorkExp(response?.data?.data?.experince_type || "");
       setIsAbout(response?.data?.data?.about || "");
       setIsEducation(response?.data?.data?.education || []);

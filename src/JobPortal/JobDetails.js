@@ -730,31 +730,49 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
     }
   };
 
+  const isValidResume = (r) => {
+    if (!r) return false;
+    const s = String(r).trim();
+    return s !== "" && s !== "null" && s !== "undefined" && s !== "#" && s !== "false";
+  };
+
+  const checkHasScreeningQuestions = (job) => {
+    const rawQuestions = job?.questions_with_ids || job?.questions || [];
+    if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) return false;
+    return rawQuestions.some((q) => {
+      const qText = typeof q === "string" ? q : q?.question;
+      return qText && String(qText).trim().length > 0;
+    });
+  };
+
   const checkCandidateResume = async (uid) => {
     try {
       const stored = typeof window !== "undefined" ? localStorage.getItem("loginDetails") : null;
+      let storedParsed = null;
       if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.resume && parsed.resume !== "null" && parsed.resume !== "undefined" && parsed.resume !== "#" && parsed.resume.trim() !== "") {
-          setUserResume(parsed.resume);
-          return parsed.resume;
-        }
+        try {
+          storedParsed = JSON.parse(stored);
+          if (isValidResume(storedParsed?.resume)) {
+            setUserResume(storedParsed.resume);
+            return storedParsed.resume;
+          }
+        } catch { }
       }
       const token = typeof window !== "undefined" ? localStorage.getItem("AccessToken") : null;
       const cleanUid = getCleanUserId(uid);
       if (token && cleanUid) {
         const res = await getUserProfile({ user_id: cleanUid });
-        const prof = res?.data?.data?.[0];
-        if (prof?.resume && prof.resume !== "null" && prof.resume !== "undefined" && prof.resume !== "#" && prof.resume.trim() !== "") {
-          setUserResume(prof.resume);
-          if (stored) {
-            try {
-              const parsed = JSON.parse(stored);
-              parsed.resume = prof.resume;
-              localStorage.setItem("loginDetails", JSON.stringify(parsed));
-            } catch { }
-          }
-          return prof.resume;
+        const rawData = res?.data?.data;
+        const prof = Array.isArray(rawData) ? rawData[0] : rawData;
+        const fetchedResume = prof?.resume || prof?.data?.resume;
+        if (isValidResume(fetchedResume)) {
+          setUserResume(fetchedResume);
+          try {
+            const currentDetails = storedParsed || JSON.parse(localStorage.getItem("loginDetails") || "{}");
+            currentDetails.resume = fetchedResume;
+            localStorage.setItem("loginDetails", JSON.stringify(currentDetails));
+          } catch { }
+          return fetchedResume;
         }
       }
     } catch (err) {
@@ -779,27 +797,26 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
 
     const effectiveUserId = getCleanUserId();
     const existingResume = await checkCandidateResume(effectiveUserId);
-    const hasScreeningQuestions = (postDetails[0]?.questions_with_ids?.length > 0) || (postDetails[0]?.questions?.length > 0);
+    const hasScreeningQuestions = checkHasScreeningQuestions(postDetails[0]);
 
-    // If candidate does NOT have a resume, ALWAYS open conversational apply drawer to prompt upload resume (even for employer site jobs!)
-    if (!existingResume) {
-      setOpenApplyNow(true);
+    // If candidate ALREADY has a resume:
+    if (existingResume) {
+      if (hasScreeningQuestions) {
+        // Just show if questions are present!
+        setOpenApplyNow(true);
+      } else if (postDetails[0]?.apply_link) {
+        // No questions & external link: direct redirect to employer site without showing drawer
+        handleExternalEmployerApply(postDetails[0].apply_link, effectiveUserId);
+      } else {
+        // No questions & internal job: direct apply without showing drawer
+        applyForJobData(effectiveUserId);
+      }
       return;
     }
 
-    // If candidate HAS a resume and it's an external employer link:
-    if (postDetails[0]?.apply_link) {
-      handleExternalEmployerApply(postDetails[0].apply_link, effectiveUserId);
-      return;
-    }
-
-    // If internal job has screening questions, open conversational apply drawer
-    if (hasScreeningQuestions) {
-      setOpenApplyNow(true);
-    } else {
-      // User already has a resume and no screening questions
-      applyForJobData(effectiveUserId);
-    }
+    // If candidate does NOT have a resume:
+    // Open conversational apply drawer to prompt upload resume (and answer questions if any)
+    setOpenApplyNow(true);
   };
 
   const onClose = () => {
@@ -824,17 +841,18 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
     if (actionToPerform === "apply") {
       setTimeout(async () => {
         const existingResume = await checkCandidateResume(newUserId);
-        const hasScreeningQuestions = (postDetails[0]?.questions_with_ids?.length > 0) || (postDetails[0]?.questions?.length > 0);
+        const hasScreeningQuestions = checkHasScreeningQuestions(postDetails[0]);
 
-        if (!existingResume) {
-          // If candidate does not have a resume, open conversational drawer (even for employer site jobs!)
-          setOpenApplyNow(true);
-        } else if (postDetails[0]?.apply_link) {
-          handleExternalEmployerApply(postDetails[0].apply_link, newUserId);
-        } else if (hasScreeningQuestions) {
-          setOpenApplyNow(true);
+        if (existingResume) {
+          if (hasScreeningQuestions) {
+            setOpenApplyNow(true);
+          } else if (postDetails[0]?.apply_link) {
+            handleExternalEmployerApply(postDetails[0].apply_link, newUserId);
+          } else {
+            applyForJobData(newUserId);
+          }
         } else {
-          applyForJobData(newUserId);
+          setOpenApplyNow(true);
         }
       }, 350);
     } else if (actionToPerform === "save") {
