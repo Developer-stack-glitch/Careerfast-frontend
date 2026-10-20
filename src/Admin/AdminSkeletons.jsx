@@ -653,17 +653,17 @@ export function JobSeekersDashboardSkeleton() {
                 </div>
             </div>
 
-            {/* KPI Cards Grid Skeleton (5 cards) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="bg-white rounded-xl shadow-xs p-4 space-y-3">
+            {/* KPI Cards Grid Skeleton (6 cards) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div key={i} className="bg-white rounded-xl shadow-xs p-3 space-y-3">
                         <div className="flex items-start justify-between">
-                            <SkeletonShimmer className="w-9 h-9 rounded-lg" />
-                            {i === 5 && <SkeletonShimmer className="w-14 h-5 rounded-full" />}
+                            <SkeletonShimmer className="w-8 h-8 rounded-lg" />
+                            <SkeletonShimmer className="w-14 h-4 rounded-full" />
                         </div>
                         <div className="space-y-1.5 pt-0.5">
-                            <SkeletonShimmer className="h-3 w-24 rounded" />
-                            <SkeletonShimmer className="h-7 w-20 rounded-md" />
+                            <SkeletonShimmer className="h-3 w-20 rounded" />
+                            <SkeletonShimmer className="h-6 w-14 rounded-md" />
                         </div>
                     </div>
                 ))}

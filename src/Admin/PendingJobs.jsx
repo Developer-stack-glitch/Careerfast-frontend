@@ -172,7 +172,7 @@ const PendingJobs = () => {
             {/* Header Section */}
             <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3 mb-0">
+                    <h1 className="text-2xl font-semibold text-slate-900 flex items-center gap-3 mb-0">
                         <div className="p-2.5 bg-blue-100 rounded-xl text-blue-600">
                             <Briefcase className="w-6 h-6" />
                         </div>
@@ -339,7 +339,7 @@ const PendingJobs = () => {
                                                         rel="noopener noreferrer"
                                                         className="no-underline hover:no-underline inline-block max-w-full"
                                                     >
-                                                        <h3 className="text-[15px] font-bold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1 mb-0 cursor-pointer">{job.job_title}</h3>
+                                                        <h3 className="text-[15px] font-semibold text-slate-900 hover:text-blue-600 transition-colors line-clamp-1 mb-0 cursor-pointer">{job.job_title}</h3>
                                                     </a>
                                                     <div className="flex items-center gap-2 flex-wrap mt-0.5">
                                                         <p className="text-sm font-semibold text-slate-700 mb-0">{job.company_name}</p>

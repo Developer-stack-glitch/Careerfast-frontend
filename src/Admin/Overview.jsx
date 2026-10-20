@@ -4,32 +4,42 @@ import {
     Briefcase, FileText, TrendingUp, TrendingDown,
     Activity, Building2, Download, FileCheck2,
     Mail, Phone, MapPin,
-    Clock, ChevronRight, Building, Sparkles, Search, ExternalLink
+    Clock, ChevronRight, Building, Sparkles, Search, ExternalLink,
+    FileSpreadsheet, FileDown
 } from 'lucide-react';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
-import { getSuperAdminDashboardStats } from '../ApiService/action';
+import { getSuperAdminDashboardStats, getPendingJobs } from '../ApiService/action';
 import { useRouter } from 'next/navigation';
 import AdminDateFilter from './AdminDateFilter';
 import { getJobDetailsUrl } from '../utils/slug';
 
-const StatCard = ({ title, value, change, isPositive, icon: Icon, color, bg }) => (
-    <div className="bg-white rounded-xl shadow-xs p-4 transition-all hover:shadow-sm">
-        <div className="flex items-start justify-between mb-3">
-            <div className={`p-2 rounded-lg ${bg} ${color}`}>
+const StatCard = ({ title, value, todayCount, icon: Icon, color, bg, onClick }) => (
+    <div
+        onClick={onClick}
+        className={`bg-white rounded-xl shadow-xs p-3 transition-all hover:shadow-sm flex flex-col justify-between ${onClick ? 'cursor-pointer hover:border-gray-300' : ''}`}
+    >
+        <div className="flex items-start justify-between gap-1.5 mb-3">
+            <div className={`p-2 rounded-lg ${bg} ${color} shrink-0`}>
                 <Icon className="w-[18px] h-[18px]" strokeWidth={1.5} />
             </div>
-            {change && (
-                <div className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${isPositive ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50'}`}>
-                    {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {change}
+            {todayCount !== undefined && todayCount !== null && (
+                <div
+                    title="Today's count (not affected by date filter)"
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold shrink-0 select-none ${Number(todayCount || 0) > 0
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                        : 'bg-gray-50 text-gray-500 border border-gray-200/60'
+                        }`}
+                >
+                    <span className={`w-1.5 h-1.5 rounded-full ${Number(todayCount || 0) > 0 ? 'bg-emerald-500' : 'bg-gray-300'}`}></span>
+                    Today: {Number(todayCount || 0) > 0 ? `+${todayCount}` : '0'}
                 </div>
             )}
         </div>
         <div>
-            <h4 className="text-gray-500 text-[12px] font-medium mb-0.5">{title}</h4>
+            <h4 className="text-gray-500 text-[12px] font-medium mb-0.5 truncate" title={title}>{title}</h4>
             <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">{value}</h2>
         </div>
     </div>
@@ -73,7 +83,28 @@ export default function Overview() {
                     end_date: dateFilter.preset === 'Custom Range' ? (dateFilter.endDate || undefined) : undefined
                 };
                 const response = await getSuperAdminDashboardStats(timeFilterParam, extraParams);
-                setData(response.data?.data || response.data);
+                let dashData = response.data?.data || response.data;
+
+                // Fallback for pendingApprovals if backend hasn't reloaded yet
+                if (dashData && dashData.counts && dashData.counts.pendingApprovals === undefined) {
+                    try {
+                        const pendingRes = await getPendingJobs(1, 1);
+                        const pendingTotal = pendingRes.data?.data?.pagination?.totalRecords || (Array.isArray(pendingRes.data?.data) ? pendingRes.data.data.length : 0);
+                        dashData = {
+                            ...dashData,
+                            counts: {
+                                ...dashData.counts,
+                                pendingApprovals: pendingTotal,
+                                emailUsage: dashData.counts.emailUsage ?? 0,
+                                resumeDownloads: dashData.counts.resumeDownloads ?? 0,
+                                excelDownloads: dashData.counts.excelDownloads ?? 0
+                            }
+                        };
+                    } catch (pErr) {
+                        // ignore fallback error
+                    }
+                }
+                setData(dashData);
             } catch (err) {
                 console.error("Failed to fetch dashboard stats", err);
                 setError("Failed to load dashboard data. Please try again later.");
@@ -89,10 +120,13 @@ export default function Overview() {
         if (!data || !data.counts) return;
 
         const csvRows = [];
-        csvRows.push(['Metric', 'Count']);
-        csvRows.push(['Active Recruiters', data.counts.recruiters || 0]);
-        csvRows.push(['Live Job Postings', data.counts.jobs || 0]);
-        csvRows.push(['Total Applications', data.counts.applications || 0]);
+        csvRows.push(['Metric', 'Count', "Today's Count"]);
+        csvRows.push(['Active Recruiters', activeRecruiters, todayRecruiters]);
+        csvRows.push(['Live Job Postings', liveJobs, todayJobs]);
+        csvRows.push(['Pending Approval', pendingApprovals, todayPendingApprovals]);
+        csvRows.push(['Overall Email Usage', emailUsage, todayEmailUsage]);
+        csvRows.push(['Resume Downloads', resumeDownloads, todayResumeDownloads]);
+        csvRows.push(['Excel Downloads', excelDownloads, todayExcelDownloads]);
 
         const csvContent = csvRows.map(e => e.join(",")).join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -108,7 +142,7 @@ export default function Overview() {
 
     if (loading) {
         return (
-            <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300 pb-8">
+            <div className="w-full animate-in fade-in duration-300 pb-8">
                 {/* Header Skeleton */}
                 <div className="flex justify-between items-center mb-6">
                     <div className="space-y-2">
@@ -122,11 +156,12 @@ export default function Overview() {
                 </div>
 
                 {/* KPI Cards Skeleton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-                    {[1, 2, 3, 4, 5].map(i => (
-                        <div key={i} className="bg-white rounded-xl shadow-xs p-4 h-[140px]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
+                    {[1, 2, 3, 4, 5, 6].map(i => (
+                        <div key={i} className="bg-white rounded-xl shadow-xs p-4 h-[135px]">
                             <div className="flex justify-between items-start mb-3">
                                 <div className="w-8 h-8 rounded-lg bg-gray-200 animate-pulse"></div>
+                                <div className="w-16 h-5 rounded-full bg-gray-200 animate-pulse"></div>
                             </div>
                             <div className="space-y-2">
                                 <div className="h-3 bg-gray-200 rounded w-20 animate-pulse"></div>
@@ -178,8 +213,17 @@ export default function Overview() {
     // Format Stat Cards
     const activeRecruiters = counts?.recruiters || 0;
     const liveJobs = counts?.jobs || 0;
-    const totalApplications = counts?.applications || 0;
-    const totalOpenings = (lists?.jobs || []).reduce((acc, j) => acc + (Number(j.openings) || 1), 0) || liveJobs;
+    const pendingApprovals = counts?.pendingApprovals || 0;
+    const emailUsage = counts?.emailUsage || 0;
+    const resumeDownloads = counts?.resumeDownloads || 0;
+    const excelDownloads = counts?.excelDownloads || 0;
+
+    const todayRecruiters = data?.todayCounts?.recruiters ?? 0;
+    const todayJobs = data?.todayCounts?.jobs ?? 0;
+    const todayPendingApprovals = data?.todayCounts?.pendingApprovals ?? 0;
+    const todayEmailUsage = data?.todayCounts?.emailUsage ?? 0;
+    const todayResumeDownloads = data?.todayCounts?.resumeDownloads ?? 0;
+    const todayExcelDownloads = data?.todayCounts?.excelDownloads ?? 0;
 
     // Process Chart Data strictly for Recruiters and Jobs
     const processedMonthlyData = [];
@@ -394,7 +438,7 @@ export default function Overview() {
     );
 
     return (
-        <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300 pb-8">
+        <div className="w-full animate-in fade-in duration-300 pb-8">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
@@ -418,42 +462,57 @@ export default function Overview() {
             </div>
 
             {/* KPI Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
                 <StatCard
                     title="Active Recruiters"
                     value={activeRecruiters.toLocaleString()}
+                    todayCount={todayRecruiters}
                     icon={Building2}
                     color="text-emerald-600"
                     bg="bg-emerald-50"
+                    onClick={() => router.push('/admin/recruiters')}
                 />
                 <StatCard
                     title="Live Job Postings"
                     value={liveJobs.toLocaleString()}
+                    todayCount={todayJobs}
                     icon={Briefcase}
                     color="text-purple-600"
                     bg="bg-purple-50"
+                    onClick={() => router.push('/admin/job-post')}
                 />
                 <StatCard
-                    title="Total Job Openings"
-                    value={totalOpenings.toLocaleString()}
-                    icon={FileText}
+                    title="Pending Approval"
+                    value={pendingApprovals.toLocaleString()}
+                    todayCount={todayPendingApprovals}
+                    icon={Clock}
+                    color="text-amber-600"
+                    bg="bg-amber-50"
+                    onClick={() => router.push('/admin/pending-jobs')}
+                />
+                <StatCard
+                    title="Overall Email Usage"
+                    value={emailUsage.toLocaleString()}
+                    todayCount={todayEmailUsage}
+                    icon={Mail}
                     color="text-blue-600"
                     bg="bg-blue-50"
                 />
                 <StatCard
-                    title="Total Applications"
-                    value={totalApplications.toLocaleString()}
-                    icon={FileCheck2}
-                    color="text-rose-600"
-                    bg="bg-rose-50"
+                    title="Resume Downloads"
+                    value={resumeDownloads.toLocaleString()}
+                    todayCount={todayResumeDownloads}
+                    icon={FileDown}
+                    color="text-teal-600"
+                    bg="bg-teal-50"
                 />
                 <StatCard
-                    title="System Health"
-                    value="99.9%"
-                    isPositive={true}
-                    icon={Activity}
-                    color="text-amber-600"
-                    bg="bg-amber-50"
+                    title="Excel Downloads"
+                    value={excelDownloads.toLocaleString()}
+                    todayCount={todayExcelDownloads}
+                    icon={FileSpreadsheet}
+                    color="text-indigo-600"
+                    bg="bg-indigo-50"
                 />
             </div>
 
@@ -566,10 +625,6 @@ export default function Overview() {
                         >
                             <Building2 className="w-4 h-4 text-emerald-600" />
                             <span>Recently Registered Recruiters</span>
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'recruiters' ? 'bg-emerald-200/70 text-emerald-800' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                {formattedRecentRecruiters.length}
-                            </span>
                         </button>
 
                         <button
@@ -581,10 +636,6 @@ export default function Overview() {
                         >
                             <Briefcase className="w-4 h-4 text-purple-600" />
                             <span>Recently Posted Jobs</span>
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'jobs' ? 'bg-purple-200/70 text-purple-800' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                {formattedRecentJobs.length}
-                            </span>
                         </button>
 
                         <button
@@ -596,35 +647,19 @@ export default function Overview() {
                         >
                             <Activity className="w-4 h-4 text-amber-600" />
                             <span>Activity Feed</span>
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'activity' ? 'bg-amber-200/70 text-amber-900' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                {combinedActivity.length}
-                            </span>
                         </button>
                     </div>
 
-                    {/* Search & View All Actions */}
-                    <div className="flex items-center gap-2.5 self-end lg:self-auto w-full lg:w-auto">
-                        <div className="relative flex-1 sm:w-60">
-                            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input
-                                type="text"
-                                placeholder={`Search ${activeRecentTab}...`}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-400"
-                            />
-                        </div>
-                        <button
-                            onClick={() => {
-                                if (activeRecentTab === 'jobs') router.push('/admin/job-post');
-                                else router.push('/admin/recruiters');
-                            }}
-                            className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
-                        >
-                            <span>View All</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
+                    {/* Search Action */}
+                    <div className="relative w-full sm:w-64 self-end lg:self-auto">
+                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder={`Search ${activeRecentTab}...`}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:bg-white transition-all placeholder:text-gray-400"
+                        />
                     </div>
                 </div>
 
@@ -651,7 +686,7 @@ export default function Overview() {
                                             <div className="flex items-center gap-3">
                                                 <div
                                                     onClick={() => router.push(`/admin/recruiters/${recruiter.id}`)}
-                                                    className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                                                    className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0 border-1 border-emerald-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                                                 >
                                                     {recruiter.profileImage ? (
                                                         <img src={recruiter.profileImage} alt={recruiter.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
@@ -750,7 +785,7 @@ export default function Overview() {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         title="Open in Admin Preview Mode"
-                                                        className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0 border border-purple-100/80 shadow-2xs cursor-pointer hover:opacity-85 hover:scale-105 transition-all no-underline"
+                                                        className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0 border-1 border-purple-100/80 shadow-2xs cursor-pointer hover:opacity-85 hover:scale-105 transition-all no-underline"
                                                     >
                                                         {job.companyLogo ? (
                                                             <img src={job.companyLogo} alt={job.title} className="w-full h-full object-contain rounded-xl p-1" onError={(e) => { e.target.style.display = 'none'; }} />
@@ -777,50 +812,50 @@ export default function Overview() {
                                                     </div>
                                                 </div>
                                             </td>
-                                        <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-800">
-                                                <Building className="w-3.5 h-3.5 text-gray-400" />
-                                                <span>{job.companyName}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <div>
-                                                <div className="text-[13px] font-medium text-gray-900">{job.recruiterName}</div>
-                                                <div className="text-[11px] text-gray-500 truncate max-w-[180px]">{job.recruiterEmail}</div>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="px-2 py-0.5 text-[11px] font-medium bg-blue-50 text-blue-700 rounded-md border-1 border-blue-100">
-                                                    {job.workplace_type}
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-800">
+                                                    <Building className="w-3.5 h-3.5 text-gray-400" />
+                                                    <span>{job.companyName}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                <div>
+                                                    <div className="text-[13px] font-medium text-gray-900">{job.recruiterName}</div>
+                                                    <div className="text-[11px] text-gray-500 truncate max-w-[180px]">{job.recruiterEmail}</div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="px-2 py-0.5 text-[11px] font-medium bg-blue-50 text-blue-700 rounded-md border-1 border-blue-100">
+                                                        {job.workplace_type}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 text-[11px] font-medium bg-gray-100 text-gray-700 rounded-md">
+                                                        {job.job_nature}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1.5 text-[12px] text-gray-600 max-w-[160px] truncate">
+                                                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                                    <span className="truncate">{job.location || 'Not specified'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                <div className="flex items-center gap-1 text-[12px] text-gray-500 font-medium">
+                                                    <Clock className="w-3.5 h-3.5 text-gray-400" />
+                                                    <span>{job.timeAgo}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${job.status === 'Active'
+                                                    ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/60'
+                                                    : job.status === 'Closed'
+                                                        ? 'bg-rose-50 text-rose-700 border-1 border-rose-200/60'
+                                                        : 'bg-amber-50 text-amber-700 border-1 border-amber-200/60'
+                                                    }`}>
+                                                    {job.status}
                                                 </span>
-                                                <span className="px-2 py-0.5 text-[11px] font-medium bg-gray-100 text-gray-700 rounded-md">
-                                                    {job.job_nature}
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <div className="flex items-center gap-1.5 text-[12px] text-gray-600 max-w-[160px] truncate">
-                                                <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                                <span className="truncate">{job.location || 'Not specified'}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <div className="flex items-center gap-1 text-[12px] text-gray-500 font-medium">
-                                                <Clock className="w-3.5 h-3.5 text-gray-400" />
-                                                <span>{job.timeAgo}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ${job.status === 'Active'
-                                                ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200/60'
-                                                : job.status === 'Closed'
-                                                    ? 'bg-rose-50 text-rose-700 border-1 border-rose-200/60'
-                                                    : 'bg-amber-50 text-amber-700 border-1 border-amber-200/60'
-                                                }`}>
-                                                {job.status}
-                                            </span>
-                                        </td>
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -868,7 +903,7 @@ export default function Overview() {
                                                             router.push(`/admin/recruiters/${recId}`);
                                                         }
                                                     }}
-                                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 border cursor-pointer hover:opacity-85 transition-opacity ${activity.entityType === 'job' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 border-1 cursor-pointer hover:opacity-85 transition-opacity ${activity.entityType === 'job' ? 'bg-purple-50 text-purple-600 border-purple-100' :
                                                         'bg-emerald-50 text-emerald-600 border-emerald-100'
                                                         }`}
                                                 >
@@ -938,6 +973,20 @@ export default function Overview() {
                         </table>
                     </div>
                 )}
+
+                {/* Section Footer: View All Button UI */}
+                <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-center">
+                    <button
+                        onClick={() => {
+                            if (activeRecentTab === 'jobs') router.push('/admin/job-post');
+                            else router.push('/admin/recruiters');
+                        }}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border border-gray-200 rounded-xl text-[14px] font-semibold shadow-2xs hover:shadow-xs transition-all cursor-pointer group active:scale-[0.99]"
+                    >
+                        <span>View All</span>
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                </div>
             </div>
 
             {/* Additional Details Grid */}

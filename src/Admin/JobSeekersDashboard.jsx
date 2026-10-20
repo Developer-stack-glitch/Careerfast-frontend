@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, Briefcase, TrendingUp, TrendingDown,
-    Activity, Building2, Download, FileCheck2, UserCheck,
+    Activity, Building2, Download, FileCheck2, UserCheck, UserX,
     Mail, Phone, MapPin, Search,
     Clock, ChevronRight, Building, Sparkles, GraduationCap
 } from 'lucide-react';
@@ -18,21 +18,35 @@ import CandidateProfileModal from './CandidateProfileModal';
 
 export { JobSeekersDashboardSkeleton };
 
-const StatCard = ({ title, value, change, isPositive, icon: Icon, color, bg }) => (
-    <div className="bg-white rounded-xl shadow-xs p-4 transition-all hover:shadow-sm">
-        <div className="flex items-start justify-between mb-3">
+const StatCard = ({ title, value, change, isPositive, icon: Icon, color, bg, todayCount, onClick }) => (
+    <div
+        onClick={onClick}
+        className={`bg-white rounded-xl shadow-xs p-3 transition-all hover:shadow-sm ${onClick ? 'cursor-pointer hover:border-gray-300' : ''}`}
+    >
+        <div className="flex items-start justify-between gap-1 mb-2">
             <div className={`p-2 rounded-lg ${bg} ${color}`}>
                 <Icon className="w-[18px] h-[18px]" strokeWidth={1.5} />
             </div>
-            {change && (
+            {todayCount !== undefined && todayCount !== null ? (
+                <div
+                    title="Today's count (not affected by date filter)"
+                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-semibold shrink-0 select-none ${Number(todayCount || 0) > 0
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs'
+                            : 'bg-gray-50 text-gray-500 border border-gray-200/60'
+                        }`}
+                >
+                    <span className={`w-1.5 h-1.5 rounded-full ${Number(todayCount || 0) > 0 ? 'bg-emerald-500' : 'bg-gray-300'}`}></span>
+                    Today: {Number(todayCount || 0) > 0 ? `+${todayCount}` : '0'}
+                </div>
+            ) : change ? (
                 <div className={`flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${isPositive ? 'text-emerald-700 bg-emerald-50' : 'text-rose-700 bg-rose-50'}`}>
                     {isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                     {change}
                 </div>
-            )}
+            ) : null}
         </div>
         <div>
-            <h4 className="text-gray-500 text-[13px] font-medium mb-0.5">{title}</h4>
+            <h4 className="text-gray-500 text-[12px] font-medium mb-0.5 truncate" title={title}>{title}</h4>
             <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">{value}</h2>
         </div>
     </div>
@@ -94,10 +108,16 @@ export default function JobSeekersDashboard() {
 
         const csvRows = [];
         csvRows.push(['Metric', 'Count']);
-        csvRows.push(['Total Job Seekers', data.counts.candidates || 0]);
-        csvRows.push(['Total Applications', data.counts.applications || 0]);
-        csvRows.push(['Available Live Jobs', data.counts.jobs || 0]);
-        csvRows.push(['Active Recruiters', data.counts.recruiters || 0]);
+        csvRows.push(['Total Job Seekers', totalCandidates]);
+        csvRows.push(['Active Users', activeCandidates]);
+        csvRows.push(['Disabled Users', disabledCandidates]);
+        csvRows.push(['Jobs Applied', jobsApplied]);
+        csvRows.push(['Internships Applied', internshipsApplied]);
+        csvRows.push(['Total Applications', totalApplications]);
+        csvRows.push(['Today Registered Users (New)', todayRegisterUsers]);
+        csvRows.push(['Today Logged In Users', todayLoggedInUsers]);
+        csvRows.push(['Today Jobs Applied', todayJobsApplied]);
+        csvRows.push(['Today Internships Applied', todayInternshipsApplied]);
 
         const csvContent = csvRows.map(e => e.join(",")).join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -125,13 +145,23 @@ export default function JobSeekersDashboard() {
         );
     }
 
-    const { counts, lists, monthlyData, distributions } = data || {};
+    const { counts, lists, monthlyData, distributions, todayCounts } = data || {};
 
     // Format Stat Cards for Job Seekers / Candidates
     const totalCandidates = counts?.candidates || 0;
+    const activeCandidates = counts?.activeCandidates ?? (counts?.candidates || 0);
+    const disabledCandidates = counts?.disabledCandidates ?? 0;
+    const jobsApplied = counts?.jobsApplied ?? 0;
+    const internshipsApplied = counts?.internshipsApplied ?? 0;
     const totalApplications = counts?.applications || 0;
     const totalJobs = counts?.jobs || 0;
-    const activeCandidates = (lists?.candidates || []).filter(c => c.is_active).length || totalCandidates;
+
+    // Today badges (independent of date filter)
+    const todayRegisterUsers = todayCounts?.registerUsers ?? 0;
+    const todayLoggedInUsers = todayCounts?.loggedInUsers ?? 0;
+    const todayJobsApplied = todayCounts?.jobsApplied ?? 0;
+    const todayInternshipsApplied = todayCounts?.internshipsApplied ?? 0;
+    const todayTotalApplications = todayJobsApplied + todayInternshipsApplied;
 
     // Process Monthly Growth Data for Candidates & Applications
     const processedMonthlyData = [];
@@ -292,7 +322,7 @@ export default function JobSeekersDashboard() {
     );
 
     return (
-        <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300 pb-8">
+        <div className="w-full animate-in fade-in duration-300 pb-8">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
@@ -316,42 +346,59 @@ export default function JobSeekersDashboard() {
             </div>
 
             {/* KPI Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-6">
                 <StatCard
                     title="Total Job Seekers"
                     value={totalCandidates.toLocaleString()}
+                    todayCount={todayRegisterUsers}
                     icon={Users}
                     color="text-blue-600"
                     bg="bg-blue-50"
+                    onClick={() => setActiveRecentTab('candidates')}
+                />
+                <StatCard
+                    title="Active Users"
+                    value={activeCandidates.toLocaleString()}
+                    todayCount={todayLoggedInUsers}
+                    icon={UserCheck}
+                    color="text-emerald-600"
+                    bg="bg-emerald-50"
+                    onClick={() => setActiveRecentTab('candidates')}
+                />
+                <StatCard
+                    title="Disabled Users"
+                    value={disabledCandidates.toLocaleString()}
+                    icon={UserX}
+                    color="text-rose-600"
+                    bg="bg-rose-50"
+                    onClick={() => setActiveRecentTab('candidates')}
+                />
+                <StatCard
+                    title="Jobs Applied"
+                    value={jobsApplied.toLocaleString()}
+                    todayCount={todayJobsApplied}
+                    icon={Briefcase}
+                    color="text-purple-600"
+                    bg="bg-purple-50"
+                    onClick={() => setActiveRecentTab('applications')}
+                />
+                <StatCard
+                    title="Internship Applied"
+                    value={internshipsApplied.toLocaleString()}
+                    todayCount={todayInternshipsApplied}
+                    icon={GraduationCap}
+                    color="text-cyan-600"
+                    bg="bg-cyan-50"
+                    onClick={() => setActiveRecentTab('applications')}
                 />
                 <StatCard
                     title="Total Applications"
                     value={totalApplications.toLocaleString()}
+                    todayCount={todayTotalApplications}
                     icon={FileCheck2}
-                    color="text-purple-600"
-                    bg="bg-purple-50"
-                />
-                <StatCard
-                    title="Active Talent Pool"
-                    value={activeCandidates.toLocaleString()}
-                    icon={UserCheck}
-                    color="text-emerald-600"
-                    bg="bg-emerald-50"
-                />
-                <StatCard
-                    title="Live Job Openings"
-                    value={totalJobs.toLocaleString()}
-                    icon={Briefcase}
                     color="text-amber-600"
                     bg="bg-amber-50"
-                />
-                <StatCard
-                    title="Talent Engagement"
-                    value="99.9%"
-                    isPositive={true}
-                    icon={Activity}
-                    color="text-sky-600"
-                    bg="bg-sky-50"
+                    onClick={() => setActiveRecentTab('applications')}
                 />
             </div>
 
@@ -469,10 +516,6 @@ export default function JobSeekersDashboard() {
                         >
                             <Sparkles className="w-4 h-4 text-blue-600" />
                             <span>Recently Registered Candidates</span>
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'candidates' ? 'bg-blue-200/70 text-blue-800' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                {formattedRecentCandidates.length}
-                            </span>
                         </button>
 
                         <button
@@ -484,10 +527,6 @@ export default function JobSeekersDashboard() {
                         >
                             <FileCheck2 className="w-4 h-4 text-purple-600" />
                             <span>Recent Job Applications</span>
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'applications' ? 'bg-purple-200/70 text-purple-800' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                {formattedRecentApplications.length}
-                            </span>
                         </button>
 
                         <button
@@ -499,35 +538,19 @@ export default function JobSeekersDashboard() {
                         >
                             <Activity className="w-4 h-4 text-amber-600" />
                             <span>Candidate Activity Feed</span>
-                            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${activeRecentTab === 'activity' ? 'bg-amber-200/70 text-amber-900' : 'bg-gray-100 text-gray-600'
-                                }`}>
-                                {combinedActivity.length}
-                            </span>
                         </button>
                     </div>
 
-                    {/* Search & View All Actions */}
-                    <div className="flex items-center gap-2.5 self-end lg:self-auto w-full lg:w-auto">
-                        <div className="relative w-full sm:w-64">
-                            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <input
-                                type="text"
-                                placeholder={`Search ${activeRecentTab}...`}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
-                            />
-                        </div>
-                        <button
-                            onClick={() => {
-                                if (activeRecentTab === 'applications') router.push('/admin/applications');
-                                else router.push('/admin/job-seekers');
-                            }}
-                            className="text-[12px] font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
-                        >
-                            <span>View All</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
+                    {/* Search Action */}
+                    <div className="relative w-full sm:w-64 self-end lg:self-auto">
+                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder={`Search ${activeRecentTab}...`}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-gray-400"
+                        />
                     </div>
                 </div>
 
@@ -553,7 +576,7 @@ export default function JobSeekersDashboard() {
                                             <div className="flex items-center gap-3">
                                                 <div
                                                     onClick={() => setSelectedCandidate(candidate)}
-                                                    className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border border-blue-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
+                                                    className="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 border-1 border-blue-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity"
                                                 >
                                                     {candidate.profileImage ? (
                                                         <img
@@ -776,7 +799,7 @@ export default function JobSeekersDashboard() {
                                             <div className="flex items-center gap-2.5">
                                                 <div
                                                     onClick={() => router.push(act.entityType === 'application' ? '/admin/applications' : '/admin/job-seekers')}
-                                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 border overflow-hidden cursor-pointer hover:opacity-85 transition-opacity ${act.entityType === 'application' ? 'bg-purple-50 text-purple-600 border-purple-100' :
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 border-1 overflow-hidden cursor-pointer hover:opacity-85 transition-opacity ${act.entityType === 'application' ? 'bg-purple-50 text-purple-600 border-purple-100' :
                                                         'bg-blue-50 text-blue-600 border-blue-100'
                                                         }`}
                                                 >
@@ -854,6 +877,20 @@ export default function JobSeekersDashboard() {
                         </table>
                     </div>
                 )}
+
+                {/* Section Footer: View All Button UI */}
+                <div className="p-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-center">
+                    <button
+                        onClick={() => {
+                            if (activeRecentTab === 'applications') router.push('/admin/applications');
+                            else router.push('/admin/job-seekers');
+                        }}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 text-gray-700 hover:text-gray-900 border border-gray-200 rounded-xl text-[14px] font-semibold shadow-2xs hover:shadow-xs transition-all cursor-pointer group active:scale-[0.99]"
+                    >
+                        <span>View All</span>
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-700 group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                </div>
             </div>
 
             {/* Additional Details Grid */}

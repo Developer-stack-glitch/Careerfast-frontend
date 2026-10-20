@@ -73,21 +73,7 @@ const formatCleanText = (val, fallback = 'Not Specified') => {
     return String(parsed || fallback);
 };
 
-// ── Stat Card Component ──
-const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
-    <div className="bg-white rounded-xl p-4 group transition-all duration-300 relative overflow-hidden">
-        <div className={`absolute top-0 right-0 w-24 h-24 rounded-full ${bg} opacity-60 -translate-y-8 translate-x-8 group-hover:scale-125 transition-transform duration-500`}></div>
-        <div className="flex items-start justify-between mb-3 relative z-10">
-            <div className={`p-2.5 rounded-xl ${bg} ${color} ring-1 ring-inset ${accent}`}>
-                <Icon className="w-[18px] h-[18px]" strokeWidth={1.8} />
-            </div>
-        </div>
-        <div className="relative z-10">
-            <h4 className="text-gray-500 text-[14px] font-medium mb-1">{title}</h4>
-            <h2 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">{value}</h2>
-        </div>
-    </div>
-);
+
 
 // ── Actions Dropdown (for Standard Table) ──
 const ActionsDropdown = ({ job, onClose, onDelete, onToggleStatus, onApprove, onReject, onViewPreview, onViewApplied, isBottom }) => {
@@ -495,37 +481,40 @@ export default function JobPost() {
         }
     };
 
-    // Filter tabs definition
+    // Filter tabs definition (styled like JobSeekers / Candidates page)
     const filterTabs = [
         {
+            key: 'All',
+            label: 'All Jobs',
+            count: globalStats.total,
+            icon: Briefcase,
+            activeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+            badgeActiveClass: 'bg-blue-100 text-blue-800',
+            iconClass: 'text-blue-600',
+        },
+        {
+            key: 'Pending',
             label: 'Pending',
             count: globalStats.pending,
-            color: { text: 'text-amber-600', border: 'border-amber-600', badgeBg: 'bg-amber-100', badgeText: 'text-amber-700' }
+            dotClass: 'bg-amber-500 animate-pulse',
+            activeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+            badgeActiveClass: 'bg-amber-100 text-amber-800',
         },
         {
-            label: 'All',
-            count: globalStats.total,
-            color: { text: 'text-blue-600', border: 'border-blue-600', badgeBg: 'bg-blue-100', badgeText: 'text-blue-700' }
-        },
-        {
+            key: 'Active',
             label: 'Active',
             count: globalStats.active,
-            color: { text: 'text-emerald-600', border: 'border-emerald-600', badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-700' }
+            dotClass: 'bg-emerald-500',
+            activeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            badgeActiveClass: 'bg-emerald-100 text-emerald-800',
         },
         {
-            label: 'Approved',
-            count: globalStats.approved,
-            color: { text: 'text-indigo-600', border: 'border-indigo-600', badgeBg: 'bg-indigo-100', badgeText: 'text-indigo-700' }
-        },
-        {
-            label: 'Auto Approved',
-            count: globalStats.autoApproved,
-            color: { text: 'text-violet-600', border: 'border-violet-600', badgeBg: 'bg-violet-100', badgeText: 'text-violet-700' }
-        },
-        {
+            key: 'Closed',
             label: 'Closed',
             count: globalStats.closed,
-            color: { text: 'text-rose-600', border: 'border-rose-600', badgeBg: 'bg-rose-100', badgeText: 'text-rose-700' }
+            dotClass: 'bg-rose-500',
+            activeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+            badgeActiveClass: 'bg-rose-100 text-rose-800',
         },
     ];
 
@@ -545,41 +534,34 @@ export default function JobPost() {
     return (
         <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300">
             {/* Header Section */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">
-                        {activeFilter === 'Pending' ? 'Approval Pending Jobs' : 'Job Postings'}
-                    </h1>
-                    <p className="text-[13px] text-gray-500 mt-0.5 mb-0">
-                        {activeFilter === 'Pending'
-                            ? 'Review and approve job postings submitted by recruiters.'
-                            : 'Manage all jobs posted by recruiters across the platform.'}
-                    </p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                        <Briefcase className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">
+                            {activeFilter === 'Pending' ? 'Approval Pending Jobs' : 'Job Postings'}
+                        </h1>
+                        <p className="text-[13px] text-gray-500 mt-0.5 mb-0">
+                            {activeFilter === 'Pending'
+                                ? 'Review and approve job postings submitted by recruiters.'
+                                : 'Manage all jobs posted by recruiters across the platform.'}
+                        </p>
+                    </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
                     {/* Approve All button when in Pending tab */}
                     {activeFilter === 'Pending' && (globalStats.pending > 0 || paginatedJobs.length > 0) && (
                         <button
                             onClick={() => openModal('approveAll')}
-                            className="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm shadow-emerald-600/20 flex items-center justify-center gap-2 shrink-0 active:scale-[0.98]"
+                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-semibold transition-all shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 h-[40px]"
                         >
                             <CheckCircle className="w-4 h-4" />
-                            Approve All
+                            <span>Approve All</span>
                         </button>
                     )}
 
-                    <div className="relative w-full sm:w-72">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <Search className="h-4 w-4 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="Search jobs or companies..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl text-[13px] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-white outline-none transition-all placeholder:text-gray-400"
-                        />
-                    </div>
                     <AdminDateFilter
                         value={dateFilter}
                         onChange={(newFilter) => {
@@ -589,95 +571,89 @@ export default function JobPost() {
                     />
                     <button
                         onClick={handleExport}
-                        className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all flex items-center justify-center gap-2 shrink-0 active:scale-[0.98]"
+                        className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs h-[40px]"
                     >
-                        <Download className="w-4 h-4" />
-                        Export
+                        <Download className="w-4 h-4 text-gray-500" />
+                        <span>Export</span>
                     </button>
                 </div>
             </div>
 
-            {/* KPI Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                <StatCard
-                    title="Total Postings"
-                    value={globalStats.total.toLocaleString()}
-                    icon={Briefcase}
-                    color="text-blue-600"
-                    bg="bg-blue-50"
-                    accent="ring-blue-100"
-                />
-                <StatCard
-                    title="Active Jobs"
-                    value={globalStats.active.toLocaleString()}
-                    icon={CheckCircle2}
-                    color="text-emerald-600"
-                    bg="bg-emerald-50"
-                    accent="ring-emerald-100"
-                />
-                <StatCard
-                    title="Auto Approved"
-                    value={globalStats.autoApproved.toLocaleString()}
-                    icon={CheckCircle2}
-                    color="text-violet-600"
-                    bg="bg-violet-50"
-                    accent="ring-violet-100"
-                />
-                <StatCard
-                    title="Approval Pending"
-                    value={globalStats.pending.toLocaleString()}
-                    icon={Clock}
-                    color="text-amber-600"
-                    bg="bg-amber-50"
-                    accent="ring-amber-100"
-                />
-                <StatCard
-                    title="Closed Jobs"
-                    value={globalStats.closed.toLocaleString()}
-                    icon={XCircle}
-                    color="text-rose-600"
-                    bg="bg-rose-50"
-                    accent="ring-rose-100"
-                />
+            {/* Status Count Tabs (JobSeekers / Candidates Style) */}
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-4 hide-scrollbar">
+                {filterTabs.map((tab) => {
+                    const isSelected = activeFilter === tab.key;
+                    const Icon = tab.icon;
+                    return (
+                        <button
+                            key={tab.key}
+                            onClick={() => {
+                                setActiveFilter(tab.key);
+                                setCurrentPage(1);
+                            }}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer shrink-0 border-1 select-none ${isSelected
+                                ? `${tab.activeClass} shadow-2xs`
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                }`}
+                        >
+                            {tab.dotClass && (
+                                <span className={`w-2 h-2 rounded-full ${tab.dotClass} shrink-0`} />
+                            )}
+                            {Icon && (
+                                <Icon className={`w-4 h-4 ${isSelected ? tab.iconClass : 'text-gray-400'} shrink-0`} />
+                            )}
+                            <span>{tab.label}</span>
+                            <span
+                                className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${isSelected
+                                    ? tab.badgeActiveClass
+                                    : 'bg-gray-100 text-gray-600'
+                                    }`}
+                            >
+                                {tab.count !== undefined ? Number(tab.count).toLocaleString() : 0}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* ── Quick Filter Bar (Type tabs, Workplace & Experience filters) ── */}
-            <div className="bg-white rounded-2xl p-2 sm:p-2.5 mb-4 shadow-2xs">
+            {/* ── Filter Bar: Search & Select Filter Fields (Neat Flow) ── */}
+            <div className="bg-white rounded-2xl p-2.5 sm:p-3 mb-4 shadow-2xs">
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                    {/* Left: Nature Type Segmented Control */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-                        <div className="inline-flex items-center p-1 bg-slate-100/80 rounded-xl border border-slate-200/70 gap-1 shrink-0">
-                            {[
-                                { label: 'All Types', value: 'All', icon: Layers },
-                                { label: 'Jobs', value: 'Job', icon: Briefcase },
-                                { label: 'Internships', value: 'Internship', icon: GraduationCap },
-                                { label: 'Walk-in Drives', value: 'Walk-in', icon: Calendar },
-                            ].map((t) => {
-                                const isSelected = selectedNature === t.value;
-                                const Icon = t.icon;
-                                return (
-                                    <button
-                                        key={t.value}
-                                        onClick={() => {
-                                            setSelectedNature(t.value);
-                                            setCurrentPage(1);
-                                        }}
-                                        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all shrink-0 active:scale-95 cursor-pointer ${isSelected
-                                            ? 'bg-blue-600 text-white shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
-                                            }`}
-                                    >
-                                        <Icon className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                                        <span>{t.label}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                    {/* Left: Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder="Search jobs, companies or skills..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full pl-10 pr-3.5 py-2 bg-slate-50/70 hover:bg-slate-100/60 focus:bg-white border border-gray-200 rounded-xl text-[13px] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
+                        />
                     </div>
 
-                    {/* Right: Dropdown Select Boxes & Reset */}
+                    {/* Right: Select Field Filters & Reset */}
                     <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
-                        {/* Workplace Select */}
+                        {/* 1. Job Type Select (converted from segmented control) */}
+                        <AdminSelect
+                            value={selectedNature}
+                            onChange={(val) => {
+                                setSelectedNature(val);
+                                setCurrentPage(1);
+                            }}
+                            options={[
+                                { value: 'All', label: 'All Types' },
+                                { value: 'Job', label: 'Jobs' },
+                                { value: 'Internship', label: 'Internships' },
+                                { value: 'Walk-in', label: 'Walk-in Drives' },
+                            ]}
+                            placeholder="All Types"
+                            size="sm"
+                        />
+
+                        {/* 2. Workplace Select */}
                         <AdminSelect
                             value={selectedWorkplace}
                             onChange={(val) => {
@@ -694,7 +670,7 @@ export default function JobPost() {
                             size="sm"
                         />
 
-                        {/* Experience Select */}
+                        {/* 3. Experience Select */}
                         <AdminSelect
                             value={selectedExperience}
                             onChange={(val) => {
@@ -710,7 +686,7 @@ export default function JobPost() {
                             size="sm"
                         />
 
-                        {/* Reset Button (only if active filters applied) */}
+                        {/* Reset Filter Button */}
                         {(selectedNature !== 'All' || selectedWorkplace !== 'All' || selectedExperience !== 'All' || searchTerm) && (
                             <button
                                 onClick={() => {
@@ -733,44 +709,6 @@ export default function JobPost() {
 
             {/* Content Area */}
             <div className="bg-white rounded-xl shadow-xs overflow-hidden">
-                {/* Filter Tabs */}
-                <div className="px-6 pt-2 border-b border-gray-100 flex items-center justify-between mb-0">
-                    <div className="flex gap-7 sm:gap-10 -mb-px overflow-x-auto">
-                        {filterTabs.map((tab) => {
-                            const isPending = tab.label === 'Pending';
-                            const isPendingWithCount = isPending && tab.count > 0;
-                            const isActive = activeFilter === tab.label;
-
-                            return (
-                                <button
-                                    key={tab.label}
-                                    onClick={() => setActiveFilter(tab.label)}
-                                    className={`py-3.5 text-[14px] font-semibold transition-all border-b-2 shrink-0 group flex items-center gap-2 ${isActive
-                                        ? `${tab.color.border} ${tab.color.text}`
-                                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-                                        }`}
-                                >
-                                    <span>{tab.label}</span>
-                                    <span
-                                        className={`text-[11.5px] font-bold px-2 py-1 rounded-full transition-all flex items-center gap-1.5 leading-none ${isPendingWithCount
-                                            ? isActive
-                                                ? 'bg-amber-100 text-amber-800 border-1 border-amber-300'
-                                                : 'bg-amber-50 text-amber-700 border-1 border-amber-200/90'
-                                            : isActive
-                                                ? `${tab.color.badgeBg} ${tab.color.badgeText}`
-                                                : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700'
-                                            }`}
-                                    >
-                                        {isPendingWithCount && (
-                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
-                                        )}
-                                        <span>{tab.count}</span>
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
 
                 {/* ── CONDITIONAL TABLE: PENDING VIEW vs STANDARD VIEW ── */}
                 {activeFilter === 'Pending' ? (

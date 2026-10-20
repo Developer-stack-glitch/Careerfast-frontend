@@ -1,14 +1,14 @@
 'use client';
-import React, { useState, useEffect, useMemo, memo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, memo, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
     Search, Settings,
     Sparkles, Users,
-    Rocket, ChevronRight, Bell, PanelLeftClose, PanelLeftOpen, Command,
+    Rocket, ChevronRight, ChevronDown, Bell, PanelLeftClose, PanelLeftOpen, Command,
     Building2, Briefcase, MessageSquare,
     LogOut, Layers, LayoutDashboard,
-    Users2, ShieldCheck, BarChart3, FileSpreadsheet
+    Users2, ShieldCheck, BarChart3, FileSpreadsheet, ExternalLink
 } from 'lucide-react';
 import defaultLogo from '../images/careerfastlogofinal.png';
 import { getImageUrl } from '../utils/getImageUrl';
@@ -202,8 +202,35 @@ export default function AdminLayout({ children }) {
 
     const [isOpen, setIsOpen] = useState(true);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const profileMenuRef = useRef(null);
     const [openTicketCount, setOpenTicketCount] = useState(0);
     const { currentUser, isSuperAdmin, userPermissions, can } = useAdminPermissions();
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+                setIsProfileMenuOpen(false);
+            }
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setIsProfileMenuOpen(false);
+            }
+        };
+        if (isProfileMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('keydown', handleKeyDown);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isProfileMenuOpen]);
+
+    useEffect(() => {
+        setIsProfileMenuOpen(false);
+    }, [pathname]);
 
     const fetchTicketStats = useCallback(async () => {
         try {
@@ -316,29 +343,165 @@ export default function AdminLayout({ children }) {
                             />
                         </div>
 
-                        <div className="flex items-center gap-3 ml-2">
-                            <Link href="/admin/support" className="text-gray-400 hover:text-gray-600 transition-colors border-0 bg-transparent p-0 cursor-pointer relative no-underline flex items-center justify-center">
-                                <Bell className="w-5 h-5" />
-                                {openTicketCount > 0 && (
-                                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center leading-none ring-2 ring-white animate-in zoom-in">
-                                        {openTicketCount > 99 ? '99+' : openTicketCount}
-                                    </span>
-                                )}
-                            </Link>
-
-                            <div className="flex items-center gap-2">
-                                <div suppressHydrationWarning className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-[12px] font-bold shadow-xs tracking-wide">
+                        <div className="relative ml-2" ref={profileMenuRef}>
+                            <button
+                                type="button"
+                                onClick={() => setIsProfileMenuOpen(prev => !prev)}
+                                className={`flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-gray-100/80 active:bg-gray-200/70 transition-all border-0 bg-transparent cursor-pointer group text-left select-none ${isProfileMenuOpen ? 'bg-gray-100 ring-2 ring-blue-500/10' : ''}`}
+                                aria-expanded={isProfileMenuOpen}
+                                aria-label="User profile menu"
+                            >
+                                <div suppressHydrationWarning className="w-10 h-10 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center text-[14px] font-bold shadow-xs tracking-wide">
                                     {userInitials}
                                 </div>
                                 <div className="hidden lg:flex flex-col text-left">
-                                    <span suppressHydrationWarning className="text-xs font-bold text-gray-900 leading-tight">
+                                    <span suppressHydrationWarning className="text-md font-semibold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
                                         {currentUser ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() : 'Super Admin'}
                                     </span>
-                                    <span suppressHydrationWarning className="text-[10px] text-gray-400 font-semibold">
+                                    <span suppressHydrationWarning className="text-[12px] text-gray-400 font-semibold">
                                         {isSuperAdmin ? 'Super Admin' : (currentUser?.admin_role_title || currentUser?.role_title || 'Sub-Admin')}
                                     </span>
                                 </div>
-                            </div>
+                                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 group-hover:text-gray-600 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180 text-blue-600' : ''}`} />
+                            </button>
+
+                            {/* Profile Dropdown Menu */}
+                            {isProfileMenuOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 py-0 z-50 animate-in fade-in zoom-in-95 duration-150">
+                                    {/* User Details Header */}
+                                    <div className="px-3 py-3 border-b border-gray-100 flex items-center gap-3">
+                                        <div suppressHydrationWarning className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-semibold flex items-center justify-center text-sm shrink-0 shadow-xs">
+                                            {userInitials}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div suppressHydrationWarning className="text-[13px] font-bold text-gray-900 truncate">
+                                                {currentUser ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() : 'Super Admin'}
+                                            </div>
+                                            <div suppressHydrationWarning className="text-[11px] text-gray-500 truncate">
+                                                {currentUser?.email || 'admin@careerfast.com'}
+                                            </div>
+                                            <div className="mt-1 flex items-center gap-1.5">
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200/60">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                                    {isSuperAdmin ? 'Super Administrator' : (currentUser?.admin_role_title || currentUser?.role_title || 'Sub-Admin')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Needable Quick Links */}
+                                    <div className="p-1.5 space-y-0.5">
+                                        <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+                                            Quick Navigation
+                                        </div>
+
+                                        {(isSuperAdmin || can('settings', 'view')) && (
+                                            <Link
+                                                href="/admin/general"
+                                                onClick={() => setIsProfileMenuOpen(false)}
+                                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-all group no-underline"
+                                            >
+                                                <div className="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
+                                                    <Settings className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-[12.5px] font-semibold text-gray-800 group-hover:text-blue-600 leading-tight">Platform Settings</div>
+                                                    <div className="text-[10px] text-gray-400">System & preferences</div>
+                                                </div>
+                                            </Link>
+                                        )}
+
+                                        {(isSuperAdmin || can('user_management', 'view')) && (
+                                            <Link
+                                                href="/admin/users"
+                                                onClick={() => setIsProfileMenuOpen(false)}
+                                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-all group no-underline"
+                                            >
+                                                <div className="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
+                                                    <Users2 className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-[12.5px] font-semibold text-gray-800 group-hover:text-blue-600 leading-tight">Users & Staff</div>
+                                                    <div className="text-[10px] text-gray-400">Manage admin team</div>
+                                                </div>
+                                            </Link>
+                                        )}
+
+                                        {(isSuperAdmin || can('roles_permissions', 'view')) && (
+                                            <Link
+                                                href="/admin/roles-permissions"
+                                                onClick={() => setIsProfileMenuOpen(false)}
+                                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-all group no-underline"
+                                            >
+                                                <div className="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
+                                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-[12.5px] font-semibold text-gray-800 group-hover:text-blue-600 leading-tight">Roles & Permissions</div>
+                                                    <div className="text-[10px] text-gray-400">Access matrix & roles</div>
+                                                </div>
+                                            </Link>
+                                        )}
+
+                                        {(isSuperAdmin || can('support', 'view')) && (
+                                            <Link
+                                                href="/admin/support"
+                                                onClick={() => setIsProfileMenuOpen(false)}
+                                                className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-all group no-underline"
+                                            >
+                                                <div className="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
+                                                    <MessageSquare className="w-3.5 h-3.5" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-[12.5px] font-semibold text-gray-800 group-hover:text-blue-600 leading-tight">Support Tickets</div>
+                                                    <div className="text-[10px] text-gray-400">Customer requests</div>
+                                                </div>
+                                                {openTicketCount > 0 && (
+                                                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                        {openTicketCount}
+                                                    </span>
+                                                )}
+                                            </Link>
+                                        )}
+
+                                        <a
+                                            href="/"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={() => setIsProfileMenuOpen(false)}
+                                            className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-all group no-underline"
+                                        >
+                                            <div className="w-7 h-7 rounded-lg bg-gray-50 text-gray-500 group-hover:bg-white group-hover:text-blue-600 flex items-center justify-center transition-colors shadow-2xs">
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[12.5px] font-semibold text-gray-800 group-hover:text-blue-600 leading-tight">View Live Website</div>
+                                                <div className="text-[10px] text-gray-400">Open portal in new tab</div>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    {/* Logout Action */}
+                                    <div className="p-1.5 border-t border-gray-100 mt-1">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setIsProfileMenuOpen(false);
+                                                handleLogout();
+                                            }}
+                                            className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer border-0 bg-transparent text-left group"
+                                        >
+                                            <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 group-hover:bg-red-100 flex items-center justify-center transition-colors shadow-2xs">
+                                                <LogOut className="w-3.5 h-3.5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-[12.5px] font-semibold leading-tight">Sign Out</div>
+                                                <div className="text-[10px] text-red-400">Exit admin session</div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

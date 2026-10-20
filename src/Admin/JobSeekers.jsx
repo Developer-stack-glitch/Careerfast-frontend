@@ -4,9 +4,9 @@ import {
     MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     MapPin, GraduationCap, CheckCircle2, XCircle,
     ChevronsUpDown, ChevronUp, ChevronDown, Clock,
-    Sparkles, Calendar, UserPlus, AlertTriangle, X, Loader2
+    Sparkles, Calendar, AlertTriangle, AlertCircle, X, Loader2
 } from 'lucide-react';
-import { getUsers, getUserProfile, updateUserStatus, deleteUser } from '../ApiService/action';
+import { getUsers, updateUserStatus, deleteUser } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
 import CandidateProfileModal from './CandidateProfileModal';
@@ -57,6 +57,86 @@ const isRecentRegistration = (dateString) => {
     if (isNaN(date.getTime())) return false;
     const diffDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
     return diffDays >= 0 && diffDays <= 7;
+};
+
+// ── Calculate candidate profile completion percentage (0 - 100) ──
+export const calculateCandidateCompletion = (u) => {
+    if (!u) return 0;
+    if (u.profile_completion !== undefined && u.profile_completion !== null && !isNaN(Number(u.profile_completion))) {
+        return Math.min(100, Math.max(0, Math.round(Number(u.profile_completion))));
+    }
+
+    let score = 0;
+    // 1. Basic details (Name, Email, Phone) - 20%
+    const hasName = Boolean((u.name || `${u.first_name || ''} ${u.last_name || ''}`).trim());
+    const hasEmail = Boolean((u.email || '').trim());
+    const rawPhone = String(u.phone || '').trim().toLowerCase();
+    const hasPhone = Boolean(rawPhone && !['null', 'undefined', 'n/a', '-', ''].includes(rawPhone));
+    if (hasName && hasEmail && hasPhone) score += 20;
+    else if (hasName && (hasEmail || hasPhone)) score += 10;
+
+    // 2. Profile Photo - 10%
+    const avatar = u.profile_image || u.profileImage || u.profile_picture || u.avatar;
+    if (avatar && avatar !== 'null' && avatar !== '#' && avatar !== 'default.png') score += 10;
+
+    // 3. Location - 10%
+    const loc = u.location || u.city || u.preferred_locations;
+    if (loc && !['Location N/A', 'Not Specified', 'N/A', 'null', ''].includes(String(loc).trim())) score += 10;
+
+    // 4. Headline or Summary/About - 10%
+    if ((u.headline && u.headline.trim()) || (u.about && u.about.trim())) score += 10;
+
+    // 5. Experience / Fresher status - 15%
+    const hasExp = Boolean(u.experince_type || u.experience_type || u.experience || u.is_fresher || Number(u.total_years) > 0);
+    if (hasExp) score += 15;
+
+    // 6. Education - 15%
+    const hasEdu = Boolean(u.display_education || u.education_college || u.education_course || u.college || u.course || u.qualification);
+    if (hasEdu && !['Not provided', 'N/A', 'null', ''].includes(String(u.display_education || '').trim())) score += 15;
+
+    // 7. Skills - 10%
+    const rawSkills = u.skills;
+    if (rawSkills && rawSkills !== '[]' && rawSkills !== 'null' && (Array.isArray(rawSkills) ? rawSkills.length > 0 : String(rawSkills).trim().length > 2)) {
+        score += 10;
+    }
+
+    // 8. Resume - 10%
+    const resume = u.resume;
+    if (resume && resume !== 'Resume' && resume !== '#' && resume !== 'null') score += 10;
+
+    return Math.min(100, Math.max(0, score));
+};
+
+// ── Dynamic Progress Styling based on Completion Percentage ──
+export const getCompletionConfig = (percent) => {
+    if (percent >= 80) {
+        return {
+            bg: 'bg-emerald-500',
+            badgeBg: 'bg-emerald-50',
+            badgeBorder: 'border-emerald-200/80',
+            textColor: 'text-emerald-700',
+            label: 'All-Star',
+            barGradient: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
+        };
+    }
+    if (percent >= 50) {
+        return {
+            bg: 'bg-amber-500',
+            badgeBg: 'bg-amber-50',
+            badgeBorder: 'border-amber-200/80',
+            textColor: 'text-amber-700',
+            label: 'Intermediate',
+            barGradient: 'linear-gradient(90deg, #ea580c 0%, #f59e0b 100%)',
+        };
+    }
+    return {
+        bg: 'bg-rose-500',
+        badgeBg: 'bg-rose-50',
+        badgeBorder: 'border-rose-200/80',
+        textColor: 'text-rose-700',
+        label: 'Basic',
+        barGradient: 'linear-gradient(90deg, #e11d48 0%, #fb7185 100%)',
+    };
 };
 
 // ── Stat Card Component ──
@@ -130,10 +210,11 @@ export default function JobSeekers() {
             location: candidate.city || candidate.location,
             profileImage: candidate.profile_image || candidate.profileImage || candidate.profile_picture || null,
             status: candidate.status,
-            timeRaw: candidate.created_date || candidate.last_active
+            timeRaw: candidate.created_date || candidate.last_active,
+            completionPercentage: candidate.completionPercentage
         });
     };
-    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, recent: 0, new: 0 });
+    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, recent: 0, new: 0, completed: 0, uncompleted: 0 });
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' }); // 'candidate' | 'education' | 'status' | 'last_login' | 'created_date'
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
@@ -175,7 +256,7 @@ export default function JobSeekers() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const statusFilter = activeFilter === 'Recent' ? 'Recent' : (activeFilter !== 'All' ? activeFilter : '');
+            const statusFilter = (activeFilter !== 'All') ? activeFilter : '';
             const payload = {
                 page: currentPage,
                 limit: itemsPerPage,
@@ -185,8 +266,8 @@ export default function JobSeekers() {
                 start_date: dateFilter.startDate || undefined,
                 end_date: dateFilter.endDate || undefined,
                 timeFilter: dateFilter.preset !== 'Custom Range' && dateFilter.preset !== 'All Time' ? dateFilter.preset : undefined,
-                sortBy: sortConfig.key || (activeFilter === 'Recent' ? 'created_date' : undefined),
-                sortOrder: sortConfig.direction || (activeFilter === 'Recent' ? 'desc' : undefined)
+                sortBy: sortConfig.key || undefined,
+                sortOrder: sortConfig.direction || undefined
             };
             const response = await getUsers(payload);
             const responseData = response?.data?.data;
@@ -204,24 +285,27 @@ export default function JobSeekers() {
                 setTotalPages(1);
             }
 
-            // Filter for only Candidates and map status 
-            // Note: Since we are using backend pagination, if backend doesn't filter role, we might have wrong count.
-            // But we already added status and search filter to backend.
+            // Filter for only Candidates, map status and calculate profile completion
             const allCandidates = usersArray.map(u => {
                 const isActive = u.is_active?.data ? u.is_active.data[0] === 1 : (u.is_active === 1 || u.is_active === true);
+                const completion = calculateCandidateCompletion(u);
                 return {
                     ...u,
-                    status: isActive ? 'Active' : 'Disabled'
+                    status: isActive ? 'Active' : 'Disabled',
+                    completionPercentage: completion
                 };
             });
 
-            const recentCount = allCandidates.filter(u => isRecentRegistration(u.created_date)).length;
+            const completedCount = allCandidates.filter(u => u.completionPercentage >= 80).length;
+            const uncompletedCount = allCandidates.filter(u => u.completionPercentage < 80).length;
+
             if (!responseData?.users) {
                 setGlobalStats({
                     total: allCandidates.length,
                     active: allCandidates.filter(u => u.status === 'Active').length,
                     pending: allCandidates.filter(u => u.status === 'Disabled').length,
-                    recent: recentCount,
+                    completed: completedCount,
+                    uncompleted: uncompletedCount,
                     new: allCandidates.length > 5 ? 5 : allCandidates.length
                 });
             } else {
@@ -230,7 +314,9 @@ export default function JobSeekers() {
                     total: responseData.stats?.total || responseData.total || 0,
                     active: responseData.stats?.active || 0,
                     pending: responseData.stats?.pending || 0,
-                    recent: responseData.stats?.recent !== undefined ? responseData.stats.recent : (recentCount || prev.recent || 0)
+                    completed: responseData.stats?.completed !== undefined ? responseData.stats.completed : (completedCount || prev.completed || 0),
+                    uncompleted: responseData.stats?.uncompleted !== undefined ? responseData.stats.uncompleted : (uncompletedCount || prev.uncompleted || 0),
+                    recent: responseData.stats?.recent !== undefined ? responseData.stats.recent : (prev.recent || 0)
                 }));
             }
 
@@ -285,58 +371,79 @@ export default function JobSeekers() {
     return (
         <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full">
             {/* Header Section */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-1">Candidates</h1>
-                <p className="text-[14px] text-gray-500 mt-0">Manage and monitor all candidates across your platform.</p>
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                    <Users className="w-5 h-5" />
+                </div>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">Job Seekers</h1>
+                    <p className="text-[13px] text-gray-500 mt-0.5 mb-0">Manage and monitor all candidates across your platform.</p>
+                </div>
             </div>
 
             {/* Filters and Search Bar Row */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
 
                 {/* Left: Filter Tabs */}
-                <div className="flex items-center gap-3 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar">
+                <div className="flex items-center gap-2.5 overflow-x-auto py-1 hide-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                     {/* All Candidates Tab */}
                     <button
                         onClick={() => { setActiveFilter('All'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeFilter === 'All'
-                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-100'
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'All'
+                            ? 'bg-indigo-50 text-indigo-700 border-1 border-indigo-100 shadow-2xs'
                             : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                             }`}
                     >
-                        <Users className="w-4 h-4" />
-                        <span>All Candidates</span>
+                        <Users className="w-4 h-4 shrink-0" />
+                        <span className="whitespace-nowrap">All Candidates</span>
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'All' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-600'
                             }`}>
                             {globalStats.total !== undefined ? globalStats.total : matchedUsers}
                         </span>
                     </button>
 
-                    {/* Recently Registered Tab */}
+                    {/* Complete Profile Tab */}
                     <button
-                        onClick={() => { setActiveFilter('Recent'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer ${activeFilter === 'Recent'
-                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        onClick={() => { setActiveFilter('Complete'); setCurrentPage(1); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Complete'
+                            ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200 shadow-2xs'
                             : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                             }`}
                     >
-                        <Sparkles className="w-4 h-4 text-blue-500" />
-                        <span>Recently Registered</span>
-                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Recent' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="whitespace-nowrap">Complete Profile</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Complete' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
                             }`}>
-                            {globalStats.recent !== undefined ? globalStats.recent : 0}
+                            {globalStats.completed !== undefined ? globalStats.completed : 0}
+                        </span>
+                    </button>
+
+                    {/* Uncompleted Profile Tab */}
+                    <button
+                        onClick={() => { setActiveFilter('Uncompleted'); setCurrentPage(1); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Uncompleted'
+                            ? 'bg-rose-50 text-rose-700 border-1 border-rose-200 shadow-2xs'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                        <span className="whitespace-nowrap">Uncompleted Profile</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Uncompleted' ? 'bg-rose-100 text-rose-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {globalStats.uncompleted !== undefined ? globalStats.uncompleted : 0}
                         </span>
                     </button>
 
                     {/* Active Tab */}
                     <button
                         onClick={() => { setActiveFilter('Active'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all ${activeFilter === 'Active'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Active'
+                            ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-100 shadow-2xs'
                             : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                             }`}
                     >
-                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <span>Active</span>
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span className="whitespace-nowrap">Active</span>
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
                             }`}>
                             {globalStats.active !== undefined ? globalStats.active : 0}
@@ -346,13 +453,13 @@ export default function JobSeekers() {
                     {/* Disabled Tab */}
                     <button
                         onClick={() => { setActiveFilter('Disabled'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all ${activeFilter === 'Disabled'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Disabled'
+                            ? 'bg-amber-50 text-amber-700 border-1 border-amber-100 shadow-2xs'
                             : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                             }`}
                     >
-                        <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                        <span>Disabled</span>
+                        <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0"></span>
+                        <span className="whitespace-nowrap">Disabled</span>
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Disabled' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600'
                             }`}>
                             {globalStats.pending !== undefined ? globalStats.pending : 0}
@@ -361,7 +468,7 @@ export default function JobSeekers() {
                 </div>
 
                 {/* Right: Date Filter and Search */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full xl:w-auto shrink-0">
                     <AdminDateFilter
                         value={dateFilter}
                         onChange={(newFilter) => {
@@ -422,6 +529,22 @@ export default function JobSeekers() {
                                     </div>
                                 </th>
                                 <th
+                                    onClick={() => handleSort('completion')}
+                                    className="px-5 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    title="Click to sort by Profile Completion"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={sortConfig.key === 'completion' ? 'text-indigo-600 font-bold' : ''}>PROFILE COMPLETION</span>
+                                        {sortConfig.key !== 'completion' ? (
+                                            <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
+                                        ) : sortConfig.direction === 'asc' ? (
+                                            <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        ) : (
+                                            <ChevronDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th
                                     onClick={() => handleSort('status')}
                                     className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
                                     title="Click to sort by Status"
@@ -438,13 +561,13 @@ export default function JobSeekers() {
                                     </div>
                                 </th>
                                 <th
-                                    onClick={() => handleSort(activeFilter === 'Recent' ? 'created_date' : 'last_login')}
+                                    onClick={() => handleSort('last_login')}
                                     className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
                                     title="Click to sort by date"
                                 >
                                     <div className="flex items-center gap-1.5">
                                         <span className={sortConfig.key === 'last_login' || sortConfig.key === 'created_date' ? 'text-indigo-600 font-bold' : ''}>
-                                            {activeFilter === 'Recent' ? 'REGISTERED DATE' : 'LAST LOGIN / REGISTERED'}
+                                            LAST LOGIN / REGISTERED
                                         </span>
                                         {sortConfig.key !== 'last_login' && sortConfig.key !== 'created_date' ? (
                                             <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
@@ -469,14 +592,15 @@ export default function JobSeekers() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 space-y-2"><div className="h-4 w-40 bg-gray-200 rounded"></div><div className="h-3 w-32 bg-gray-200 rounded"></div></td>
-                                        <td className="px-6 py-4"><div className="h-6 w-20 bg-gray-200 rounded-full"></div></td>
-                                        <td className="px-6 py-4 space-y-1.5"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-3 w-16 bg-gray-200 rounded"></div></td>
-                                        <td className="px-6 py-4 text-right"><div className="h-8 w-8 bg-gray-200 rounded-lg ml-auto"></div></td>
+                                        <td className="px-5 py-4 space-y-2"><div className="h-3 w-20 bg-gray-200 rounded"></div><div className="h-2 w-28 bg-gray-200 rounded"></div></td>
+                                        <td className="px-4 py-4"><div className="h-6 w-20 bg-gray-200 rounded-full"></div></td>
+                                        <td className="px-4 py-4 space-y-1.5"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-3 w-16 bg-gray-200 rounded"></div></td>
+                                        <td className="px-4 py-4 text-right"><div className="h-8 w-8 bg-gray-200 rounded-lg ml-auto"></div></td>
                                     </tr>
                                 ))
                             ) : displayedUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-16 text-center">
+                                    <td colSpan={6} className="px-6 py-16 text-center">
                                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
                                             <Users className="w-8 h-8 text-gray-400" />
                                         </div>
@@ -490,6 +614,10 @@ export default function JobSeekers() {
                                     const name = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown';
                                     const activity = formatLastActive(user.last_login || user.created_date);
                                     const candidateAvatar = user.profile_image || user.profileImage || user.profile_picture || user.avatar;
+                                    const completion = user.completionPercentage !== undefined
+                                        ? user.completionPercentage
+                                        : calculateCandidateCompletion(user);
+                                    const compConfig = getCompletionConfig(completion);
 
                                     return (
                                         <tr key={user.id || user._id || idx} className="hover:bg-gray-50/80 transition-colors group">
@@ -497,7 +625,7 @@ export default function JobSeekers() {
                                                 <div className="flex items-center gap-3">
                                                     <div
                                                         onClick={() => handleViewProfile(user)}
-                                                        className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm border border-indigo-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity shrink-0"
+                                                        className="w-10 h-10 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-sm border-1 border-indigo-100 shadow-2xs overflow-hidden cursor-pointer hover:opacity-85 transition-opacity shrink-0"
                                                         title="View candidate profile"
                                                     >
                                                         {candidateAvatar && candidateAvatar !== 'null' && candidateAvatar !== '#' ? (
@@ -531,7 +659,7 @@ export default function JobSeekers() {
                                                                 {name}
                                                             </button>
                                                             {isRecentRegistration(user.created_date) && (
-                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10.5px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-200/80 shrink-0">
+                                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10.5px] font-bold bg-indigo-50 text-indigo-600 border-1 border-indigo-200/80 shrink-0">
                                                                     <Sparkles className="w-2.5 h-2.5 text-indigo-500" />
                                                                     New
                                                                 </span>
@@ -552,6 +680,27 @@ export default function JobSeekers() {
                                                     <div className="flex items-center gap-1.5 text-[12px] text-gray-500">
                                                         <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                                                         <span>{user.city || user.location || 'Location N/A'}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4">
+                                                <div className="flex flex-col gap-1.5 w-28 sm:w-32">
+                                                    <div className="flex items-center justify-between text-[11px] font-bold leading-none">
+                                                        <span className={compConfig.textColor}>
+                                                            {completion}%
+                                                        </span>
+                                                        <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-md border-1 ${compConfig.badgeBg} ${compConfig.badgeBorder} ${compConfig.textColor}`}>
+                                                            {compConfig.label}
+                                                        </span>
+                                                    </div>
+                                                    <div className="w-full h-1.5 sm:h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                                                        <div
+                                                            className="h-full rounded-full transition-all duration-300"
+                                                            style={{
+                                                                width: `${Math.max(6, completion)}%`,
+                                                                background: compConfig.barGradient
+                                                            }}
+                                                        />
                                                     </div>
                                                 </div>
                                             </td>

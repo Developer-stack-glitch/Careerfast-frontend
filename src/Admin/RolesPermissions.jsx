@@ -893,7 +893,7 @@ export default function RolesPermissions() {
                                     </div>
 
                                     {/* Role Name */}
-                                    <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-2 mb-1.5">
+                                    <h3 className="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-2 mb-1.5">
                                         {role.role_title || role.role_name}
                                     </h3>
 
@@ -1086,8 +1086,8 @@ export default function RolesPermissions() {
                                                 type="button"
                                                 onClick={() => applyPreset(preset)}
                                                 className={`p-3 text-left rounded-xl border transition-all cursor-pointer group relative ${isSelected
-                                                        ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
-                                                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 bg-white'
+                                                    ? 'border-blue-600 bg-blue-50/70 ring-2 ring-blue-500/20 shadow-xs'
+                                                    : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 bg-white'
                                                     }`}
                                             >
                                                 <div className="flex items-center justify-between mb-1">

@@ -164,7 +164,7 @@ export default function useAdminPermissions() {
                 } else if (moduleId === 'analytics') {
                     modPerms = userPermissions['report_recruiters'] || userPermissions['reports_recruiters'];
                 } else if (moduleId === 'report_job_seekers') {
-                    modPerms = userPermissions['reports_job_seekers'];
+                    modPerms = userPermissions['report_job_seekers'] || userPermissions['reports_job_seekers'];
                 } else if (moduleId === 'roles_permissions') {
                     modPerms = userPermissions['user_management'];
                 } else if (moduleId === 'talent_subscriptions') {

@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
-import AnalyticsReport from '@/Admin/AnalyticsReport';
+import RecruitersReport from '@/Admin/RecruitersReport';
 
 export default function RecruitersReportPage() {
-    return <AnalyticsReport />;
+    return <RecruitersReport />;
 }

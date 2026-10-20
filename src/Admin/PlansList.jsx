@@ -5,7 +5,7 @@ import {
     CreditCard, Plus, Search, Edit2, Copy, Trash2,
     Users, Eye, AlertCircle, Briefcase, Zap, Loader2, Check, X,
     Table as TableIcon, RefreshCw, Clock,
-    TrendingUp, Layers, Crown, ChevronRight, UserCheck, Flame
+    TrendingUp, Layers, Crown, ChevronRight, UserCheck, Flame, RotateCcw
 } from 'lucide-react';
 import {
     getAdminPlans,
@@ -132,6 +132,36 @@ export default function PlansList() {
         };
     }, [plans]);
 
+    // Status Count Tabs (styled like JobSeekers / Candidates page)
+    const inactiveCount = plans.filter(p => p.status === 'inactive').length;
+    const statusTabs = [
+        {
+            key: 'ALL',
+            label: 'All Plans',
+            count: stats.total,
+            icon: CreditCard,
+            activeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+            badgeActiveClass: 'bg-blue-100 text-blue-800',
+            iconClass: 'text-blue-600',
+        },
+        {
+            key: 'active',
+            label: 'Active',
+            count: stats.active,
+            dotClass: 'bg-emerald-500',
+            activeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            badgeActiveClass: 'bg-emerald-100 text-emerald-800',
+        },
+        {
+            key: 'inactive',
+            label: 'Inactive',
+            count: inactiveCount,
+            dotClass: 'bg-slate-400',
+            activeClass: 'bg-slate-100 text-slate-700 border-slate-300',
+            badgeActiveClass: 'bg-slate-200 text-slate-800',
+        },
+    ];
+
     // Filter & Sort plans
     const filteredPlans = useMemo(() => {
         let result = plans.filter(plan => {
@@ -191,12 +221,6 @@ export default function PlansList() {
         <div className="w-full max-w-9xl mx-auto font-sans pb-16 px-2 sm:px-4">
             {/* Breadcrumb & Header */}
             <div className="mb-6 pt-2">
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-2">
-                    <span className="hover:text-slate-600 cursor-pointer transition-colors" onClick={() => router.push('/admin')}>Dashboard</span>
-                    <ChevronRight className="w-3 h-3 text-slate-300" />
-                    <span className="text-slate-700 font-semibold">Subscription Plans</span>
-                </div>
-
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3">
@@ -238,171 +262,113 @@ export default function PlansList() {
                 </div>
             </div>
 
-            {/* Quick Metrics Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {/* Metric 1: Total Plans */}
-                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[14px] font-semibold text-slate-600">Total Plans</span>
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 border-1 border-indigo-100 flex items-center justify-center text-indigo-600">
-                            <Layers className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-2.5 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-slate-900 tracking-tight">{stats.total}</span>
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border-1 border-emerald-100 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            {stats.active} Active
-                        </span>
-                    </div>
-                    <p className="text-[12px] text-slate-500 mt-1.5 mb-0">
-                        Configured subscription tiers
-                    </p>
-                </div>
-
-                {/* Metric 2: Active Subscribers */}
-                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[14px] font-semibold text-slate-600">Active Subscribers</span>
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 border-1 border-blue-100 flex items-center justify-center text-blue-600">
-                            <Users className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-2.5 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-blue-600 tracking-tight">{stats.totalSubscribers}</span>
-                        <span className="text-xs font-medium text-slate-400">recruiter orgs</span>
-                    </div>
-                    <p className="text-[12px] text-slate-500 mt-1.5 mb-0">
-                        Across recruitment companies
-                    </p>
-                </div>
-
-                {/* Metric 3: Most Popular Plan */}
-                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[14px] font-semibold text-slate-600">Top Performing Tier</span>
-                        <div className="w-8 h-8 rounded-lg bg-amber-50 border-1 border-amber-100 flex items-center justify-center text-amber-600">
-                            <Flame className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-2.5 flex items-baseline gap-2">
-                        <span className="text-xl font-bold text-slate-900 truncate tracking-tight">{stats.mostPopular}</span>
-                    </div>
-                    <p className="text-[12px] text-slate-500 mt-1.5 mb-0">
-                        Highest active subscriber count
-                    </p>
-                </div>
-
-                {/* Metric 4: Average Plan Value */}
-                <div className="bg-white rounded-2xl p-3 border-slate-200/70 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden group">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[14px] font-semibold text-slate-600">Average Plan Value</span>
-                        <div className="w-8 h-8 rounded-lg bg-emerald-50 border-1 border-emerald-100 flex items-center justify-center text-emerald-600">
-                            <TrendingUp className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-2.5 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-emerald-700 tracking-tight">₹{stats.avgValue.toLocaleString()}</span>
-                        <span className="text-xs font-medium text-slate-400">/ package</span>
-                    </div>
-                    <p className="text-[12px] text-slate-500 mt-1.5 mb-0">
-                        Monthly benchmark price
-                    </p>
-                </div>
+            {/* Status Count Tabs (JobSeekers / Candidates Style) */}
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-4 hide-scrollbar">
+                {statusTabs.map((tab) => {
+                    const isSelected = statusFilter === tab.key;
+                    const Icon = tab.icon;
+                    return (
+                        <button
+                            key={tab.key}
+                            onClick={() => setStatusFilter(tab.key)}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer shrink-0 border-1 select-none ${isSelected
+                                ? `${tab.activeClass} shadow-2xs`
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                }`}
+                        >
+                            {tab.dotClass && (
+                                <span className={`w-2 h-2 rounded-full ${tab.dotClass} shrink-0`} />
+                            )}
+                            {Icon && (
+                                <Icon className={`w-4 h-4 ${isSelected ? tab.iconClass : 'text-gray-400'} shrink-0`} />
+                            )}
+                            <span>{tab.label}</span>
+                            <span
+                                className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${isSelected
+                                    ? tab.badgeActiveClass
+                                    : 'bg-gray-100 text-gray-600'
+                                    }`}
+                            >
+                                {tab.count !== undefined ? Number(tab.count).toLocaleString() : 0}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* Filter & Controls Toolbar */}
-            <div className="bg-white rounded-2xl p-3.5 border-slate-200/80 shadow-xs mb-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-                {/* Search & Status Quick Filter */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            {/* ── Filter Bar: Search & Select Filter Fields (Neat Flow) ── */}
+            <div className="bg-white rounded-2xl p-2.5 sm:p-3 mb-4 shadow-2xs">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    {/* Left: Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                         <input
                             type="text"
                             placeholder="Search plan name, limits, or description..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-9 py-2 bg-slate-50/70 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl text-[13px] text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                            className="w-full pl-10 pr-9 py-2 bg-slate-50/70 hover:bg-slate-100/60 focus:bg-white border border-gray-200 rounded-xl text-[13px] text-gray-800 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
                             >
                                 <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                     </div>
 
-                    {/* Quick Status Chips */}
-                    <div className="flex items-center gap-1 bg-slate-100/80 p-1 rounded-xl shrink-0">
-                        {[
-                            { id: 'ALL', label: 'All' },
-                            { id: 'active', label: 'Active' },
-                            { id: 'inactive', label: 'Inactive' }
-                        ].map((chip) => (
+                    {/* Right: Dropdowns & Reset Button */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+                        {/* Billing Cycle Dropdown */}
+                        <AdminSelect
+                            value={typeFilter}
+                            onChange={setTypeFilter}
+                            options={[
+                                { value: 'ALL', label: 'All Billing Cycles' },
+                                { value: 'monthly', label: 'Monthly Billing' },
+                                { value: 'yearly', label: 'Yearly Billing' },
+                                { value: 'custom', label: 'Custom Billing' }
+                            ]}
+                            placeholder="All Billing Cycles"
+                            size="sm"
+                        />
+
+                        {/* Sort Order Dropdown */}
+                        <AdminSelect
+                            value={sortBy}
+                            onChange={setSortBy}
+                            options={[
+                                { value: 'default', label: 'Sort: Default' },
+                                { value: 'price-low', label: 'Price: Low to High' },
+                                { value: 'price-high', label: 'Price: High to Low' },
+                                { value: 'subscribers', label: 'Most Subscribers' },
+                                { value: 'name', label: 'Name (A-Z)' }
+                            ]}
+                            placeholder="Sort: Default"
+                            size="sm"
+                        />
+
+                        {/* Reset Button (only if active filters applied) */}
+                        {(searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL' || sortBy !== 'default') && (
                             <button
-                                key={chip.id}
-                                onClick={() => setStatusFilter(chip.id)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${statusFilter === chip.id
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-500 hover:text-slate-800'
-                                    }`}
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setTypeFilter('ALL');
+                                    setStatusFilter('ALL');
+                                    setSortBy('default');
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border-1 border-rose-200/80 transition-all cursor-pointer active:scale-95 shadow-2xs"
+                                title="Reset all filters"
                             >
-                                {chip.label}
+                                <RotateCcw className="w-3 h-3" />
+                                <span>Reset</span>
                             </button>
-                        ))}
+                        )}
                     </div>
                 </div>
-
-                {/* Dropdowns & View Mode Toggles */}
-                <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap justify-between lg:justify-end">
-                    {/* Billing Cycle Dropdown */}
-                    <AdminSelect
-                        value={typeFilter}
-                        onChange={setTypeFilter}
-                        options={[
-                            { value: 'ALL', label: 'All Billing Cycles' },
-                            { value: 'monthly', label: 'Monthly Billing' },
-                            { value: 'yearly', label: 'Yearly Billing' },
-                            { value: 'custom', label: 'Custom Billing' }
-                        ]}
-                    />
-
-                    {/* Sort Order Dropdown */}
-                    <AdminSelect
-                        value={sortBy}
-                        onChange={setSortBy}
-                        options={[
-                            { value: 'default', label: 'Sort: Default' },
-                            { value: 'price-low', label: 'Price: Low to High' },
-                            { value: 'price-high', label: 'Price: High to Low' },
-                            { value: 'subscribers', label: 'Most Subscribers' },
-                            { value: 'name', label: 'Name (A-Z)' }
-                        ]}
-                    />
-                </div>
             </div>
-
-            {/* Results Count & Clear Filter Bar (if filters active) */}
-            {(searchTerm || typeFilter !== 'ALL' || statusFilter !== 'ALL' || sortBy !== 'default') && (
-                <div className="flex items-center justify-between text-xs text-slate-500 mb-3 px-1">
-                    <span>
-                        Showing <strong className="text-slate-700">{filteredPlans.length}</strong> of {plans.length} subscription plans
-                    </span>
-                    <button
-                        onClick={() => {
-                            setSearchTerm('');
-                            setTypeFilter('ALL');
-                            setStatusFilter('ALL');
-                            setSortBy('default');
-                        }}
-                        className="text-blue-600 hover:text-blue-800 font-semibold hover:underline flex items-center gap-1"
-                    >
-                        <X className="w-3.5 h-3.5" /> Clear all filters
-                    </button>
-                </div>
-            )}
 
             {/* Main Content Area */}
             {loading ? (
@@ -443,11 +409,11 @@ export default function PlansList() {
                     ))}
                 </div>
             ) : filteredPlans.length === 0 ? (
-                <div className="bg-white rounded-2xl p-10 border border-slate-200/80 shadow-xs text-center max-w-lg mx-auto">
+                <div className="bg-white rounded-2xl p-10 shadow-xs text-center max-w-lg mx-auto">
                     <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4">
                         <CreditCard className="w-7 h-7" />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900">No subscription plans found</h3>
+                    <h3 className="text-lg font-semibold mb-0 text-slate-900">No subscription plans found</h3>
                     <p className="text-[13px] text-slate-500 mt-1.5 leading-relaxed mb-0">
                         No subscription plans match your search or filter criteria. Try adjusting your filters or create a new plan package.
                     </p>

@@ -3,11 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
-    Building, Users, Search, Plus,
-    Eye, CreditCard, Clock, CheckCircle2, XCircle,
+    Building, Search, Plus,
+    Eye, CheckCircle2, XCircle,
     RefreshCw, X, MoreVertical, Edit3,
-    ArrowUpDown, AlertTriangle, Check, Mail, MessageSquare, FileSpreadsheet,
-    LogIn, ExternalLink, Trash2
+    ArrowUpDown, Check, Mail, MessageSquare, FileSpreadsheet,
+    LogIn, ExternalLink, Trash2, Sparkles, RotateCcw
 } from 'lucide-react';
 import {
     getAdminRecruiters,
@@ -233,11 +233,10 @@ const RecruiterActionCell = ({
                 <button
                     ref={buttonRef}
                     onClick={onToggle}
-                    className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
-                        isOpen
-                            ? 'text-blue-600 bg-blue-50 border-blue-200 shadow-xs'
-                            : 'text-slate-400 hover:text-slate-900 bg-white border-slate-200 hover:border-slate-300'
-                    }`}
+                    className={`p-1.5 rounded-lg border transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${isOpen
+                        ? 'text-blue-600 bg-blue-50 border-blue-200 shadow-xs'
+                        : 'text-slate-400 hover:text-slate-900 bg-white border-slate-200 hover:border-slate-300'
+                        }`}
                     title="Actions"
                 >
                     <MoreVertical className="w-4 h-4" />
@@ -261,7 +260,7 @@ const RecruiterActionCell = ({
 
 export default function RecruitersList() {
     const router = useRouter();
-    const [recruiters, setRecruiters] = useState([]);
+    const [allRecruiters, setAllRecruiters] = useState([]);
     const [plans, setPlans] = useState([]);
     const [loading, setLoading] = useState(true);
     const [openDropdown, setOpenDropdown] = useState(null);
@@ -273,6 +272,72 @@ export default function RecruitersList() {
     const [statusFilter, setStatusFilter] = useState('');
     const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState('');
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
+
+    // Helper to detect auto-approve flag reliably
+    const checkIsAutoApprove = (rec) => Boolean(
+        rec.auto_approve === 1 ||
+        rec.auto_approve === true ||
+        rec.auto_approve === '1' ||
+        (rec.auto_approve?.data && rec.auto_approve.data[0] === 1)
+    );
+
+    // Status counts for tabs
+    const stats = React.useMemo(() => {
+        const list = allRecruiters || [];
+        return {
+            total: list.length,
+            active: list.filter(r => Boolean(r.user_active)).length,
+            suspended: list.filter(r => !r.user_active).length,
+            autoApprove: list.filter(checkIsAutoApprove).length,
+        };
+    }, [allRecruiters]);
+
+    // Status Count Tabs (JobSeekers / Candidates Style)
+    const statusTabs = [
+        {
+            key: '',
+            label: 'All Recruiters',
+            count: stats.total,
+            icon: Building,
+            activeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+            badgeActiveClass: 'bg-blue-100 text-blue-800',
+            iconClass: 'text-blue-600',
+        },
+        {
+            key: 'Active',
+            label: 'Active',
+            count: stats.active,
+            dotClass: 'bg-emerald-500',
+            activeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            badgeActiveClass: 'bg-emerald-100 text-emerald-800',
+        },
+        {
+            key: 'Suspended',
+            label: 'Suspended',
+            count: stats.suspended,
+            dotClass: 'bg-rose-500',
+            activeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+            badgeActiveClass: 'bg-rose-100 text-rose-800',
+        },
+        {
+            key: 'AutoApprove',
+            label: 'Auto Approve',
+            count: stats.autoApprove,
+            icon: Sparkles,
+            activeClass: 'bg-violet-50 text-violet-700 border-violet-200',
+            badgeActiveClass: 'bg-violet-100 text-violet-800',
+            iconClass: 'text-violet-600',
+        },
+    ];
+
+    // Filter recruiters list based on selected status tab
+    const recruiters = React.useMemo(() => {
+        if (!statusFilter) return allRecruiters;
+        if (statusFilter === 'Active') return allRecruiters.filter(r => Boolean(r.user_active));
+        if (statusFilter === 'Suspended') return allRecruiters.filter(r => !r.user_active);
+        if (statusFilter === 'AutoApprove') return allRecruiters.filter(checkIsAutoApprove);
+        return allRecruiters;
+    }, [allRecruiters, statusFilter]);
 
     // Modals
     const [changePlanRecruiter, setChangePlanRecruiter] = useState(null);
@@ -294,7 +359,7 @@ export default function RecruitersList() {
 
     useEffect(() => {
         loadData();
-    }, [selectedPlanId, statusFilter, subscriptionStatusFilter, dateFilter.startDate, dateFilter.endDate]);
+    }, [selectedPlanId, subscriptionStatusFilter, dateFilter.startDate, dateFilter.endDate]);
 
     const loadData = async () => {
         try {
@@ -303,7 +368,6 @@ export default function RecruitersList() {
                 getAdminRecruiters({
                     search: searchTerm,
                     planId: selectedPlanId,
-                    status: statusFilter,
                     subscriptionStatus: subscriptionStatusFilter,
                     startDate: dateFilter.startDate,
                     endDate: dateFilter.endDate
@@ -316,7 +380,7 @@ export default function RecruitersList() {
             const [recRes, planRes] = await Promise.all(promises);
 
             if (recRes?.data?.success) {
-                setRecruiters(recRes.data.data || []);
+                setAllRecruiters(recRes.data.data || []);
             }
             if (planRes?.data?.success) {
                 setPlans(planRes.data.data || []);
@@ -345,11 +409,25 @@ export default function RecruitersList() {
     };
 
     const handleClearFilters = () => {
+        const hadSearch = Boolean(searchTerm);
         setSearchTerm('');
         setSelectedPlanId('');
         setStatusFilter('');
         setSubscriptionStatusFilter('');
         setDateFilter({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
+        if (hadSearch) {
+            getAdminRecruiters({
+                search: '',
+                planId: '',
+                subscriptionStatus: '',
+                startDate: '',
+                endDate: ''
+            }).then(recRes => {
+                if (recRes?.data?.success) {
+                    setAllRecruiters(recRes.data.data || []);
+                }
+            }).catch(console.error);
+        }
     };
 
     const hasActiveFilters = Boolean(searchTerm || selectedPlanId || statusFilter || subscriptionStatusFilter || dateFilter.startDate || dateFilter.endDate);
@@ -500,17 +578,17 @@ export default function RecruitersList() {
     return (
         <div className="w-full max-w-9xl mx-auto font-sans pb-16 px-1 sm:px-2">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                 <div>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 border-1 border-blue-100 flex items-center justify-center text-blue-600">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
                             <Building className="w-5 h-5" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-semibold text-slate-900 tracking-tight mb-0">
                                 Recruiters & Companies
                             </h1>
-                            <p className="text-xs text-slate-500 mt-0.5 mb-0">
+                            <p className="text-[13px] text-slate-500 mt-0.5 mb-0">
                                 Manage corporate recruiters, subscription quotas, and account statuses
                             </p>
                         </div>
@@ -520,7 +598,7 @@ export default function RecruitersList() {
                 <div className="flex items-center gap-2.5">
                     <button
                         onClick={() => router.push('/admin/recruiters/create')}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white rounded-xl text-sm font-medium transition-all shadow-sm shadow-blue-500/20 flex items-center gap-1.5"
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[14px] font-medium transition-all shadow-sm hover:shadow-md hover:shadow-blue-500/20 flex items-center gap-1.5 active:scale-95 cursor-pointer"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Add Recruiter</span>
@@ -528,82 +606,42 @@ export default function RecruitersList() {
                 </div>
             </div>
 
-            {/* Quick Metrics Bar */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
-                {/* Total Recruiters */}
-                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">Total Recruiters</span>
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                            <Users className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-1 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-slate-900">{recruiters.length}</span>
-                        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md border-1 border-emerald-100">
-                            {recruiters.filter(r => r.user_active).length} Active
-                        </span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1 mb-0">Registered hiring accounts</p>
-                </div>
-
-                {/* Paid Subscriptions */}
-                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">Active Plans</span>
-                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                            <CreditCard className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-1 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-emerald-600">
-                            {recruiters.filter(r => r.subscription_status === 'Active').length}
-                        </span>
-                        <span className="text-[11px] text-slate-500">plan holders</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1 mb-0">Currently active billing</p>
-                </div>
-
-                {/* Expiring Soon */}
-                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">Expiring Soon</span>
-                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                            <Clock className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-1 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-amber-600">
-                            {recruiters.filter(r => {
-                                const diff = getDaysRemaining(r.subscription_expiry);
-                                return diff !== null && diff > 0 && diff <= 7;
-                            }).length}
-                        </span>
-                        <span className="text-[11px] text-amber-600 font-medium">Within 7 days</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1 mb-0">May require renewal</p>
-                </div>
-
-                {/* Suspended / Expired */}
-                <div className="bg-white rounded-2xl p-4 hover:border-slate-300 transition-colors">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-600">Attention Needed</span>
-                        <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-                            <AlertTriangle className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="mt-1 flex items-baseline gap-2">
-                        <span className="text-2xl font-bold text-rose-600">
-                            {recruiters.filter(r => r.subscription_status === 'Expired' || !r.user_active).length}
-                        </span>
-                        <span className="text-[11px] text-rose-600 font-medium">Suspended / Expired</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 mt-1 mb-0">Requires administrator review</p>
-                </div>
+            {/* Status Count Tabs (JobSeekers / Candidates Style) */}
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-4 hide-scrollbar">
+                {statusTabs.map((tab) => {
+                    const isSelected = statusFilter === tab.key;
+                    const Icon = tab.icon;
+                    return (
+                        <button
+                            key={tab.key}
+                            onClick={() => setStatusFilter(tab.key)}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer shrink-0 border-1 select-none ${isSelected
+                                ? `${tab.activeClass} shadow-2xs`
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                }`}
+                        >
+                            {tab.dotClass && (
+                                <span className={`w-2 h-2 rounded-full ${tab.dotClass} shrink-0`} />
+                            )}
+                            {Icon && (
+                                <Icon className={`w-4 h-4 ${isSelected ? tab.iconClass : 'text-gray-400'} shrink-0`} />
+                            )}
+                            <span>{tab.label}</span>
+                            <span
+                                className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${isSelected
+                                    ? tab.badgeActiveClass
+                                    : 'bg-gray-100 text-gray-600'
+                                    }`}
+                            >
+                                {tab.count !== undefined ? Number(tab.count).toLocaleString() : 0}
+                            </span>
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="bg-white rounded-2xl p-3 mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div className="bg-white rounded-2xl p-2.5 sm:p-3 mb-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-2xs">
                 <form onSubmit={handleSearchSubmit} className="relative flex-1 max-w-md">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
@@ -640,19 +678,6 @@ export default function RecruitersList() {
                         placeholder="All Plans"
                     />
 
-                    {/* Recruiter Login Status */}
-                    <AdminSelect
-                        value={statusFilter}
-                        onChange={setStatusFilter}
-                        options={[
-                            { value: '', label: 'All Accounts' },
-                            { value: 'Active', label: 'Active Only' },
-                            { value: 'Suspended', label: 'Suspended Only' },
-                            { value: 'AutoApprove', label: 'Auto Approve Only' }
-                        ]}
-                        placeholder="All Accounts"
-                    />
-
                     {/* Subscription Status Filter */}
                     <AdminSelect
                         value={subscriptionStatusFilter}
@@ -674,16 +699,17 @@ export default function RecruitersList() {
                         <button
                             type="button"
                             onClick={handleClearFilters}
-                            className="px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors whitespace-nowrap"
+                            className="flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-rose-600 hover:text-rose-700 bg-rose-50/70 hover:bg-rose-100/70 border-1 border-rose-200/80 rounded-xl transition-all cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
                         >
-                            Reset
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Reset</span>
                         </button>
                     )}
 
                     <button
                         type="button"
                         onClick={loadData}
-                        className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl text-slate-600 transition-colors"
+                        className="p-2 bg-slate-50 hover:bg-slate-100 border border-slate-200/90 rounded-xl text-slate-600 transition-colors cursor-pointer"
                         title="Reload directory"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-600' : ''}`} />

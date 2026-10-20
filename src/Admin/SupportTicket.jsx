@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Ticket, Search, MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     MessageSquare, AlertCircle, CheckCircle2, Clock, X, Filter, RefreshCw, Send,
-    Building2, Building, User, Users
+    Building2, Building, User, Users, Download, RotateCcw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminSelect from './AdminSelect';
@@ -22,20 +22,6 @@ const PRIORITY_OPTIONS = [
     { value: 'High', label: 'High' },
     { value: 'Urgent', label: 'Urgent' }
 ];
-
-// ── Stat Card Component ──
-const StatCard = ({ title, value, icon: Icon, color, bg, accent }) => (
-    <div className="bg-white rounded-2xl p-4 group transition-all duration-300 relative overflow-hidden flex items-center gap-4">
-        <div className={`p-3 rounded-xl ${bg} ${color} ring-1 ring-inset ${accent}`}>
-            <Icon className="w-6 h-6" strokeWidth={1.8} />
-        </div>
-        <div>
-            <h4 className="text-gray-500 text-sm font-medium mb-1">{title}</h4>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight leading-none">{value}</h2>
-        </div>
-        <div className={`absolute -right-6 -bottom-6 w-24 h-24 rounded-full ${bg} opacity-50 group-hover:scale-125 transition-transform duration-500 pointer-events-none`}></div>
-    </div>
-);
 
 // ── User Type Badge ──
 const UserTypeBadge = ({ type, organization }) => {
@@ -313,6 +299,7 @@ export default function SupportTicket() {
     const [stats, setStats] = useState({ total: 0, open: 0, inprogress: 0, closed: 0, recruiter: { total: 0, open: 0, inprogress: 0, closed: 0 }, candidate: { total: 0, open: 0, inprogress: 0, closed: 0 } });
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [activeUserType, setActiveUserType] = useState('All'); // 'All' | 'recruiter' | 'candidate'
     const [activeStatusFilter, setActiveStatusFilter] = useState('All');
     const [activePriorityFilter, setActivePriorityFilter] = useState('All');
@@ -323,13 +310,20 @@ export default function SupportTicket() {
 
     const itemsPerPage = 10;
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     // Fetch dynamic tickets and stats from backend
     const fetchTicketsData = useCallback(async () => {
         setLoading(true);
         try {
             const [ticketsRes, statsRes] = await Promise.all([
                 getSupportTickets({
-                    search: searchTerm,
+                    search: debouncedSearch,
                     status: activeStatusFilter,
                     priority: activePriorityFilter,
                     user_type: activeUserType
@@ -349,7 +343,7 @@ export default function SupportTicket() {
         } finally {
             setLoading(false);
         }
-    }, [searchTerm, activeStatusFilter, activePriorityFilter, activeUserType]);
+    }, [debouncedSearch, activeStatusFilter, activePriorityFilter, activeUserType]);
 
     useEffect(() => {
         fetchTicketsData();
@@ -438,11 +432,14 @@ export default function SupportTicket() {
     // Filter Logic for client-side search fine tuning if any
     const filteredTickets = tickets.filter(ticket => {
         const matchType = activeUserType === 'All' || (ticket.user_type || 'candidate').toLowerCase() === activeUserType.toLowerCase();
-        const matchSearch = (ticket.subject || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (ticket.id || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (ticket.user?.name || ticket.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (ticket.user?.email || ticket.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (ticket.user?.organization || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const searchVal = (debouncedSearch || '').toLowerCase();
+        const matchSearch = !searchVal ||
+            (ticket.subject || '').toLowerCase().includes(searchVal) ||
+            (ticket.id || '').toLowerCase().includes(searchVal) ||
+            (ticket.ticket_number || '').toLowerCase().includes(searchVal) ||
+            (ticket.user?.name || ticket.name || '').toLowerCase().includes(searchVal) ||
+            (ticket.user?.email || ticket.email || '').toLowerCase().includes(searchVal) ||
+            (ticket.user?.organization || '').toLowerCase().includes(searchVal);
         const matchStatus = activeStatusFilter === 'All' || ticket.status === activeStatusFilter;
         const matchPriority = activePriorityFilter === 'All' || ticket.priority === activePriorityFilter;
         return matchType && matchSearch && matchStatus && matchPriority;
@@ -454,161 +451,249 @@ export default function SupportTicket() {
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchTerm, activeStatusFilter, activePriorityFilter, activeUserType]);
+    }, [debouncedSearch, activeStatusFilter, activePriorityFilter, activeUserType]);
+
+    const handleExport = () => {
+        try {
+            if (!filteredTickets || filteredTickets.length === 0) {
+                toast.error('No tickets to export');
+                return;
+            }
+            const csvRows = [
+                ['Ticket ID', 'Subject', 'Category', 'User Name', 'Email', 'Organization', 'User Type', 'Priority', 'Status', 'Date']
+            ];
+            filteredTickets.forEach(ticket => {
+                const id = `"${ticket.ticket_number || ticket.id || ''}"`;
+                const subject = `"${(ticket.subject || '').replace(/"/g, '""')}"`;
+                const category = `"${(ticket.category || 'General').replace(/"/g, '""')}"`;
+                const name = `"${(ticket.user?.name || ticket.name || '').replace(/"/g, '""')}"`;
+                const email = `"${(ticket.user?.email || ticket.email || '').replace(/"/g, '""')}"`;
+                const org = `"${(ticket.user?.organization || '').replace(/"/g, '""')}"`;
+                const type = `"${ticket.user_type || 'candidate'}"`;
+                const priority = `"${ticket.priority || 'Medium'}"`;
+                const status = `"${ticket.status || 'Open'}"`;
+                const date = `"${new Date(ticket.createdAt || ticket.created_at || new Date()).toLocaleDateString()}"`;
+                csvRows.push([id, subject, category, name, email, org, type, priority, status, date]);
+            });
+            const csvContent = csvRows.map(e => e.join(",")).join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `support_tickets_${activeStatusFilter.toLowerCase()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            toast.success('Export completed');
+        } catch (error) {
+            console.error("Export error:", error);
+            toast.error('Failed to generate export');
+        }
+    };
+
+    // Filter tabs definition (styled like JobPosting / JobSeekers page)
+    const filterTabs = [
+        {
+            key: 'All',
+            label: 'All Tickets',
+            count: currentStats.total,
+            icon: Ticket,
+            activeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+            badgeActiveClass: 'bg-blue-100 text-blue-800',
+            iconClass: 'text-blue-600',
+        },
+        {
+            key: 'Open',
+            label: 'Open',
+            count: currentStats.open,
+            dotClass: 'bg-blue-500 animate-pulse',
+            activeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+            badgeActiveClass: 'bg-blue-100 text-blue-800',
+        },
+        {
+            key: 'In Progress',
+            label: 'In Progress',
+            count: currentStats.inprogress,
+            dotClass: 'bg-amber-500',
+            activeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+            badgeActiveClass: 'bg-amber-100 text-amber-800',
+        },
+        {
+            key: 'Closed',
+            label: 'Closed',
+            count: currentStats.closed,
+            dotClass: 'bg-emerald-500',
+            activeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            badgeActiveClass: 'bg-emerald-100 text-emerald-800',
+        },
+    ];
 
     return (
-        <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full p-2 md:p-4 lg:p-4">
+        <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300">
             {/* Header Section */}
-            <div className="mb-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl md:text-2xl font-semibold text-gray-900 mb-1">Support Tickets</h1>
-                    <p className="text-sm text-gray-500 mb-0">Manage user inquiries, issues, and support requests in real-time.</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                        <Ticket className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight mb-0">
+                            Support Tickets
+                        </h1>
+                        <p className="text-[13px] text-gray-500 mt-0.5 mb-0">
+                            Manage user inquiries, issues, and support requests in real-time.
+                        </p>
+                    </div>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => fetchTicketsData()}
-                    className="inline-flex items-center gap-2 bg-white border-1 border-gray-200 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-xl text-sm font-semibold transition-all self-start sm:self-auto cursor-pointer"
-                >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-600' : ''}`} />
-                    <span>Refresh Data</span>
-                </button>
+                <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                    <button
+                        type="button"
+                        onClick={() => fetchTicketsData()}
+                        className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs h-[40px]"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-indigo-600' : 'text-gray-500'}`} />
+                        <span>Refresh Data</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleExport}
+                        className="bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-3.5 py-2 rounded-xl text-[13px] font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs h-[40px]"
+                    >
+                        <Download className="w-4 h-4 text-gray-500" />
+                        <span>Export</span>
+                    </button>
+                </div>
             </div>
 
-            {/* Dynamic Recruiter vs Candidate Type Selector Tabs */}
-            <div className="mb-6 flex flex-wrap items-center gap-2.5 p-1.5 bg-gray-100/80 rounded-2xl w-fit border border-gray-200/60 shadow-2xs">
-                <button
-                    type="button"
-                    onClick={() => { setActiveUserType('All'); setActiveStatusFilter('All'); }}
-                    className={`px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${activeUserType === 'All'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-900'
-                        }`}
-                >
-                    <Ticket className="w-4 h-4 text-gray-500" />
-                    <span>All Tickets</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeUserType === 'All' ? 'bg-gray-100 text-gray-800' : 'bg-gray-200/70 text-gray-600'
-                        }`}>
-                        {stats.total || 0}
-                    </span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => { setActiveUserType('recruiter'); setActiveStatusFilter('All'); }}
-                    className={`px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${activeUserType === 'recruiter'
-                        ? 'bg-white text-purple-700 shadow-sm ring-1 ring-purple-100'
-                        : 'text-gray-500 hover:text-purple-700'
-                        }`}
-                >
-                    <Building2 className={`w-4 h-4 ${activeUserType === 'recruiter' ? 'text-purple-600' : 'text-gray-400'}`} />
-                    <span>Recruiter Tickets</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeUserType === 'recruiter' ? 'bg-purple-100 text-purple-800' : 'bg-gray-200/70 text-gray-600'
-                        }`}>
-                        {stats.recruiter?.total || 0}
-                    </span>
-                </button>
-
-                <button
-                    type="button"
-                    onClick={() => { setActiveUserType('candidate'); setActiveStatusFilter('All'); }}
-                    className={`px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer ${activeUserType === 'candidate'
-                        ? 'bg-white text-blue-700 shadow-sm ring-1 ring-blue-100'
-                        : 'text-gray-500 hover:text-blue-700'
-                        }`}
-                >
-                    <User className={`w-4 h-4 ${activeUserType === 'candidate' ? 'text-blue-600' : 'text-gray-400'}`} />
-                    <span>Candidate Tickets</span>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${activeUserType === 'candidate' ? 'bg-blue-100 text-blue-800' : 'bg-gray-200/70 text-gray-600'
-                        }`}>
-                        {stats.candidate?.total || 0}
-                    </span>
-                </button>
-            </div>
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-                <StatCard
-                    title={activeUserType === 'recruiter' ? 'Recruiter Tickets' : activeUserType === 'candidate' ? 'Candidate Tickets' : 'Total Tickets'}
-                    value={currentStats.total || 0}
-                    icon={activeUserType === 'recruiter' ? Building2 : activeUserType === 'candidate' ? User : Ticket}
-                    color={activeUserType === 'recruiter' ? 'text-purple-600' : activeUserType === 'candidate' ? 'text-blue-600' : 'text-indigo-600'}
-                    bg={activeUserType === 'recruiter' ? 'bg-purple-50' : activeUserType === 'candidate' ? 'bg-blue-50' : 'bg-indigo-50'}
-                    accent={activeUserType === 'recruiter' ? 'ring-purple-100' : activeUserType === 'candidate' ? 'ring-blue-100' : 'ring-indigo-100'}
-                />
-                <StatCard title="Open" value={currentStats.open || 0} icon={AlertCircle} color="text-blue-600" bg="bg-blue-50" accent="ring-blue-100" />
-                <StatCard title="In Progress" value={currentStats.inprogress || 0} icon={Clock} color="text-amber-600" bg="bg-amber-50" accent="ring-amber-100" />
-                <StatCard title="Closed" value={currentStats.closed || 0} icon={CheckCircle2} color="text-emerald-600" bg="bg-emerald-50" accent="ring-emerald-100" />
-            </div>
-
-            {/* Filters and Search Bar Row */}
-            <div className="bg-white p-4 rounded-2xl mb-6 flex flex-col lg:flex-row gap-4 justify-between lg:items-center">
-
-                {/* Status Filters */}
-                <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar">
-                    {['All', 'Open', 'In Progress', 'Closed'].map(status => {
-                        const count = status === 'All' ? currentStats.total : currentStats[status.toLowerCase().replace(' ', '')];
-                        return (
-                            <button
-                                key={status}
-                                onClick={() => setActiveStatusFilter(status)}
-                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${activeStatusFilter === status
-                                    ? activeUserType === 'recruiter' ? 'bg-purple-600 text-white shadow-sm' : 'bg-indigo-600 text-white shadow-sm'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+            {/* Status Count Tabs (JobPosting Page Tab Filter Style) */}
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-2 mb-4 hide-scrollbar">
+                {filterTabs.map((tab) => {
+                    const isSelected = activeStatusFilter === tab.key;
+                    const Icon = tab.icon;
+                    return (
+                        <button
+                            key={tab.key}
+                            type="button"
+                            onClick={() => {
+                                setActiveStatusFilter(tab.key);
+                                setCurrentPage(1);
+                            }}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all cursor-pointer shrink-0 border-1 select-none ${isSelected
+                                ? `${tab.activeClass} shadow-2xs`
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                                }`}
+                        >
+                            {tab.dotClass && (
+                                <span className={`w-2 h-2 rounded-full ${tab.dotClass} shrink-0`} />
+                            )}
+                            {Icon && (
+                                <Icon className={`w-4 h-4 ${isSelected ? tab.iconClass : 'text-gray-400'} shrink-0`} />
+                            )}
+                            <span>{tab.label}</span>
+                            <span
+                                className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${isSelected
+                                    ? tab.badgeActiveClass
+                                    : 'bg-gray-100 text-gray-600'
                                     }`}
                             >
-                                {status} {`(${count || 0})`}
-                            </button>
-                        );
-                    })}
-                </div>
+                                {tab.count !== undefined ? Number(tab.count).toLocaleString() : 0}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                    {/* Priority Filter */}
-                    <div className="">
-                        <AdminSelect
-                            value={activePriorityFilter}
-                            onChange={setActivePriorityFilter}
-                            options={PRIORITY_OPTIONS}
-                            placeholder="All Priorities"
+            {/* ── Filter Bar: Search & Select Filter Fields (Neat Flow) ── */}
+            <div className="bg-white rounded-2xl p-2.5 sm:p-3 mb-4 shadow-2xs">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                    {/* Left: Search Input */}
+                    <div className="relative flex-1 min-w-[240px] max-w-md">
+                        <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                            type="text"
+                            placeholder="Search by ID, subject, name, or email..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                            className="w-full pl-10 pr-3.5 py-2 bg-slate-50/70 hover:bg-slate-100/60 focus:bg-white border border-gray-200 rounded-xl text-[13px] outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-gray-400"
                         />
                     </div>
 
-                    {/* Search */}
-                    <div className="relative group w-full sm:w-[260px]">
-                        <input
-                            type="text"
-                            placeholder="Search by ID, subject or user..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-4 pr-10 py-2.5 w-full bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all placeholder:text-gray-400"
+                    {/* Right: Select Field Filters & Reset */}
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+                        {/* User / Sender Type Select */}
+                        <AdminSelect
+                            value={activeUserType}
+                            onChange={(val) => {
+                                setActiveUserType(val);
+                                setCurrentPage(1);
+                            }}
+                            options={[
+                                { value: 'All', label: `All Users (${stats.total || 0})` },
+                                { value: 'recruiter', label: `Recruiters (${stats.recruiter?.total || 0})` },
+                                { value: 'candidate', label: `Candidates (${stats.candidate?.total || 0})` },
+                            ]}
+                            placeholder="All Users"
+                            size="sm"
                         />
-                        <Search className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2" />
+
+                        {/* Priority Select */}
+                        <AdminSelect
+                            value={activePriorityFilter}
+                            onChange={(val) => {
+                                setActivePriorityFilter(val);
+                                setCurrentPage(1);
+                            }}
+                            options={PRIORITY_OPTIONS}
+                            placeholder="All Priorities"
+                            size="sm"
+                        />
+
+                        {/* Reset Filter Button */}
+                        {(activeUserType !== 'All' || activePriorityFilter !== 'All' || searchTerm) && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveUserType('All');
+                                    setActivePriorityFilter('All');
+                                    setSearchTerm('');
+                                    setCurrentPage(1);
+                                }}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border-1 border-rose-200/80 transition-all cursor-pointer active:scale-95 shadow-2xs"
+                                title="Reset all filters"
+                            >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>Reset</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
 
             {/* Table Area */}
-            <div className={`bg-white rounded-2xl ${openDropdown !== null ? '' : 'overflow-hidden'}`}>
+            <div className={`bg-white rounded-2xl shadow-2xs border-1 border-gray-100/80 ${openDropdown !== null ? '' : 'overflow-hidden'}`}>
                 <div className={`min-h-[300px] ${openDropdown !== null ? '' : 'overflow-x-auto'}`}>
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-gray-50/70 border-b border-gray-100">
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <tr className="bg-slate-50/70 border-b border-gray-100">
+                                <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                                     Ticket Details
                                 </th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                                     User / Sender
                                 </th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                                     Type
                                 </th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                                     Priority
                                 </th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
                                     Status
                                 </th>
-                                <th className="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider text-center">
+                                <th className="py-3.5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
                                     Actions
                                 </th>
                             </tr>
@@ -634,12 +719,28 @@ export default function SupportTicket() {
                                 ))
                             ) : paginatedTickets.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-20 text-center">
-                                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4 border border-gray-100">
-                                            <Ticket className="w-8 h-8 text-gray-400" />
+                                    <td colSpan={6} className="px-6 py-16 text-center">
+                                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gray-50 mb-3 border border-gray-100 text-gray-400">
+                                            <Ticket className="w-7 h-7" />
                                         </div>
-                                        <h3 className="text-gray-900 font-semibold text-lg">No tickets found</h3>
-                                        <p className="text-gray-500 text-sm mt-1">Try adjusting your type tabs, filters or search criteria.</p>
+                                        <h3 className="text-gray-900 font-semibold text-base mb-1">No support tickets found</h3>
+                                        <p className="text-gray-500 text-[13px] mb-3">Try adjusting your status tab, user filters, or search term.</p>
+                                        {(activeStatusFilter !== 'All' || activeUserType !== 'All' || activePriorityFilter !== 'All' || searchTerm) && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setActiveStatusFilter('All');
+                                                    setActiveUserType('All');
+                                                    setActivePriorityFilter('All');
+                                                    setSearchTerm('');
+                                                    setCurrentPage(1);
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-all cursor-pointer"
+                                            >
+                                                <RotateCcw className="w-3.5 h-3.5" />
+                                                <span>Clear all filters</span>
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ) : (

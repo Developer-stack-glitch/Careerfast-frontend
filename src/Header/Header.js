@@ -15,7 +15,6 @@ import {
   List,
   Typography,
   Progress,
-  Tooltip,
   Popover,
   message,
   Button as AntButton,
@@ -38,22 +37,15 @@ import {
   ProfileOutlined,
   LockOutlined,
   ReadOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  CustomerServiceOutlined,
 } from "@ant-design/icons";
 
-
-import { Tag } from "antd";
 import {
   CrownFilled,
-  StarFilled,
-  EnvironmentOutlined,
 } from "@ant-design/icons";
-import { getUserProfile, searchByKeyword } from "../ApiService/action";
+import { getUserProfile } from "../ApiService/action";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { FaBookOpen, FaCalendarAlt, FaChalkboardTeacher, FaGraduationCap } from "react-icons/fa";
-import { Blocks, Book, BookAlert, LayoutDashboard, Briefcase, GraduationCap as LucideGraduationCap, Users, Menu, ShieldCheck, Building2, LogIn, CheckCircle2 } from "lucide-react";
+import { Blocks, BookAlert, LayoutDashboard, Briefcase, GraduationCap as LucideGraduationCap, Users, Menu, ShieldCheck, Building2, LogIn, CheckCircle2 } from "lucide-react";
 
 const { Title, Text } = Typography;
 
@@ -95,14 +87,6 @@ export default function Header({ noSticky = false }) {
       setHeaderProgress(parseInt(saved));
     }
   }, []);
-
-  const generateSlug = (text) => {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
-  };
-
 
   useEffect(() => {
     const syncAuth = () => {
@@ -783,7 +767,7 @@ export default function Header({ noSticky = false }) {
                   ? [
                     { title: "Dashboard", path: "/admin", icon: <LayoutDashboard size={18} /> },
                     { title: "Manage Listings", path: "/admin/job-post", icon: <AppstoreOutlined /> },
-                    { title: "Employers", path: "/admin/employers", icon: <UserOutlined /> },
+                    { title: "Recruiters & Companies", path: "/admin/recruiters", icon: <UserOutlined /> },
                     { title: "Account Settings", path: "/admin/general", icon: <SettingOutlined /> },
                   ]
                   : roleId === 2

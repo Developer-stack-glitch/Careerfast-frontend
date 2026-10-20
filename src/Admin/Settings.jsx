@@ -95,7 +95,7 @@ export default function Settings() {
 
     if (isLoading) {
         return (
-            <div className="max-w-[1200px] w-full animate-in fade-in duration-300 p-8 bg-gray-50/30 min-h-full">
+            <div className="w-full animate-in fade-in duration-300 p-4 bg-gray-50/30 min-h-full">
                 {/* Header Skeleton */}
                 <div className="mb-10 flex items-center justify-between">
                     <div className="flex gap-4 items-start">
@@ -138,7 +138,7 @@ export default function Settings() {
     }
 
     return (
-        <div className="max-w-[1200px] w-full animate-in fade-in duration-300 p-8 bg-gray-50/30 min-h-full">
+        <div className="w-full animate-in fade-in duration-300 p-4 bg-gray-50/30 min-h-full">
             {/* Header Section */}
             <div className="mb-10 flex items-center justify-between">
                 <div className="flex gap-4 items-start">
