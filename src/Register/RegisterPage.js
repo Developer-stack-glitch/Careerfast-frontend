@@ -35,11 +35,16 @@ import {
   phoneValidation,
   confirmPasswordValidation,
 } from "../Common/Validation";
+import { useDispatch } from "react-redux";
+import { GoogleLogin } from "@react-oauth/google";
+import { storeLoginStatus } from "../Redux/Slice";
 import { getImageUrl } from "../utils/getImageUrl";
-import { register } from "../ApiService/action";
+import { register, googleLogin, isProfileUpdated } from "../ApiService/action";
+import { requestForToken } from "../firebase/fireBase";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   // Form States
   const [formData, setFormData] = useState({
@@ -133,6 +138,83 @@ const RegisterPage = () => {
         error.message ||
         "Registration failed. Please try again.";
       CommonToaster(errorMsg, "error");
+    }
+  };
+
+  const handleGoogleSuccess = async (res) => {
+    try {
+      setIsLoading(true);
+      let fcm_token = null;
+      try {
+        fcm_token = await requestForToken();
+        if (fcm_token) localStorage.setItem("fcm_token", fcm_token);
+      } catch (err) {}
+
+      const candidateRoleId = 2; // Candidate
+
+      const response = await googleLogin({
+        token: res.credential,
+        role_id: candidateRoleId,
+        fcm_token:
+          fcm_token ||
+          (typeof window !== "undefined"
+            ? localStorage.getItem("fcm_token")
+            : null),
+      });
+
+      const token = response?.data?.token;
+      const userDetails = response?.data?.user;
+
+      if (!token || !userDetails) {
+        throw new Error(
+          response?.data?.message || "Invalid response from server"
+        );
+      }
+
+      localStorage.setItem("AccessToken", token);
+      localStorage.setItem("loginDetails", JSON.stringify(userDetails));
+
+      // Set cookies for cross-app synchronization
+      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`; // 30 days
+      document.cookie = `loginDetails=${encodeURIComponent(
+        JSON.stringify(userDetails)
+      )}; path=/; max-age=2592000; SameSite=Lax`;
+
+      dispatch(storeLoginStatus(true));
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(
+        new CustomEvent("authChange", { detail: userDetails })
+      );
+
+      CommonToaster("Registered with Google successfully! 🎉", "success");
+
+      if (userDetails?.role_id === 1) {
+        navigate("/admin");
+      } else {
+        try {
+          const profileCheck = await isProfileUpdated({
+            email: userDetails.email,
+          });
+          navigate(
+            profileCheck?.data?.data === true ? "/" : "/profiledetails"
+          );
+        } catch (checkErr) {
+          console.warn(
+            "Could not check profile status, default redirect:",
+            checkErr
+          );
+          navigate("/");
+        }
+      }
+    } catch (error) {
+      console.error("Google Registration Error", error);
+      const msg =
+        error?.response?.data?.details ||
+        error?.response?.data?.message ||
+        "Google sign-in failed. Please try again.";
+      CommonToaster(msg, "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -423,6 +505,33 @@ const RegisterPage = () => {
                   </>
                 )}
               </button>
+
+              {/* Social Divider */}
+              <div className="cf-divider">
+                <span className="cf-divider-line"></span>
+                <span className="cf-divider-text">or continue with</span>
+                <span className="cf-divider-line"></span>
+              </div>
+
+              {/* Continue with Google */}
+              <div className="cf-social-row">
+                <div className="cf-google-wrapper">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() =>
+                      CommonToaster(
+                        "Google sign-in failed. Please try again.",
+                        "error"
+                      )
+                    }
+                    theme="outline"
+                    shape="rectangular"
+                    text="continue_with"
+                    size="large"
+                    width="100%"
+                  />
+                </div>
+              </div>
             </form>
           </div>
 

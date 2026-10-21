@@ -738,7 +738,9 @@ export default function HomePage() {
             .filter(Boolean)
             .join(", ");
 
-        if (!skillTrimmed && locParts.length === 0 && experienceToUse === null) {
+        const hasExperience = experienceToUse !== null && experienceToUse !== undefined && experienceToUse !== "";
+
+        if (!skillTrimmed && locParts.length === 0 && !hasExperience) {
             message.info("Please enter some search criteria");
             return;
         }
@@ -748,7 +750,13 @@ export default function HomePage() {
         locParts.forEach(loc => {
             queryParams.push(`l=${encodeURIComponent(loc)}`);
         });
-        if (experienceToUse !== null) queryParams.push(`experience=${experienceToUse}`);
+        if (hasExperience) {
+            if (String(experienceToUse).toLowerCase() === "internship") {
+                queryParams.push(`job_nature=Internship`);
+            } else {
+                queryParams.push(`experience=${experienceToUse}`);
+            }
+        }
 
         const searchUrl = `/job-filter?${queryParams.join("&")}`;
         navigate(searchUrl);
@@ -1113,6 +1121,7 @@ export default function HomePage() {
                                 onChange={(val) => setExperience(val)}
                                 allowClear
                             >
+                                <Option value="Internship">Internship</Option>
                                 <Option value={0}>Fresher (less than 1 year)</Option>
                                 <Option value={1}>1 Year</Option>
                                 <Option value={2}>2 Years</Option>

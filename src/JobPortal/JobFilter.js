@@ -291,10 +291,17 @@ export default function JobFilter() {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedSort, setSelectedSort] = useState("recommended");
   const [selectedUserType, setSelectedUserType] = useState("");
-  const [jobNatureSelected, setJobNatureSelected] = useState(
-    isClient && window.location.pathname.includes("/internship") ? "Internship" :
-      isClient && window.location.pathname.includes("/scholarship") ? "Scholarship" : "Job"
-  );
+  const [jobNatureSelected, setJobNatureSelected] = useState(() => {
+    if (!isClient) return "Job";
+    const qNature = new URLSearchParams(window.location.search).get('job_nature');
+    if (qNature) {
+      const match = ["Job", "Internship", "Scholarship"].find(j => j.toLowerCase() === qNature.toLowerCase());
+      if (match) return match;
+    }
+    if (window.location.pathname.includes("/internship")) return "Internship";
+    if (window.location.pathname.includes("/scholarship")) return "Scholarship";
+    return "Job";
+  });
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const [tempSelectedLocations, setTempSelectedLocations] = useState([]);
   const [categoryModalVisible, setCategoryModalVisible] = useState(false);
@@ -407,20 +414,31 @@ export default function JobFilter() {
     const qCategories = queryParams.getAll('c');
     const qCompanies = queryParams.getAll('co');
     const qDiversity = [...queryParams.getAll('g'), ...queryParams.getAll('gender'), ...queryParams.getAll('diversity')];
+    const qTypes = [...queryParams.getAll('t'), ...queryParams.getAll('type'), ...queryParams.getAll('workplace_type')];
     const qExperience = queryParams.get('experience');
+    const qUserType = queryParams.get('userType');
     const qSearch = queryParams.get('q');
     const qNature = queryParams.get('job_nature');
 
-    if (qNature && jobNature.includes(qNature)) nature = qNature;
+    if (qNature) {
+      const matchedNature = jobNature.find(j => j.toLowerCase() === qNature.toLowerCase());
+      if (matchedNature) nature = matchedNature;
+    }
     if (qLocations.length > 0) locations = qLocations;
     if (qCategories.length > 0) categories = qCategories;
+    if (qTypes.length > 0) types = qTypes;
     if (qDiversity.length > 0) diversity = qDiversity;
+    if (qUserType) userType = qUserType;
     if (qSearch && qSearch !== searchTerm) setSearchTerm(qSearch);
 
-    if (qExperience !== null) {
-      const expVal = parseInt(qExperience);
-      if (expVal === 0) userType = "Fresher";
-      else if (expVal > 0) userType = "Experienced";
+    if (qExperience !== null && qExperience !== undefined) {
+      if (typeof qExperience === 'string' && qExperience.toLowerCase() === 'internship') {
+        nature = "Internship";
+      } else {
+        const expVal = parseInt(qExperience);
+        if (expVal === 0) userType = "Fresher";
+        else if (expVal > 0) userType = "Experienced";
+      }
     }
 
     let companiesParsed = [];
@@ -552,7 +570,31 @@ export default function JobFilter() {
     const userType = overrides.hasOwnProperty('userType') ? overrides.userType : selectedUserType;
     const companies = overrides.hasOwnProperty('companies') ? overrides.companies : selectedCompanies;
 
-    const baseMap = { "Job": "jobs", "Internship": "internships", "Scholarship": "scholarship" };
+    const isJobFilterRoute = location.pathname === "/job-filter" || location.pathname === "/internship-filter";
+
+    if (isJobFilterRoute) {
+      const queryParams = new URLSearchParams();
+      if (nature) queryParams.set('job_nature', nature);
+      if (locations.length > 0) locations.forEach(l => queryParams.append('l', l));
+      if (categories.length > 0) categories.forEach(c => queryParams.append('c', c));
+      if (types.length > 0) types.forEach(t => queryParams.append('t', t));
+      if (diversity.length > 0) diversity.forEach(d => queryParams.append('g', d));
+      if (companies.length > 0) companies.forEach(co => queryParams.append('co', co));
+      if (userType) queryParams.set('userType', userType);
+      if (searchTerm) queryParams.set('q', searchTerm);
+
+      const qStr = queryParams.toString() ? `?${queryParams.toString()}` : "";
+      const targetUrl = `${location.pathname}${qStr}`;
+
+      if (location.pathname + location.search !== targetUrl) {
+        skipUrlSyncRef.current = true;
+        lastSlugRef.current = targetUrl;
+        navigate(targetUrl, { replace: true });
+      }
+      return;
+    }
+
+    const baseMap = { "Job": "jobs", "Internship": "internship", "Scholarship": "scholarship" };
     const base = baseMap[nature] || "jobs";
 
     let slug = "";
@@ -601,7 +643,8 @@ export default function JobFilter() {
     }
 
     const qStr = queryParams.toString() ? `?${queryParams.toString()}` : "";
-    const targetUrl = slug ? `/${base}/${slug}${qStr}` : `/${base}${qStr}`;
+    const targetBase = slug && nature === "Internship" ? "internships" : base;
+    const targetUrl = slug ? `/${targetBase}/${slug}${qStr}` : `/${targetBase}${qStr}`;
 
     if (location.pathname + location.search !== targetUrl) {
       skipUrlSyncRef.current = true;
@@ -999,9 +1042,13 @@ export default function JobFilter() {
               setSelectedUserType("");
               setSelectedCompanies([]);
               lastSlugRef.current = ""; // Reset slug tracking
-              const baseMap = { "Job": "jobs", "Internship": "internship", "Scholarship": "scholarship" };
-              const base = baseMap[jobNatureSelected] || "jobs";
-              navigate(`/${base}`, { replace: true });
+              if (location.pathname === "/job-filter" || location.pathname === "/internship-filter") {
+                navigate(`${location.pathname}?job_nature=${jobNatureSelected}`, { replace: true });
+              } else {
+                const baseMap = { "Job": "jobs", "Internship": "internship", "Scholarship": "scholarship" };
+                const base = baseMap[jobNatureSelected] || "jobs";
+                navigate(`/${base}`, { replace: true });
+              }
             }}
           >
             Reset All
@@ -1671,9 +1718,13 @@ export default function JobFilter() {
                             setSelectedStatus("");
                             setSelectedSort(null);
                             setSelectedUserType("");
-                            const baseMap = { "Job": "jobs", "Internship": "internship", "Scholarship": "scholarship" };
-                            const base = baseMap[jobNatureSelected] || "jobs";
-                            navigate(`/${base}`, { replace: true });
+                            if (location.pathname === "/job-filter" || location.pathname === "/internship-filter") {
+                              navigate(`${location.pathname}?job_nature=${jobNatureSelected}`, { replace: true });
+                            } else {
+                              const baseMap = { "Job": "jobs", "Internship": "internship", "Scholarship": "scholarship" };
+                              const base = baseMap[jobNatureSelected] || "jobs";
+                              navigate(`/${base}`, { replace: true });
+                            }
                           }}
                         >
                           Clear All Filters
