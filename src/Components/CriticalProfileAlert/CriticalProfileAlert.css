@@ -1,0 +1,356 @@
+/* ==========================================================================
+   CRITICAL PROFILE ALERT (FOUNDIT-STYLE URGENT NOTICE)
+   ========================================================================== */
+
+.cpa-root {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin-bottom: 20px;
+  animation: cpaFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cpaFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card inner shell */
+.cpa-card-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 15px;
+  border-radius: 12px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+/* --------------------------------------------------------------------------
+   VARIANT 1: JOB DETAILS (Foundit In-Card Style)
+   -------------------------------------------------------------------------- */
+.cpa-variant-job-details .cpa-card-inner {
+  background: #fff0f0;
+  border: 1px solid #f24646;
+  box-shadow: 0 2px 10px rgba(224, 36, 36, 0.04);
+}
+
+.cpa-variant-job-details .cpa-card-inner:hover {
+  border-color: #FEB2B2;
+  box-shadow: 0 4px 14px rgba(224, 36, 36, 0.07);
+}
+
+/* --------------------------------------------------------------------------
+   VARIANT 2: JOB FILTER (Search Boost Top Strip)
+   -------------------------------------------------------------------------- */
+.cpa-variant-job-filter {
+  margin-bottom: 18px;
+}
+
+.cpa-variant-job-filter .cpa-card-inner {
+  background: linear-gradient(90deg, #FFF6F4 0%, #FFFFFF 100%);
+  border: 1px solid #FED7D7;
+  border-left: 5px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* --------------------------------------------------------------------------
+   VARIANT 3: APPLIED JOBS (Application Tracker Urgency Card)
+   -------------------------------------------------------------------------- */
+.cpa-variant-applied-jobs {
+  margin-top: 14px;
+  margin-bottom: 22px;
+}
+
+.cpa-variant-applied-jobs .cpa-card-inner {
+  background: linear-gradient(135deg, #FEF2F2 0%, #FFF7F5 100%);
+  border: 1px solid #FECACA;
+  border-left: 5px solid #DC2626;
+  box-shadow: 0 3px 12px rgba(220, 38, 38, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   VARIANT 4: WATCHLIST (Pre-Apply Readiness)
+   -------------------------------------------------------------------------- */
+.cpa-variant-watchlist {
+  margin-bottom: 20px;
+}
+
+.cpa-variant-watchlist .cpa-card-inner {
+  background: #FFF8F6;
+  border: 1px solid #FED7D7;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+/* --------------------------------------------------------------------------
+   LEFT SECTION (Avatar + Text)
+   -------------------------------------------------------------------------- */
+.cpa-left-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Avatar container with warning badge */
+.cpa-avatar-container {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+}
+
+.cpa-avatar-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #EDE9FE;
+  color: #7E22CE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(126, 34, 206, 0.12);
+  text-transform: uppercase;
+}
+
+.cpa-warning-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.cpa-warning-icon {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+/* Text block */
+.cpa-text-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.cpa-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1E293B;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.cpa-text-danger {
+  color: #E02424;
+  font-weight: 700;
+}
+
+.cpa-subtitle {
+  font-size: 13px;
+  font-weight: 400;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.cpa-meta-row {
+  margin-top: 2px;
+}
+
+.cpa-meta-text {
+  font-size: 12px;
+  color: #64748B;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.cpa-meta-text strong {
+  color: #334155;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   RIGHT SECTION (CTA, Progress, Close)
+   -------------------------------------------------------------------------- */
+.cpa-right-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Progress bar (Job filter / Applied Jobs) */
+.cpa-progress-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+}
+
+.cpa-progress-track {
+  width: 70px;
+  height: 6px;
+  background: #E2E8F0;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cpa-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #F59E0B, #10B981);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.cpa-progress-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+/* Complete Profile CTA button */
+.cpa-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 9999px;
+  background: #FFFFFF;
+  color: #1E293B;
+  border: 1px solid #CBD5E1;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cpa-cta-btn:hover {
+  background: #4F46E5;
+  color: #FFFFFF;
+  border-color: #4F46E5;
+  transform: translateY(-1px);
+}
+
+.cpa-cta-btn:active {
+  transform: translateY(0);
+}
+
+.cpa-btn-arrow {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.cpa-cta-btn:hover .cpa-btn-arrow {
+  transform: translateX(2px);
+}
+
+/* Dismiss (✕) Button */
+.cpa-dismiss-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.cpa-dismiss-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+}
+
+/* --------------------------------------------------------------------------
+   RESPONSIVE LAYOUTS
+   -------------------------------------------------------------------------- */
+@media (max-width: 840px) {
+  .cpa-card-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .cpa-right-section {
+    width: 100%;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px dashed #FED7D7;
+  }
+
+  .cpa-cta-btn {
+    flex: 1;
+    max-width: 220px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .cpa-avatar-container {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cpa-avatar-circle {
+    width: 40px;
+    height: 40px;
+    font-size: 17px;
+  }
+
+  .cpa-warning-badge {
+    width: 16px;
+    height: 16px;
+    bottom: -2px;
+    right: -2px;
+  }
+
+  .cpa-warning-icon {
+    width: 13px;
+    height: 13px;
+  }
+
+  .cpa-title {
+    font-size: 13.5px;
+  }
+
+  .cpa-subtitle {
+    font-size: 12px;
+  }
+
+  .cpa-cta-btn {
+    padding: 7px 14px;
+    font-size: 12px;
+  }
+}

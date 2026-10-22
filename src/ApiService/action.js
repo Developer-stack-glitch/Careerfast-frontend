@@ -212,6 +212,24 @@ export const login = async (payload) => {
   }
 };
 
+export const sendLoginOTP = async (payload) => {
+  try {
+    const response = await api.post("/api/sendLoginOTP", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const verifyLoginOTP = async (payload) => {
+  try {
+    const response = await api.post("/api/verifyLoginOTP", payload);
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // getUsers
 
 export const getUsers = async (payload) => {

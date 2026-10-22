@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
 import SEO from "../Components/SEO/SEO";
 import { checkIsRegistered, getAllEvents, getUserProfile, registerForEvent } from "../ApiService/action";
 import {
@@ -147,7 +146,7 @@ const FilterFields = ({
             minWidth: isMobile ? "100%" : 200,
             borderRadius: 30,
             background: "#f9fafc",
-           // border: "1px solid #d9d9d9",
+            // border: "1px solid #d9d9d9",
           }}
         >
           <Option value="daysAsc">Days Left (Low → High)</Option>
@@ -166,7 +165,7 @@ const FilterFields = ({
           style={{
             borderRadius: 30,
             background: "#f9fafc",
-           //border: "1px solid #d9d9d9",
+            //border: "1px solid #d9d9d9",
             width: isMobile ? "100%" : 140,
           }}
         />
@@ -475,7 +474,7 @@ export default function EventFilter() {
           }] : [])
         ]}
       />
-      <Header />
+      <Header showSearch={true} />
 
       {loading ? (
         <>
@@ -896,7 +895,7 @@ export default function EventFilter() {
                         </div>
 
                         <div style={{ flex: 1 }}>
-                          <div className="event-details-card-text" 
+                          <div className="event-details-card-text"
                             style={{
                               display: "flex",
                               alignItems: "center",

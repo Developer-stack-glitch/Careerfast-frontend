@@ -640,7 +640,7 @@ export function AdminUserManagementSkeleton() {
  */
 export function JobSeekersDashboardSkeleton() {
     return (
-        <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300 pb-8 space-y-6">
+        <div className="w-full animate-in fade-in duration-300 pb-8 space-y-6">
             {/* Header Section Skeleton */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="space-y-1.5">

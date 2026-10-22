@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "@/routing-shim";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
@@ -117,6 +117,164 @@ const Counter = ({ end, duration = 2, decimals = 0, suffix = "" }) => {
 };
 
 
+const cleanSingleLocationName = (name) => {
+    if (!name || typeof name !== 'string') return '';
+    return name.split('/')[0].split('(')[0].split(',')[0].trim();
+};
+
+const ALL_STANDARD_LOCATIONS = [
+    "Bangalore", "Chennai", "Hyderabad", "Mumbai", "Delhi", "Noida", "Gurgaon", "Pune", "Kolkata", "Ahmedabad",
+    "Coimbatore", "Chandigarh", "Chhatrapati Sambhajinagar", "Cuttack", "Cuddalore", "Chiplun", "Chandrapur",
+    "Calicut", "Kochi", "Jaipur", "Indore", "Visakhapatnam", "Bhubaneswar", "Trivandrum", "Vadodara",
+    "Nagpur", "Mysore", "Surat", "Bhopal", "Lucknow", "Patna", "Agra", "Ajmer", "Aligarh", "Allahabad",
+    "Amravati", "Amritsar", "Asansol", "Bareilly", "Belgaum", "Bhavnagar", "Bikaner", "Bokaro", "Dehradun",
+    "Dhanbad", "Durgapur", "Ernakulam", "Erode", "Faridabad", "Ghaziabad", "Gwalior", "Guwahati", "Hubli",
+    "Jabalpur", "Jalandhar", "Jammu", "Jamshedpur", "Jodhpur", "Kanpur", "Kolhapur", "Kota", "Madurai",
+    "Mangalore", "Meerut", "Moradabad", "Nashik", "Panaji", "Pondicherry", "Raipur", "Rajkot", "Ranchi",
+    "Rourkela", "Salem", "Shimla", "Siliguri", "Solapur", "Srinagar", "Thane", "Tiruchirappalli", "Tirunelveli",
+    "Tirupati", "Tirupur", "Udaipur", "Ujjain", "Varanasi", "Vijayawada", "Warangal", "Navi Mumbai", "Greater Noida",
+    "Guntur", "Nellore", "Kakinada", "Rajahmundry", "Kurnool", "Anantapur", "Kadapa", "Tiruvallur", "Vellore",
+    "Thanjavur", "Dindigul", "Nagercoil", "Kanchipuram", "Hosur", "Kollam", "Thrissur", "Kannur", "Alappuzha",
+    "Kottayam", "Palakkad", "Kasaragod", "Malappuram", "Ludhiana", "Mohali", "Panchkula", "Haridwar", "Roorkee",
+    "Gorakhpur", "Jhansi", "Mathura", "Alwar", "Bhilwara", "Sikar", "Bilaspur", "Korba", "Durg", "Bhilai",
+    "Muzaffarpur", "Bhagalpur", "Gaya", "Darbhanga", "Silchar", "Dibrugarh", "Jorhat", "Shillong",
+    "Gangtok", "Agartala", "Aizawl", "Imphal", "Remote", "Work from Home"
+];
+
+const ALL_POPULAR_SKILLS_AND_ROLES = [
+    // Engineering & Tech Roles
+    "Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer",
+    "Java Developer", "Python Developer", "React Developer", "React Native Developer",
+    "Node.js Developer", "Angular Developer", "JavaScript Developer", "TypeScript Developer",
+    "PHP Developer", "Laravel Developer", ".NET Developer", "C# Developer", "C++ Developer",
+    "Android Developer", "iOS Developer", "Flutter Developer", "Mobile App Developer",
+    "DevOps Engineer", "Cloud Engineer", "AWS Solutions Architect", "Azure Cloud Architect",
+    "System Administrator", "Linux Administrator", "Network Engineer", "Cyber Security Analyst",
+    "Data Analyst", "Data Scientist", "Data Engineer", "Business Analyst", "Power BI Developer",
+    "Tableau Developer", "Machine Learning Engineer", "AI Specialist", "Deep Learning Engineer",
+    "Database Administrator (DBA)", "SQL Developer", "QA Engineer", "Automation Test Engineer",
+    "Manual Tester", "Software Tester", "SDET", "Selenium Tester", "Technical Support Engineer",
+    "IT Support Specialist", "Helpdesk Executive", "Desktop Support Engineer", "Solutions Architect",
+    "Technical Lead", "Engineering Manager",
+
+    // Creative & Design
+    "UI/UX Designer", "Product Designer", "Graphic Designer", "Web Designer", "Visual Designer",
+    "Figma Designer", "Video Editor", "Motion Graphic Designer", "3D Animator", "Content Creator",
+
+    // Product & Management
+    "Product Manager", "Associate Product Manager", "Project Manager", "Scrum Master",
+    "Agile Coach", "Operations Manager", "Operations Executive",
+
+    // Marketing & Growth
+    "Digital Marketing Executive", "Digital Marketing Manager", "SEO Specialist", "SEM Specialist",
+    "Social Media Manager", "Content Writer", "Copywriter", "Technical Writer", "Email Marketer",
+    "Brand Manager", "Growth Specialist",
+
+    // Sales & BPO
+    "Business Development Executive", "Business Development Manager", "Sales Executive",
+    "Sales Manager", "Inside Sales Specialist", "B2B Sales", "Telecaller", "Telesales Executive",
+    "Customer Support Executive", "Customer Success Manager", "BPO Executive", "Call Center Agent",
+
+    // HR & Administration
+    "HR Executive", "HR Manager", "HR Generalist", "HR Recruiter", "Talent Acquisition Specialist",
+    "Technical Recruiter", "Office Administrator", "Administrative Assistant", "Executive Assistant",
+    "Receptionist", "Data Entry Operator",
+
+    // Finance & Accounts
+    "Accountant", "Senior Accountant", "Chartered Accountant (CA)", "Accounts Executive",
+    "Financial Analyst", "Finance Manager", "Tax Consultant", "GST Specialist", "Billing Executive",
+
+    // Core Engineering & Others
+    "Mechanical Engineer", "Civil Engineer", "Electrical Engineer", "Electronics Engineer",
+    "Site Engineer", "Quality Control Engineer (QC)", "Pharmacist", "Medical Officer", "Intern"
+];
+
+const CITY_ALIASES = {
+    "bengaluru": "Bangalore",
+    "bang": "Bangalore",
+    "blr": "Bangalore",
+    "bombay": "Mumbai",
+    "mum": "Mumbai",
+    "madras": "Chennai",
+    "chen": "Chennai",
+    "maa": "Chennai",
+    "calcutta": "Kolkata",
+    "kol": "Kolkata",
+    "ccu": "Kolkata",
+    "secunderabad": "Hyderabad",
+    "hyd": "Hyderabad",
+    "gurugram": "Gurgaon",
+    "gur": "Gurgaon",
+    "ncr": "Delhi",
+    "del": "Delhi",
+    "cochin": "Kochi",
+    "ernakulam": "Kochi",
+    "kozhikode": "Calicut",
+    "trichy": "Tiruchirappalli",
+    "puducherry": "Pondicherry",
+    "pondy": "Pondicherry",
+    "goa": "Panaji",
+    "baroda": "Vadodara",
+    "vizag": "Visakhapatnam",
+    "trivandrum": "Trivandrum",
+    "thiruvananthapuram": "Trivandrum",
+    "mysuru": "Mysore",
+    "mangaluru": "Mangalore",
+    "hubballi": "Hubli",
+    "belagavi": "Belgaum",
+    "prayagraj": "Allahabad",
+    "allahabad": "Allahabad",
+    "aurangabad": "Chhatrapati Sambhajinagar",
+    "wfh": "Remote",
+    "home": "Remote"
+};
+
+const getInstantLocationMatches = (query) => {
+    if (!query || !query.trim()) return [];
+    const cleanQ = query.trim().toLowerCase();
+    const aliasCity = CITY_ALIASES[cleanQ];
+
+    const startsWith = [];
+    const contains = [];
+
+    if (aliasCity) {
+        startsWith.push(aliasCity);
+    }
+
+    for (let i = 0; i < ALL_STANDARD_LOCATIONS.length; i++) {
+        const city = ALL_STANDARD_LOCATIONS[i];
+        if (aliasCity && city.toLowerCase() === aliasCity.toLowerCase()) continue;
+        const lower = city.toLowerCase();
+        if (lower.startsWith(cleanQ)) {
+            startsWith.push(city);
+        } else if (lower.includes(cleanQ)) {
+            contains.push(city);
+        }
+    }
+
+    return [...startsWith, ...contains].slice(0, 10).map(c => ({ label: c }));
+};
+
+const getInstantSkillsMatches = (query) => {
+    if (!query || !query.trim()) return [];
+    const cleanQ = query.trim().toLowerCase();
+
+    const startsWith = [];
+    const contains = [];
+
+    for (let i = 0; i < ALL_POPULAR_SKILLS_AND_ROLES.length; i++) {
+        const item = ALL_POPULAR_SKILLS_AND_ROLES[i];
+        const lower = item.toLowerCase();
+        if (lower.startsWith(cleanQ)) {
+            startsWith.push(item);
+        } else if (lower.includes(cleanQ)) {
+            contains.push(item);
+        }
+    }
+
+    return [...startsWith, ...contains].slice(0, 8).map(s => ({ label: s }));
+};
+
 export default function HomePage() {
     const navigate = useNavigate();
     const [skills, setSkills] = useState("");
@@ -173,6 +331,8 @@ export default function HomePage() {
     const locationInputRef = useRef(null);
     const skillsDropdownRef = useRef(null);
     const locationDropdownRef = useRef(null);
+    const latestSkillsQueryRef = useRef("");
+    const latestLocationQueryRef = useRef("");
 
     // Candidate Profile Completion & HR Attention Indicator
     const [candidateProfileStats, setCandidateProfileStats] = useState(() => {
@@ -222,14 +382,25 @@ export default function HomePage() {
                 const profile = res?.data?.data || {};
 
                 const checks = [
-                    { key: "resume", label: "Resume", done: Boolean(profile?.resume) },
+                    { key: "resume", label: "Resume", done: Boolean(profile?.resume && profile.resume !== "null" && profile.resume !== "#") },
                     { key: "skills", label: "Key Skills", done: Boolean(profile?.skills && profile.skills.length > 0) },
-                    { key: "experience", label: "Experience", done: Boolean(profile?.experience && profile.experience.length > 0) },
+                    {
+                        key: "experience",
+                        label: "Experience",
+                        done: Boolean(
+                            (profile?.professional && profile.professional.length > 0) ||
+                            (profile?.experience && profile.experience.length > 0) ||
+                            (profile?.companies && profile.companies.length > 0) ||
+                            profile?.user_type === "Fresher" ||
+                            profile?.experince_type === "Fresher" ||
+                            (profile?.total_years && String(profile.total_years) !== "0")
+                        )
+                    },
                     { key: "education", label: "Education", done: Boolean(profile?.education && profile.education.length > 0) },
                     { key: "about", label: "Summary", done: Boolean(profile?.about && profile.about.trim()) },
                     { key: "projects", label: "Projects", done: Boolean(profile?.projects && profile.projects.length > 0) },
-                    { key: "certifications", label: "Certifications", done: Boolean(profile?.certifications && profile.certifications.length > 0) },
-                    { key: "basic", label: "Basic Info", done: Boolean((profile?.first_name || userObj.first_name) && profile?.email) }
+                    { key: "certifications", label: "Certifications", done: Boolean((profile?.certifications && profile.certifications.length > 0) || profile?.profile_image) },
+                    { key: "basic", label: "Basic Info", done: Boolean((profile?.first_name || userObj.first_name) && (profile?.email || userObj.email)) }
                 ];
 
                 const completedCount = checks.filter(c => c.done).length;
@@ -297,55 +468,91 @@ export default function HomePage() {
         );
     };
 
-    // Real-time suggestions debounced fetch for Skills / Roles / Companies
+    // Active query terms
+    const activeSkillTerm = getLastQueryTerm(skills);
+    const activeLocTerm = getLastQueryTerm(location);
+
+    // Synchronous 0ms in-memory instant suggestions
+    const instantSkillItems = useMemo(() => getInstantSkillsMatches(activeSkillTerm), [activeSkillTerm]);
+    const instantLocItems = useMemo(() => getInstantLocationMatches(activeLocTerm), [activeLocTerm]);
+
+    // Fast active skills list: prefer fresh API items if matching, otherwise instant items
+    const currentSkillsList = useMemo(() => {
+        if (!activeSkillTerm) return [];
+        const apiList = [
+            ...(skillsSuggestions.roles || []),
+            ...(skillsSuggestions.skills || []),
+            ...(skillsSuggestions.companies || []),
+        ];
+        if (apiList.length > 0 && latestSkillsQueryRef.current === activeSkillTerm.toLowerCase()) {
+            return apiList.slice(0, 8);
+        }
+        return instantSkillItems;
+    }, [activeSkillTerm, skillsSuggestions, instantSkillItems]);
+
+    // Fast active locations list: prefer fresh API items if matching, otherwise instant items
+    const currentLocationList = useMemo(() => {
+        if (!activeLocTerm) return [];
+        if (locationSuggestions.length > 0 && latestLocationQueryRef.current === activeLocTerm.toLowerCase()) {
+            return locationSuggestions.slice(0, 10);
+        }
+        return instantLocItems;
+    }, [activeLocTerm, locationSuggestions, instantLocItems]);
+
+    // Background API enrichment for Skills / Roles / Companies
     useEffect(() => {
-        const activeTerm = getLastQueryTerm(skills);
-        if (!activeTerm || activeTerm.length < 2) {
+        if (!activeSkillTerm) {
             setSkillsSuggestions({});
             return;
         }
 
+        const currentQ = activeSkillTerm.toLowerCase();
+        latestSkillsQueryRef.current = currentQ;
+
         const timer = setTimeout(async () => {
             try {
-                const res = await getSearchSuggestions({ q: activeTerm, type: "all" });
-                if (res?.data?.data) {
+                const res = await getSearchSuggestions({ q: activeSkillTerm, type: "all" });
+                if (latestSkillsQueryRef.current === currentQ && res?.data?.data) {
                     setSkillsSuggestions(res.data.data);
                 }
             } catch (err) {
-                console.error("Failed to fetch suggestions", err);
+                // Keep instant matches
             }
-        }, 120);
+        }, 40);
 
         return () => clearTimeout(timer);
-    }, [skills]);
+    }, [activeSkillTerm]);
 
-    // Real-time suggestions debounced fetch for Locations (Worldwide)
+    // Background API enrichment for Locations
     useEffect(() => {
-        const activeTerm = getLastQueryTerm(location);
-        if (!activeTerm || activeTerm.length < 2) {
-            setLocationSuggestions(defaultLocations);
-            setIsSearchingLocation(false);
+        if (!activeLocTerm) {
+            setLocationSuggestions([]);
             return;
         }
 
-        setIsSearchingLocation(true);
+        const currentQ = activeLocTerm.toLowerCase();
+        latestLocationQueryRef.current = currentQ;
+
         const timer = setTimeout(async () => {
             try {
-                const res = await searchLocationsAPI(activeTerm);
-                if (Array.isArray(res) && res.length > 0) {
-                    setLocationSuggestions(res);
-                } else {
-                    setLocationSuggestions([]);
+                const res = await getSearchSuggestions({ q: activeLocTerm, type: "locations" });
+                if (latestLocationQueryRef.current === currentQ) {
+                    const locs = res?.data?.data?.locations || [];
+                    if (Array.isArray(locs) && locs.length > 0) {
+                        const cleaned = locs
+                            .map(l => cleanSingleLocationName(l.label || l))
+                            .filter(Boolean);
+                        const unique = Array.from(new Set(cleaned));
+                        setLocationSuggestions(unique.map(c => ({ label: c })));
+                    }
                 }
             } catch (err) {
-                console.error("Failed to fetch location suggestions", err);
-            } finally {
-                setIsSearchingLocation(false);
+                // Keep instant matches
             }
-        }, 150);
+        }, 40);
 
         return () => clearTimeout(timer);
-    }, [location, defaultLocations]);
+    }, [activeLocTerm]);
 
     // Close dropdowns on outside click
     useEffect(() => {
@@ -373,26 +580,6 @@ export default function HomePage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Flattened clean list of skills suggestions
-    const flattenedSkillsSuggestions = [
-        ...(skillsSuggestions.roles || []),
-        ...(skillsSuggestions.skills || []),
-        ...(skillsSuggestions.companies || []),
-    ].slice(0, 8);
-
-    const defaultPopularSkills = [
-        { label: "Java Developer" },
-        { label: "React Developer" },
-        { label: "Full Stack Developer" },
-        { label: "Python Developer" },
-        { label: "Frontend Developer" },
-        { label: "Backend Developer" },
-        { label: "Data Analyst" },
-        { label: "UI/UX Designer" }
-    ];
-
-    const currentSkillsList = flattenedSkillsSuggestions.length > 0 ? flattenedSkillsSuggestions : defaultPopularSkills;
-
     const handleSelectSkillsSuggestion = (item) => {
         const label = typeof item === "string" ? item : item.label;
         if (label) {
@@ -404,8 +591,8 @@ export default function HomePage() {
     };
 
     const handleSelectLocationSuggestion = (item) => {
-        const rawVal = item.mainText || item.city || item.label || item;
-        const locName = typeof rawVal === "string" ? rawVal.trim() : String(rawVal);
+        const rawVal = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
+        const locName = cleanSingleLocationName(typeof rawVal === "string" ? rawVal.trim() : String(rawVal));
         if (locName) {
             setLocation(prev => appendSuggestionToInput(prev, locName));
         }
@@ -464,8 +651,8 @@ export default function HomePage() {
             e.preventDefault();
             if (showLocationDropdown && locationActiveIndex >= 0 && locationSuggestions[locationActiveIndex]) {
                 const item = locationSuggestions[locationActiveIndex];
-                const rawVal = item.mainText || item.city || item.label || item;
-                const locName = typeof rawVal === "string" ? rawVal.trim() : String(rawVal);
+                const rawVal = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
+                const locName = cleanSingleLocationName(typeof rawVal === "string" ? rawVal.trim() : String(rawVal));
                 const newLocation = appendSuggestionToInput(location, locName);
                 setLocation(newLocation);
                 setShowLocationDropdown(false);
@@ -971,7 +1158,7 @@ export default function HomePage() {
 
     return (
         <div className="hp-container">
-            <Header />
+            <Header showSearch={false} />
 
             {/* Candidate Profile Completion Alert Banner */}
             {candidateProfileStats.isCandidate && candidateProfileStats.completionPercentage !== null && candidateProfileStats.completionPercentage < 100 && !bannerDismissed && (
@@ -980,17 +1167,17 @@ export default function HomePage() {
                         <div className="hp-profile-alert-left">
                             <div className="hp-profile-alert-badge">
                                 <ThunderboltFilled className="hp-profile-alert-zap" />
-                                <span>GET 3X MORE HR ATTENTION</span>
+                                <span>3X RECRUITER VISIBILITY</span>
                             </div>
                             <div className="hp-profile-alert-text">
                                 <div className="hp-profile-alert-title">
-                                    {candidateProfileStats.userName ? `Hey ${candidateProfileStats.userName}, your` : "Your"} profile is only <strong>{candidateProfileStats.completionPercentage}% complete</strong>! Reach 100% to get prioritized by top HRs.
+                                    {candidateProfileStats.userName ? `Hey ${candidateProfileStats.userName}, your` : "Your"} profile is <strong>{candidateProfileStats.completionPercentage}% complete</strong> — reach 100% to get prioritized!
                                 </div>
                                 <div className="hp-profile-alert-subtitle">
-                                    Profiles at 100% completeness receive up to 3x more recruiter views and direct interview invitations.
+                                    100% complete profiles get 3x more views & direct interview calls.
                                     {candidateProfileStats.missingItems.length > 0 && (
                                         <span className="hp-profile-missing-preview">
-                                            {" "}Missing: {candidateProfileStats.missingItems.slice(0, 3).map(m => m.label).join(", ")}{candidateProfileStats.missingItems.length > 3 ? ` +${candidateProfileStats.missingItems.length - 3} more` : ""}
+                                            {" • "}Missing: {candidateProfileStats.missingItems.slice(0, 3).map(m => m.label).join(", ")}{candidateProfileStats.missingItems.length > 3 ? ` +${candidateProfileStats.missingItems.length - 3} more` : ""}
                                         </span>
                                     )}
                                 </div>
@@ -1061,11 +1248,27 @@ export default function HomePage() {
                                     className="hp-search-input"
                                     value={skills}
                                     onChange={(e) => {
-                                        setSkills(e.target.value);
-                                        setShowSkillsDropdown(true);
+                                        const val = e.target.value;
+                                        setSkills(val);
+                                        const term = getLastQueryTerm(val);
+                                        const hasTerm = Boolean(term && term.trim());
+                                        setShowSkillsDropdown(hasTerm);
                                         setSkillsActiveIndex(-1);
+                                        if (hasTerm) {
+                                            latestSkillsQueryRef.current = term.toLowerCase();
+                                            const instant = getInstantSkillsMatches(term);
+                                            setSkillsSuggestions({ roles: instant });
+                                        } else {
+                                            latestSkillsQueryRef.current = "";
+                                            setSkillsSuggestions({});
+                                        }
                                     }}
-                                    onFocus={() => setShowSkillsDropdown(true)}
+                                    onFocus={() => {
+                                        const term = getLastQueryTerm(skills);
+                                        if (term && term.trim()) {
+                                            setShowSkillsDropdown(true);
+                                        }
+                                    }}
                                     onKeyDown={handleSkillsKeyDown}
                                     autoComplete="off"
                                 />
@@ -1076,6 +1279,7 @@ export default function HomePage() {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setSkills("");
+                                            setShowSkillsDropdown(false);
                                             skillsInputRef.current?.focus();
                                         }}
                                         title="Clear search"
@@ -1086,7 +1290,7 @@ export default function HomePage() {
                             </div>
 
                             {/* Clean Skills Suggestion Dropdown */}
-                            {showSkillsDropdown && currentSkillsList.length > 0 && (
+                            {showSkillsDropdown && Boolean(activeSkillTerm) && currentSkillsList.length > 0 && (
                                 <div className="hp-suggestions-dropdown" ref={skillsDropdownRef}>
                                     {currentSkillsList.map((item, idx) => {
                                         const isHighlighted = skillsActiveIndex === idx;
@@ -1100,7 +1304,7 @@ export default function HomePage() {
                                                 }}
                                             >
                                                 <span className="hp-suggestion-text">
-                                                    {highlightMatch(item.label, getLastQueryTerm(skills))}
+                                                    {highlightMatch(item.label, activeSkillTerm)}
                                                 </span>
                                             </div>
                                         );
@@ -1142,11 +1346,27 @@ export default function HomePage() {
                                     className="hp-search-input"
                                     value={location}
                                     onChange={(e) => {
-                                        setLocation(e.target.value);
-                                        setShowLocationDropdown(true);
+                                        const val = e.target.value;
+                                        setLocation(val);
+                                        const term = getLastQueryTerm(val);
+                                        const hasTerm = Boolean(term && term.trim());
+                                        setShowLocationDropdown(hasTerm);
                                         setLocationActiveIndex(-1);
+                                        if (hasTerm) {
+                                            latestLocationQueryRef.current = term.toLowerCase();
+                                            const instant = getInstantLocationMatches(term);
+                                            setLocationSuggestions(instant);
+                                        } else {
+                                            latestLocationQueryRef.current = "";
+                                            setLocationSuggestions([]);
+                                        }
                                     }}
-                                    onFocus={() => setShowLocationDropdown(true)}
+                                    onFocus={() => {
+                                        const term = getLastQueryTerm(location);
+                                        if (term && term.trim()) {
+                                            setShowLocationDropdown(true);
+                                        }
+                                    }}
                                     onKeyDown={handleLocationKeyDown}
                                     autoComplete="off"
                                 />
@@ -1157,6 +1377,7 @@ export default function HomePage() {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setLocation("");
+                                            setShowLocationDropdown(false);
                                             locationInputRef.current?.focus();
                                         }}
                                         title="Clear location"
@@ -1167,16 +1388,13 @@ export default function HomePage() {
                             </div>
 
                             {/* Clean Location Suggestions Dropdown */}
-                            {showLocationDropdown && (
+                            {showLocationDropdown && Boolean(activeLocTerm) && (
                                 <div className="hp-suggestions-dropdown hp-suggestions-dropdown-location" ref={locationDropdownRef}>
-                                    {isSearchingLocation ? (
-                                        <div className="hp-suggestion-loading">
-                                            <Spin size="small" /> Searching worldwide locations...
-                                        </div>
-                                    ) : locationSuggestions && locationSuggestions.length > 0 ? (
-                                        locationSuggestions.map((item, idx) => {
+                                    {currentLocationList && currentLocationList.length > 0 ? (
+                                        currentLocationList.map((item, idx) => {
                                             const isHighlighted = locationActiveIndex === idx;
-                                            const labelText = item.mainText || item.label;
+                                            const rawLabel = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
+                                            const labelText = cleanSingleLocationName(rawLabel);
                                             return (
                                                 <div
                                                     key={`loc-${idx}`}
@@ -1185,33 +1403,26 @@ export default function HomePage() {
                                                         e.preventDefault();
                                                         handleSelectLocationSuggestion(item);
                                                     }}
+                                                    onMouseEnter={() => setLocationActiveIndex(idx)}
                                                 >
-                                                    <div className="hp-suggestion-text-col">
-                                                        <span className="hp-suggestion-text">
-                                                            {highlightMatch(labelText, getLastQueryTerm(location))}
-                                                        </span>
-                                                        {(item.subText || item.state) && (
-                                                            <span className="hp-suggestion-subtext">
-                                                                {item.subText || item.state}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    <span className="hp-suggestion-text">
+                                                        {highlightMatch(labelText, activeLocTerm)}
+                                                    </span>
                                                 </div>
                                             );
                                         })
                                     ) : (
                                         <div
                                             className="hp-suggestion-empty"
-                                            style={{ cursor: getLastQueryTerm(location) ? "pointer" : "default" }}
+                                            style={{ cursor: activeLocTerm ? "pointer" : "default" }}
                                             onMouseDown={(e) => {
                                                 e.preventDefault();
-                                                const lastQ = getLastQueryTerm(location);
-                                                if (lastQ) {
-                                                    handleSelectLocationSuggestion(lastQ);
+                                                if (activeLocTerm) {
+                                                    handleSelectLocationSuggestion(activeLocTerm);
                                                 }
                                             }}
                                         >
-                                            Press Enter to add "<strong>{getLastQueryTerm(location)}</strong>"
+                                            Press Enter to add "<strong>{activeLocTerm}</strong>"
                                         </div>
                                     )}
                                 </div>
@@ -1424,7 +1635,7 @@ export default function HomePage() {
                                         <div className="hp-card-meta">
                                             <div className="hp-card-meta-item">
                                                 <EnvironmentOutlined style={{ color: "#8292b4" }} />
-                                                <span>{Array.isArray(job.work_location) ? job.work_location[0] : job.work_location}</span>
+                                                <span>{(Array.isArray(job.work_location) ? job.work_location[0] : job.work_location) || "N/A"}</span>
                                             </div>
                                             <div className="hp-card-meta-item">
                                                 <WalletOutlined style={{ color: "#8292b4" }} />
@@ -1547,7 +1758,7 @@ export default function HomePage() {
                                         <div className="hp-card-meta">
                                             <div className="hp-card-meta-item">
                                                 <EnvironmentOutlined style={{ color: "#8292b4" }} />
-                                                <span>{Array.isArray(job.work_location) ? job.work_location[0] : job.work_location}</span>
+                                                <span>{(Array.isArray(job.work_location) ? job.work_location[0] : job.work_location) || "N/A"}</span>
                                             </div>
                                             <div className="hp-card-meta-item">
                                                 <WalletOutlined style={{ color: "#8292b4" }} />

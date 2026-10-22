@@ -15,6 +15,7 @@ import {
 import { CommonToaster } from "../Common/CommonToaster";
 import { getSavedJobs, removeSavedJobs } from "../ApiService/action";
 import { useNavigate } from "@/routing-shim";
+import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
 // import Header from "../Header/Header";
 import { FaRegEye, FaArrowRight, FaBookmark } from "react-icons/fa";
 import { FiMapPin, FiBriefcase, FiBarChart2, FiBookmark } from "react-icons/fi";
@@ -397,6 +398,9 @@ export default function WatchList() {
             </div>
           </div>
         </div>
+
+        {/* Critical Profile Alert for Saved Jobs */}
+        <CriticalProfileAlert variant="watchlist" />
 
         {/* Filters Section */}
         <div className="flex flex-col xl:flex-row gap-4 mb-8">

@@ -50,6 +50,7 @@ import { storeLoginStatus } from "../Redux/Slice";
 import Header from "../Header/Header";
 import SEO from "../Components/SEO/SEO";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
+import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
 import { getJobSlug, getJobDetailsUrl, generateSlug } from "../utils/slug";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
@@ -1469,6 +1470,8 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                       </div>
                     </div>
                   </div>
+
+                  <CriticalProfileAlert variant="job-details" />
 
                   <div className="njd-main-card">
                     <h2 className="njd-section-title">Job description:</h2>

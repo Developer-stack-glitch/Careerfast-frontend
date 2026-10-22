@@ -144,9 +144,9 @@ export default function AdminDateFilter({
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all outline-none select-none h-[42px] cursor-pointer ${isFiltered
-                        ? 'bg-blue-50/80 border-blue-200 text-blue-700 hover:bg-blue-100/70 hover:border-blue-300'
-                        : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-white hover:border-blue-500'
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border-1 text-sm font-medium transition-all outline-none select-none h-[42px] cursor-pointer ${isFiltered
+                    ? 'bg-blue-50/80 border-blue-200 text-blue-700 hover:bg-blue-100/70 hover:border-blue-300'
+                    : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-white hover:border-blue-500'
                     }`}
             >
                 <Calendar className={`w-4 h-4 shrink-0 ${isFiltered ? 'text-blue-600' : 'text-gray-400'}`} />
@@ -180,8 +180,8 @@ export default function AdminDateFilter({
                                     type="button"
                                     onClick={() => handleSelectPreset(preset)}
                                     className={`w-full flex items-center justify-between px-3.5 py-2 text-[13px] text-left transition-colors ${isSelected
-                                            ? 'bg-blue-50/80 text-blue-700 font-semibold'
-                                            : 'text-gray-700 hover:bg-gray-50'
+                                        ? 'bg-blue-50/80 text-blue-700 font-semibold'
+                                        : 'text-gray-700 hover:bg-gray-50'
                                         }`}
                                 >
                                     <span>{preset}</span>

@@ -1,966 +1,912 @@
 /* ==========================================================================
    CareerFast Candidate Login Page Styles
-   Professional, Neat, Modern, State-of-the-Art Aesthetic
+   Clean, modern, crisp layout matching Candidate Registration pattern
    ========================================================================== */
 
 :root {
-  --cf-indigo-600: #4f46e5;
-  --cf-indigo-500: #6366f1;
-  --cf-indigo-700: #4338ca;
-  --cf-violet-600: #7c3aed;
-  --cf-emerald: #10b981;
-  --cf-slate-900: #0f172a;
-  --cf-slate-800: #1e293b;
-  --cf-slate-700: #334155;
-  --cf-slate-600: #475569;
-  --cf-slate-500: #64748b;
-  --cf-slate-400: #94a3b8;
-  --cf-slate-200: #e2e8f0;
-  --cf-slate-100: #f1f5f9;
-  --cf-slate-50: #f8fafc;
+  --cf-login-primary: #4f46e5;
+  --cf-login-primary-hover: #4338ca;
+  --cf-login-primary-light: #f5f3ff;
+  --cf-login-emerald: #10b981;
+  --cf-login-slate-900: #0f172a;
+  --cf-login-slate-800: #1e293b;
+  --cf-login-slate-700: #334155;
+  --cf-login-slate-600: #475569;
+  --cf-login-slate-500: #64748b;
+  --cf-login-slate-400: #94a3b8;
+  --cf-login-slate-300: #cbd5e1;
+  --cf-login-slate-200: #e2e8f0;
+  --cf-login-slate-100: #f1f5f9;
+  --cf-login-slate-50: #f8fafc;
 }
 
 /* ================= PAGE OUTER WRAPPER ================= */
-.cf-login-wrapper {
+.cf-login-page {
   min-height: 100vh;
   width: 100%;
   background: #f8fafc;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  position: relative;
-  overflow: hidden;
+  flex-direction: column;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
+  color: var(--cf-login-slate-800);
 }
 
-/* Background Subtle Lighting & Technical Grid Overlay */
-.cf-bg-ambient-light {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 500px;
-  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.cf-bg-grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px);
-  background-size: 28px 28px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ================= MAIN CARD CONTAINER ================= */
-.cf-login-card {
-  max-width: 1100px;
+/* ================= TOP HEADER ================= */
+.cf-login-header {
   width: 100%;
-  min-height: 640px;
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow:
-    0 20px 48px -12px rgba(15, 23, 42, 0.09),
-    0 1px 2px 0 rgba(15, 23, 42, 0.04),
-    0 0 0 1px rgba(226, 232, 240, 0.85);
-  display: grid;
-  grid-template-columns: 48% 52%;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
-}
-
-/* ================= LEFT SIDE: FORM COLUMN ================= */
-.cf-form-column {
-  padding: 38px 46px 32px 46px;
+  border-bottom: 1px solid var(--cf-login-slate-200);
+  height: 68px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: #ffffff;
-  box-sizing: border-box;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-/* Top Navigation Row */
-.cf-top-nav-row {
+.cf-login-header-inner {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 18px;
 }
 
-.cf-back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: none;
-  border: none;
-  padding: 4px 6px 4px 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--cf-slate-500);
+.cf-login-brand {
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 6px;
-}
-
-.cf-back-link:hover {
-  color: var(--cf-slate-900);
-  transform: translateX(-2px);
-}
-
-.cf-portal-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  background: #eef2ff;
-  border: 1px solid #e0e7ff;
-  color: var(--cf-indigo-600);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 11px;
-  border-radius: 9999px;
 }
 
-.cf-portal-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--cf-emerald);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
-}
-
-/* Brand Header */
-.cf-brand-header {
-  margin-bottom: 16px;
-}
-
-.cf-brand-logo {
-  height: 36px;
+.cf-login-logo {
+  height: 38px;
   width: auto;
   object-fit: contain;
   display: block;
 }
 
-/* Heading Block */
-.cf-heading-block {
-  margin-bottom: 22px;
-}
-
-.cf-title {
-  font-family: 'Outfit', sans-serif !important;
-  font-size: 26px !important;
-  font-weight: 700 !important;
-  color: var(--cf-slate-900) !important;
-  margin: 0 0 6px 0 !important;
-  letter-spacing: -0.5px;
-  line-height: 1.25;
-}
-
-.cf-subtitle {
-  margin: 0;
-  font-size: 13.5px;
-  color: var(--cf-slate-500);
-  line-height: 1.5;
-}
-
-/* Auth Form */
-.cf-auth-form {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.cf-field-group {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-}
-
-.cf-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cf-slate-700);
-  margin-bottom: 6px;
-  letter-spacing: -0.1px;
-}
-
-.cf-input-box {
+.cf-login-header-right {
   display: flex;
   align-items: center;
-  background: #ffffff;
-  border: 1.5px solid var(--cf-slate-200);
-  border-radius: 10px;
-  padding: 0 14px;
-  height: 45px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-sizing: border-box;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-}
-
-.cf-input-box:hover {
-  border-color: #cbd5e1;
-}
-
-.cf-input-box:focus-within {
-  border-color: var(--cf-indigo-500);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
-}
-
-.cf-input-box.cf-has-error {
-  border-color: #ef4444;
-  background: #fffcfc;
-}
-
-.cf-field-icon {
-  color: var(--cf-slate-400);
-  font-size: 15px;
-  margin-right: 10px;
-  flex-shrink: 0;
-  transition: color 0.2s ease;
-}
-
-.cf-input-box:focus-within .cf-field-icon {
-  color: var(--cf-indigo-600);
-}
-
-.cf-native-input {
-  flex: 1;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
+  gap: 6px;
   font-size: 14px;
-  color: var(--cf-slate-900);
-  font-family: inherit;
-  width: 100%;
+  color: var(--cf-login-slate-600);
 }
 
-.cf-native-input:focus,
-.cf-native-input:focus-visible {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.cf-native-input::placeholder {
-  color: var(--cf-slate-400);
-  font-weight: 400;
-}
-
-/* Chrome autofill fix */
-.cf-native-input:-webkit-autofill,
-.cf-native-input:-webkit-autofill:hover,
-.cf-native-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
-  -webkit-text-fill-color: var(--cf-slate-900) !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
-.cf-antd-pass,
-.cf-antd-pass.ant-input-affix-wrapper,
-.cf-antd-pass.ant-input-affix-wrapper-focused,
-.cf-antd-pass.ant-input-affix-wrapper:focus,
-.cf-antd-pass.ant-input-affix-wrapper:focus-within,
-.cf-antd-pass.ant-input-affix-wrapper-borderless,
-.cf-antd-pass.ant-input-affix-wrapper-borderless:focus,
-.cf-antd-pass.ant-input-affix-wrapper-borderless:focus-within,
-.cf-antd-pass.ant-input-affix-wrapper-borderless.ant-input-affix-wrapper-focused {
-  flex: 1;
-  width: 100%;
-  padding: 0 !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-.cf-antd-pass input,
-.cf-antd-pass input:focus,
-.cf-antd-pass input:focus-visible,
-.cf-antd-pass .ant-input,
-.cf-antd-pass .ant-input:focus,
-.cf-antd-pass .ant-input:focus-visible {
-  font-size: 14px !important;
-  color: var(--cf-slate-900) !important;
-  font-family: inherit !important;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.cf-antd-pass input::placeholder {
-  color: var(--cf-slate-400) !important;
-}
-
-.cf-antd-pass .ant-input-suffix {
-  color: var(--cf-slate-400) !important;
-  cursor: pointer;
-  font-size: 15px;
-  transition: color 0.2s ease;
-}
-
-.cf-antd-pass .ant-input-suffix:hover {
-  color: var(--cf-slate-800) !important;
-}
-
-.cf-error-msg {
-  font-size: 12px;
-  color: #ef4444;
-  margin-top: 5px;
-  font-weight: 500;
-}
-
-/* Options Row */
-.cf-options-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 3px 0 18px 0;
-}
-
-.cf-remember-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.cf-custom-checkbox .ant-checkbox-inner {
-  border-radius: 5px !important;
-  border: 1.5px solid #cbd5e1 !important;
-}
-
-.cf-custom-checkbox .ant-checkbox-checked .ant-checkbox-inner {
-  background-color: var(--cf-indigo-600) !important;
-  border-color: var(--cf-indigo-600) !important;
-}
-
-.cf-remember-text {
-  font-size: 13.5px;
-  color: var(--cf-slate-700);
-  font-weight: 500;
-}
-
-.cf-forgot-btn {
+.cf-login-header-btn {
   background: none;
   border: none;
-  padding: 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cf-indigo-600);
+  color: var(--cf-login-primary);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
   transition: all 0.2s ease;
 }
 
-.cf-forgot-btn:hover {
-  color: var(--cf-indigo-700);
+.cf-login-header-btn strong {
+  font-weight: 700;
+  color: var(--cf-login-primary);
+}
+
+.cf-login-header-btn:hover {
+  color: var(--cf-login-primary-hover);
   text-decoration: underline;
 }
 
-/* Primary Submit Button */
-.cf-submit-btn {
-  height: 46px;
+/* ================= MAIN CONTENT ================= */
+.cf-login-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 20px 20px 20px;
+}
+
+.cf-login-container {
+  max-width: 1040px;
   width: 100%;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  border: none;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+}
+
+/* ================= LEFT: BENEFITS CARD ================= */
+.cf-login-benefits-card {
+  width: 300px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px 18px 22px 18px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 24px;
+}
+
+.cf-login-illustration-wrap {
+  width: 100%;
+  height: 160px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  margin-bottom: 16px;
+  padding: 6px 8px;
+}
+
+.cf-login-illustration {
+  max-width: 100%;
+  max-height: 175px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 4px 10px rgba(79, 70, 229, 0.08));
+}
+
+.cf-login-benefits-card:hover .cf-login-illustration {
+  transform: translateY(-1px) scale(1.02);
+}
+
+.cf-login-benefits-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.cf-login-benefits-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cf-login-slate-900);
+  margin: 0 0 13px 0;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.cf-login-benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cf-login-benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cf-login-check-bubble {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.2s ease;
+}
+
+.cf-login-benefit-item:hover .cf-login-check-bubble {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+  transform: scale(1.05);
+}
+
+.cf-login-benefit-text {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--cf-login-slate-600);
+}
+
+.cf-login-benefit-text strong {
+  color: var(--cf-login-slate-900);
+  font-weight: 600;
+}
+
+.cf-login-trust-card {
+  margin-top: 18px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cf-login-trust-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #059669;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px -1px rgba(5, 150, 105, 0.3);
+}
+
+.cf-login-trust-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cf-login-trust-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #065f46;
+  line-height: 1.25;
+}
+
+.cf-login-trust-desc {
+  font-size: 10.5px;
+  color: #047857;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+/* ================= RIGHT: LOGIN FORM CARD ================= */
+.cf-login-form-card {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 32px 36px 28px 36px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+
+.cf-login-card-header {
+  margin-bottom: 22px;
+}
+
+.cf-login-card-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--cf-login-slate-900);
+  margin: 0 0 5px 0;
+  letter-spacing: -0.3px;
+}
+
+.cf-login-card-subtitle {
+  font-size: 13px;
+  color: var(--cf-login-slate-500);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cf-login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Section: Inputs on Left, Divider & Google on Right */
+.cf-login-top-section {
+  display: flex;
+  align-items: stretch;
+  gap: 22px;
+}
+
+.cf-login-top-fields {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ================= AUTH MODE TABS (Password vs OTP) ================= */
+.cf-login-mode-tabs {
+  background: #f1f5f9;
+  border: 1px solid var(--cf-login-slate-200);
+  border-radius: 9px;
+  padding: 3px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.cf-login-mode-tab {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cf-login-slate-600);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.cf-login-mode-tab:hover {
+  color: var(--cf-login-slate-900);
+}
+
+.cf-login-mode-tab.active {
+  background: #ffffff;
+  color: var(--cf-login-primary);
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.cf-mode-tab-icon {
+  font-size: 14px;
+}
+
+.cf-login-mode-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+  letter-spacing: 0.01em;
+}
+
+/* ================= OTP CHANNEL TABS (Email vs Phone) ================= */
+.cf-otp-channel-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cf-otp-channel-tab {
+  flex: 1;
+  height: 35px;
+  border: 1.5px solid var(--cf-login-slate-200);
+  background: #ffffff;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--cf-login-slate-600);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.cf-otp-channel-tab:hover {
+  border-color: var(--cf-login-slate-300);
+  color: var(--cf-login-slate-900);
+}
+
+.cf-otp-channel-tab.active {
+  border-color: var(--cf-login-primary);
+  background: var(--cf-login-primary-light);
+  color: var(--cf-login-primary);
+  font-weight: 600;
+}
+
+/* OTP Target Chip (When OTP is sent) */
+.cf-otp-target-chip {
+  background: #f8fafc;
+  border: 1px solid var(--cf-login-slate-200);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.cf-otp-target-text {
+  font-size: 12px;
+  color: var(--cf-login-slate-500);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cf-otp-target-text strong {
+  color: var(--cf-login-slate-900);
+  font-weight: 600;
+}
+
+.cf-otp-change-btn {
+  background: none;
+  border: none;
+  color: var(--cf-login-primary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.cf-otp-change-btn:hover {
+  color: var(--cf-login-primary-hover);
+}
+
+/* OTP Input Boxes */
+.cf-otp-box-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 8px 0;
+}
+
+.cf-otp-box-wrapper .ant-otp {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.cf-otp-box-wrapper .ant-otp-input {
+  width: 42px !important;
+  height: 44px !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  border-radius: 8px !important;
+  border: 1.5px solid var(--cf-login-slate-300) !important;
+  background: #ffffff !important;
+  color: var(--cf-login-slate-900) !important;
+  transition: all 0.2s ease !important;
+}
+
+.cf-otp-box-wrapper .ant-otp-input:focus,
+.cf-otp-box-wrapper .ant-otp-input-focused {
+  border-color: var(--cf-login-primary) !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
+}
+
+.cf-otp-resend-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 0 12px 0;
+  font-size: 12px;
+}
+
+.cf-otp-timer-text {
+  color: var(--cf-login-slate-500);
+}
+
+.cf-otp-timer-text strong {
+  color: var(--cf-login-primary);
+  font-weight: 600;
+}
+
+/* Phone Input with +91 Prefix */
+.cf-login-phone-box {
+  width: 100%;
+  height: 42px;
+  border: 1.5px solid var(--cf-login-slate-300);
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.cf-login-phone-code {
+  padding: 0 13px;
+  height: 100%;
+  background: #f8fafc;
+  border-right: 1.5px solid var(--cf-login-slate-300);
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cf-login-slate-600);
+  user-select: none;
+}
+
+.cf-login-phone-box input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0 13px;
+  font-size: 13.5px;
+  color: var(--cf-login-slate-900);
+  font-family: inherit;
+}
+
+.cf-login-phone-box input::placeholder {
+  color: var(--cf-login-slate-400);
+}
+
+.cf-login-phone-box:focus-within {
+  border-color: var(--cf-login-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* Field Groups */
+.cf-login-form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cf-login-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cf-login-slate-800);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cf-login-star {
+  color: #ef4444;
+  font-size: 13px;
+}
+
+/* Native Inputs */
+.cf-login-input-box {
+  width: 100%;
+  height: 42px;
+  border: 1.5px solid var(--cf-login-slate-300);
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.cf-login-input-box input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0 13px;
+  font-size: 13.5px;
+  color: var(--cf-login-slate-900);
+  font-family: inherit;
+}
+
+.cf-login-input-box input::placeholder {
+  color: var(--cf-login-slate-400);
+}
+
+.cf-login-input-box:focus-within {
+  border-color: var(--cf-login-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.cf-login-error-box {
+  border-color: #ef4444 !important;
+}
+
+/* Antd Password Input */
+.cf-login-antd-password {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 13px !important;
+}
+
+.cf-login-antd-password input {
+  font-size: 13.5px !important;
+  padding: 0 !important;
+}
+
+.cf-login-antd-password input::placeholder {
+  color: var(--cf-login-slate-400);
+}
+
+.cf-login-antd-password .ant-input-password-icon {
+  color: var(--cf-login-slate-400);
+  font-size: 15px;
+  transition: color 0.2s ease;
+}
+
+.cf-login-antd-password .ant-input-password-icon:hover {
+  color: var(--cf-login-slate-700);
+}
+
+/* Helper & Error Texts */
+.cf-login-helper-text {
+  font-size: 11px;
+  color: var(--cf-login-slate-500);
+  margin-top: 4px;
+}
+
+.cf-login-error-text {
+  font-size: 11px;
+  color: #ef4444;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+/* Options Row: Remember Me & Forgot Password */
+.cf-login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+.cf-login-remember-label {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: -0.1px;
+  font-size: 12.5px;
+  color: var(--cf-login-slate-600);
+  user-select: none;
 }
 
-.cf-submit-btn:hover:not(:disabled) {
+.cf-login-remember-label .ant-checkbox-inner {
+  border-radius: 4px;
+}
+
+.cf-login-forgot-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--cf-login-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.cf-login-forgot-link:hover {
+  color: var(--cf-login-primary-hover);
+  text-decoration: underline;
+}
+
+/* ================= VERTICAL DIVIDER ================= */
+.cf-login-divider-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  padding: 10px 0;
+}
+
+.cf-login-divider-line {
+  flex: 1;
+  width: 1px;
+  background: var(--cf-login-slate-200);
+}
+
+.cf-login-divider-pill {
+  font-size: 12px;
+  color: var(--cf-login-slate-400);
+  background: #ffffff;
+  padding: 6px 0;
+  font-weight: 500;
+  user-select: none;
+}
+
+/* ================= SOCIAL COLUMN ================= */
+.cf-login-social-column {
+  width: 175px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.cf-login-google-btn-box {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.cf-login-google-btn-box>div {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.cf-login-google-btn-box iframe {
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+.cf-signup-footer {
+  text-align: center;
+  color: var(--cf-login-slate-500);
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  display: flex;
+  margin-top: 10px;
+}
+
+.cf-signup-footer span {
+  font-size: 11px;
+}
+
+.cf-signup-link {
+  color: var(--cf-login-primary);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.cf-signup-link:hover {
+  color: var(--cf-login-primary-hover);
+  text-decoration: underline;
+}
+
+/* ================= BOTTOM SECTION ================= */
+.cf-login-bottom-section {
+  width: 100%;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--cf-login-slate-200);
+}
+
+.cf-login-terms-paragraph {
+  font-size: 11.5px;
+  color: var(--cf-login-slate-500);
+  line-height: 1.5;
+  margin: 0;
+  text-align: center;
+}
+
+.cf-login-link-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--cf-login-primary);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cf-login-link-inline:hover {
+  color: var(--cf-login-primary-hover);
+}
+
+/* Submit Button */
+.cf-login-submit-row {
+  margin-top: 14px;
+}
+
+.cf-login-primary-btn {
+  height: 40px;
+  width: 100%;
+  padding: 0 28px;
+  background: var(--cf-login-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cf-login-primary-btn:hover:not(:disabled) {
+  background: var(--cf-login-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.42);
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
 }
 
-.cf-submit-btn:active:not(:disabled) {
+.cf-login-primary-btn:active:not(:disabled) {
   transform: translateY(0);
 }
 
-.cf-submit-btn:disabled {
+.cf-login-primary-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.cf-btn-arrow {
-  font-size: 12.5px;
-  transition: transform 0.2s ease;
-}
-
-.cf-submit-btn:hover .cf-btn-arrow {
-  transform: translateX(3px);
-}
-
-.cf-loading-text {
+.cf-login-btn-loader {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
 }
 
-.cf-spinner {
-  width: 16px;
-  height: 16px;
+.cf-login-btn-spinner {
+  width: 14px;
+  height: 14px;
   border: 2px solid rgba(255, 255, 255, 0.35);
   border-top-color: #ffffff;
   border-radius: 50%;
-  animation: cfSpin 0.75s linear infinite;
+  animation: cfLoginSpin 0.75s linear infinite;
 }
 
-@keyframes cfSpin {
+@keyframes cfLoginSpin {
   to {
     transform: rotate(360deg);
   }
 }
 
-/* Divider */
-.cf-divider {
-  display: flex;
-  align-items: center;
-  margin: 18px 0 16px 0;
-  gap: 12px;
-}
-
-.cf-divider-line {
-  flex: 1;
-  height: 1px;
-  background: var(--cf-slate-200);
-}
-
-.cf-divider-text {
-  font-size: 11.5px;
-  color: var(--cf-slate-400);
-  font-weight: 500;
-  white-space: nowrap;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-}
-
-/* Social Row */
-.cf-social-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.cf-google-wrapper {
-  overflow: hidden;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-}
-
-.cf-google-wrapper>div {
-  width: 100% !important;
-}
-
-.cf-google-wrapper iframe {
-  width: 100% !important;
-  margin: 0 auto !important;
-}
-
-.cf-linkedin-btn {
-  height: 40px;
-  border-radius: 8px;
-  border: 1px solid #dadce0;
-  background: #ffffff;
-  color: #3c4043;
-  font-size: 13.5px;
-  font-weight: 500;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  padding: 0 12px;
-  box-sizing: border-box;
-}
-
-.cf-linkedin-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-  color: #0a66c2;
-}
-
-.cf-linkedin-icon {
-  font-size: 16px;
-  color: #0a66c2;
-}
-
-/* Form Bottom & Footer */
-.cf-form-bottom {
-  margin-top: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.cf-signup-footer {
+/* ================= FOOTER ================= */
+.cf-login-footer {
+  width: 100%;
+  padding: 22px 20px 20px 20px;
   text-align: center;
-  font-size: 13.5px;
-  color: var(--cf-slate-500);
+  border-top: 1px solid var(--cf-login-slate-200);
+  background: #ffffff;
+  margin-top: auto;
+}
+
+.cf-login-footer-links {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 7px;
 }
 
-.cf-signup-link {
+.cf-login-footer-links button {
   background: none;
   border: none;
-  padding: 0;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--cf-indigo-600);
+  color: var(--cf-login-slate-500);
+  font-size: 12px;
   cursor: pointer;
   transition: color 0.2s ease;
+  padding: 0;
 }
 
-.cf-signup-link:hover {
-  color: var(--cf-indigo-700);
+.cf-login-footer-links button:hover {
+  color: var(--cf-login-primary);
   text-decoration: underline;
 }
 
-.cf-security-guarantee {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--cf-slate-400);
+.cf-login-footer-sep {
+  color: var(--cf-login-slate-300);
+  font-size: 11px;
 }
 
-.cf-shield-icon {
-  color: var(--cf-emerald);
-}
-
-/* ================= RIGHT SIDE: HERO VISUAL ================= */
-.cf-hero-column {
-  background: linear-gradient(155deg, #090d16 0%, #0f172a 45%, #1e1b4b 100%);
-  position: relative;
-  overflow: hidden;
-  padding: 40px 42px 32px 42px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  color: #ffffff;
-  box-sizing: border-box;
-}
-
-/* Ambient Subtle Lighting Glows */
-.cf-hero-glow {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(80px);
-}
-
-.cf-glow-1 {
-  width: 320px;
-  height: 320px;
-  background: rgba(99, 102, 241, 0.22);
-  top: -50px;
-  right: -50px;
-}
-
-.cf-glow-2 {
-  width: 280px;
-  height: 280px;
-  background: rgba(168, 85, 247, 0.16);
-  bottom: 40px;
-  left: -40px;
-}
-
-.cf-hero-grid-pattern {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
-  pointer-events: none;
-}
-
-/* Top Header Section */
-.cf-hero-top {
-  position: relative;
-  z-index: 2;
-}
-
-.cf-hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
-  padding: 4px 12px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin-bottom: 12px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.cf-sparkle-icon {
-  color: #fbbf24;
-}
-
-.cf-hero-heading {
-  font-family: 'Outfit', sans-serif !important;
-  font-size: 26px !important;
-  font-weight: 700 !important;
-  color: #ffffff !important;
-  line-height: 1.28 !important;
-  letter-spacing: -0.4px;
-  margin: 0 0 8px 0 !important;
-  max-width: 440px;
-}
-
-.cf-hero-desc {
+.cf-login-footer-copyright {
+  font-size: 11px;
+  color: var(--cf-login-slate-400);
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: rgba(226, 232, 240, 0.82);
-  max-width: 430px;
-}
-
-/* Showcase Stage */
-.cf-showcase-stage {
-  position: relative;
-  z-index: 2;
-  margin: 18px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* Live Interactive Feature Showcase Card */
-.cf-preview-card {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 18px 20px;
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.35);
-  transition: transform 0.25s ease, border-color 0.25s ease;
-}
-
-.cf-preview-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.cf-preview-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.cf-preview-company-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cf-company-logo-google {
-  width: 32px;
-  height: 32px;
-  background: #ffffff;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.cf-preview-company-name {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-}
-
-.cf-preview-location {
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.7);
-  margin-top: 1px;
-}
-
-.cf-preview-match-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(16, 185, 129, 0.14);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #34d399;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 3.5px 10px;
-  border-radius: 9999px;
-}
-
-.cf-pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-  display: inline-block;
-  animation: cfPulse 2s infinite;
-}
-
-@keyframes cfPulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-
-  70% {
-    transform: scale(1.15);
-    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
-  }
-
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
-.cf-preview-role-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 10px;
-  letter-spacing: -0.2px;
-}
-
-.cf-preview-tags {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-
-.cf-tag {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #e2e8f0;
-  padding: 3px 9px;
-}
-
-.cf-tag-accent {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: rgba(99, 102, 241, 0.35);
-  color: #c7d2fe;
-  font-weight: 600;
-}
-
-.cf-preview-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  font-size: 11.5px;
-}
-
-.cf-preview-recruiter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(226, 232, 240, 0.85);
-}
-
-.cf-zap-icon {
-  color: #fbbf24;
-}
-
-.cf-preview-verified-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #60a5fa;
-  font-weight: 600;
-}
-
-/* Placement Proof Strip */
-.cf-placement-badge {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 13px;
-  padding: 9px 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.cf-avatar-stack {
-  display: flex;
-  align-items: center;
-}
-
-.cf-avatar-img {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  object-fit: cover;
-  margin-left: -7px;
-}
-
-.cf-avatar-img:first-child {
-  margin-left: 0;
-}
-
-.cf-avatar-count {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--cf-indigo-600);
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #ffffff;
-  margin-left: -7px;
-}
-
-.cf-placement-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.cf-placement-bold {
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-}
-
-.cf-placement-sub {
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.72);
-  line-height: 1.25;
-  margin-top: 1px;
-}
-
-/* Bottom Stats & Trust Strip */
-.cf-hero-bottom {
-  position: relative;
-  z-index: 2;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  padding-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.cf-hero-stats-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.cf-stat-cell {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  flex: 1;
-}
-
-.cf-stat-number {
-  font-family: 'Outfit', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.15;
-}
-
-.cf-stat-title {
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.7);
-  margin-top: 2px;
-}
-
-.cf-stat-sep {
-  width: 1px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.cf-trusted-by {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.6);
-  padding-top: 4px;
-}
-
-.cf-trusted-label {
-  white-space: nowrap;
-}
-
-.cf-trusted-logos {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
-  letter-spacing: 0.2px;
-}
-
-.cf-trusted-logos span {
-  transition: color 0.2s ease;
-}
-
-.cf-trusted-logos span:hover {
-  color: #ffffff;
 }
 
 /* ================= FORGOT PASSWORD MODAL ================= */
 .cf-theme-modal .ant-modal-content {
-  border-radius: 20px !important;
-  padding: 30px !important;
+  border-radius: 12px !important;
+  padding: 28px !important;
   background: #ffffff !important;
-  box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.2) !important;
-  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.16) !important;
+  border: 1px solid var(--cf-login-slate-200) !important;
 }
 
 .cf-theme-modal .ant-modal-header {
@@ -971,27 +917,25 @@
 }
 
 .cf-theme-modal .ant-modal-title {
-  font-family: 'Outfit', sans-serif !important;
-  font-size: 24px !important;
+  font-size: 20px !important;
   font-weight: 700 !important;
-  color: var(--cf-slate-900) !important;
+  color: var(--cf-login-slate-900) !important;
 }
 
 .cf-modal-subtitle {
-  font-size: 13.5px;
-  color: var(--cf-slate-500);
+  font-size: 13px;
+  color: var(--cf-login-slate-500);
   margin-bottom: 18px;
   line-height: 1.5;
 }
 
 .cf-modal-btn {
-  height: 46px !important;
-  border-radius: 10px !important;
-  font-size: 14.5px !important;
-  font-weight: 600 !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
   margin-top: 18px !important;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3) !important;
+  background: var(--cf-login-primary) !important;
   border: none !important;
   width: 100% !important;
   color: #ffffff !important;
@@ -1000,9 +944,8 @@
 }
 
 .cf-modal-btn:hover:not(:disabled) {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4) !important;
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+  background: var(--cf-login-primary-hover) !important;
+  transform: translateY(-1px);
 }
 
 .cf-modal-btn:disabled {
@@ -1010,59 +953,78 @@
   cursor: not-allowed;
 }
 
-/* ================= RESPONSIVE DESIGN ================= */
-@media (max-width: 1024px) {
-  .cf-login-card {
-    grid-template-columns: 50% 50%;
+.otp-display-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+/* ================= RESPONSIVE ADAPTATIONS ================= */
+@media (max-width: 960px) {
+  .cf-login-container {
+    flex-direction: column;
+    align-items: center;
   }
 
-  .cf-form-column {
-    padding: 32px 34px 28px 34px;
+  .cf-login-benefits-card {
+    width: 100%;
+    max-width: 620px;
+    position: static;
+    flex-direction: column;
   }
 
-  .cf-hero-column {
-    padding: 32px 32px 28px 32px;
-  }
-
-  .cf-hero-heading {
-    font-size: 24px !important;
+  .cf-login-form-card {
+    width: 100%;
+    max-width: 620px;
   }
 }
 
-@media (max-width: 900px) {
-  .cf-login-wrapper {
-    padding: 24px 16px;
+@media (max-width: 680px) {
+  .cf-login-header-inner {
+    padding: 0 16px;
   }
 
-  .cf-login-card {
-    grid-template-columns: 1fr;
-    max-width: 480px;
-    border-radius: 18px;
+  .cf-login-main {
+    padding: 18px 12px 28px 12px;
   }
 
-  .cf-form-column {
-    padding: 32px 28px 28px 28px;
+  .cf-login-top-section {
+    flex-direction: column;
+    gap: 16px;
   }
 
-  .cf-hero-column {
+  .cf-login-divider-column {
+    width: 100%;
+    flex-direction: row;
+    padding: 2px 0;
+  }
+
+  .cf-login-divider-line {
+    height: 1px;
+    width: 100%;
+  }
+
+  .cf-login-divider-pill {
+    padding: 0 12px;
+  }
+
+  .cf-login-social-column {
+    width: 100%;
+    padding: 0;
+  }
+
+  .cf-login-benefits-card {
     display: none;
   }
-}
 
-@media (max-width: 480px) {
-  .cf-login-wrapper {
-    padding: 16px 12px;
+  .cf-login-form-card {
+    padding: 22px 16px;
   }
 
-  .cf-form-column {
-    padding: 24px 18px 20px 18px;
-  }
-
-  .cf-title {
-    font-size: 23px !important;
-  }
-
-  .cf-social-row {
-    grid-template-columns: 1fr;
+  .cf-login-card-title {
+    font-size: 19px;
   }
 }

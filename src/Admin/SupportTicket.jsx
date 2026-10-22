@@ -10,6 +10,7 @@ import AdminSelect from './AdminSelect';
 import {
     getSupportTickets,
     getSupportTicketStats,
+    getSupportTicketById,
     updateSupportTicketStatus,
     addSupportTicketMessage,
     deleteSupportTicket
@@ -104,16 +105,38 @@ const ActionsDropdown = ({ ticket, onClose, onDelete, onViewDetails, onUpdateSta
 const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
     const [replyText, setReplyText] = useState('');
     const [sending, setSending] = useState(false);
+    const [activeTicket, setActiveTicket] = useState(ticket);
 
-    if (!ticket) return null;
+    useEffect(() => {
+        if (!ticket) {
+            setActiveTicket(null);
+            return;
+        }
+        setActiveTicket(ticket);
+        let mounted = true;
+        getSupportTicketById(ticket.ticket_number || ticket.id)
+            .then(res => {
+                if (mounted && res?.data?.success && res.data.data) {
+                    setActiveTicket(res.data.data);
+                }
+            })
+            .catch(() => {});
+        return () => { mounted = false; };
+    }, [ticket]);
+
+    if (!activeTicket) return null;
 
     const handleSend = async (e) => {
         e?.preventDefault();
         if (!replyText.trim()) return;
         setSending(true);
         try {
-            await onAddReply(ticket.id, replyText.trim());
+            await onAddReply(activeTicket.id || activeTicket.ticket_number, replyText.trim());
             setReplyText('');
+            const res = await getSupportTicketById(activeTicket.ticket_number || activeTicket.id);
+            if (res?.data?.success && res.data.data) {
+                setActiveTicket(res.data.data);
+            }
         } catch (err) {
             console.error('Failed to send reply:', err);
         } finally {
@@ -128,19 +151,19 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                 <div className="flex items-center justify-between px-6 py-3 border-b border-gray-100 bg-gray-50/70">
                     <div>
                         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-0">
-                            #{ticket.ticket_number || ticket.id}
-                            <PriorityBadge priority={ticket.priority} />
-                            {ticket.category && (
+                            #{activeTicket.ticket_number || activeTicket.id}
+                            <PriorityBadge priority={activeTicket.priority} />
+                            {activeTicket.category && (
                                 <span className="bg-purple-50 text-purple-700 text-xs px-2.5 py-0.5 rounded-full font-semibold border-1 border-purple-100">
-                                    {ticket.category}
+                                    {activeTicket.category}
                                 </span>
                             )}
                         </h2>
                         <p className="text-xs text-gray-500 mt-1 mb-0">
-                            Logged on {new Date(ticket.createdAt || ticket.created_at).toLocaleString()}
+                            Logged on {new Date(activeTicket.createdAt || activeTicket.created_at).toLocaleString()}
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                    <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
@@ -151,14 +174,17 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                     <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex-1">
                             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Subject</span>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-0">{ticket.subject}</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-0">{activeTicket.subject}</h3>
                         </div>
                         <div className="text-right">
                             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-1">Status</span>
                             <div className="w-36 inline-block">
                                 <AdminSelect
-                                    value={ticket.status}
-                                    onChange={(val) => onUpdateStatus(ticket.id, val)}
+                                    value={activeTicket.status}
+                                    onChange={(val) => {
+                                        onUpdateStatus(activeTicket.id || activeTicket.ticket_number, val);
+                                        setActiveTicket(prev => ({ ...prev, status: val }));
+                                    }}
                                     options={[
                                         { value: 'Open', label: 'Open' },
                                         { value: 'In Progress', label: 'In Progress' },
@@ -174,12 +200,12 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                     {/* User Info */}
                     <div className="bg-white p-3.5 rounded-xl flex items-center justify-between mt-0 border border-gray-100 shadow-2xs">
                         <div className="flex items-center gap-3">
-                            <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base border overflow-hidden shrink-0 shadow-2xs ${(ticket.user_type || '').toLowerCase() === 'recruiter' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
+                            <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base border overflow-hidden shrink-0 shadow-2xs ${(activeTicket.user_type || '').toLowerCase() === 'recruiter' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'
                                 }`}>
-                                {ticket.user?.avatar ? (
+                                {activeTicket.user?.avatar ? (
                                     <img
-                                        src={ticket.user.avatar}
-                                        alt={ticket.user?.name || ticket.name}
+                                        src={activeTicket.user.avatar}
+                                        alt={activeTicket.user?.name || activeTicket.name}
                                         className="w-full h-full object-cover"
                                         onError={(e) => {
                                             e.currentTarget.style.display = 'none';
@@ -190,34 +216,34 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                                     />
                                 ) : null}
                                 <span
-                                    style={{ display: ticket.user?.avatar ? 'none' : 'flex' }}
+                                    style={{ display: activeTicket.user?.avatar ? 'none' : 'flex' }}
                                     className="w-full h-full items-center justify-center select-none"
                                 >
-                                    {(ticket.user?.name || ticket.name || 'U').charAt(0).toUpperCase()}
+                                    {(activeTicket.user?.name || activeTicket.name || 'U').charAt(0).toUpperCase()}
                                 </span>
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-gray-900 text-sm">{ticket.user?.name || ticket.name}</span>
-                                    <UserTypeBadge type={ticket.user_type} organization={ticket.user?.organization} />
+                                    <span className="font-semibold text-gray-900 text-sm">{activeTicket.user?.name || activeTicket.name}</span>
+                                    <UserTypeBadge type={activeTicket.user_type} organization={activeTicket.user?.organization} />
                                 </div>
                                 <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                                    <span>{ticket.user?.email || ticket.email}</span>
-                                    {ticket.user?.organization && (
+                                    <span>{activeTicket.user?.email || activeTicket.email}</span>
+                                    {activeTicket.user?.organization && (
                                         <>
                                             <span className="text-gray-300">•</span>
                                             <span className="inline-flex items-center gap-1 font-medium text-purple-700 bg-purple-50/60 px-1.5 py-0.2 rounded text-[11px]">
                                                 <Building className="w-3 h-3 text-purple-500" />
-                                                {ticket.user.organization}
+                                                {activeTicket.user.organization}
                                             </span>
                                         </>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        {(ticket.user?.phone || ticket.phone) && (
+                        {(activeTicket.user?.phone || activeTicket.phone) && (
                             <div className="text-xs text-gray-500 font-medium">
-                                📞 {ticket.user?.phone || ticket.phone}
+                                📞 {activeTicket.user?.phone || activeTicket.phone}
                             </div>
                         )}
                     </div>
@@ -226,7 +252,7 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                     <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Original Issue Description</h4>
                         <div className="bg-white p-3.5 rounded-xl text-sm text-gray-700 leading-relaxed border border-gray-100 whitespace-pre-wrap">
-                            {ticket.description}
+                            {activeTicket.description}
                         </div>
                     </div>
 
@@ -234,11 +260,11 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                     <div>
                         <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3 flex items-center gap-2">
                             <MessageSquare className="w-4 h-4 text-indigo-600" />
-                            <span>Conversation History ({ticket.messages?.length || 0})</span>
+                            <span>Conversation History ({activeTicket.messages?.length || 0})</span>
                         </h4>
                         <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                            {ticket.messages && ticket.messages.length > 0 ? (
-                                ticket.messages.map((msg, idx) => (
+                            {activeTicket.messages && activeTicket.messages.length > 0 ? (
+                                activeTicket.messages.map((msg, idx) => (
                                     <div key={idx} className={`flex flex-col ${msg.sender === 'Admin' ? 'items-end' : 'items-start'}`}>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-xs font-semibold text-gray-600">
@@ -276,7 +302,7 @@ const TicketModal = ({ ticket, onClose, onUpdateStatus, onAddReply }) => {
                         <button
                             type="submit"
                             disabled={sending || !replyText.trim()}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                         >
                             {sending ? (
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -307,6 +333,8 @@ export default function SupportTicket() {
     const [openDropdown, setOpenDropdown] = useState(null);
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalTickets, setTotalTickets] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
 
     const itemsPerPage = 10;
 
@@ -326,13 +354,23 @@ export default function SupportTicket() {
                     search: debouncedSearch,
                     status: activeStatusFilter,
                     priority: activePriorityFilter,
-                    user_type: activeUserType
+                    user_type: activeUserType,
+                    page: currentPage,
+                    limit: itemsPerPage
                 }),
                 getSupportTicketStats()
             ]);
 
             if (ticketsRes?.data?.success && ticketsRes.data.data) {
                 setTickets(ticketsRes.data.data);
+                const pagination = ticketsRes.data.pagination;
+                if (pagination) {
+                    setTotalTickets(pagination.total || 0);
+                    setTotalPages(pagination.totalPages || 1);
+                } else {
+                    setTotalTickets(ticketsRes.data.data.length);
+                    setTotalPages(Math.ceil(ticketsRes.data.data.length / itemsPerPage) || 1);
+                }
             }
             if (statsRes?.data?.success && statsRes.data.data) {
                 setStats(statsRes.data.data);
@@ -343,19 +381,23 @@ export default function SupportTicket() {
         } finally {
             setLoading(false);
         }
-    }, [debouncedSearch, activeStatusFilter, activePriorityFilter, activeUserType]);
+    }, [debouncedSearch, activeStatusFilter, activePriorityFilter, activeUserType, currentPage]);
 
     useEffect(() => {
         fetchTicketsData();
     }, [fetchTicketsData]);
+
+    // Reset page to 1 when filters or search change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearch, activeStatusFilter, activePriorityFilter, activeUserType]);
 
     const handleDeleteTicket = async (ticket) => {
         try {
             const res = await deleteSupportTicket(ticket.id || ticket.ticket_number);
             if (res?.data?.success) {
                 setTickets(prev => prev.filter(t => t.id !== ticket.id));
-                toast.success(`Ticket #${ticket.id} deleted successfully`);
-                // Update stats
+                toast.success(`Ticket #${ticket.id || ticket.ticket_number} deleted successfully`);
                 fetchTicketsData();
                 if (typeof window !== 'undefined') {
                     window.dispatchEvent(new Event('support_ticket_changed'));
@@ -371,8 +413,8 @@ export default function SupportTicket() {
         try {
             const res = await updateSupportTicketStatus(ticketId, newStatus);
             if (res?.data?.success) {
-                setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
-                if (selectedTicket && selectedTicket.id === ticketId) {
+                setTickets(prev => prev.map(t => (t.id === ticketId || t.ticket_number === ticketId) ? { ...t, status: newStatus } : t));
+                if (selectedTicket && (selectedTicket.id === ticketId || selectedTicket.ticket_number === ticketId)) {
                     setSelectedTicket(prev => ({ ...prev, status: newStatus }));
                 }
                 toast.success(`Ticket #${ticketId} status updated to ${newStatus}`);
@@ -402,12 +444,12 @@ export default function SupportTicket() {
                     time: new Date().toISOString()
                 };
                 setTickets(prev => prev.map(t => {
-                    if (t.id === ticketId) {
+                    if (t.id === ticketId || t.ticket_number === ticketId) {
                         return { ...t, messages: [...(t.messages || []), newMsg] };
                     }
                     return t;
                 }));
-                if (selectedTicket && selectedTicket.id === ticketId) {
+                if (selectedTicket && (selectedTicket.id === ticketId || selectedTicket.ticket_number === ticketId)) {
                     setSelectedTicket(prev => ({
                         ...prev,
                         messages: [...(prev.messages || []), newMsg]
@@ -429,40 +471,25 @@ export default function SupportTicket() {
             ? (stats.candidate || { total: 0, open: 0, inprogress: 0, closed: 0 })
             : stats;
 
-    // Filter Logic for client-side search fine tuning if any
-    const filteredTickets = tickets.filter(ticket => {
-        const matchType = activeUserType === 'All' || (ticket.user_type || 'candidate').toLowerCase() === activeUserType.toLowerCase();
-        const searchVal = (debouncedSearch || '').toLowerCase();
-        const matchSearch = !searchVal ||
-            (ticket.subject || '').toLowerCase().includes(searchVal) ||
-            (ticket.id || '').toLowerCase().includes(searchVal) ||
-            (ticket.ticket_number || '').toLowerCase().includes(searchVal) ||
-            (ticket.user?.name || ticket.name || '').toLowerCase().includes(searchVal) ||
-            (ticket.user?.email || ticket.email || '').toLowerCase().includes(searchVal) ||
-            (ticket.user?.organization || '').toLowerCase().includes(searchVal);
-        const matchStatus = activeStatusFilter === 'All' || ticket.status === activeStatusFilter;
-        const matchPriority = activePriorityFilter === 'All' || ticket.priority === activePriorityFilter;
-        return matchType && matchSearch && matchStatus && matchPriority;
-    });
-
-    // Pagination Logic
-    const totalPages = Math.ceil(filteredTickets.length / itemsPerPage) || 1;
-    const paginatedTickets = filteredTickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [debouncedSearch, activeStatusFilter, activePriorityFilter, activeUserType]);
-
-    const handleExport = () => {
+    const handleExport = async () => {
         try {
-            if (!filteredTickets || filteredTickets.length === 0) {
+            // Fetch all matching tickets for export
+            const res = await getSupportTickets({
+                search: debouncedSearch,
+                status: activeStatusFilter,
+                priority: activePriorityFilter,
+                user_type: activeUserType,
+                limit: 1000
+            });
+            const exportData = res?.data?.data || tickets;
+            if (!exportData || exportData.length === 0) {
                 toast.error('No tickets to export');
                 return;
             }
             const csvRows = [
                 ['Ticket ID', 'Subject', 'Category', 'User Name', 'Email', 'Organization', 'User Type', 'Priority', 'Status', 'Date']
             ];
-            filteredTickets.forEach(ticket => {
+            exportData.forEach(ticket => {
                 const id = `"${ticket.ticket_number || ticket.id || ''}"`;
                 const subject = `"${(ticket.subject || '').replace(/"/g, '""')}"`;
                 const category = `"${(ticket.category || 'General').replace(/"/g, '""')}"`;
@@ -529,7 +556,7 @@ export default function SupportTicket() {
     ];
 
     return (
-        <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300">
+        <div className="w-full animate-in fade-in duration-300">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div className="flex items-center gap-3">
@@ -717,7 +744,7 @@ export default function SupportTicket() {
                                         <td className="px-6 py-4 text-center"><div className="h-8 w-8 bg-gray-200 rounded-lg mx-auto"></div></td>
                                     </tr>
                                 ))
-                            ) : paginatedTickets.length === 0 ? (
+                            ) : tickets.length === 0 ? (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-16 text-center">
                                         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gray-50 mb-3 border border-gray-100 text-gray-400">
@@ -744,8 +771,8 @@ export default function SupportTicket() {
                                     </td>
                                 </tr>
                             ) : (
-                                paginatedTickets.map((ticket, idx) => {
-                                    const isBottom = idx >= paginatedTickets.length - 2 && paginatedTickets.length > 3;
+                                tickets.map((ticket, idx) => {
+                                    const isBottom = idx >= tickets.length - 2 && tickets.length > 3;
                                     const isRecruiter = (ticket.user_type || '').toLowerCase() === 'recruiter';
 
                                     return (
@@ -845,10 +872,10 @@ export default function SupportTicket() {
                 </div>
 
                 {/* Pagination */}
-                {!loading && filteredTickets.length > 0 && (
+                {!loading && totalTickets > 0 && (
                     <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
                         <div className="text-sm text-gray-500">
-                            Showing <span className="font-medium text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-gray-900">{Math.min(currentPage * itemsPerPage, filteredTickets.length)}</span> of <span className="font-medium text-gray-900">{filteredTickets.length}</span> tickets
+                            Showing <span className="font-medium text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="font-medium text-gray-900">{Math.min(currentPage * itemsPerPage, totalTickets)}</span> of <span className="font-medium text-gray-900">{totalTickets}</span> tickets
                         </div>
                         <div className="flex items-center gap-2">
                             <button

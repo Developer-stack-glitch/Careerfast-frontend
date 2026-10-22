@@ -11,11 +11,35 @@ import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
 import CandidateProfileModal from './CandidateProfileModal';
 
+// ── Helper to safely parse Date Strings (handles 'YYYY-MM-DD HH:MM:SS' and ISO) ──
+const parseDateSafe = (dateString) => {
+    if (!dateString) return null;
+    const date = new Date(typeof dateString === 'string' ? dateString.replace(' ', 'T') : dateString);
+    return isNaN(date.getTime()) ? null : date;
+};
+
+// ── Format Date and Hour/Time Cleanly ──
+const formatDateTime = (dateString) => {
+    const date = parseDateSafe(dateString);
+    if (!date) return { date: '—', time: '—' };
+
+    const dateFormatted = date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+    const timeFormatted = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
+    return { date: dateFormatted, time: timeFormatted };
+};
+
 // ── Format Last Active Dynamically ──
 const formatLastActive = (dateString) => {
-    if (!dateString) return { relative: 'Inactive', exact: '', isOnline: false };
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return { relative: 'Inactive', exact: '', isOnline: false };
+    const date = parseDateSafe(dateString);
+    if (!date) return { relative: 'Inactive', exact: '—', time: '—', isOnline: false };
 
     const now = new Date();
     const diffInMs = now.getTime() - date.getTime();
@@ -26,35 +50,39 @@ const formatLastActive = (dateString) => {
         day: 'numeric',
         year: 'numeric'
     });
+    const time = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+    });
 
-    if (diffInSec < 0 || diffInSec < 60) return { relative: 'Active now', exact, isOnline: true };
+    if (diffInSec < 0 || diffInSec < 60) return { relative: 'Active now', exact, time, isOnline: true };
 
     const diffInMin = Math.floor(diffInSec / 60);
-    if (diffInMin < 15) return { relative: 'Active now', exact, isOnline: true };
-    if (diffInMin < 60) return { relative: `${diffInMin}m ago`, exact, isOnline: false };
+    if (diffInMin < 15) return { relative: 'Active now', exact, time, isOnline: true };
+    if (diffInMin < 60) return { relative: `${diffInMin}m ago`, exact, time, isOnline: false };
 
     const diffInHours = Math.floor(diffInMin / 60);
-    if (diffInHours < 24) return { relative: `${diffInHours}h ago`, exact, isOnline: false };
+    if (diffInHours < 24) return { relative: `${diffInHours}h ago`, exact, time, isOnline: false };
 
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return { relative: 'Yesterday', exact, isOnline: false };
-    if (diffInDays < 7) return { relative: `${diffInDays}d ago`, exact, isOnline: false };
+    if (diffInDays === 1) return { relative: 'Yesterday', exact, time, isOnline: false };
+    if (diffInDays < 7) return { relative: `${diffInDays}d ago`, exact, time, isOnline: false };
 
     const diffInWeeks = Math.floor(diffInDays / 7);
-    if (diffInWeeks < 4) return { relative: `${diffInWeeks}w ago`, exact, isOnline: false };
+    if (diffInWeeks < 4) return { relative: `${diffInWeeks}w ago`, exact, time, isOnline: false };
 
     const diffInMonths = Math.floor(diffInDays / 30);
-    if (diffInMonths < 12) return { relative: `${diffInMonths}mo ago`, exact, isOnline: false };
+    if (diffInMonths < 12) return { relative: `${diffInMonths}mo ago`, exact, time, isOnline: false };
 
     const diffInYears = Math.floor(diffInDays / 365);
-    return { relative: `${diffInYears}y ago`, exact, isOnline: false };
+    return { relative: `${diffInYears}y ago`, exact, time, isOnline: false };
 };
 
 // ── Check if Candidate Registered Recently (within 7 days) ──
 const isRecentRegistration = (dateString) => {
-    if (!dateString) return false;
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return false;
+    const date = parseDateSafe(dateString);
+    if (!date) return false;
     const diffDays = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24);
     return diffDays >= 0 && diffDays <= 7;
 };
@@ -214,7 +242,7 @@ export default function JobSeekers() {
             completionPercentage: candidate.completionPercentage
         });
     };
-    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, recent: 0, new: 0, completed: 0, uncompleted: 0 });
+    const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, pending: 0, recent: 0, new: 0, new_registered: 0, last_login: 0, completed: 0, uncompleted: 0 });
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' }); // 'candidate' | 'education' | 'status' | 'last_login' | 'created_date'
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
@@ -316,7 +344,9 @@ export default function JobSeekers() {
                     pending: responseData.stats?.pending || 0,
                     completed: responseData.stats?.completed !== undefined ? responseData.stats.completed : (completedCount || prev.completed || 0),
                     uncompleted: responseData.stats?.uncompleted !== undefined ? responseData.stats.uncompleted : (uncompletedCount || prev.uncompleted || 0),
-                    recent: responseData.stats?.recent !== undefined ? responseData.stats.recent : (prev.recent || 0)
+                    recent: responseData.stats?.new_registered !== undefined ? responseData.stats.new_registered : (responseData.stats?.recent || 0),
+                    new_registered: responseData.stats?.new_registered !== undefined ? responseData.stats.new_registered : (responseData.stats?.recent || 0),
+                    last_login: responseData.stats?.last_login !== undefined ? responseData.stats.last_login : 0
                 }));
             }
 
@@ -369,7 +399,7 @@ export default function JobSeekers() {
     const filters = ['All', 'Recent', 'Active', 'Disabled'];
 
     return (
-        <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full">
+        <div className="animate-in fade-in duration-500 w-full">
             {/* Header Section */}
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
@@ -402,6 +432,54 @@ export default function JobSeekers() {
                         </span>
                     </button>
 
+                    {/* Active Tab */}
+                    <button
+                        onClick={() => { setActiveFilter('Active'); setCurrentPage(1); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Active'
+                            ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-100 shadow-2xs'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span className="whitespace-nowrap">Active</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {globalStats.active !== undefined ? globalStats.active : 0}
+                        </span>
+                    </button>
+
+                    {/* New Registered Tab */}
+                    <button
+                        onClick={() => { setActiveFilter('New Registered'); setCurrentPage(1); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'New Registered'
+                            ? 'bg-blue-50 text-blue-700 border-1 border-blue-200 shadow-2xs'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span className="whitespace-nowrap">New Registered</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'New Registered' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {globalStats.new_registered !== undefined ? globalStats.new_registered : (globalStats.recent || 0)}
+                        </span>
+                    </button>
+
+                    {/* Last Login Tab */}
+                    <button
+                        onClick={() => { setActiveFilter('Last Login'); setCurrentPage(1); }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Last Login'
+                            ? 'bg-violet-50 text-violet-700 border-1 border-violet-200 shadow-2xs'
+                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                    >
+                        <Clock className="w-4 h-4 text-violet-600 shrink-0" />
+                        <span className="whitespace-nowrap">Last Login</span>
+                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Last Login' ? 'bg-violet-100 text-violet-800' : 'bg-gray-100 text-gray-600'
+                            }`}>
+                            {globalStats.last_login !== undefined ? globalStats.last_login : 0}
+                        </span>
+                    </button>
+
                     {/* Complete Profile Tab */}
                     <button
                         onClick={() => { setActiveFilter('Complete'); setCurrentPage(1); }}
@@ -431,22 +509,6 @@ export default function JobSeekers() {
                         <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Uncompleted' ? 'bg-rose-100 text-rose-800' : 'bg-gray-100 text-gray-600'
                             }`}>
                             {globalStats.uncompleted !== undefined ? globalStats.uncompleted : 0}
-                        </span>
-                    </button>
-
-                    {/* Active Tab */}
-                    <button
-                        onClick={() => { setActiveFilter('Active'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Active'
-                            ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-100 shadow-2xs'
-                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                            }`}
-                    >
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                        <span className="whitespace-nowrap">Active</span>
-                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                            {globalStats.active !== undefined ? globalStats.active : 0}
                         </span>
                     </button>
 
@@ -493,12 +555,12 @@ export default function JobSeekers() {
             <div className="bg-white rounded-2xl overflow-hidden">
 
                 <div className="overflow-x-auto pb-1 min-h-[280px] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-gray-50 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full min-w-[1050px] text-left border-collapse">
                         <thead>
                             <tr className="border-b border-gray-100">
                                 <th
                                     onClick={() => handleSort('candidate')}
-                                    className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
                                     title="Click to sort by Candidate"
                                 >
                                     <div className="flex items-center gap-1.5">
@@ -514,7 +576,7 @@ export default function JobSeekers() {
                                 </th>
                                 <th
                                     onClick={() => handleSort('education')}
-                                    className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
                                     title="Click to sort by Education / Location"
                                 >
                                     <div className="flex items-center gap-1.5">
@@ -530,7 +592,7 @@ export default function JobSeekers() {
                                 </th>
                                 <th
                                     onClick={() => handleSort('completion')}
-                                    className="px-5 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
                                     title="Click to sort by Profile Completion"
                                 >
                                     <div className="flex items-center gap-1.5">
@@ -546,7 +608,7 @@ export default function JobSeekers() {
                                 </th>
                                 <th
                                     onClick={() => handleSort('status')}
-                                    className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
+                                    className="px-3.5 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
                                     title="Click to sort by Status"
                                 >
                                     <div className="flex items-center gap-1.5">
@@ -561,15 +623,15 @@ export default function JobSeekers() {
                                     </div>
                                 </th>
                                 <th
-                                    onClick={() => handleSort('last_login')}
-                                    className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th"
-                                    title="Click to sort by date"
+                                    onClick={() => handleSort('created_date')}
+                                    className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th whitespace-nowrap"
+                                    title="Click to sort by Registered Date"
                                 >
                                     <div className="flex items-center gap-1.5">
-                                        <span className={sortConfig.key === 'last_login' || sortConfig.key === 'created_date' ? 'text-indigo-600 font-bold' : ''}>
-                                            LAST LOGIN / REGISTERED
+                                        <span className={sortConfig.key === 'created_date' ? 'text-indigo-600 font-bold' : ''}>
+                                            REGISTERED DATE
                                         </span>
-                                        {sortConfig.key !== 'last_login' && sortConfig.key !== 'created_date' ? (
+                                        {sortConfig.key !== 'created_date' ? (
                                             <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
                                         ) : sortConfig.direction === 'asc' ? (
                                             <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
@@ -578,29 +640,48 @@ export default function JobSeekers() {
                                         )}
                                     </div>
                                 </th>
-                                <th className="px-4 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white text-center">ACTIONS</th>
+                                <th
+                                    onClick={() => handleSort('last_login')}
+                                    className="px-4 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white cursor-pointer hover:text-indigo-600 select-none transition-colors group/th whitespace-nowrap"
+                                    title="Click to sort by Last Login"
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span className={sortConfig.key === 'last_login' ? 'text-indigo-600 font-bold' : ''}>
+                                            LAST LOGIN
+                                        </span>
+                                        {sortConfig.key !== 'last_login' ? (
+                                            <ChevronsUpDown className="w-3.5 h-3.5 opacity-40 text-gray-400 group-hover/th:opacity-70 transition-opacity" />
+                                        ) : sortConfig.direction === 'asc' ? (
+                                            <ChevronUp className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        ) : (
+                                            <ChevronDown className="w-3.5 h-3.5 text-indigo-600 stroke-[2.5]" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th className="px-3.5 py-3.5 text-[11px] font-bold text-gray-500 uppercase tracking-wider bg-white text-center">ACTIONS</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 Array.from({ length: 5 }).map((_, i) => (
                                     <tr key={i} className="animate-pulse">
-                                        <td className="px-6 py-4">
+                                        <td className="px-4 py-3.5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-gray-200"></div>
                                                 <div className="space-y-2"><div className="h-4 w-32 bg-gray-200 rounded"></div><div className="h-3 w-24 bg-gray-200 rounded"></div></div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 space-y-2"><div className="h-4 w-40 bg-gray-200 rounded"></div><div className="h-3 w-32 bg-gray-200 rounded"></div></td>
-                                        <td className="px-5 py-4 space-y-2"><div className="h-3 w-20 bg-gray-200 rounded"></div><div className="h-2 w-28 bg-gray-200 rounded"></div></td>
-                                        <td className="px-4 py-4"><div className="h-6 w-20 bg-gray-200 rounded-full"></div></td>
-                                        <td className="px-4 py-4 space-y-1.5"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-3 w-16 bg-gray-200 rounded"></div></td>
-                                        <td className="px-4 py-4 text-right"><div className="h-8 w-8 bg-gray-200 rounded-lg ml-auto"></div></td>
+                                        <td className="px-4 py-3.5 space-y-2"><div className="h-4 w-40 bg-gray-200 rounded"></div><div className="h-3 w-32 bg-gray-200 rounded"></div></td>
+                                        <td className="px-4 py-3.5 space-y-2"><div className="h-3 w-20 bg-gray-200 rounded"></div><div className="h-2 w-28 bg-gray-200 rounded"></div></td>
+                                        <td className="px-3.5 py-3.5"><div className="h-6 w-20 bg-gray-200 rounded-full"></div></td>
+                                        <td className="px-4 py-3.5 space-y-1.5"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-3 w-16 bg-gray-200 rounded"></div></td>
+                                        <td className="px-4 py-3.5 space-y-1.5"><div className="h-4 w-24 bg-gray-200 rounded"></div><div className="h-3 w-16 bg-gray-200 rounded"></div></td>
+                                        <td className="px-3.5 py-3.5 text-right"><div className="h-8 w-8 bg-gray-200 rounded-lg ml-auto"></div></td>
                                     </tr>
                                 ))
                             ) : displayedUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-16 text-center">
+                                    <td colSpan={7} className="px-6 py-16 text-center">
                                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-50 mb-4">
                                             <Users className="w-8 h-8 text-gray-400" />
                                         </div>
@@ -612,7 +693,8 @@ export default function JobSeekers() {
                                 displayedUsers.map((user, idx) => {
                                     const isBottom = idx >= displayedUsers.length - 2 && displayedUsers.length > 3;
                                     const name = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown';
-                                    const activity = formatLastActive(user.last_login || user.created_date);
+                                    const regInfo = formatDateTime(user.created_date);
+                                    const activity = formatLastActive(user.last_login || user.last_active);
                                     const candidateAvatar = user.profile_image || user.profileImage || user.profile_picture || user.avatar;
                                     const completion = user.completionPercentage !== undefined
                                         ? user.completionPercentage
@@ -621,7 +703,7 @@ export default function JobSeekers() {
 
                                     return (
                                         <tr key={user.id || user._id || idx} className="hover:bg-gray-50/80 transition-colors group">
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-3.5">
                                                 <div className="flex items-center gap-3">
                                                     <div
                                                         onClick={() => handleViewProfile(user)}
@@ -669,7 +751,7 @@ export default function JobSeekers() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-3.5">
                                                 <div className="flex flex-col gap-1.5">
                                                     <div className="flex items-center gap-1.5 text-[13px] text-gray-700">
                                                         <GraduationCap className="w-3.5 h-3.5 text-gray-400 shrink-0" />
@@ -683,7 +765,7 @@ export default function JobSeekers() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-5 py-4">
+                                            <td className="px-4 py-3.5">
                                                 <div className="flex flex-col gap-1.5 w-28 sm:w-32">
                                                     <div className="flex items-center justify-between text-[11px] font-bold leading-none">
                                                         <span className={compConfig.textColor}>
@@ -704,41 +786,61 @@ export default function JobSeekers() {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-4">
+                                            <td className="px-3.5 py-3.5">
                                                 <span className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[12px] font-semibold ${(user.status === 'Approved' || user.status === 'Active') ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${(user.status === 'Approved' || user.status === 'Active') ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
                                                     {user.status || 'Disabled'}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-1.5">
-                                                    {activity.isOnline ? (
-                                                        <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[12px] font-semibold shadow-2xs">
+                                            {/* REGISTERED DATE */}
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                {user.created_date ? (
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-800">
+                                                            <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                                            <span>{regInfo.date}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500 pl-5">
+                                                            <Clock className="w-3 h-3 text-gray-400 shrink-0" />
+                                                            <span>{regInfo.time}</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[12px] text-gray-400">—</span>
+                                                )}
+                                            </td>
+                                            {/* LAST LOGIN */}
+                                            <td className="px-4 py-3.5 whitespace-nowrap">
+                                                {activity.isOnline ? (
+                                                    <div className="flex flex-col gap-1 items-start">
+                                                        <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[11.5px] font-semibold shadow-2xs">
                                                             <span className="relative flex h-2 w-2">
                                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                                                             </span>
                                                             Active now
                                                         </span>
-                                                    ) : (
-                                                        <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-700">
-                                                            <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                                            <span>{activity.relative}</span>
+                                                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500 pl-1">
+                                                            <Clock className="w-3 h-3 text-gray-400 shrink-0" />
+                                                            <span>{activity.time}</span>
                                                         </div>
-                                                    )}
-                                                </div>
-                                                {user.created_date ? (
-                                                    <div className="text-[11px] text-gray-500 flex items-center gap-1 mt-1 pl-0.5">
-                                                        <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
-                                                        <span>Joined: {new Date(user.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                                     </div>
-                                                ) : activity.exact && !activity.isOnline ? (
-                                                    <span className="text-[11px] text-gray-400 block mt-0.5 pl-5">
-                                                        {activity.exact}
-                                                    </span>
-                                                ) : null}
+                                                ) : (user.last_login || user.last_active) ? (
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <div className="flex items-center gap-1.5 text-[13px] font-medium text-gray-800">
+                                                            <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                                            <span>{activity.exact}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500 pl-5">
+                                                            <Clock className="w-3 h-3 text-gray-400 shrink-0" />
+                                                            <span>{activity.time}</span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-[12px] text-gray-400">—</span>
+                                                )}
                                             </td>
-                                            <td className="px-4 py-4 text-center">
+                                            <td className="px-3.5 py-3.5 text-center">
                                                 <div className="relative inline-block text-left">
                                                     <button
                                                         onClick={() => setOpenDropdown(openDropdown === user.id ? null : user.id)}

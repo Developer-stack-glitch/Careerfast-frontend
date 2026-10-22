@@ -25,6 +25,7 @@ import {
   FiCheck
 } from "react-icons/fi";
 import { BsBriefcaseFill, BsBuilding } from "react-icons/bs";
+import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
 import "../css/AppliedJobsTracker.css";
 
 const generateSlug = (text) => {
@@ -578,6 +579,9 @@ export default function AppliedJobs() {
         </div>
       </div>
 
+      {/* Critical Profile Alert for Candidates */}
+      <CriticalProfileAlert variant="applied-jobs" />
+
       {/* Interactive Metric Cards */}
       <div className="tracker-stats-grid">
         <div
@@ -720,7 +724,7 @@ export default function AppliedJobs() {
                   suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
                   showSearch
                   popupMatchSelectWidth={false}
-                  popupClassName="tracker-dropdown-popup"
+                  classNames={{ popup: { root: "tracker-dropdown-popup" } }}
                   placeholder="All Roles"
                   filterOption={(input, option) =>
                     String(option?.value ?? "").toLowerCase().includes(input.toLowerCase())
@@ -751,7 +755,7 @@ export default function AppliedJobs() {
                   suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
                   showSearch
                   popupMatchSelectWidth={false}
-                  popupClassName="tracker-dropdown-popup"
+                  classNames={{ popup: { root: "tracker-dropdown-popup" } }}
                   placeholder="All Companies"
                   filterOption={(input, option) =>
                     String(option?.value ?? "").toLowerCase().includes(input.toLowerCase())
@@ -782,7 +786,7 @@ export default function AppliedJobs() {
                   suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
                   showSearch
                   popupMatchSelectWidth={false}
-                  popupClassName="tracker-dropdown-popup"
+                  classNames={{ popup: { root: "tracker-dropdown-popup" } }}
                   placeholder="All Locations"
                   filterOption={(input, option) =>
                     String(option?.value ?? "").toLowerCase().includes(input.toLowerCase())
@@ -812,7 +816,7 @@ export default function AppliedJobs() {
                   prefix={<FiCalendar size={14} style={{ color: dateFilter !== 'All Time' ? '#5f2eea' : '#64748b' }} />}
                   suffixIcon={<FiChevronDown size={14} style={{ color: '#94a3b8' }} />}
                   popupMatchSelectWidth={false}
-                  popupClassName="tracker-dropdown-popup"
+                  classNames={{ popup: { root: "tracker-dropdown-popup" } }}
                   options={[
                     { value: 'All Time', label: 'All Time' },
                     { value: 'Last 7 Days', label: 'Last 7 Days' },

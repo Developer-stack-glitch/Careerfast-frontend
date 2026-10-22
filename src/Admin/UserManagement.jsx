@@ -414,7 +414,7 @@ export default function UserManagement() {
     }, [roles]);
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto pb-12">
+        <div className="space-y-6 max-w-9xl mx-auto pb-12">
             {/* Header section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

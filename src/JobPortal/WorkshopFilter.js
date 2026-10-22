@@ -255,7 +255,7 @@ export default function WorkshopFilter() {
           }] : [])
         ]}
       />
-      <Header />
+      <Header showSearch={true} />
 
       {loading ? (
         <>

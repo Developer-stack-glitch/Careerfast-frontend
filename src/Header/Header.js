@@ -1,13 +1,14 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import logo from "../images/careerfastlogofinal.png";
-import { useNavigate } from "@/routing-shim";
+import { useNavigate, usePathname, useLocation } from "@/routing-shim";
 import { getImageUrl } from "../utils/getImageUrl";
 // Header.css already in layout.jsx
 import { useDispatch, useSelector } from "react-redux";
 import { storeLoginStatus } from "../Redux/Slice";
 import {
   Input,
+  Select,
   Avatar,
   Dropdown,
   Drawer,
@@ -19,8 +20,8 @@ import {
   message,
   Button as AntButton,
   Modal,
+  Spin,
 } from "antd";
-import { usePathname } from "@/routing-shim";
 
 import {
   UserOutlined,
@@ -37,19 +38,198 @@ import {
   ProfileOutlined,
   LockOutlined,
   ReadOutlined,
+  SearchOutlined,
+  EnvironmentOutlined,
+  HistoryOutlined,
+  CloseCircleFilled,
 } from "@ant-design/icons";
 
 import {
   CrownFilled,
 } from "@ant-design/icons";
-import { getUserProfile } from "../ApiService/action";
+import { getUserProfile, getSearchSuggestions, searchLocationsAPI } from "../ApiService/action";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { FaBookOpen, FaCalendarAlt, FaChalkboardTeacher, FaGraduationCap } from "react-icons/fa";
-import { Blocks, BookAlert, LayoutDashboard, Briefcase, GraduationCap as LucideGraduationCap, Users, Menu, ShieldCheck, Building2, LogIn, CheckCircle2 } from "lucide-react";
+import {
+  Blocks,
+  BookAlert,
+  LayoutDashboard,
+  GraduationCap as LucideGraduationCap,
+  ShieldCheck,
+  Building2,
+  LogIn,
+  CheckCircle2,
+  Sparkles,
+  Search as LucideSearch,
+  MapPin,
+  X as LucideX,
+  ChevronDown as LucideChevronDown,
+  ArrowRight as LucideArrowRight,
+  Check as LucideCheck,
+  RotateCcw
+} from "lucide-react";
 
 const { Title, Text } = Typography;
 
-export default function Header({ noSticky = false }) {
+const cleanSingleLocationName = (name) => {
+  if (!name || typeof name !== 'string') return '';
+  return name.split('/')[0].split('(')[0].split(',')[0].trim();
+};
+
+const ALL_STANDARD_LOCATIONS = [
+  "Bangalore", "Chennai", "Hyderabad", "Mumbai", "Delhi", "Noida", "Gurgaon", "Pune", "Kolkata", "Ahmedabad",
+  "Coimbatore", "Chandigarh", "Chhatrapati Sambhajinagar", "Cuttack", "Cuddalore", "Chiplun", "Chandrapur",
+  "Calicut", "Kochi", "Jaipur", "Indore", "Visakhapatnam", "Bhubaneswar", "Trivandrum", "Vadodara",
+  "Nagpur", "Mysore", "Surat", "Bhopal", "Lucknow", "Patna", "Agra", "Ajmer", "Aligarh", "Allahabad",
+  "Amravati", "Amritsar", "Asansol", "Bareilly", "Belgaum", "Bhavnagar", "Bikaner", "Bokaro", "Dehradun",
+  "Dhanbad", "Durgapur", "Ernakulam", "Erode", "Faridabad", "Ghaziabad", "Gwalior", "Guwahati", "Hubli",
+  "Jabalpur", "Jalandhar", "Jammu", "Jamshedpur", "Jodhpur", "Kanpur", "Kolhapur", "Kota", "Madurai",
+  "Mangalore", "Meerut", "Moradabad", "Nashik", "Panaji", "Pondicherry", "Raipur", "Rajkot", "Ranchi",
+  "Rourkela", "Salem", "Shimla", "Siliguri", "Solapur", "Srinagar", "Thane", "Tiruchirappalli", "Tirunelveli",
+  "Tirupati", "Tirupur", "Udaipur", "Ujjain", "Varanasi", "Vijayawada", "Warangal", "Navi Mumbai", "Greater Noida",
+  "Guntur", "Nellore", "Kakinada", "Rajahmundry", "Kurnool", "Anantapur", "Kadapa", "Tiruvallur", "Vellore",
+  "Thanjavur", "Dindigul", "Nagercoil", "Kanchipuram", "Hosur", "Kollam", "Thrissur", "Kannur", "Alappuzha",
+  "Kottayam", "Palakkad", "Kasaragod", "Malappuram", "Ludhiana", "Mohali", "Panchkula", "Haridwar", "Roorkee",
+  "Gorakhpur", "Jhansi", "Mathura", "Alwar", "Bhilwara", "Sikar", "Bilaspur", "Korba", "Durg", "Bhilai",
+  "Muzaffarpur", "Bhagalpur", "Gaya", "Darbhanga", "Silchar", "Dibrugarh", "Jorhat", "Shillong",
+  "Gangtok", "Agartala", "Aizawl", "Imphal", "Remote", "Work from Home"
+];
+
+const ALL_POPULAR_SKILLS_AND_ROLES = [
+  // Top Engineering / Software Roles
+  "Software Engineer", "Frontend Developer", "Backend Developer", "Full Stack Developer",
+  "Java Developer", "Python Developer", "React Developer", "React Native Developer",
+  "Node.js Developer", "Angular Developer", "JavaScript Developer", "TypeScript Developer",
+  "PHP Developer", "Laravel Developer", ".NET Developer", "C# Developer", "C++ Developer",
+  "Android Developer", "iOS Developer", "Flutter Developer", "Mobile App Developer",
+  "DevOps Engineer", "Cloud Engineer", "AWS Solutions Architect", "Azure Cloud Architect",
+  "System Administrator", "Linux Administrator", "Network Engineer", "Cyber Security Analyst",
+  "Data Analyst", "Data Scientist", "Data Engineer", "Business Analyst", "Power BI Developer",
+  "Tableau Developer", "Machine Learning Engineer", "AI Specialist", "Deep Learning Engineer",
+  "Database Administrator (DBA)", "SQL Developer", "QA Engineer", "Automation Test Engineer",
+  "Manual Tester", "Software Tester", "SDET", "Selenium Tester", "Technical Support Engineer",
+  "IT Support Specialist", "Helpdesk Executive", "Desktop Support Engineer", "Solutions Architect",
+  "Technical Lead", "Engineering Manager",
+
+  // Design & Creative Roles
+  "UI/UX Designer", "Product Designer", "Graphic Designer", "Web Designer", "Visual Designer",
+  "Figma Designer", "Video Editor", "Motion Graphic Designer", "3D Animator", "Content Creator",
+
+  // Product, Project & Management
+  "Product Manager", "Associate Product Manager", "Project Manager", "Scrum Master",
+  "Agile Coach", "Operations Manager", "Operations Executive",
+
+  // Marketing, Content & SEO
+  "Digital Marketing Executive", "Digital Marketing Manager", "SEO Specialist", "SEM Specialist",
+  "Social Media Manager", "Content Writer", "Copywriter", "Technical Writer", "Email Marketer",
+  "Brand Manager", "Growth Specialist",
+
+  // Sales, Support & BPO
+  "Business Development Executive", "Business Development Manager", "Sales Executive",
+  "Sales Manager", "Inside Sales Specialist", "B2B Sales", "Telecaller", "Telesales Executive",
+  "Customer Support Executive", "Customer Success Manager", "BPO Executive", "Call Center Agent",
+
+  // HR, Admin & Operations
+  "HR Executive", "HR Manager", "HR Generalist", "HR Recruiter", "Talent Acquisition Specialist",
+  "Technical Recruiter", "Office Administrator", "Administrative Assistant", "Executive Assistant",
+  "Receptionist", "Data Entry Operator",
+
+  // Finance, Accounts & Banking
+  "Accountant", "Senior Accountant", "Chartered Accountant (CA)", "Accounts Executive",
+  "Financial Analyst", "Finance Manager", "Tax Consultant", "GST Specialist", "Billing Executive",
+
+  // Healthcare, Core Engineering & Others
+  "Mechanical Engineer", "Civil Engineer", "Electrical Engineer", "Electronics Engineer",
+  "Site Engineer", "Quality Control Engineer (QC)", "Pharmacist", "Medical Officer", "Intern"
+];
+
+const CITY_ALIASES = {
+  "bengaluru": "Bangalore",
+  "bang": "Bangalore",
+  "blr": "Bangalore",
+  "bombay": "Mumbai",
+  "mum": "Mumbai",
+  "madras": "Chennai",
+  "chen": "Chennai",
+  "maa": "Chennai",
+  "calcutta": "Kolkata",
+  "kol": "Kolkata",
+  "ccu": "Kolkata",
+  "secunderabad": "Hyderabad",
+  "hyd": "Hyderabad",
+  "gurugram": "Gurgaon",
+  "gur": "Gurgaon",
+  "ncr": "Delhi",
+  "del": "Delhi",
+  "cochin": "Kochi",
+  "ernakulam": "Kochi",
+  "kozhikode": "Calicut",
+  "trichy": "Tiruchirappalli",
+  "puducherry": "Pondicherry",
+  "pondy": "Pondicherry",
+  "goa": "Panaji",
+  "baroda": "Vadodara",
+  "vizag": "Visakhapatnam",
+  "trivandrum": "Trivandrum",
+  "thiruvananthapuram": "Trivandrum",
+  "mysuru": "Mysore",
+  "mangaluru": "Mangalore",
+  "hubballi": "Hubli",
+  "belagavi": "Belgaum",
+  "prayagraj": "Allahabad",
+  "allahabad": "Allahabad",
+  "aurangabad": "Chhatrapati Sambhajinagar",
+  "wfh": "Remote",
+  "home": "Remote"
+};
+
+const getInstantLocationMatches = (query) => {
+  if (!query || !query.trim()) return [];
+  const cleanQ = query.trim().toLowerCase();
+  const aliasCity = CITY_ALIASES[cleanQ];
+
+  const startsWith = [];
+  const contains = [];
+
+  if (aliasCity) {
+    startsWith.push(aliasCity);
+  }
+
+  for (let i = 0; i < ALL_STANDARD_LOCATIONS.length; i++) {
+    const city = ALL_STANDARD_LOCATIONS[i];
+    if (aliasCity && city.toLowerCase() === aliasCity.toLowerCase()) continue;
+    const lower = city.toLowerCase();
+    if (lower.startsWith(cleanQ)) {
+      startsWith.push(city);
+    } else if (lower.includes(cleanQ)) {
+      contains.push(city);
+    }
+  }
+
+  return [...startsWith, ...contains].slice(0, 10).map((c) => ({ label: c }));
+};
+
+const getInstantSkillsMatches = (query) => {
+  if (!query || !query.trim()) return [];
+  const cleanQ = query.trim().toLowerCase();
+
+  const startsWith = [];
+  const contains = [];
+
+  for (let i = 0; i < ALL_POPULAR_SKILLS_AND_ROLES.length; i++) {
+    const item = ALL_POPULAR_SKILLS_AND_ROLES[i];
+    const lower = item.toLowerCase();
+    if (lower.startsWith(cleanQ)) {
+      startsWith.push(item);
+    } else if (lower.includes(cleanQ)) {
+      contains.push(item);
+    }
+  }
+
+  return [...startsWith, ...contains].slice(0, 8).map((s) => ({ label: s }));
+};
+
+export default function Header({ noSticky = false, showSearch }) {
   const [open, setOpen] = useState(false);
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state) => state.loginstatus);
@@ -63,10 +243,301 @@ export default function Header({ noSticky = false }) {
   const [email, setEmail] = useState("");
   const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
+  const currentPath = usePathname();
+  const location = useLocation();
+
+  // Determine whether this is a filter / search page where header search is appropriate
+  const isFilterPage = Boolean(
+    currentPath && (
+      currentPath.includes("filter") ||
+      currentPath.startsWith("/jobs") ||
+      currentPath.startsWith("/internships") ||
+      currentPath.startsWith("/job-") ||
+      currentPath.startsWith("/internship-")
+    )
+  );
+  const shouldShowSearch = showSearch !== undefined ? Boolean(showSearch) : isFilterPage;
   const [headerProgress, setHeaderProgress] = useState(0);
   const [megaTab, setMegaTab] = useState("locations");
   const [candidateModalVisible, setCandidateModalVisible] = useState(false);
   const COURSE_URL = process.env.NEXT_PUBLIC_COURSE_URL || "";
+
+  // Quick Job Search Modal States (CareerFast Concept)
+  const [quickSearchOpen, setQuickSearchOpen] = useState(false);
+  const [quickKeywords, setQuickKeywords] = useState("");
+  const [quickExperience, setQuickExperience] = useState(null);
+  const [quickLocation, setQuickLocation] = useState("");
+
+  // Suggestions & Dropdown States matching exact HomePage & Naukri API & UI
+  const [skillsSuggestions, setSkillsSuggestions] = useState({ roles: [], skills: [], companies: [] });
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [showSkillsDropdown, setShowSkillsDropdown] = useState(false);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [skillsActiveIndex, setSkillsActiveIndex] = useState(-1);
+  const [locationActiveIndex, setLocationActiveIndex] = useState(-1);
+
+  const quickSearchInputRef = useRef(null);
+  const locationInputRef = useRef(null);
+  const skillsDropdownRef = useRef(null);
+  const locationDropdownRef = useRef(null);
+  const latestSkillsQueryRef = useRef("");
+  const latestLocationQueryRef = useRef("");
+
+  // Helper to get active term after last comma
+  const getLastQueryTerm = (val) => {
+    if (!val) return "";
+    const parts = val.split(",");
+    return parts[parts.length - 1].trim();
+  };
+
+  // Helper to cleanly append or replace the active term with selected suggestion
+  const appendSuggestionToInput = (currentVal, suggestion) => {
+    if (!currentVal || !currentVal.trim()) {
+      return suggestion + ", ";
+    }
+    const parts = currentVal.split(",");
+    parts.pop(); // remove whatever was typed after the last comma
+    const cleanPrefix = parts.map((p) => p.trim()).filter(Boolean);
+    if (!cleanPrefix.some((p) => p.toLowerCase() === suggestion.toLowerCase())) {
+      cleanPrefix.push(suggestion);
+    }
+    return cleanPrefix.join(", ") + ", ";
+  };
+
+  // Matching query highlighter for bold search terms
+  const highlightMatch = (text, query) => {
+    if (!query || !text) return text;
+    const cleanQ = query.trim();
+    if (!cleanQ) return text;
+    const index = text.toLowerCase().indexOf(cleanQ.toLowerCase());
+    if (index === -1) return text;
+    const before = text.substring(0, index);
+    const match = text.substring(index, index + cleanQ.length);
+    const after = text.substring(index + cleanQ.length);
+    return (
+      <span className="hp-suggestion-text-inner">
+        {before}
+        <strong className="matched-text">{match}</strong>
+        {after}
+      </span>
+    );
+  };
+
+  // Active query terms
+  const activeSkillTerm = getLastQueryTerm(quickKeywords);
+  const activeLocTerm = getLastQueryTerm(quickLocation);
+
+  // Synchronous 0ms in-memory instant suggestions
+  const instantSkillItems = useMemo(() => getInstantSkillsMatches(activeSkillTerm), [activeSkillTerm]);
+  const instantLocItems = useMemo(() => getInstantLocationMatches(activeLocTerm), [activeLocTerm]);
+
+  // Fast active skills list: prefer fresh API items if matching, otherwise instant items
+  const currentSkillsList = useMemo(() => {
+    if (!activeSkillTerm) return [];
+    const apiList = [
+      ...(skillsSuggestions.roles || []),
+      ...(skillsSuggestions.skills || []),
+      ...(skillsSuggestions.companies || []),
+    ];
+    if (apiList.length > 0 && latestSkillsQueryRef.current === activeSkillTerm.toLowerCase()) {
+      return apiList.slice(0, 8);
+    }
+    return instantSkillItems;
+  }, [activeSkillTerm, skillsSuggestions, instantSkillItems]);
+
+  // Fast active locations list: prefer fresh API items if matching, otherwise instant items
+  const currentLocationList = useMemo(() => {
+    if (!activeLocTerm) return [];
+    if (locationSuggestions.length > 0 && latestLocationQueryRef.current === activeLocTerm.toLowerCase()) {
+      return locationSuggestions.slice(0, 10);
+    }
+    return instantLocItems;
+  }, [activeLocTerm, locationSuggestions, instantLocItems]);
+
+  // Background API enrichment for Skills / Roles / Companies
+  useEffect(() => {
+    if (!activeSkillTerm) {
+      setSkillsSuggestions({});
+      return;
+    }
+
+    const currentQ = activeSkillTerm.toLowerCase();
+    latestSkillsQueryRef.current = currentQ;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await getSearchSuggestions({ q: activeSkillTerm, type: "all" });
+        if (latestSkillsQueryRef.current === currentQ && res?.data?.data) {
+          setSkillsSuggestions(res.data.data);
+        }
+      } catch (err) {
+        // Keep instant matches
+      }
+    }, 40);
+
+    return () => clearTimeout(timer);
+  }, [activeSkillTerm]);
+
+  // Background API enrichment for Locations
+  useEffect(() => {
+    if (!activeLocTerm) {
+      setLocationSuggestions([]);
+      return;
+    }
+
+    const currentQ = activeLocTerm.toLowerCase();
+    latestLocationQueryRef.current = currentQ;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await getSearchSuggestions({ q: activeLocTerm, type: "locations" });
+        if (latestLocationQueryRef.current === currentQ) {
+          const locs = res?.data?.data?.locations || [];
+          if (Array.isArray(locs) && locs.length > 0) {
+            const cleanedNames = locs
+              .map((l) => cleanSingleLocationName(l.label || l))
+              .filter(Boolean);
+            const unique = Array.from(new Set(cleanedNames));
+            setLocationSuggestions(unique.map((name) => ({ label: name })));
+          }
+        }
+      } catch (err) {
+        // Keep instant matches
+      }
+    }, 40);
+
+    return () => clearTimeout(timer);
+  }, [activeLocTerm]);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        skillsDropdownRef.current &&
+        !skillsDropdownRef.current.contains(event.target) &&
+        quickSearchInputRef.current &&
+        !quickSearchInputRef.current.contains(event.target)
+      ) {
+        setShowSkillsDropdown(false);
+      }
+
+      if (
+        locationDropdownRef.current &&
+        !locationDropdownRef.current.contains(event.target) &&
+        locationInputRef.current &&
+        !locationInputRef.current.contains(event.target)
+      ) {
+        setShowLocationDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectSkillsSuggestion = (item) => {
+    const label = typeof item === "string" ? item : (item.label || item.name || "");
+    if (label) {
+      setQuickKeywords((prev) => appendSuggestionToInput(prev, label));
+    }
+    setShowSkillsDropdown(false);
+    setSkillsActiveIndex(-1);
+    quickSearchInputRef.current?.focus();
+  };
+
+  const handleSelectLocationSuggestion = (item) => {
+    const rawVal = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
+    const locName = cleanSingleLocationName(typeof rawVal === "string" ? rawVal.trim() : String(rawVal));
+    if (locName) {
+      setQuickLocation((prev) => appendSuggestionToInput(prev, locName));
+    }
+    setShowLocationDropdown(false);
+    setLocationActiveIndex(-1);
+    locationInputRef.current?.focus();
+  };
+
+  const handleSkillsKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showSkillsDropdown && skillsActiveIndex >= 0 && currentSkillsList[skillsActiveIndex]) {
+        const item = currentSkillsList[skillsActiveIndex];
+        const label = typeof item === "string" ? item : (item.label || item.name || "");
+        const newSkills = appendSuggestionToInput(quickKeywords, label);
+        setQuickKeywords(newSkills);
+        setShowSkillsDropdown(false);
+        setSkillsActiveIndex(-1);
+        handleQuickSearchSubmit({ skills: newSkills });
+      } else {
+        setShowSkillsDropdown(false);
+        setSkillsActiveIndex(-1);
+        handleQuickSearchSubmit();
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      setShowSkillsDropdown(false);
+      setSkillsActiveIndex(-1);
+      return;
+    }
+
+    if (!showSkillsDropdown) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        setShowSkillsDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSkillsActiveIndex((prev) => (prev < currentSkillsList.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSkillsActiveIndex((prev) => (prev > 0 ? prev - 1 : currentSkillsList.length - 1));
+    }
+  };
+
+  const handleLocationKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (showLocationDropdown && locationActiveIndex >= 0 && locationSuggestions[locationActiveIndex]) {
+        const item = locationSuggestions[locationActiveIndex];
+        const rawVal = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
+        const locName = cleanSingleLocationName(typeof rawVal === "string" ? rawVal.trim() : String(rawVal));
+        const newLocation = appendSuggestionToInput(quickLocation, locName);
+        setQuickLocation(newLocation);
+        setShowLocationDropdown(false);
+        setLocationActiveIndex(-1);
+        handleQuickSearchSubmit({ location: newLocation });
+      } else {
+        setShowLocationDropdown(false);
+        setLocationActiveIndex(-1);
+        handleQuickSearchSubmit();
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      setShowLocationDropdown(false);
+      setLocationActiveIndex(-1);
+      return;
+    }
+
+    if (!showLocationDropdown) {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        setShowLocationDropdown(true);
+      }
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setLocationActiveIndex((prev) => (prev < locationSuggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setLocationActiveIndex((prev) => (prev > 0 ? prev - 1 : locationSuggestions.length - 1));
+    }
+  };
 
   const smartNavigate = (path) => {
     const externalPrefixes = [];
@@ -78,6 +549,130 @@ export default function Header({ noSticky = false }) {
       // Redirect to the Course project
       window.location.href = `${COURSE_URL}${path}`;
     }
+  };
+
+  // Focus quick search input when modal opens
+  useEffect(() => {
+    if (quickSearchOpen) {
+      const timer = setTimeout(() => {
+        quickSearchInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [quickSearchOpen]);
+
+  // Keyboard shortcuts: Ctrl+K / Cmd+K to toggle, Escape to close
+  useEffect(() => {
+    if (!shouldShowSearch) return;
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setQuickSearchOpen((prev) => !prev);
+      }
+      if (e.key === "Escape") {
+        if (quickSearchOpen) {
+          setQuickSearchOpen(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [quickSearchOpen, shouldShowSearch]);
+
+  // Sync search keyword, location, experience from URL
+  useEffect(() => {
+    if (!shouldShowSearch) return;
+    const searchStr = location?.search || (typeof window !== "undefined" ? window.location.search : "");
+    const params = new URLSearchParams(searchStr);
+    const q = params.get("q") || "";
+    const l = params.get("l") || "";
+    const expParam = params.get("experience");
+    const userTypeParam = params.get("userType");
+    const natureParam = params.get("job_nature");
+
+    let exp = null;
+    if (expParam !== null && expParam !== undefined && expParam !== "") {
+      exp = expParam;
+    } else if (userTypeParam === "Fresher") {
+      exp = 0;
+    } else if (natureParam === "Internship") {
+      exp = "Internship";
+    }
+
+    setQuickKeywords(q);
+    setQuickLocation(l);
+    setQuickExperience(exp);
+  }, [shouldShowSearch, location?.pathname, location?.search]);
+
+  // Listen for clear filter event dispatched from JobFilter
+  useEffect(() => {
+    const handleClearHeaderSearch = () => {
+      setQuickKeywords("");
+      setQuickLocation("");
+      setQuickExperience(null);
+      setShowSkillsDropdown(false);
+      setShowLocationDropdown(false);
+    };
+    window.addEventListener("clearHeaderSearch", handleClearHeaderSearch);
+    return () => window.removeEventListener("clearHeaderSearch", handleClearHeaderSearch);
+  }, []);
+
+  const handleClearQuickFilters = () => {
+    setQuickKeywords("");
+    setQuickLocation("");
+    setQuickExperience(null);
+    setShowSkillsDropdown(false);
+    setShowLocationDropdown(false);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("clearHeaderSearch"));
+    }
+    if (isFilterPage) {
+      smartNavigate("/jobs");
+    }
+  };
+
+  const handleQuickSearchSubmit = (overrides = {}) => {
+    if (overrides && overrides.preventDefault) overrides.preventDefault();
+    const skillsToUse = overrides && overrides.hasOwnProperty('skills') ? overrides.skills : quickKeywords;
+    const locationToUse = overrides && overrides.hasOwnProperty('location') ? overrides.location : quickLocation;
+    const experienceToUse = overrides && overrides.hasOwnProperty('experience') ? overrides.experience : quickExperience;
+
+    const locParts = (locationToUse || "")
+      .split(",")
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    const skillTrimmed = (skillsToUse || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .join(", ");
+
+    const hasExperience = experienceToUse !== null && experienceToUse !== undefined && experienceToUse !== "";
+
+    if (!skillTrimmed && locParts.length === 0 && !hasExperience) {
+      message.info("Please enter some search criteria");
+      return;
+    }
+
+    let queryParams = [];
+    if (skillTrimmed) queryParams.push(`q=${encodeURIComponent(skillTrimmed)}`);
+    locParts.forEach((loc) => {
+      queryParams.push(`l=${encodeURIComponent(loc)}`);
+    });
+    if (hasExperience) {
+      if (String(experienceToUse).toLowerCase() === "internship") {
+        queryParams.push(`job_nature=Internship`);
+      } else if (experienceToUse === 0 || experienceToUse === "0" || experienceToUse === "Fresher") {
+        queryParams.push(`userType=Fresher`);
+      } else {
+        queryParams.push(`experience=${experienceToUse}`);
+      }
+    }
+
+    const searchUrl = `/job-filter?${queryParams.join("&")}`;
+    smartNavigate(searchUrl);
+    setQuickSearchOpen(false);
   };
 
   useEffect(() => {
@@ -184,14 +779,22 @@ export default function Header({ noSticky = false }) {
     let score = 0;
     let total = 8;
 
-    if (profile.about) score++;
+    if (profile.about && String(profile.about).trim()) score++;
     if (profile.skills?.length > 0) score++;
     if (profile.education?.length > 0) score++;
     if (profile.projects?.length > 0) score++;
-    if (profile.experience?.length > 0) score++;
-    if (profile.social_links) score++;
-    if (profile.resume) score++;
-    if (profile.profile_image) score++;
+    const hasExp = Boolean(
+      (profile.professional && profile.professional.length > 0) ||
+      (profile.experience && profile.experience.length > 0) ||
+      (profile.companies && profile.companies.length > 0) ||
+      profile.user_type === "Fresher" ||
+      profile.experince_type === "Fresher" ||
+      (profile.total_years && String(profile.total_years) !== "0")
+    );
+    if (hasExp) score++;
+    if (profile.social_links && (typeof profile.social_links === 'object' ? Object.values(profile.social_links).some(Boolean) : true)) score++;
+    if (profile.resume && profile.resume !== "null" && profile.resume !== "#") score++;
+    if (profile.profile_image || profile.certifications?.length > 0) score++;
 
     const percentage = Math.round((score / total) * 100);
 
@@ -324,15 +927,14 @@ export default function Header({ noSticky = false }) {
   );
 
   const menuItems = [
-    { key: "jobs", label: "Jobs", icon: <Briefcase size={16} style={{ color: "#64748b" }} />, path: "/job-filter?job_nature=Job", isDropdown: true },
+    { key: "jobs", label: "Jobs", path: "/job-filter?job_nature=Job", isDropdown: true },
     {
       key: "internships",
       label: "Internships",
-      icon: <LucideGraduationCap size={18} style={{ color: "#64748b" }} />,
       path: "/job-filter?job_nature=Internship",
       isDropdown: true
     },
-    { key: "mentorships", label: "Mentorships", icon: <Users size={18} style={{ color: "#64748b" }} />, path: "/mentors" },
+    { key: "mentorships", label: "Mentorships", path: "/mentors" },
   ];
 
   const moreMenuItems = [
@@ -445,8 +1047,6 @@ export default function Header({ noSticky = false }) {
     }
   ];
 
-  const currentPath = usePathname();
-
   return (
     <>
       <div className="top-bar-custom">
@@ -502,9 +1102,9 @@ export default function Header({ noSticky = false }) {
               </div>
             </div>
 
-            {/* Desktop Navigation */}
-            <div className="d-none d-md-flex align-items-center flex-grow-1 justify-content-center">
-              <nav className="nav justify-content-center align-items-center gap-0">
+            {/* Desktop Navigation & Search */}
+            <div className={`d-none d-md-flex align-items-center flex-grow-1 ${shouldShowSearch ? 'px-3' : 'justify-content-center'}`}>
+              <nav className="nav align-items-center gap-2 flex-shrink-0">
                 {menuItems.map((item) => (
                   item.isDropdown ? (
                     <Dropdown
@@ -518,7 +1118,7 @@ export default function Header({ noSticky = false }) {
                         style={{ cursor: "pointer" }}
                         onClick={() => smartNavigate(item.path)}
                       >
-                        {item.icon} {item.label} <IoChevronDownOutline />
+                        {item.icon} {item.label}
                       </div>
                     </Dropdown>
                   ) : (
@@ -546,10 +1146,69 @@ export default function Header({ noSticky = false }) {
                     className={`nav-link nav-item ${moreMenuItems.some((menu) => currentPath === menu.path) ? "active" : ""}`}
                     style={{ cursor: "pointer" }}
                   >
-                    <Menu size={18} style={{ color: "#64748b" }} /> More <IoChevronDownOutline />
+                    More
                   </div>
                 </Dropdown>
               </nav>
+
+              {/* Centered & Enlarged Search Bar in Header */}
+              {shouldShowSearch && (
+                <div className="header-search-center-container">
+                  <div
+                    className="naukri-header-compact-search"
+                    onClick={() => setQuickSearchOpen(true)}
+                    title="Search jobs (Ctrl+K)"
+                  >
+                    <SearchOutlined style={{ color: "#8292b4", fontSize: 16, marginRight: 8 }} />
+                    <span className={`naukri-compact-placeholder ${quickKeywords || quickLocation ? 'has-value' : ''}`}>
+                      {quickKeywords
+                        ? `${quickKeywords}${quickLocation ? ` in ${quickLocation}` : ''}`
+                        : "Skills / designations / companies"}
+                    </span>
+                    {(quickKeywords || quickLocation) ? (
+                      <button
+                        type="button"
+                        className="naukri-compact-clear-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClearQuickFilters();
+                        }}
+                        title="Clear search"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: "0 6px",
+                          cursor: "pointer",
+                          color: "#94a3b8",
+                          display: "flex",
+                          alignItems: "center",
+                          fontSize: "15px",
+                          transition: "color 0.2s"
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = "#ef4444"}
+                        onMouseLeave={(e) => e.currentTarget.style.color = "#94a3b8"}
+                      >
+                        <CloseCircleFilled />
+                      </button>
+                    ) : (
+                      <span className="naukri-compact-shortcut hidden sm:inline-block">
+                        Ctrl K
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className="naukri-compact-search-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setQuickSearchOpen(true);
+                      }}
+                      title="Quick Search"
+                    >
+                      <SearchOutlined />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* User Actions */}
@@ -672,6 +1331,293 @@ export default function Header({ noSticky = false }) {
           </div>
         </div>
       </header>
+
+      {/* Quick Job Search Modal / Command Palette - CareerFast Concept */}
+      {shouldShowSearch && quickSearchOpen && (
+        <div
+          className="fixed inset-0 z-[2050] flex items-start justify-center p-3 sm:p-6 bg-slate-900/60 backdrop-blur-xs overflow-y-auto pt-12 sm:pt-16 quick-job-search-overlay"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setQuickSearchOpen(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-3xl shadow-[0_25px_60px_-15px_rgba(15,23,42,0.25)] border border-slate-200/90 max-w-4xl w-full p-4 sm:p-7 space-y-5 relative quick-job-search-modal">
+
+            {/* Modal Hero Header (CareerFast Concept matching User Screenshot) */}
+            <div className="relative text-center pt-1 pb-1 mb-2">
+              <button
+                type="button"
+                onClick={() => setQuickSearchOpen(false)}
+                className="absolute -top-1 -right-1 text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer border-0 bg-transparent flex items-center gap-1.5"
+                title="Close (Esc)"
+              >
+                <span className="hidden sm:inline-block text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Esc</span>
+                <LucideX size={19} />
+              </button>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11.5px] font-bold bg-purple-50 text-purple-700 border-1 border-purple-200/70 mb-2">
+                <Sparkles size={13} className="text-purple-600" />
+                <span>Instant Job Search</span>
+              </div>
+              <h2 className="text-[24px] sm:text-[30px] font-semibold text-slate-900 tracking-tight mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                Find your dream job now
+              </h2>
+              <p className="text-[15px] sm:text-[16px] text-[#474d6a] font-normal mb-0" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                5 lakh+ jobs for you to explore
+              </p>
+            </div>
+
+            {/* Search Form with CareerFast Concept Segmented Bar */}
+            <form onSubmit={handleQuickSearchSubmit} className="space-y-4 m-0">
+              <div className="quick-search-pill-container">
+
+                {/* 1. Skills / Designations / Companies */}
+                <div className="quick-search-segment skills-segment">
+                  <SearchOutlined className="quick-search-icon" />
+                  <div className="hp-input-wrapper" style={{ flex: 1, display: 'flex', alignItems: 'center', position: 'relative' }}>
+                    <input
+                      ref={quickSearchInputRef}
+                      type="text"
+                      value={quickKeywords}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setQuickKeywords(val);
+                        const term = getLastQueryTerm(val);
+                        const hasTerm = Boolean(term && term.trim());
+                        setShowSkillsDropdown(hasTerm);
+                        setSkillsActiveIndex(-1);
+                        if (hasTerm) {
+                          latestSkillsQueryRef.current = term.toLowerCase();
+                          const instant = getInstantSkillsMatches(term);
+                          setSkillsSuggestions({ roles: instant });
+                        } else {
+                          latestSkillsQueryRef.current = "";
+                          setSkillsSuggestions({});
+                        }
+                      }}
+                      onFocus={() => {
+                        const term = getLastQueryTerm(quickKeywords);
+                        if (term && term.trim()) {
+                          setShowSkillsDropdown(true);
+                        }
+                      }}
+                      onKeyDown={handleSkillsKeyDown}
+                      placeholder="Skills / designations / companies"
+                      className="quick-search-input"
+                      autoComplete="off"
+                    />
+                    {quickKeywords && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickKeywords('');
+                          setShowSkillsDropdown(false);
+                          quickSearchInputRef.current?.focus();
+                        }}
+                        className="hp-clear-btn"
+                        title="Clear search"
+                      >
+                        <CloseCircleFilled />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Clean Skills Suggestions Dropdown matching Screenshot 1 */}
+                  {showSkillsDropdown && Boolean(activeSkillTerm) && currentSkillsList.length > 0 && (
+                    <div className="hp-suggestions-dropdown" ref={skillsDropdownRef}>
+                      {currentSkillsList.map((item, idx) => {
+                        const isHighlighted = skillsActiveIndex === idx;
+                        const label = typeof item === "string" ? item : (item.label || item.name || "");
+                        return (
+                          <div
+                            key={`skill-${idx}`}
+                            className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleSelectSkillsSuggestion(item);
+                            }}
+                            onMouseEnter={() => setSkillsActiveIndex(idx)}
+                          >
+                            <span className="hp-suggestion-text">
+                              {highlightMatch(label, activeSkillTerm)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="quick-search-divider" />
+
+                {/* 2. Select Experience */}
+                <div className="quick-search-segment exp-segment" style={{ cursor: 'pointer' }}>
+                  <HistoryOutlined className="quick-search-icon" />
+                  <Select
+                    placeholder="Select experience"
+                    className="hp-search-input-select quick-search-select"
+                    variant="borderless"
+                    style={{ width: '100%' }}
+                    value={quickExperience !== null && quickExperience !== undefined ? quickExperience : undefined}
+                    onChange={(val) => setQuickExperience(val)}
+                    allowClear
+                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
+                    classNames={{ popup: { root: "hp-experience-select-dropdown" } }}
+                    styles={{ popup: { root: { zIndex: 99999 } } }}
+                    suffixIcon={<IoChevronDownOutline size={13} style={{ color: '#8292b4' }} />}
+                  >
+                    <Select.Option value="Internship" className="hp-exp-internship-opt">Internship</Select.Option>
+                    <Select.Option value={0}>Fresher (less than 1 year)</Select.Option>
+                    <Select.Option value={1}>1 Year</Select.Option>
+                    <Select.Option value={2}>2 Years</Select.Option>
+                    <Select.Option value={3}>3 Years</Select.Option>
+                    <Select.Option value={4}>4 Years</Select.Option>
+                    <Select.Option value={5}>5+ Years</Select.Option>
+                  </Select>
+                </div>
+
+                {/* Divider */}
+                <div className="quick-search-divider" />
+
+                {/* 3. Enter Location */}
+                <div className="quick-search-segment loc-segment">
+                  <EnvironmentOutlined className="quick-search-icon" />
+                  <div className="hp-input-wrapper" style={{ flex: 1, display: 'flex', alignItems: 'center', position: 'relative' }}>
+                    <input
+                      ref={locationInputRef}
+                      type="text"
+                      value={quickLocation}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setQuickLocation(val);
+                        const term = getLastQueryTerm(val);
+                        const hasTerm = Boolean(term && term.trim());
+                        setShowLocationDropdown(hasTerm);
+                        setLocationActiveIndex(-1);
+                        if (hasTerm) {
+                          latestLocationQueryRef.current = term.toLowerCase();
+                          const instant = getInstantLocationMatches(term);
+                          setLocationSuggestions(instant);
+                        } else {
+                          latestLocationQueryRef.current = "";
+                          setLocationSuggestions([]);
+                        }
+                      }}
+                      onFocus={() => {
+                        const term = getLastQueryTerm(quickLocation);
+                        if (term && term.trim()) {
+                          setShowLocationDropdown(true);
+                        }
+                      }}
+                      onKeyDown={handleLocationKeyDown}
+                      placeholder="Enter location"
+                      className="quick-search-input"
+                      autoComplete="off"
+                    />
+                    {quickLocation && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setQuickLocation('');
+                          setShowLocationDropdown(false);
+                          locationInputRef.current?.focus();
+                        }}
+                        className="hp-clear-btn"
+                        title="Clear location"
+                      >
+                        <CloseCircleFilled />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Clean Location Suggestions Dropdown matching Naukri UI */}
+                  {showLocationDropdown && Boolean(activeLocTerm) && (
+                    <div className="hp-suggestions-dropdown hp-suggestions-dropdown-location" ref={locationDropdownRef}>
+                      {currentLocationList && currentLocationList.length > 0 ? (
+                        currentLocationList.map((item, idx) => {
+                          const isHighlighted = locationActiveIndex === idx;
+                          const rawLabel = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
+                          const labelText = cleanSingleLocationName(rawLabel);
+                          return (
+                            <div
+                              key={`loc-${idx}`}
+                              className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectLocationSuggestion(item);
+                              }}
+                              onMouseEnter={() => setLocationActiveIndex(idx)}
+                            >
+                              <span className="hp-suggestion-text">
+                                {highlightMatch(labelText, activeLocTerm)}
+                              </span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div
+                          className="hp-suggestion-empty"
+                          style={{ cursor: activeLocTerm ? "pointer" : "default" }}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            if (activeLocTerm) {
+                              handleSelectLocationSuggestion(activeLocTerm);
+                            }
+                          }}
+                        >
+                          Press Enter to add "<strong>{activeLocTerm}</strong>"
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 4. Search Button */}
+                <button
+                  type="submit"
+                  className="quick-search-submit-btn"
+                >
+                  Search
+                </button>
+              </div>
+            </form>
+
+            {/* Modal Footer: All Jobs & Filters Link & Reset */}
+            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
+              <div className="text-[12.5px] text-slate-500 font-medium">
+                Need more precise filters? Use{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickSearchOpen(false);
+                    smartNavigate('/jobs');
+                  }}
+                  className="font-bold text-purple-600 hover:text-purple-800 hover:underline inline-flex items-center gap-1 cursor-pointer border-0 bg-transparent p-0"
+                >
+                  <span>All Jobs &amp; Filters</span>
+                  <LucideArrowRight size={13} />
+                </button>
+                {' '}for salary brackets, work modes, and company filters.
+              </div>
+
+              {(quickKeywords || quickLocation || quickExperience !== null) && (
+                <button
+                  type="button"
+                  onClick={handleClearQuickFilters}
+                  className="text-[12px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer transition-colors border-0 bg-transparent"
+                >
+                  <RotateCcw size={12} />
+                  <span>Reset filters</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <Drawer
         className="header-drawer"

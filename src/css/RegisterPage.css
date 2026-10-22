@@ -1,970 +1,870 @@
 /* ==========================================================================
-   CareerFast Candidate Registration Page Styles
-   Professional, Neat, Modern, State-of-the-Art Aesthetic
+   CareerFast Candidate Registration Page
+   Clean, modern, copyright-safe layout with CareerFast brand identity
    ========================================================================== */
 
 :root {
-  --cf-indigo-600: #4f46e5;
-  --cf-indigo-500: #6366f1;
-  --cf-indigo-700: #4338ca;
-  --cf-violet-600: #7c3aed;
-  --cf-emerald: #10b981;
-  --cf-slate-900: #0f172a;
-  --cf-slate-800: #1e293b;
-  --cf-slate-700: #334155;
-  --cf-slate-600: #475569;
-  --cf-slate-500: #64748b;
-  --cf-slate-400: #94a3b8;
-  --cf-slate-200: #e2e8f0;
-  --cf-slate-100: #f1f5f9;
-  --cf-slate-50: #f8fafc;
+  --cf-reg-primary: #4f46e5;
+  --cf-reg-primary-hover: #4338ca;
+  --cf-reg-primary-light: #f5f3ff;
+  --cf-reg-emerald: #10b981;
+  --cf-reg-slate-900: #0f172a;
+  --cf-reg-slate-800: #1e293b;
+  --cf-reg-slate-700: #334155;
+  --cf-reg-slate-600: #475569;
+  --cf-reg-slate-500: #64748b;
+  --cf-reg-slate-400: #94a3b8;
+  --cf-reg-slate-300: #cbd5e1;
+  --cf-reg-slate-200: #e2e8f0;
+  --cf-reg-slate-100: #f1f5f9;
+  --cf-reg-slate-50: #f8fafc;
 }
 
-/* ================= PAGE OUTER WRAPPER ================= */
-.cf-register-wrapper {
+/* Page Outer Wrapper */
+.cf-reg-page {
   min-height: 100vh;
   width: 100%;
   background: #f8fafc;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  position: relative;
-  overflow: hidden;
+  flex-direction: column;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
+  color: var(--cf-reg-slate-800);
 }
 
-/* Background Subtle Lighting & Technical Grid Overlay */
-.cf-register-wrapper .cf-bg-ambient-light {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 500px;
-  background: radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.cf-register-wrapper .cf-bg-grid-overlay {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(148, 163, 184, 0.16) 1px, transparent 1px);
-  background-size: 28px 28px;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ================= MAIN CARD CONTAINER ================= */
-.cf-register-card {
-  max-width: 1140px;
+/* ================= TOP HEADER ================= */
+.cf-reg-header {
   width: 100%;
-  min-height: 680px;
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow:
-    0 20px 48px -12px rgba(15, 23, 42, 0.09),
-    0 1px 2px 0 rgba(15, 23, 42, 0.04),
-    0 0 0 1px rgba(226, 232, 240, 0.85);
-  display: grid;
-  grid-template-columns: 52% 48%;
-  overflow: hidden;
-  position: relative;
-  z-index: 1;
-}
-
-/* ================= LEFT SIDE: REGISTRATION FORM ================= */
-.cf-register-form-column {
-  padding: 38px 46px 32px 46px;
+  border-bottom: 1px solid var(--cf-reg-slate-200);
+  height: 68px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: #ffffff;
-  box-sizing: border-box;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-/* Top Navigation Row */
-.cf-register-form-column .cf-top-nav-row {
+.cf-reg-header-inner {
+  max-width: 1080px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
 }
 
-.cf-register-form-column .cf-back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  background: none;
-  border: none;
-  padding: 4px 6px 4px 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--cf-slate-500);
+.cf-reg-brand {
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-radius: 6px;
-}
-
-.cf-register-form-column .cf-back-link:hover {
-  color: var(--cf-slate-900);
-  transform: translateX(-2px);
-}
-
-.cf-register-form-column .cf-portal-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  background: #eef2ff;
-  border: 1px solid #e0e7ff;
-  color: var(--cf-indigo-600);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 4px 11px;
-  border-radius: 9999px;
 }
 
-.cf-register-form-column .cf-portal-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--cf-emerald);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
-}
-
-/* Brand Header */
-.cf-register-form-column .cf-brand-header {
-  margin-bottom: 14px;
-}
-
-.cf-register-form-column .cf-brand-logo {
-  height: 36px;
+.cf-reg-logo {
+  height: 38px;
   width: auto;
   object-fit: contain;
   display: block;
 }
 
-/* Heading Block */
-.cf-register-form-column .cf-heading-block {
-  margin-bottom: 20px;
-}
-
-.cf-register-form-column .cf-title {
-  font-family: 'Outfit', sans-serif !important;
-  font-size: 26px !important;
-  font-weight: 700 !important;
-  color: var(--cf-slate-900) !important;
-  margin: 0 0 6px 0 !important;
-  letter-spacing: -0.5px;
-  line-height: 1.25;
-}
-
-.cf-register-form-column .cf-subtitle {
-  margin: 0;
-  font-size: 13.5px;
-  color: var(--cf-slate-500);
-  line-height: 1.5;
-}
-
-/* Form Layout */
-.cf-register-form-column .cf-auth-form {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.cf-grid-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 2px;
-}
-
-.cf-register-form-column .cf-field-group {
-  margin-bottom: 14px;
-  display: flex;
-  flex-direction: column;
-}
-
-.cf-register-form-column .cf-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cf-slate-700);
-  margin-bottom: 5px;
-  letter-spacing: -0.1px;
-}
-
-.cf-register-form-column .cf-input-box {
+.cf-reg-header-right {
   display: flex;
   align-items: center;
-  background: #ffffff;
-  border: 1.5px solid var(--cf-slate-200);
-  border-radius: 10px;
-  padding: 0 13px;
-  height: 44px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-sizing: border-box;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  gap: 6px;
+  font-size: 14px;
+  color: var(--cf-reg-slate-600);
 }
 
-.cf-register-form-column .cf-input-box:hover {
-  border-color: #cbd5e1;
-}
-
-.cf-register-form-column .cf-input-box:focus-within {
-  border-color: var(--cf-indigo-500);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.14);
-}
-
-.cf-register-form-column .cf-input-box.cf-has-error {
-  border-color: #ef4444;
-  background: #fffcfc;
-}
-
-.cf-register-form-column .cf-field-icon {
-  color: var(--cf-slate-400);
-  font-size: 15px;
-  margin-right: 9px;
-  flex-shrink: 0;
-  transition: color 0.2s ease;
-}
-
-.cf-register-form-column .cf-input-box:focus-within .cf-field-icon {
-  color: var(--cf-indigo-600);
-}
-
-.cf-phone-prefix {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--cf-slate-600);
-  padding-right: 7px;
-  margin-right: 7px;
-  border-right: 1px solid var(--cf-slate-200);
-  user-select: none;
-}
-
-.cf-register-form-column .cf-native-input {
-  flex: 1;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-  font-size: 13.5px;
-  color: var(--cf-slate-900);
-  font-family: inherit;
-  width: 100%;
-}
-
-.cf-register-form-column .cf-native-input:focus,
-.cf-register-form-column .cf-native-input:focus-visible {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.cf-register-form-column .cf-native-input::placeholder {
-  color: var(--cf-slate-400);
-  font-weight: 400;
-}
-
-.cf-register-form-column .cf-native-input:-webkit-autofill,
-.cf-register-form-column .cf-native-input:-webkit-autofill:hover,
-.cf-register-form-column .cf-native-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
-  -webkit-text-fill-color: var(--cf-slate-900) !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
-.cf-register-form-column .cf-antd-pass,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-focused,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper:focus,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper:focus-within,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless:focus,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless:focus-within,
-.cf-register-form-column .cf-antd-pass.ant-input-affix-wrapper-borderless.ant-input-affix-wrapper-focused {
-  flex: 1;
-  width: 100%;
-  padding: 0 !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-  background: transparent !important;
-}
-
-.cf-register-form-column .cf-antd-pass input,
-.cf-register-form-column .cf-antd-pass input:focus,
-.cf-register-form-column .cf-antd-pass input:focus-visible,
-.cf-register-form-column .cf-antd-pass .ant-input,
-.cf-register-form-column .cf-antd-pass .ant-input:focus,
-.cf-register-form-column .cf-antd-pass .ant-input:focus-visible {
-  font-size: 13.5px !important;
-  color: var(--cf-slate-900) !important;
-  font-family: inherit !important;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.cf-register-form-column .cf-antd-pass input::placeholder {
-  color: var(--cf-slate-400) !important;
-}
-
-.cf-register-form-column .cf-antd-pass .ant-input-suffix {
-  color: var(--cf-slate-400) !important;
-  cursor: pointer;
-  font-size: 15px;
-  transition: color 0.2s ease;
-}
-
-.cf-register-form-column .cf-antd-pass .ant-input-suffix:hover {
-  color: var(--cf-slate-800) !important;
-}
-
-.cf-register-form-column .cf-error-msg {
-  font-size: 11.5px;
-  color: #ef4444;
-  margin-top: 4px;
-  font-weight: 500;
-}
-
-/* Terms Row */
-.cf-terms-row {
-  margin: 6px 0 18px 0;
-}
-
-.cf-terms-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.cf-register-form-column .cf-custom-checkbox .ant-checkbox-inner {
-  border-radius: 5px !important;
-  border: 1.5px solid #cbd5e1 !important;
-}
-
-.cf-register-form-column .cf-custom-checkbox .ant-checkbox-checked .ant-checkbox-inner {
-  background-color: var(--cf-indigo-600) !important;
-  border-color: var(--cf-indigo-600) !important;
-}
-
-.cf-terms-text {
-  font-size: 12.5px;
-  color: var(--cf-slate-600);
-  line-height: 1.45;
-}
-
-.cf-link-btn {
+.cf-reg-login-btn {
   background: none;
   border: none;
-  padding: 0;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--cf-indigo-600);
+  color: var(--cf-reg-primary);
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.cf-reg-login-btn strong {
+  font-weight: 700;
+  color: var(--cf-reg-primary);
+}
+
+.cf-reg-login-btn:hover {
+  color: var(--cf-reg-primary-hover);
   text-decoration: underline;
-  text-underline-offset: 2px;
 }
 
-.cf-link-btn:hover {
-  color: var(--cf-indigo-700);
+/* ================= MAIN CONTENT ================= */
+.cf-reg-main {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 20px 48px 20px;
 }
 
-/* Primary Submit Button */
-.cf-register-form-column .cf-submit-btn {
-  height: 46px;
+.cf-reg-container {
+  max-width: 1040px;
   width: 100%;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-  border: none;
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+}
+
+/* ================= LEFT: BENEFITS CARD ================= */
+.cf-reg-benefits-card {
+  width: 300px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px 18px 22px 18px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 24px;
+}
+
+.cf-reg-benefits-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  background: linear-gradient(135deg, #eff6ff 0%, #eef2ff 100%);
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.cf-reg-badge-icon {
+  color: #6366f1;
+}
+
+.cf-reg-illustration-wrap {
+  width: 100%;
+  height: 160px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: -0.1px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  padding: 6px 8px;
 }
 
-.cf-register-form-column .cf-submit-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.42);
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+.cf-reg-illustration {
+  max-width: 100%;
+  max-height: 175px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 4px 10px rgba(79, 70, 229, 0.08));
 }
 
-.cf-register-form-column .cf-submit-btn:active:not(:disabled) {
-  transform: translateY(0);
+.cf-reg-benefits-card:hover .cf-reg-illustration {
+  transform: translateY(-1px) scale(1.02);
 }
 
-.cf-register-form-column .cf-submit-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.cf-register-form-column .cf-btn-arrow {
-  font-size: 12.5px;
-  transition: transform 0.2s ease;
-}
-
-.cf-register-form-column .cf-submit-btn:hover .cf-btn-arrow {
-  transform: translateX(3px);
-}
-
-.cf-register-form-column .cf-loading-text {
+.cf-reg-benefits-content {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
 }
 
-.cf-register-form-column .cf-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #ffffff;
-  border-radius: 50%;
-  animation: cfSpin 0.75s linear infinite;
+.cf-reg-benefits-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cf-reg-slate-900);
+  margin: 0 0 13px 0;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
-/* Social Divider */
-.cf-register-form-column .cf-divider {
+.cf-reg-benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
-  align-items: center;
-  margin: 16px 0 14px 0;
+  flex-direction: column;
   gap: 12px;
 }
 
-.cf-register-form-column .cf-divider-line {
-  flex: 1;
-  height: 1px;
-  background: var(--cf-slate-200);
+.cf-reg-benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
-.cf-register-form-column .cf-divider-text {
-  font-size: 11.5px;
-  color: var(--cf-slate-400);
-  font-weight: 500;
-  white-space: nowrap;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-}
-
-/* Social Row */
-.cf-register-form-column .cf-social-row {
+.cf-reg-check-bubble {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  margin-bottom: 6px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.2s ease;
 }
 
-.cf-register-form-column .cf-google-wrapper {
-  overflow: hidden;
+.cf-reg-benefit-item:hover .cf-reg-check-bubble {
+  background: #059669;
+  color: #ffffff;
+  border-color: #059669;
+  transform: scale(1.05);
+}
+
+.cf-reg-benefit-text {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--cf-reg-slate-600);
+}
+
+.cf-reg-benefit-text strong {
+  color: var(--cf-reg-slate-900);
+  font-weight: 600;
+}
+
+.cf-reg-trust-card {
+  margin-top: 18px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cf-reg-trust-icon-box {
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
+  background: #059669;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 44px;
-  width: 100%;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px -1px rgba(5, 150, 105, 0.3);
 }
 
-.cf-register-form-column .cf-google-wrapper > div {
+.cf-reg-trust-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cf-reg-trust-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #065f46;
+  line-height: 1.25;
+}
+
+.cf-reg-trust-desc {
+  font-size: 10.5px;
+  color: #047857;
+  line-height: 1.3;
+  margin-top: 1px;
+}
+
+/* ================= RIGHT: REGISTRATION FORM CARD ================= */
+.cf-reg-form-card {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 32px 36px 28px 36px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+}
+
+.cf-reg-card-header {
+  margin-bottom: 22px;
+}
+
+.cf-reg-card-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--cf-reg-slate-900);
+  margin: 0 0 5px 0;
+  letter-spacing: -0.3px;
+}
+
+.cf-reg-card-subtitle {
+  font-size: 13px;
+  color: var(--cf-reg-slate-500);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cf-reg-form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top Section: Inputs on Left, Divider & Google on Right */
+.cf-reg-top-section {
+  display: flex;
+  align-items: stretch;
+  gap: 22px;
+}
+
+.cf-reg-top-fields {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Field Groups */
+.cf-reg-form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cf-reg-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cf-reg-slate-800);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.cf-reg-star {
+  color: #ef4444;
+  font-size: 13px;
+}
+
+/* Native Inputs */
+.cf-reg-input-box {
+  width: 100%;
+  height: 42px;
+  border: 1.5px solid var(--cf-reg-slate-300);
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.cf-reg-input-box input {
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0 13px;
+  font-size: 13.5px;
+  color: var(--cf-reg-slate-900);
+  font-family: inherit;
+}
+
+.cf-reg-input-box input::placeholder {
+  color: var(--cf-reg-slate-400);
+}
+
+.cf-reg-input-box:focus-within {
+  border-color: var(--cf-reg-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+.cf-reg-error-box {
+  border-color: #ef4444 !important;
+}
+
+/* Antd Password Input */
+.cf-reg-antd-password {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 13px !important;
+}
+
+.cf-reg-antd-password input {
+  font-size: 13.5px !important;
+  padding: 0 !important;
+}
+
+.cf-reg-antd-password input::placeholder {
+  color: var(--cf-reg-slate-400);
+}
+
+.cf-reg-antd-password .ant-input-password-icon {
+  color: var(--cf-reg-slate-400);
+  font-size: 15px;
+  transition: color 0.2s ease;
+}
+
+.cf-reg-antd-password .ant-input-password-icon:hover {
+  color: var(--cf-reg-slate-700);
+}
+
+/* Phone Input with +91 Prefix */
+.cf-reg-phone-box {
+  width: 100%;
+  height: 42px;
+  border: 1.5px solid var(--cf-reg-slate-300);
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.cf-reg-phone-code {
+  padding: 0 13px;
+  height: 100%;
+  background: #f8fafc;
+  border-right: 1.5px solid var(--cf-reg-slate-300);
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cf-reg-slate-600);
+  user-select: none;
+}
+
+.cf-reg-phone-box input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 0 13px;
+  font-size: 13.5px;
+  color: var(--cf-reg-slate-900);
+  font-family: inherit;
+}
+
+.cf-reg-phone-box input::placeholder {
+  color: var(--cf-reg-slate-400);
+}
+
+.cf-reg-phone-box:focus-within {
+  border-color: var(--cf-reg-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* Helper & Error Texts */
+.cf-reg-helper-text {
+  font-size: 11px;
+  color: var(--cf-reg-slate-500);
+  margin-top: 4px;
+}
+
+.cf-reg-error-text {
+  font-size: 11px;
+  color: #ef4444;
+  margin-top: 3px;
+  font-weight: 500;
+}
+
+/* ================= VERTICAL DIVIDER ================= */
+.cf-reg-divider-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  padding: 10px 0;
+}
+
+.cf-reg-divider-line {
+  flex: 1;
+  width: 1px;
+  background: var(--cf-reg-slate-200);
+}
+
+.cf-reg-divider-pill {
+  font-size: 12px;
+  color: var(--cf-reg-slate-400);
+  background: #ffffff;
+  padding: 6px 0;
+  font-weight: 500;
+  user-select: none;
+}
+
+/* ================= SOCIAL COLUMN ================= */
+.cf-reg-social-column {
+  width: 175px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.cf-reg-social-prompt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cf-reg-slate-600);
+  margin-bottom: 10px;
+  white-space: nowrap;
+}
+
+.cf-reg-google-btn-box {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+
+.cf-reg-google-btn-box>div {
   width: 100% !important;
   display: flex !important;
   justify-content: center !important;
 }
 
-.cf-register-form-column .cf-google-wrapper iframe {
+.cf-reg-google-btn-box iframe {
   width: 100% !important;
   margin: 0 auto !important;
 }
 
-/* Form Bottom & Footer */
-.cf-register-form-column .cf-form-bottom {
-  margin-top: 14px;
+/* ================= BOTTOM SECTION ================= */
+.cf-reg-bottom-section {
+  width: 100%;
+  margin-top: 2px;
+}
+
+/* Work Status Cards */
+.cf-reg-work-status-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 3px;
+}
+
+.cf-reg-status-card {
+  border: 1.5px solid var(--cf-reg-slate-200);
+  border-radius: 10px;
+  padding: 11px 14px;
+  cursor: pointer;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.cf-reg-status-card:hover {
+  border-color: var(--cf-reg-slate-300);
+  background: #fafafa;
+}
+
+.cf-reg-status-card.active {
+  border-color: var(--cf-reg-primary);
+  background: var(--cf-reg-primary-light);
+  box-shadow: 0 0 0 1px var(--cf-reg-primary);
+}
+
+.cf-reg-status-info {
   display: flex;
   flex-direction: column;
+  gap: 2px;
+}
+
+.cf-reg-status-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cf-reg-slate-900);
+  transition: color 0.2s ease;
+}
+
+.cf-reg-status-card.active .cf-reg-status-heading {
+  color: var(--cf-reg-primary);
+}
+
+.cf-reg-status-caption {
+  font-size: 10.5px;
+  color: var(--cf-reg-slate-500);
+  line-height: 1.35;
+}
+
+.cf-reg-status-badge {
+  color: var(--cf-reg-slate-400);
+  display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.cf-reg-status-card.active .cf-reg-status-badge {
+  color: var(--cf-reg-primary);
+}
+
+/* Opt-In & Terms */
+.cf-reg-optin-group {
+  margin: 4px 0 12px 0;
+}
+
+.cf-reg-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.cf-reg-optin-label-text {
+  font-size: 11.5px;
+  color: var(--cf-reg-slate-600);
+  line-height: 1.45;
+}
+
+.cf-reg-wa-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.cf-reg-wa-ico {
+  font-size: 13px;
+}
+
+.cf-reg-terms-paragraph {
+  font-size: 12px;
+  color: var(--cf-reg-slate-500);
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.cf-reg-link-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--cf-reg-primary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cf-reg-link-inline:hover {
+  color: var(--cf-reg-primary-hover);
+}
+
+/* Submit Button */
+.cf-reg-submit-row {
+  margin-top: 2px;
+}
+
+.cf-reg-primary-btn {
+  height: 40px;
+  padding: 0 28px;
+  background: var(--cf-reg-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.cf-reg-primary-btn:hover:not(:disabled) {
+  background: var(--cf-reg-primary-hover);
+  transform: translateY(-1px);
+}
+
+.cf-reg-primary-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.cf-reg-primary-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.cf-reg-btn-loader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cf-reg-btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: cfRegSpin 0.75s linear infinite;
 }
 
 .cf-register-form-column .cf-signup-footer {
   text-align: center;
-  font-size: 13.5px;
   color: var(--cf-slate-500);
-  display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: 6px;
+  font-size: 13.5px;
+  display: flex;
 }
 
 .cf-register-form-column .cf-signup-link {
-  background: none;
+  color: var(--cf-indigo-600);
+  cursor: pointer;
+  background: 0 0;
   border: none;
   padding: 0;
   font-size: 13.5px;
   font-weight: 600;
-  color: var(--cf-indigo-600);
-  cursor: pointer;
-  transition: color 0.2s ease;
+  transition: color .2s;
 }
 
-.cf-register-form-column .cf-signup-link:hover {
-  color: var(--cf-indigo-700);
+.cf-signup-footer span {
+  font-size: 11px;
+}
+
+@keyframes cfRegSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ================= FOOTER ================= */
+.cf-reg-footer {
+  width: 100%;
+  padding: 22px 20px 20px 20px;
+  text-align: center;
+  border-top: 1px solid var(--cf-reg-slate-200);
+  background: #ffffff;
+  margin-top: auto;
+}
+
+.cf-reg-footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 7px;
+}
+
+.cf-reg-footer-links button {
+  background: none;
+  border: none;
+  color: var(--cf-reg-slate-500);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.cf-reg-footer-links button:hover {
+  color: var(--cf-reg-primary);
   text-decoration: underline;
 }
 
-.cf-register-form-column .cf-security-guarantee {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--cf-slate-400);
+.cf-reg-footer-sep {
+  color: var(--cf-reg-slate-300);
+  font-size: 11px;
 }
 
-.cf-register-form-column .cf-shield-icon {
-  color: var(--cf-emerald);
-}
-
-/* ================= RIGHT SIDE: HERO VISUAL ================= */
-.cf-register-card .cf-hero-column {
-  background: linear-gradient(155deg, #090d16 0%, #0f172a 45%, #1e1b4b 100%);
-  position: relative;
-  overflow: hidden;
-  padding: 40px 42px 32px 42px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: #ffffff;
-  box-sizing: border-box;
-}
-
-.cf-register-card .cf-hero-glow {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(80px);
-}
-
-.cf-register-card .cf-glow-1 {
-  width: 320px;
-  height: 320px;
-  background: rgba(99, 102, 241, 0.22);
-  top: -50px;
-  right: -50px;
-}
-
-.cf-register-card .cf-glow-2 {
-  width: 280px;
-  height: 280px;
-  background: rgba(168, 85, 247, 0.16);
-  bottom: 40px;
-  left: -40px;
-}
-
-.cf-register-card .cf-hero-grid-pattern {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 32px 32px;
-  pointer-events: none;
-}
-
-/* Hero Top */
-.cf-register-card .cf-hero-top {
-  position: relative;
-  z-index: 2;
-}
-
-.cf-register-card .cf-hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
-  padding: 4px 12px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #e2e8f0;
-  margin-bottom: 12px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.cf-register-card .cf-sparkle-icon {
-  color: #fbbf24;
-}
-
-.cf-register-card .cf-hero-heading {
-  font-family: 'Outfit', sans-serif !important;
-  font-size: 26px !important;
-  font-weight: 700 !important;
-  color: #ffffff !important;
-  line-height: 1.28 !important;
-  letter-spacing: -0.4px;
-  margin: 0 0 8px 0 !important;
-  max-width: 440px;
-}
-
-.cf-register-card .cf-hero-desc {
+.cf-reg-footer-copyright {
+  font-size: 11px;
+  color: var(--cf-reg-slate-400);
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.55;
-  color: rgba(226, 232, 240, 0.82);
-  max-width: 430px;
 }
 
-/* Showcase Stage */
-.cf-register-card .cf-showcase-stage {
-  position: relative;
-  z-index: 2;
-  margin: 18px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* Preview Card */
-.cf-register-card .cf-preview-card {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 18px 20px;
-  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.35);
-  transition: transform 0.25s ease, border-color 0.25s ease;
-}
-
-.cf-register-card .cf-preview-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.cf-register-card .cf-preview-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.cf-register-card .cf-preview-company-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.cf-benefit-icon-badge {
-  width: 32px;
-  height: 32px;
-  background: rgba(99, 102, 241, 0.25);
-  border: 1px solid rgba(99, 102, 241, 0.4);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #a5b4fc;
-}
-
-.cf-bolt-icon {
-  color: #fbbf24;
-}
-
-.cf-register-card .cf-preview-company-name {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-}
-
-.cf-register-card .cf-preview-location {
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.7);
-  margin-top: 1px;
-}
-
-.cf-register-card .cf-preview-match-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(16, 185, 129, 0.14);
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  color: #34d399;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 3.5px 10px;
-  border-radius: 9999px;
-}
-
-.cf-register-card .cf-pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  box-shadow: 0 0 6px #10b981;
-  display: inline-block;
-  animation: cfPulse 2s infinite;
-}
-
-/* Benefits Checklist */
-.cf-benefits-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.cf-benefit-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  font-size: 12.5px;
-  color: rgba(226, 232, 240, 0.9);
-  line-height: 1.4;
-}
-
-.cf-benefit-check {
-  color: #34d399;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.cf-register-card .cf-preview-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  font-size: 11.5px;
-}
-
-.cf-register-card .cf-preview-recruiter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(226, 232, 240, 0.85);
-}
-
-.cf-briefcase-icon {
-  color: #a5b4fc;
-}
-
-.cf-register-card .cf-preview-verified-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #60a5fa;
-  font-weight: 600;
-}
-
-/* Placement Proof Strip */
-.cf-register-card .cf-placement-badge {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 13px;
-  padding: 9px 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.cf-register-card .cf-avatar-stack {
-  display: flex;
-  align-items: center;
-}
-
-.cf-register-card .cf-avatar-img {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid #ffffff;
-  object-fit: cover;
-  margin-left: -7px;
-}
-
-.cf-register-card .cf-avatar-img:first-child {
-  margin-left: 0;
-}
-
-.cf-register-card .cf-avatar-count {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--cf-indigo-600);
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid #ffffff;
-  margin-left: -7px;
-}
-
-.cf-register-card .cf-placement-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.cf-register-card .cf-placement-bold {
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.2;
-}
-
-.cf-register-card .cf-placement-sub {
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.72);
-  line-height: 1.25;
-  margin-top: 1px;
-}
-
-/* Bottom Stats & Trust Strip */
-.cf-register-card .cf-hero-bottom {
-  position: relative;
-  z-index: 2;
-  border-top: 1px solid rgba(255, 255, 255, 0.09);
-  padding-top: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.cf-register-card .cf-hero-stats-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.cf-register-card .cf-stat-cell {
-  display: flex;
-  flex-direction: column;
-  text-align: center;
-  flex: 1;
-}
-
-.cf-register-card .cf-stat-number {
-  font-family: 'Outfit', sans-serif;
-  font-size: 18px;
-  font-weight: 700;
-  color: #ffffff;
-  line-height: 1.15;
-}
-
-.cf-register-card .cf-stat-title {
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.7);
-  margin-top: 2px;
-}
-
-.cf-register-card .cf-stat-sep {
-  width: 1px;
-  height: 22px;
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.cf-register-card .cf-trusted-by {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 11px;
-  color: rgba(226, 232, 240, 0.6);
-  padding-top: 4px;
-}
-
-.cf-register-card .cf-trusted-label {
-  white-space: nowrap;
-}
-
-.cf-register-card .cf-trusted-logos {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.75);
-  letter-spacing: 0.2px;
-}
-
-.cf-register-card .cf-trusted-logos span {
-  transition: color 0.2s ease;
-}
-
-.cf-register-card .cf-trusted-logos span:hover {
-  color: #ffffff;
-}
-
-/* ================= RESPONSIVE DESIGN ================= */
-@media (max-width: 1080px) {
-  .cf-register-card {
-    grid-template-columns: 54% 46%;
+/* ================= RESPONSIVE ADAPTATIONS ================= */
+@media (max-width: 960px) {
+  .cf-reg-container {
+    flex-direction: column;
+    align-items: center;
   }
 
-  .cf-register-form-column {
-    padding: 32px 34px 28px 34px;
+  .cf-reg-benefits-card {
+    width: 100%;
+    max-width: 620px;
+    position: static;
+    flex-direction: column;
   }
 
-  .cf-register-card .cf-hero-column {
-    padding: 32px 32px 28px 32px;
-  }
-
-  .cf-register-card .cf-hero-heading {
-    font-size: 24px !important;
+  .cf-reg-form-card {
+    width: 100%;
+    max-width: 620px;
   }
 }
 
-@media (max-width: 900px) {
-  .cf-register-wrapper {
-    padding: 24px 16px;
+@media (max-width: 680px) {
+  .cf-reg-header-inner {
+    padding: 0 16px;
   }
 
-  .cf-register-card {
+  .cf-reg-main {
+    padding: 18px 12px 28px 12px;
+  }
+
+  .cf-reg-top-section {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .cf-reg-divider-column {
+    width: 100%;
+    flex-direction: row;
+    padding: 2px 0;
+  }
+
+  .cf-reg-divider-line {
+    height: 1px;
+    width: 100%;
+  }
+
+  .cf-reg-divider-pill {
+    padding: 0 12px;
+  }
+
+  .cf-reg-social-column {
+    width: 100%;
+    padding: 0;
+  }
+
+  .cf-reg-work-status-row {
     grid-template-columns: 1fr;
-    max-width: 520px;
-    border-radius: 18px;
   }
 
-  .cf-register-form-column {
-    padding: 32px 26px 28px 26px;
-  }
-
-  .cf-register-card .cf-hero-column {
+  .cf-reg-benefits-card {
     display: none;
   }
-}
 
-@media (max-width: 540px) {
-  .cf-grid-row {
-    grid-template-columns: 1fr;
-    gap: 0px;
+  .cf-reg-form-card {
+    padding: 22px 16px;
   }
 
-  .cf-register-wrapper {
-    padding: 16px 12px;
-  }
-
-  .cf-register-form-column {
-    padding: 24px 18px 20px 18px;
-  }
-
-  .cf-register-form-column .cf-title {
-    font-size: 23px !important;
+  .cf-reg-card-title {
+    font-size: 19px;
   }
 }

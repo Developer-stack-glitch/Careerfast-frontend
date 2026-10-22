@@ -1,42 +1,26 @@
 'use client';
 import React, { useEffect, useState } from "react";
-import {
-  Form,
-  Checkbox,
-  Modal,
-  Input,
-} from "antd";
+import { Checkbox, Modal, Input } from "antd";
 import { CommonToaster } from "../Common/CommonToaster";
 import {
-  MailOutlined,
-  LockOutlined,
-  ArrowRightOutlined,
-  LinkedinFilled,
   EyeOutlined,
   EyeInvisibleOutlined,
+  LockOutlined,
+  MailOutlined,
+  MobileOutlined,
+  KeyOutlined,
 } from "@ant-design/icons";
-import {
-  Briefcase,
-  Building2,
-  Users,
-  TrendingUp,
-  Sparkles,
-  ShieldCheck,
-  ArrowLeft,
-  BadgeCheck,
-  Zap,
-} from "lucide-react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "../css/LoginPage.css";
 import logo from "../images/careerfastlogofinal.png";
-import avatar1 from "../images/priya.jpg";
-import avatar2 from "../images/rahul.jpg";
-import avatar3 from "../images/sneha.jpg";
+import benefitsImg from "../images/register_img.png";
 import { useNavigate } from "@/routing-shim";
 import {
   emailValidator,
   passwordValidator,
   confirmPasswordValidation,
+  phoneValidation,
 } from "../Common/Validation";
 import CommonInputField from "../Common/CommonInputField";
 import CommonPasswordField from "../Common/CommonPasswordField";
@@ -49,6 +33,8 @@ import {
   forgotPassword,
   sendOtp,
   getRoles,
+  sendLoginOTP,
+  verifyLoginOTP,
 } from "../ApiService/action";
 import { GoogleLogin } from "@react-oauth/google";
 import { requestForToken } from "../firebase/fireBase";
@@ -59,7 +45,20 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // States
+  // Mode: "password" or "otp"
+  const [loginMode, setLoginMode] = useState("password");
+
+  // OTP Channel: "email" or "phone"
+  const [otpChannel, setOtpChannel] = useState("email");
+  const [otpIdentifier, setOtpIdentifier] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpTarget, setOtpTarget] = useState("");
+  const [otpTimer, setOtpTimer] = useState(30);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpErrors, setOtpErrors] = useState({});
+
+  // Password Login States
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -94,6 +93,19 @@ const LoginPage = () => {
     updateRoleId();
   }, [roleOptions]);
 
+  // OTP Resend Countdown Timer
+  useEffect(() => {
+    let interval = null;
+    if (otpSent && otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [otpSent, otpTimer]);
+
   const fetchRoles = async () => {
     try {
       const response = await getRoles();
@@ -114,9 +126,57 @@ const LoginPage = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (validator) {
       setErrors((prev) => ({ ...prev, [field]: validator(value) }));
+    } else {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
+  // Switch between Password and OTP Login modes
+  const handleSwitchMode = (mode) => {
+    setLoginMode(mode);
+    setErrors({});
+    setOtpErrors({});
+  };
+
+  // Switch between Email and Mobile OTP channels
+  const handleSwitchChannel = (channel) => {
+    setOtpChannel(channel);
+    setOtpIdentifier("");
+    setOtpCode("");
+    setOtpSent(false);
+    setOtpErrors({});
+  };
+
+  // Handle successful login response
+  const processLoginSuccess = async (token, loginDetails, candidateRoleId) => {
+    localStorage.setItem("AccessToken", token);
+    localStorage.setItem("loginDetails", JSON.stringify(loginDetails));
+
+    // Set cookies for cross-app synchronization
+    document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`;
+    document.cookie = `loginDetails=${encodeURIComponent(
+      JSON.stringify(loginDetails)
+    )}; path=/; max-age=2592000; SameSite=Lax`;
+
+    dispatch(storeLoginStatus(true));
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("authChange", { detail: loginDetails }));
+
+    CommonToaster("Logged in successfully!", "success");
+
+    if (loginDetails?.role_id === 1) {
+      navigate("/admin");
+    } else {
+      try {
+        const profileCheck = await isProfileUpdated({ email: loginDetails.email });
+        navigate(profileCheck?.data?.data === true ? "/" : "/profiledetails");
+      } catch (err) {
+        navigate("/");
+      }
+    }
+  };
+
+  // Password Login Submit
   const handleSubmit = async (e) => {
     if (e && typeof e.preventDefault === "function") {
       e.preventDefault();
@@ -138,7 +198,7 @@ const LoginPage = () => {
 
     try {
       setIsLoading(true);
-      const fcm_token = await requestForToken();
+      const fcm_token = await requestForToken().catch(() => null);
       if (fcm_token) localStorage.setItem("fcm_token", fcm_token);
 
       const candidateRoleId =
@@ -155,27 +215,7 @@ const LoginPage = () => {
       const token = response.data.token;
       const loginDetails = response.data.data[0];
 
-      localStorage.setItem("AccessToken", token);
-      localStorage.setItem("loginDetails", JSON.stringify(loginDetails));
-
-      // Set cookies for cross-app synchronization (shared across ports on localhost)
-      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`; // 30 days
-      document.cookie = `loginDetails=${encodeURIComponent(
-        JSON.stringify(loginDetails)
-      )}; path=/; max-age=2592000; SameSite=Lax`;
-
-      dispatch(storeLoginStatus(true));
-      window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new CustomEvent("authChange", { detail: loginDetails }));
-
-      CommonToaster("Logged in successfully!", "success");
-
-      if (loginDetails?.role_id === 1) {
-        navigate("/admin");
-      } else {
-        const profileCheck = await isProfileUpdated({ email: payload.email });
-        navigate(profileCheck?.data?.data === true ? "/" : "/profiledetails");
-      }
+      await processLoginSuccess(token, loginDetails, candidateRoleId);
     } catch (error) {
       console.error("Login error", error);
       const msg =
@@ -188,6 +228,104 @@ const LoginPage = () => {
     }
   };
 
+  // OTP Login: Send OTP
+  const handleSendOtp = async (e) => {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+
+    let err = "";
+    if (otpChannel === "email") {
+      err = emailValidator(otpIdentifier);
+    } else {
+      err = phoneValidation(otpIdentifier);
+    }
+
+    if (err) {
+      setOtpErrors({ identifier: err });
+      CommonToaster(err, "error");
+      return;
+    }
+
+    try {
+      setOtpLoading(true);
+      setOtpErrors({});
+      const candidateRoleId =
+        roleId || roleOptions.find((r) => r.name === "CANDIDATE")?.id || 2;
+
+      const response = await sendLoginOTP({
+        identifier: otpIdentifier.trim(),
+        type: otpChannel,
+        role_id: candidateRoleId,
+      });
+
+      setOtpSent(true);
+      setOtpTimer(30);
+      setOtpCode("");
+      setOtpTarget(
+        response?.data?.target ||
+        (otpChannel === "phone" ? `+91 ${otpIdentifier}` : otpIdentifier)
+      );
+
+      const successMsg = response?.data?.message || "OTP sent successfully!";
+      CommonToaster(successMsg, "success");
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.details ||
+        "Failed to send OTP. Please check your credentials.";
+      setOtpErrors({ identifier: msg });
+      CommonToaster(msg, "error");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  // OTP Login: Verify Code & Sign In
+  const handleVerifyOtp = async (e) => {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+
+    if (!otpCode || otpCode.trim().length < 6) {
+      setOtpErrors({ code: "Please enter the complete 6-digit OTP." });
+      CommonToaster("Please enter the complete 6-digit OTP.", "error");
+      return;
+    }
+
+    try {
+      setOtpLoading(true);
+      setOtpErrors({});
+      const fcm_token = await requestForToken().catch(() => null);
+      if (fcm_token) localStorage.setItem("fcm_token", fcm_token);
+
+      const candidateRoleId =
+        roleId || roleOptions.find((r) => r.name === "CANDIDATE")?.id || 2;
+
+      const response = await verifyLoginOTP({
+        identifier: otpIdentifier.trim(),
+        type: otpChannel,
+        otp: otpCode.trim(),
+        role_id: candidateRoleId,
+        fcm_token: fcm_token || localStorage.getItem("fcm_token"),
+      });
+
+      const token = response?.data?.token;
+      const loginDetails = response?.data?.data?.[0];
+
+      if (!token || !loginDetails) {
+        throw new Error("Invalid response from server");
+      }
+
+      await processLoginSuccess(token, loginDetails, candidateRoleId);
+    } catch (error) {
+      const msg =
+        error?.response?.data?.message ||
+        error?.response?.data?.details ||
+        "Invalid OTP. Please check the code and try again.";
+      setOtpErrors({ code: msg });
+      CommonToaster(msg, "error");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async (res) => {
     try {
       setIsLoading(true);
@@ -195,7 +333,7 @@ const LoginPage = () => {
       try {
         fcm_token = await requestForToken();
         if (fcm_token) localStorage.setItem("fcm_token", fcm_token);
-      } catch (err) {}
+      } catch (err) { }
 
       const candidateRoleId =
         roleId || roleOptions.find((r) => r.name === "CANDIDATE")?.id || 2;
@@ -213,34 +351,7 @@ const LoginPage = () => {
         throw new Error(response?.data?.message || "Invalid response from server");
       }
 
-      localStorage.setItem("AccessToken", token);
-      localStorage.setItem("loginDetails", JSON.stringify(userDetails));
-
-      // Set cookies for cross-app synchronization
-      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`; // 30 days
-      document.cookie = `loginDetails=${encodeURIComponent(
-        JSON.stringify(userDetails)
-      )}; path=/; max-age=2592000; SameSite=Lax`;
-
-      dispatch(storeLoginStatus(true));
-      window.dispatchEvent(new Event("storage"));
-      window.dispatchEvent(new CustomEvent("authChange", { detail: userDetails }));
-
-      CommonToaster("Google login successful!", "success");
-
-      if (userDetails?.role_id === 1) {
-        navigate("/admin");
-      } else {
-        try {
-          const profileCheck = await isProfileUpdated({
-            email: userDetails.email,
-          });
-          navigate(profileCheck?.data?.data === true ? "/" : "/profiledetails");
-        } catch (checkErr) {
-          console.warn("Could not check profile status, default redirect:", checkErr);
-          navigate("/");
-        }
-      }
+      await processLoginSuccess(token, userDetails, candidateRoleId);
     } catch (error) {
       console.error("Google Login Error", error);
       const msg =
@@ -254,319 +365,563 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="cf-login-wrapper">
-      {/* Background Subtle Gradient & Technical Grid */}
-      <div className="cf-bg-ambient-light"></div>
-      <div className="cf-bg-grid-overlay"></div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="cf-login-card"
-      >
-        {/* ================= LEFT SIDE: FORM ================= */}
-        <div className="cf-form-column">
-          {/* Top Navigation Row */}
-          <div className="cf-top-nav-row">
+    <div className="cf-login-page">
+      {/* Top Header */}
+      <header className="cf-login-header">
+        <div className="cf-login-header-inner">
+          <div
+            className="cf-login-brand"
+            onClick={() => navigate("/")}
+            role="button"
+            tabIndex={0}
+            title="Return to CareerFast Home"
+          >
+            <img
+              src={getImageUrl(logo)}
+              alt="CareerFast Logo"
+              className="cf-login-logo"
+            />
+          </div>
+          <div className="cf-login-header-right">
+            <span className="cf-login-header-text">New to CareerFast?</span>
             <button
               type="button"
-              className="cf-back-link"
-              onClick={() => navigate("/")}
-              title="Return to Homepage"
+              className="cf-login-header-btn"
+              onClick={() => navigate("/register")}
             >
-              <ArrowLeft size={15} />
-              <span>Back to Home</span>
+              <strong>Register</strong> here
             </button>
-            <div className="cf-portal-badge">
-              <span className="cf-portal-dot"></span>
-              <span>Candidate Portal</span>
-            </div>
           </div>
+        </div>
+      </header>
 
-          <div className="cf-form-main-content">
-            {/* Brand Header */}
-            <div className="cf-brand-header">
+      {/* Main Layout */}
+      <main className="cf-login-main">
+        <div className="cf-login-container">
+          {/* Left Card: Benefits & Highlights */}
+          <aside className="cf-login-benefits-card">
+            <div className="cf-login-illustration-wrap">
               <img
-                src={getImageUrl(logo)}
-                alt="CareerFast"
-                className="cf-brand-logo"
+                src={getImageUrl(benefitsImg)}
+                alt="CareerFast Opportunities"
+                className="cf-login-illustration"
               />
             </div>
 
-            {/* Heading */}
-            <div className="cf-heading-block">
-              <h1 className="cf-title">Welcome back</h1>
-              <p className="cf-subtitle">
-                Enter your credentials to access your job applications and dashboard.
+            <div className="cf-login-benefits-content">
+              <h3 className="cf-login-benefits-title">On logging in, you can</h3>
+              <ul className="cf-login-benefits-list">
+                <li className="cf-login-benefit-item">
+                  <span className="cf-login-check-bubble">
+                    <CheckCircle2 size={15} />
+                  </span>
+                  <span className="cf-login-benefit-text">
+                    <strong>Track job applications</strong> & view recruiter updates
+                  </span>
+                </li>
+                <li className="cf-login-benefit-item">
+                  <span className="cf-login-check-bubble">
+                    <CheckCircle2 size={15} />
+                  </span>
+                  <span className="cf-login-benefit-text">
+                    <strong>Direct messages & calls</strong> from verified hiring teams
+                  </span>
+                </li>
+                <li className="cf-login-benefit-item">
+                  <span className="cf-login-check-bubble">
+                    <CheckCircle2 size={15} />
+                  </span>
+                  <span className="cf-login-benefit-text">
+                    <strong>Explore verified jobs</strong> matching your skills & salary
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="cf-login-trust-card">
+              <div className="cf-login-trust-icon-box">
+                <ShieldCheck size={17} />
+              </div>
+              <div className="cf-login-trust-info">
+                <div className="cf-login-trust-title">100% Free & Verified</div>
+                <div className="cf-login-trust-desc">Authentic recruiters • Zero candidate fee</div>
+              </div>
+            </div>
+          </aside>
+
+          {/* Right Card: Login Form Card */}
+          <section className="cf-login-form-card">
+            <div className="cf-login-card-header">
+              <h1 className="cf-login-card-title">Login to your CareerFast profile</h1>
+              <p className="cf-login-card-subtitle">
+                Search & apply to jobs and internships from India's verified career platform
               </p>
             </div>
 
-            {/* Authentication Form */}
-            <form className="cf-auth-form" onSubmit={handleSubmit} noValidate>
-              {/* Email Field */}
-              <div className="cf-field-group">
-                <label className="cf-label" htmlFor="email-input">
-                  Email Address
-                </label>
-                <div
-                  className={`cf-input-box ${errors.email ? "cf-has-error" : ""}`}
-                >
-                  <MailOutlined className="cf-field-icon" />
-                  <input
-                    id="email-input"
-                    type="email"
-                    name="email"
-                    className="cf-native-input"
-                    placeholder="name@example.com"
-                    value={formData.email}
-                    onChange={(e) =>
-                      handleInputChange("email", e.target.value, emailValidator)
-                    }
-                    autoComplete="email"
-                  />
-                </div>
-                {errors.email && (
-                  <span className="cf-error-msg">{errors.email}</span>
-                )}
-              </div>
-
-              {/* Password Field */}
-              <div className="cf-field-group">
-                <label className="cf-label" htmlFor="password-input">
-                  Password
-                </label>
-                <div
-                  className={`cf-input-box ${errors.password ? "cf-has-error" : ""
-                    }`}
-                >
-                  <LockOutlined className="cf-field-icon" />
-                  <Input.Password
-                    id="password-input"
-                    name="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={(e) =>
-                      handleInputChange("password", e.target.value, passwordValidator)
-                    }
-                    className="cf-antd-pass"
-                    variant="borderless"
-                    iconRender={(visible) =>
-                      visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
-                    }
-                  />
-                </div>
-                {errors.password && (
-                  <span className="cf-error-msg">{errors.password}</span>
-                )}
-              </div>
-
-              {/* Options Row */}
-              <div className="cf-options-row">
-                <label className="cf-remember-label">
-                  <Checkbox
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="cf-custom-checkbox"
-                  />
-                  <span className="cf-remember-text">Remember me</span>
-                </label>
-                <button
-                  type="button"
-                  className="cf-forgot-btn"
-                  onClick={() => setIsModalOpen(true)}
-                >
-                  Forgot password?
-                </button>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="cf-submit-btn"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <span className="cf-loading-text">
-                    <span className="cf-spinner"></span>
-                    Signing in...
-                  </span>
-                ) : (
-                  <>
-                    <span>Sign In</span>
-                    <ArrowRightOutlined className="cf-btn-arrow" />
-                  </>
-                )}
-              </button>
-
-              {/* Social Divider */}
-              <div className="cf-divider">
-                <span className="cf-divider-line"></span>
-                <span className="cf-divider-text">or continue with</span>
-                <span className="cf-divider-line"></span>
-              </div>
-
-              {/* Social Login Buttons */}
-              <div className="cf-social-row">
-                <div className="cf-google-wrapper">
-                  <GoogleLogin
-                    onSuccess={handleGoogleLogin}
-                    onError={() => CommonToaster("Google login failed", "error")}
-                    theme="outline"
-                    shape="rectangular"
-                    text="signin_with"
-                    size="large"
-                    width="100%"
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="cf-linkedin-btn"
-                  onClick={() =>
-                    CommonToaster(
-                      "LinkedIn login will be available soon!",
-                      "info"
-                    )
-                  }
-                  title="Sign in with LinkedIn"
-                >
-                  <LinkedinFilled className="cf-linkedin-icon" />
-                  <span>LinkedIn</span>
-                </button>
-              </div>
-            </form>
-          </div>
-
-          {/* Form Footer */}
-          <div className="cf-form-bottom">
-            <div className="cf-signup-footer">
-              <span>Don't have an account?</span>
+            {/* Segmented Mode Selector: Password vs OTP Login */}
+            <div className="cf-login-mode-tabs" role="tablist">
               <button
                 type="button"
-                className="cf-signup-link"
-                onClick={() => navigate("/register")}
+                role="tab"
+                aria-selected={loginMode === "password"}
+                className={`cf-login-mode-tab ${loginMode === "password" ? "active" : ""
+                  }`}
+                onClick={() => handleSwitchMode("password")}
               >
-                Create an account
+                <LockOutlined className="cf-mode-tab-icon" />
+                <span>Password</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={loginMode === "otp"}
+                className={`cf-login-mode-tab ${loginMode === "otp" ? "active" : ""
+                  }`}
+                onClick={() => handleSwitchMode("otp")}
+              >
+                <KeyOutlined className="cf-mode-tab-icon" />
+                <span>OTP Login</span>
+                <span className="cf-login-mode-badge">Email & Mobile</span>
               </button>
             </div>
-            <div className="cf-security-guarantee">
-              <ShieldCheck size={13} className="cf-shield-icon" />
-              <span>Encrypted 256-bit authentication</span>
-            </div>
-          </div>
-        </div>
 
-        {/* ================= RIGHT SIDE: HERO VISUAL ================= */}
-        <div className="cf-hero-column">
-          {/* Subtle Ambient Glow Overlays */}
-          <div className="cf-hero-glow cf-glow-1"></div>
-          <div className="cf-hero-glow cf-glow-2"></div>
-          <div className="cf-hero-grid-pattern"></div>
+            {/* ================= PASSWORD LOGIN FORM ================= */}
+            {loginMode === "password" && (
+              <form className="cf-login-form" onSubmit={handleSubmit} noValidate>
+                {/* TOP SECTION: Email & Password on Left | Divider | Google Login on Right */}
+                <div className="cf-login-top-section">
+                  <div className="cf-login-top-fields">
+                    {/* Email ID */}
+                    <div className="cf-login-form-group">
+                      <label className="cf-login-field-label" htmlFor="loginEmail">
+                        Email ID<span className="cf-login-star">*</span>
+                      </label>
+                      <div
+                        className={`cf-login-input-box ${errors.email ? "cf-login-error-box" : ""
+                          }`}
+                      >
+                        <input
+                          id="loginEmail"
+                          type="email"
+                          name="email"
+                          placeholder="Tell us your Email ID"
+                          value={formData.email}
+                          onChange={(e) =>
+                            handleInputChange("email", e.target.value, emailValidator)
+                          }
+                          autoComplete="email"
+                        />
+                      </div>
+                      {errors.email ? (
+                        <span className="cf-login-error-text">{errors.email}</span>
+                      ) : (
+                        <span className="cf-login-helper-text">
+                          We'll send relevant job alerts and updates to this email
+                        </span>
+                      )}
+                    </div>
 
-          {/* Top Header */}
-          <div className="cf-hero-top">
-            <div className="cf-hero-tag">
-              <Sparkles size={12} className="cf-sparkle-icon" />
-              <span>Verified Tech Career Platform</span>
-            </div>
-            <h2 className="cf-hero-heading">
-              Your next career breakthrough starts here
-            </h2>
-            <p className="cf-hero-desc">
-              Connect directly with verified recruiters at Google, Microsoft, Amazon, and 500+ top companies across India.
-            </p>
-          </div>
+                    {/* Password */}
+                    <div className="cf-login-form-group">
+                      <label className="cf-login-field-label" htmlFor="loginPassword">
+                        Password<span className="cf-login-star">*</span>
+                      </label>
+                      <div
+                        className={`cf-login-input-box ${errors.password ? "cf-login-error-box" : ""
+                          }`}
+                      >
+                        <Input.Password
+                          id="loginPassword"
+                          name="password"
+                          placeholder="Enter your password"
+                          value={formData.password}
+                          onChange={(e) =>
+                            handleInputChange(
+                              "password",
+                              e.target.value,
+                              passwordValidator
+                            )
+                          }
+                          className="cf-login-antd-password"
+                          variant="borderless"
+                          iconRender={(visible) =>
+                            visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
+                          }
+                        />
+                      </div>
+                      {errors.password && (
+                        <span className="cf-login-error-text">{errors.password}</span>
+                      )}
+                    </div>
 
-          {/* Centerpiece 1: Live Interactive Feature Showcase Card */}
-          <div className="cf-showcase-stage">
-            <div className="cf-preview-card">
-              <div className="cf-preview-card-header">
-                <div className="cf-preview-company-badge">
-                  <div className="cf-company-logo-google">
-                    <svg width="18" height="18" viewBox="0 0 24 24">
-                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                    </svg>
+                    {/* Remember Me & Forgot Password Row */}
+                    <div className="cf-login-options-row">
+                      <label className="cf-login-remember-label">
+                        <Checkbox
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                        />
+                        <span>Remember me</span>
+                      </label>
+                      <button
+                        type="button"
+                        className="cf-login-forgot-link"
+                        onClick={() => setIsModalOpen(true)}
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="cf-login-submit-row">
+                      <button
+                        type="submit"
+                        className="cf-login-primary-btn"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? (
+                          <span className="cf-login-btn-loader">
+                            <span className="cf-login-btn-spinner"></span>
+                            Logging in...
+                          </span>
+                        ) : (
+                          "Login"
+                        )}
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <div className="cf-preview-company-name">Google Cloud</div>
-                    <div className="cf-preview-location">Bengaluru • Hybrid</div>
+
+                  {/* Vertical Divider */}
+                  <div className="cf-login-divider-column">
+                    <div className="cf-login-divider-line"></div>
+                    <span className="cf-login-divider-pill">Or</span>
+                    <div className="cf-login-divider-line"></div>
+                  </div>
+
+                  {/* Right Side Social Auth */}
+                  <div className="cf-login-social-column">
+                    <div className="cf-login-google-btn-box">
+                      <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() =>
+                          CommonToaster(
+                            "Google sign-in failed. Please try again.",
+                            "error"
+                          )
+                        }
+                        theme="outline"
+                        shape="pill"
+                        text="signin_with"
+                        size="large"
+                        width="100%"
+                      />
+                    </div>
+                    <div className="cf-signup-footer">
+                      <span>Don't have an account?</span>
+                      <button
+                        type="button"
+                        className="cf-signup-link"
+                        onClick={() => navigate("/register")}
+                      >
+                        Register
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <div className="cf-preview-match-pill">
-                  <span className="cf-pulse-dot"></span>
-                  <span>98% Match</span>
+              </form>
+            )}
+
+            {/* ================= OTP LOGIN FORM ================= */}
+            {loginMode === "otp" && (
+              <div className="cf-login-otp-wrapper">
+                <div className="cf-login-top-section">
+                  <div className="cf-login-top-fields">
+                    {/* Channel Selector: Email vs Mobile */}
+                    {!otpSent && (
+                      <div className="cf-otp-channel-tabs">
+                        <button
+                          type="button"
+                          className={`cf-otp-channel-tab ${otpChannel === "email" ? "active" : ""
+                            }`}
+                          onClick={() => handleSwitchChannel("email")}
+                        >
+                          <MailOutlined />
+                          <span>Email ID</span>
+                        </button>
+                        <button
+                          type="button"
+                          className={`cf-otp-channel-tab ${otpChannel === "phone" ? "active" : ""
+                            }`}
+                          onClick={() => handleSwitchChannel("phone")}
+                        >
+                          <MobileOutlined />
+                          <span>Mobile Number</span>
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Step 1: Identifier Input (Email or Mobile) */}
+                    {!otpSent ? (
+                      <form onSubmit={handleSendOtp} noValidate>
+                        {otpChannel === "email" ? (
+                          <div className="cf-login-form-group">
+                            <label className="cf-login-field-label" htmlFor="otpEmail">
+                              Registered Email ID<span className="cf-login-star">*</span>
+                            </label>
+                            <div
+                              className={`cf-login-input-box ${otpErrors.identifier ? "cf-login-error-box" : ""
+                                }`}
+                            >
+                              <input
+                                id="otpEmail"
+                                type="email"
+                                name="otpEmail"
+                                placeholder="Enter your registered email ID"
+                                value={otpIdentifier}
+                                onChange={(e) => {
+                                  setOtpIdentifier(e.target.value);
+                                  setOtpErrors({});
+                                }}
+                                autoComplete="email"
+                              />
+                            </div>
+                            {otpErrors.identifier ? (
+                              <span className="cf-login-error-text">
+                                {otpErrors.identifier}
+                              </span>
+                            ) : (
+                              <span className="cf-login-helper-text">
+                                We'll send a 6-digit login verification code to your email
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="cf-login-form-group">
+                            <label className="cf-login-field-label" htmlFor="otpPhone">
+                              Registered Mobile Number<span className="cf-login-star">*</span>
+                            </label>
+                            <div
+                              className={`cf-login-phone-box ${otpErrors.identifier ? "cf-login-error-box" : ""
+                                }`}
+                            >
+                              <span className="cf-login-phone-code">+91</span>
+                              <input
+                                id="otpPhone"
+                                type="tel"
+                                name="otpPhone"
+                                maxLength={10}
+                                placeholder="Enter 10-digit mobile number"
+                                value={otpIdentifier}
+                                onChange={(e) => {
+                                  setOtpIdentifier(e.target.value.replace(/\D/g, ""));
+                                  setOtpErrors({});
+                                }}
+                                autoComplete="tel-national"
+                              />
+                            </div>
+                            {otpErrors.identifier ? (
+                              <span className="cf-login-error-text">
+                                {otpErrors.identifier}
+                              </span>
+                            ) : (
+                              <span className="cf-login-helper-text">
+                                We'll send a 6-digit login verification code to your phone
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="cf-login-submit-row">
+                          <button
+                            type="submit"
+                            className="cf-login-primary-btn"
+                            disabled={otpLoading}
+                          >
+                            {otpLoading ? (
+                              <span className="cf-login-btn-loader">
+                                <span className="cf-login-btn-spinner"></span>
+                                Sending OTP...
+                              </span>
+                            ) : (
+                              "Send OTP"
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    ) : (
+                      /* Step 2: OTP Verification */
+                      <form onSubmit={handleVerifyOtp} noValidate>
+                        <div className="cf-otp-target-chip">
+                          <div className="cf-otp-target-text">
+                            <span>Code sent to:</span>
+                            <strong>{otpTarget}</strong>
+                          </div>
+                          <button
+                            type="button"
+                            className="cf-otp-change-btn"
+                            onClick={() => {
+                              setOtpSent(false);
+                              setOtpCode("");
+                              setOtpErrors({});
+                            }}
+                          >
+                            Change
+                          </button>
+                        </div>
+
+                        <div className="cf-login-form-group cf-otp-input-group">
+                          <label className="cf-login-field-label">
+                            Enter 6-digit OTP<span className="cf-login-star">*</span>
+                          </label>
+                          <div className="cf-otp-box-wrapper">
+                            <Input.OTP
+                              size="large"
+                              length={6}
+                              value={otpCode}
+                              onChange={(val) => {
+                                setOtpCode(val);
+                                setOtpErrors({});
+                              }}
+                              autoFocus
+                            />
+                          </div>
+                          {otpErrors.code && (
+                            <span className="cf-login-error-text" style={{ textAlign: "center" }}>
+                              {otpErrors.code}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="cf-otp-resend-row">
+                          {otpTimer > 0 ? (
+                            <span className="cf-otp-timer-text">
+                              Resend OTP in <strong>{otpTimer}s</strong>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="cf-login-forgot-link"
+                              onClick={handleSendOtp}
+                              disabled={otpLoading}
+                            >
+                              Resend OTP
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="cf-login-submit-row">
+                          <button
+                            type="submit"
+                            className="cf-login-primary-btn"
+                            disabled={otpLoading}
+                          >
+                            {otpLoading ? (
+                              <span className="cf-login-btn-loader">
+                                <span className="cf-login-btn-spinner"></span>
+                                Verifying...
+                              </span>
+                            ) : (
+                              "Verify & Login"
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+
+                  {/* Vertical Divider */}
+                  <div className="cf-login-divider-column">
+                    <div className="cf-login-divider-line"></div>
+                    <span className="cf-login-divider-pill">Or</span>
+                    <div className="cf-login-divider-line"></div>
+                  </div>
+
+                  {/* Right Side Social Auth */}
+                  <div className="cf-login-social-column">
+                    <div className="cf-login-google-btn-box">
+                      <GoogleLogin
+                        onSuccess={handleGoogleLogin}
+                        onError={() =>
+                          CommonToaster(
+                            "Google sign-in failed. Please try again.",
+                            "error"
+                          )
+                        }
+                        theme="outline"
+                        shape="pill"
+                        text="signin_with"
+                        size="large"
+                        width="100%"
+                      />
+                    </div>
+                    <div className="cf-signup-footer">
+                      <span>Don't have an account?</span>
+                      <button
+                        type="button"
+                        className="cf-signup-link"
+                        onClick={() => navigate("/register")}
+                      >
+                        Register
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-              <div className="cf-preview-role-title">Senior Full Stack Engineer</div>
-              <div className="cf-preview-tags">
-                <span className="cf-tag cf-tag-accent">₹32L - ₹48L PA</span>
-                <span className="cf-tag">Full Time</span>
-                <span className="cf-tag">React / Node.js</span>
-              </div>
-
-              <div className="cf-preview-footer">
-                <div className="cf-preview-recruiter">
-                  <Zap size={13} className="cf-zap-icon" />
-                  <span>Hiring Manager active today • Direct fast-track</span>
-                </div>
-                <span className="cf-preview-verified-badge">
-                  <BadgeCheck size={14} />
-                  Verified
-                </span>
-              </div>
+            {/* BOTTOM SECTION: Terms Note */}
+            <div className="cf-login-bottom-section">
+              <p className="cf-login-terms-paragraph">
+                By logging in, you agree to the{" "}
+                <button
+                  type="button"
+                  className="cf-login-link-inline"
+                  onClick={() => navigate("/terms-conditions")}
+                >
+                  Terms & Conditions
+                </button>{" "}
+                &{" "}
+                <button
+                  type="button"
+                  className="cf-login-link-inline"
+                  onClick={() => navigate("/privacy-policy")}
+                >
+                  Privacy Policy
+                </button>{" "}
+                of careerFast.in
+              </p>
             </div>
-
-            {/* Placement Proof Strip */}
-            <div className="cf-placement-badge">
-              <div className="cf-avatar-stack">
-                <img src={getImageUrl(avatar1)} alt="Candidate Priya" className="cf-avatar-img" />
-                <img src={getImageUrl(avatar2)} alt="Candidate Rahul" className="cf-avatar-img" />
-                <img src={getImageUrl(avatar3)} alt="Candidate Sneha" className="cf-avatar-img" />
-                <span className="cf-avatar-count">+50k</span>
-              </div>
-              <div className="cf-placement-text">
-                <span className="cf-placement-bold">50,000+ Placed Candidates</span>
-                <span className="cf-placement-sub">Average 65% salary hike across top tech roles</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Stats & Trust Strip */}
-          <div className="cf-hero-bottom">
-            <div className="cf-hero-stats-row">
-              <div className="cf-stat-cell">
-                <span className="cf-stat-number">10,000+</span>
-                <span className="cf-stat-title">Verified Jobs</span>
-              </div>
-              <div className="cf-stat-sep"></div>
-              <div className="cf-stat-cell">
-                <span className="cf-stat-number">500+</span>
-                <span className="cf-stat-title">Top Companies</span>
-              </div>
-              <div className="cf-stat-sep"></div>
-              <div className="cf-stat-cell">
-                <span className="cf-stat-number">98%</span>
-                <span className="cf-stat-title">Placement Rate</span>
-              </div>
-            </div>
-
-            <div className="cf-trusted-by">
-              <span className="cf-trusted-label">Trusted by engineers at</span>
-              <div className="cf-trusted-logos">
-                <span>Google</span>
-                <span>Microsoft</span>
-                <span>Amazon</span>
-                <span>TCS</span>
-                <span>Zoho</span>
-              </div>
-            </div>
-          </div>
+          </section>
         </div>
-      </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="cf-login-footer">
+        <div className="cf-login-footer-links">
+          <button type="button" onClick={() => navigate("/about-us")}>
+            About Us
+          </button>
+          <span className="cf-login-footer-sep">•</span>
+          <button type="button" onClick={() => navigate("/contact-us")}>
+            Contact Us
+          </button>
+          <span className="cf-login-footer-sep">•</span>
+          <button type="button" onClick={() => navigate("/faqs")}>
+            FAQs
+          </button>
+          <span className="cf-login-footer-sep">•</span>
+          <button type="button" onClick={() => navigate("/terms-conditions")}>
+            Terms and Conditions
+          </button>
+          <span className="cf-login-footer-sep">•</span>
+          <button type="button" onClick={() => navigate("/privacy-policy")}>
+            Privacy Policy
+          </button>
+        </div>
+        <p className="cf-login-footer-copyright">
+          All rights reserved © 2026 CareerFast Services
+        </p>
+      </footer>
 
       {/* ================= FORGOT PASSWORD MODAL ================= */}
       <Modal
@@ -579,7 +934,7 @@ const LoginPage = () => {
         footer={null}
         className="premium-modal cf-theme-modal"
         centered
-        width={480}
+        width={460}
         maskClosable={false}
       >
         <div style={{ padding: "8px 0" }}>
@@ -678,7 +1033,7 @@ const LoginPage = () => {
                 <div style={{ textAlign: "center", marginTop: 18 }}>
                   <button
                     type="button"
-                    className="cf-forgot-btn"
+                    className="cf-login-forgot-link"
                     onClick={() => setModalStep(1)}
                   >
                     Back to Email

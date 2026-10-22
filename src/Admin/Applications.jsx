@@ -298,7 +298,7 @@ export default function Applications() {
     const totalPages = Math.ceil(totalApplications / itemsPerPage) || 1;
 
     return (
-        <div className="animate-in fade-in duration-500 max-w-[1600px] mx-auto w-full">
+        <div className="animate-in fade-in duration-500 w-full">
             {/* Header Section */}
             <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>

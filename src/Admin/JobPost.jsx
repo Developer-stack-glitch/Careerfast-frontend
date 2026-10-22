@@ -532,7 +532,7 @@ export default function JobPost() {
     };
 
     return (
-        <div className="max-w-[1400px] mx-auto w-full animate-in fade-in duration-300">
+        <div className="w-full animate-in fade-in duration-300">
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                 <div className="flex items-center gap-3">
