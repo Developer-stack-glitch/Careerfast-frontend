@@ -32,9 +32,7 @@ export async function generateMetadata({ params, searchParams }) {
     return `${job.workplace_type || ""}${locStr ? ` • ${locStr}` : ""}`.trim();
   })();
 
-  const experience = Array.isArray(job.experience_required) 
-    ? job.experience_required.join(", ") 
-    : (job.experience_required || "");
+  const experience = "Internship";
 
   const fullTitle = `${job.job_title} - ${location} - ${job.company_name} - ${experience}`;
   

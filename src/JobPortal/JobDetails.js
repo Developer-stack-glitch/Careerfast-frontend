@@ -51,7 +51,7 @@ import Header from "../Header/Header";
 import SEO from "../Components/SEO/SEO";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
-import { getJobSlug, getJobDetailsUrl, generateSlug } from "../utils/slug";
+import { getJobSlug, getJobDetailsUrl, generateSlug, isInternshipOpportunity } from "../utils/slug";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
 import "../css/naukri-job-details.css";
@@ -74,11 +74,23 @@ const getCurrencySymbol = (currencyCode) => {
 // Helper function to clean and process job description HTML
 const processDescription = (html) => {
   if (!html) return "";
-  return html
+  let str = String(html)
     .replace(/\u00AD/g, '')
-    .replace(/\u200B/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .trim();
+    .replace(/\u200B/g, '');
+
+  // If plain text (no HTML tags), convert newlines to paragraphs
+  if (!/<[a-z][\s\S]*>/i.test(str)) {
+    str = str
+      .split(/\r?\n/)
+      .map((line) => (line.trim() === "" ? "<p><br /></p>" : `<p>${line}</p>`))
+      .join("");
+  } else {
+    // Convert empty paragraphs (<p></p>, <p> </p>, <p>&nbsp;</p>) to <p><br /></p>
+    // so empty lines created by pressing Enter always render with height
+    str = str.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '<p><br /></p>');
+  }
+
+  return str.trim();
 };
 
 const transformJob = (job) => {
@@ -92,6 +104,7 @@ const transformJob = (job) => {
   const daysLeft = totalActiveDays - daysPassed;
   const isClosedVal = job.is_closed && typeof job.is_closed === 'object' && job.is_closed.data ? job.is_closed.data[0] : job.is_closed;
   const isExpired = daysLeft < 0 || isClosedVal == 1;
+  const isIntern = isInternshipOpportunity(job);
 
   return {
     id: job.id,
@@ -109,7 +122,7 @@ const transformJob = (job) => {
     postedDate,
     working_days: job.working_days,
     daysLeft: isExpired ? "Expired" : `${daysLeft} days left`,
-    level: job.experience_type,
+    level: isIntern ? "Internship" : job.experience_type,
     salary: (() => {
       if (String(job.hide_salary) === "true" || job.hide_salary === true || job.hide_salary === 1) return "Not Disclosed";
       if (!["Fixed", "Range", "Total CTC", "Fixed + Variable"].includes(job.salary_type)) return "Negotiable";
@@ -183,7 +196,7 @@ const transformJob = (job) => {
     premium: true,
     urgent: false,
     skills: job.skills,
-    eligibility: Array.isArray(job.experience_required) ? job.experience_required.join(", ") : (job.experience_required || ""),
+    eligibility: isIntern ? "Internship" : (Array.isArray(job.experience_required) ? job.experience_required.join(", ") : (job.experience_required || "")),
     status: isExpired ? "Expired" : "Live",
     raw_location: job.work_location,
     raw_workplace_type: job.workplace_type,
@@ -1067,7 +1080,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
     <>
       {!initialData && job && (
         <SEO
-          title={`${job.title} - ${job.location} - ${job.company} - ${job.eligibility}`}
+          title={`${job.title} - ${job.location} - ${job.company} - ${isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "Fresher")}`}
           description={`${job.seo_description || (job.job_description ? job.job_description.replace(/<[^>]*>?/gm, ' ').substring(0, 160).trim() : `Job opportunities for ${job.title} at ${job.company}`)} - ${job.location} - ${job.eligibility}`}
           ogType="article"
           ogImage={job.logo}
@@ -1219,7 +1232,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
             <div className="njd-alert-job-meta">
               <span>🏢 <strong>{job.company}</strong></span>
               {job.location && <span>📍 {job.location}</span>}
-              {job.eligibility && <span>💼 {job.eligibility}</span>}
+              <span>💼 {isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "Fresher")}</span>
             </div>
           </div>
 
@@ -1355,7 +1368,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                         <div className="njd-header-stats" style={job.is_walk_in ? { borderBottom: 'none', paddingBottom: '10px' } : {}}>
                           <div className="njd-stat-item">
                             <MdOutlineWorkOutline className="njd-stat-icon" />
-                            <span>{job.eligibility || "0-2 years"}</span>
+                            <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "0-2 years")}</span>
                           </div>
                           <div className="njd-stat-sep"></div>
                           <div className="njd-stat-item">

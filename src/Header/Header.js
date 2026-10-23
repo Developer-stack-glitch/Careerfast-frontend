@@ -48,6 +48,7 @@ import {
   CrownFilled,
 } from "@ant-design/icons";
 import { getUserProfile, getSearchSuggestions, searchLocationsAPI } from "../ApiService/action";
+import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../utils/profileCompletion";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { FaBookOpen, FaCalendarAlt, FaChalkboardTeacher, FaGraduationCap } from "react-icons/fa";
 import {
@@ -679,8 +680,20 @@ export default function Header({ noSticky = false, showSearch }) {
     setMounted(true);
     const saved = localStorage.getItem("profileProgress");
     if (saved) {
-      setHeaderProgress(parseInt(saved));
+      setHeaderProgress(parseInt(saved, 10));
     }
+
+    const handleProgress = (e) => {
+      if (e?.detail?.percentage !== undefined) {
+        setHeaderProgress(Number(e.detail.percentage));
+      } else {
+        const currentSaved = localStorage.getItem("profileProgress");
+        if (currentSaved) setHeaderProgress(parseInt(currentSaved, 10));
+      }
+    };
+
+    window.addEventListener(PROFILE_PROGRESS_EVENT, handleProgress);
+    return () => window.removeEventListener(PROFILE_PROGRESS_EVENT, handleProgress);
   }, []);
 
   useEffect(() => {
@@ -776,30 +789,10 @@ export default function Header({ noSticky = false, showSearch }) {
 
 
   const calculateCompletion = (profile) => {
-    let score = 0;
-    let total = 8;
-
-    if (profile.about && String(profile.about).trim()) score++;
-    if (profile.skills?.length > 0) score++;
-    if (profile.education?.length > 0) score++;
-    if (profile.projects?.length > 0) score++;
-    const hasExp = Boolean(
-      (profile.professional && profile.professional.length > 0) ||
-      (profile.experience && profile.experience.length > 0) ||
-      (profile.companies && profile.companies.length > 0) ||
-      profile.user_type === "Fresher" ||
-      profile.experince_type === "Fresher" ||
-      (profile.total_years && String(profile.total_years) !== "0")
-    );
-    if (hasExp) score++;
-    if (profile.social_links && (typeof profile.social_links === 'object' ? Object.values(profile.social_links).some(Boolean) : true)) score++;
-    if (profile.resume && profile.resume !== "null" && profile.resume !== "#") score++;
-    if (profile.profile_image || profile.certifications?.length > 0) score++;
-
-    const percentage = Math.round((score / total) * 100);
-
-    localStorage.setItem("profileProgress", percentage);
+    const { percentage } = calculateCandidateCompletion(profile);
+    broadcastProfileProgress(percentage);
     setHeaderProgress(percentage);
+    return percentage;
   };
 
   const jobsMenuContent = (
@@ -1648,7 +1641,7 @@ export default function Header({ noSticky = false, showSearch }) {
                 type="circle"
                 percent={headerProgress}
                 size={80}
-                strokeColor="#22c55e"
+                strokeColor={headerProgress >= 80 ? "#22c55e" : headerProgress >= 50 ? "#10b981" : "#f59e0b"}
                 trailColor="rgba(255,255,255,0.2)"
                 strokeWidth={4}
                 showInfo={false}
@@ -1658,14 +1651,16 @@ export default function Header({ noSticky = false, showSearch }) {
                 position: 'absolute',
                 bottom: -2,
                 right: -2,
-                background: '#22c55e',
+                background: headerProgress >= 80 ? '#22c55e' : headerProgress >= 50 ? '#10b981' : '#f59e0b',
                 color: 'white',
                 fontSize: '10px',
                 fontWeight: 'bold',
                 padding: '2px 6px',
                 borderRadius: '10px',
                 border: '2px solid #6366f1',
-                zIndex: 2
+                zIndex: 2,
+                boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                lineHeight: 1.2
               }}>
                 {headerProgress}%
               </div>

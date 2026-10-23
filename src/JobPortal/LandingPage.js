@@ -21,6 +21,7 @@ import company_logos2 from "../images/verified.png";
 import company_logos3 from "../images/applied.png";
 import need_content_img from "../images/need_guidence.webp";
 import need_guidence1 from "../images/need_guidence1.png";
+import { isInternshipOpportunity } from "../utils/slug";
 import { useNavigate } from '@/routing-shim';
 import logo1 from "../images/logo1.svg";
 import logo2 from "../images/logo2.svg";
@@ -683,7 +684,7 @@ export default function JobPortalLandingPage() {
                                 <span className="elite-detail-label">
                                   Level
                                 </span>
-                                <span>{jobs.experience_type}</span>
+                                <span>{isInternshipOpportunity(jobs) ? "Internship" : (jobs.experience_type || "N/A")}</span>
                               </div>
                             </div>
                           </div>

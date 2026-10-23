@@ -1,32 +1,70 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
-  Layout,
-  Menu,
   Progress,
-  Card,
-  Avatar,
   Button,
   Space,
   Divider,
   Tag,
-  Tooltip,
   Drawer,
   Upload,
   Typography,
   Form,
   Row,
   Col,
-  message,
+  message as antdMessage,
   Checkbox,
   Popconfirm,
   Empty,
   Skeleton,
-  Dropdown,
-  Modal,
   Alert,
 } from "antd";
+import toast from "react-hot-toast";
+import { CommonToaster } from "../Common/CommonToaster";
+
+// Unified toaster linking to the app's react-hot-toast system
+const message = {
+  success: (msg) => {
+    try {
+      CommonToaster(msg, "success");
+    } catch {
+      toast.success(msg);
+    }
+    try {
+      antdMessage.success(msg);
+    } catch {}
+  },
+  error: (msg) => {
+    try {
+      CommonToaster(msg, "error");
+    } catch {
+      toast.error(msg);
+    }
+    try {
+      antdMessage.error(msg);
+    } catch {}
+  },
+  warning: (msg) => {
+    try {
+      CommonToaster(msg, "warning");
+    } catch {
+      toast(msg, { icon: "⚠️" });
+    }
+    try {
+      antdMessage.warning(msg);
+    } catch {}
+  },
+  info: (msg) => {
+    try {
+      CommonToaster(msg, "info");
+    } catch {
+      toast(msg, { icon: "ℹ️" });
+    }
+    try {
+      antdMessage.info(msg);
+    } catch {}
+  },
+};
 import {
-  Check,
   Clock,
   Briefcase,
   FileText,
@@ -38,14 +76,11 @@ import {
   Share2,
   Download,
   Eye,
-  RefreshCw,
   Code2,
   GraduationCap,
   FolderGit2,
   Globe,
   ExternalLink,
-  ChevronRight,
-  Flame,
   Trophy,
   CheckCircle2,
   Building2,
@@ -60,39 +95,25 @@ import {
   Wallet,
   Trash2,
   X,
-  Camera,
-  MoreHorizontal,
-  Zap,
-  AlertCircle
+  BarChart,
 } from "lucide-react";
 import {
-  EditOutlined,
   CheckCircleFilled,
   PlusOutlined,
-  UploadOutlined,
-  CalendarOutlined,
-  BgColorsOutlined,
-  PictureOutlined,
 } from "@ant-design/icons";
 import { IoIosMale } from "react-icons/io";
 import { IoFemaleOutline } from "react-icons/io5";
-import { LuGraduationCap } from "react-icons/lu";
 import { GiOfficeChair } from "react-icons/gi";
-import { PiStudent } from "react-icons/pi";
-import { GiNewShoot } from "react-icons/gi";
 import { FiEdit } from "react-icons/fi";
-import { FaUserPen } from "react-icons/fa6";
 
 import "../css/Profile.css";
 import "../css/ProfileDetailsPage.css";
 import "../css/ModernCandidateProfile.css";
-import { FaFacebookF, FaTwitter, FaGithub } from "react-icons/fa";
-import { FiBriefcase, FiCalendar, FiPlusCircle, FiFolder } from "react-icons/fi";
+import { FaTwitter, FaGithub } from "react-icons/fa";
+import { FiBriefcase, FiCalendar, FiPlusCircle } from "react-icons/fi";
 import { FaInstagram } from "react-icons/fa";
 import { MdDeleteForever } from "react-icons/md";
-import { FaBehance } from "react-icons/fa";
 import { FaLinkedinIn } from "react-icons/fa";
-import { FaDribbble } from "react-icons/fa";
 import { PiGenderTransgender } from "react-icons/pi";
 import { PiGenderIntersex } from "react-icons/pi";
 import { PiGenderNonbinary } from "react-icons/pi";
@@ -101,7 +122,6 @@ import { HiMiniXMark } from "react-icons/hi2";
 import { MdEdit } from "react-icons/md";
 import { IoLocationSharp } from "react-icons/io5";
 
-import { LiaSchoolSolid } from "react-icons/lia";
 import { MdFileDownloadDone } from "react-icons/md";
 
 import "react-calendar-heatmap/dist/styles.css";
@@ -112,10 +132,8 @@ import {
   MdSchool,
   MdOutlineSchool,
   MdMenuBook,
-  MdStarOutline,
   MdLocationCity,
   MdDateRange,
-  MdEventAvailable,
   MdCategory,
   MdPercent,
   MdOutlineCalculate,
@@ -134,7 +152,7 @@ import {
   userTypeValidator,
 } from "../Common/Validation";
 import CommonDatePicker from "../Common/CommonDatePicker";
-import Header from "../Header/Header";
+import { getProfileCompletenessChecks, broadcastProfileProgress } from "../utils/profileCompletion";
 import {
   dailyStreak,
   deleteEducation,
@@ -154,7 +172,6 @@ import {
   insertProjects,
   updateAbout,
   updateBasicDetails,
-  updateBanner,
   updateEducation,
   updateExperience,
   updateProfileImage,
@@ -163,12 +180,8 @@ import {
   updateSkills,
   updateSocialLinks,
 } from "../ApiService/action";
-import { useNavigate } from "@/routing-shim";
 
 const { Title, Text } = Typography;
-
-const { Content } = Layout;
-const { Meta } = Card;
 
 const items = [
   { key: "basic", label: "Personal Details" },
@@ -199,26 +212,10 @@ const suggestions = [
   "Substance Designer",
 ];
 
-const yearOptions = Array.from({ length: 2025 - 1990 + 1 }, (_, i) => {
-  const year = (1990 + i).toString();
-  return { label: year, value: year };
-});
-
 const workingYearOptions = Array.from({ length: 2025 - 1990 + 1 }, (_, i) => {
   const workingYear = (1990 + i).toString();
   return { label: workingYear, value: workingYear };
 });
-
-const FresherYearOptions = Array.from({ length: 2025 - 1990 + 1 }, (_, i) => {
-  const FreshYear = (1990 + i).toString();
-  return { label: FreshYear, value: FreshYear };
-});
-
-const startYearOptions = yearOptions;
-const endYearOptions = yearOptions;
-
-const fresherStartYearOptions = FresherYearOptions;
-const fresherEndYearOptions = FresherYearOptions;
 
 const workingStartDateOptions = workingYearOptions;
 const workingEndDateOptions = workingYearOptions;
@@ -302,12 +299,22 @@ export default function MainProfile() {
   const [fresherStartDateError, setFresherStartDateError] = useState("");
   const [fresherEndtDate, setFresherEndDate] = useState("");
   const [fresherEndDateError, setFresherEndDateError] = useState("");
-  const [loginUserId, setLoginUserId] = useState(null);
+  const [loginUserId, setLoginUserId] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("loginDetails");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return parsed.id || parsed.user_id || parsed.userId || null;
+        }
+      } catch (e) {}
+    }
+    return null;
+  });
   const [roleId, setRoleId] = useState(null);
   const [organizationName, setOrganisationName] = useState("");
   const [organizationNameType, setOrganizationType] = useState("");
   const [resumeError, setResumeError] = useState("");
-  const [isVisible, setIsVisible] = useState(false);
   const [createdAt, setCreatedAt] = useState("");
 
   //
@@ -387,11 +394,11 @@ export default function MainProfile() {
   const [isEducation, setIsEducation] = useState([]);
   const [isProjects, setIsProjects] = useState([]);
   const [isSocialLinks, setIsSocialLinks] = useState({});
-  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [userProfileLoading, setUserProfileLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [proBannerDismissed, setProBannerDismissed] = useState(false);
   const [companies, setCompanies] = useState([
     {
       id: Date.now(),
@@ -414,17 +421,9 @@ export default function MainProfile() {
     backgroundColor: "#481eaf",
     backgroundImage: "none",
   });
-
-  const [isColorModalVisible, setColorModalVisible] = useState(false);
-  const [isImageModalVisible, setImageModalVisible] = useState(false);
-
-  // active streak
-
   const [streakData, setStreakData] = useState([]);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
-  const today = new Date();
-
 
   useEffect(() => {
     getDailyStreakData();
@@ -475,47 +474,6 @@ export default function MainProfile() {
       setIsLoading(false);
     }
   };
-
-  const handleMenuClick = ({ key }) => {
-    if (key === "color") {
-      setColorModalVisible(true);
-    } else if (key === "image") {
-      setImageModalVisible(true);
-    }
-  };
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const menuItems = [
-    {
-      key: "color",
-      icon: <BgColorsOutlined style={{ color: "#5f2eea", fontSize: "16px" }} />,
-      label: <span style={{ fontWeight: 500 }}>Change Background Color</span>,
-      style: {
-        padding: "10px 16px",
-        margin: "4px 8px",
-        borderRadius: "8px",
-      },
-    },
-    {
-      type: "divider",
-      style: { margin: "4px 0" },
-    },
-    {
-      key: "image",
-      icon: <PictureOutlined style={{ color: "#5f2eea", fontSize: "16px" }} />,
-      label: <span style={{ fontWeight: 500 }}>Change Background Image</span>,
-      style: {
-        padding: "10px 16px",
-        margin: "4px 8px",
-        borderRadius: "8px",
-      },
-    },
-  ];
 
   //
   const [customSkillError, setCustomSkillError] = useState("");
@@ -1078,13 +1036,14 @@ export default function MainProfile() {
       await updateBasicDetails(payload);
       message.success("Preferences updated successfully!");
       getUserProfileData();
+      resetFormFields();
     } catch (error) {
       console.error("Error updating preferences:", error);
       message.error("Failed to update preferences.");
     }
   };
 
-  const handleSaveCertifications = async (newCerts) => {
+  const handleSaveCertifications = async (newCerts, shouldClose = false) => {
     const payload = {
       user_id: loginUserId,
       certifications: newCerts,
@@ -1094,13 +1053,16 @@ export default function MainProfile() {
       setCertifications(newCerts);
       message.success("Certifications updated successfully!");
       getUserProfileData();
+      if (shouldClose) {
+        resetFormFields();
+      }
     } catch (error) {
       console.error("Error updating certifications:", error);
       message.error("Failed to update certifications.");
     }
   };
 
-  const handleSaveAccomplishments = async (newAccomplishments) => {
+  const handleSaveAccomplishments = async (newAccomplishments, shouldClose = false) => {
     const payload = {
       user_id: loginUserId,
       accomplishments: newAccomplishments,
@@ -1110,13 +1072,16 @@ export default function MainProfile() {
       setAccomplishments(newAccomplishments);
       message.success("Accomplishments updated successfully!");
       getUserProfileData();
+      if (shouldClose) {
+        resetFormFields();
+      }
     } catch (error) {
       console.error("Error updating accomplishments:", error);
       message.error("Failed to update accomplishments.");
     }
   };
 
-  const handleSaveLanguages = async (newLanguages) => {
+  const handleSaveLanguages = async (newLanguages, shouldClose = false) => {
     const payload = {
       user_id: loginUserId,
       languages: newLanguages,
@@ -1126,13 +1091,16 @@ export default function MainProfile() {
       setLanguages(newLanguages);
       message.success("Languages updated successfully!");
       getUserProfileData();
+      if (shouldClose) {
+        resetFormFields();
+      }
     } catch (error) {
       console.error("Error updating languages:", error);
       message.error("Failed to update languages.");
     }
   };
 
-  const handleSaveAdditionalInfo = async (newInfo) => {
+  const handleSaveAdditionalInfo = async (newInfo, shouldClose = false) => {
     const payload = {
       user_id: loginUserId,
       additional_info: newInfo,
@@ -1142,6 +1110,9 @@ export default function MainProfile() {
       setAdditionalInfo(newInfo);
       message.success("Additional info updated successfully!");
       getUserProfileData();
+      if (shouldClose) {
+        resetFormFields();
+      }
     } catch (error) {
       console.error("Error updating additional info:", error);
       message.error("Failed to update additional info.");
@@ -1390,6 +1361,7 @@ export default function MainProfile() {
       }
       setShowEducationForm(false);
       getUserProfileData();
+      resetFormFields();
     } catch (error) {
       console.error("Education save/update failed:", error);
       message.error("Failed to save education data.");
@@ -1535,6 +1507,7 @@ export default function MainProfile() {
 
       setShowWorkExpForm(false);
       setEditingCompanyId(null);
+      resetFormFields();
     } catch (error) {
       console.error("Experience save error", error);
       message.error("Failed to save experience");
@@ -1628,6 +1601,7 @@ export default function MainProfile() {
       setActiveButton(""); // clear active button style
       setGenderActiveButton("")
       setShowForm(false);
+      resetFormFields();
     } catch (error) {
       console.error("project error", error);
       message.error("Failed to save project");
@@ -1911,7 +1885,7 @@ export default function MainProfile() {
       if (stored) {
         const loginDetails = JSON.parse(stored);
         setRoleId(loginDetails.role_id);
-        setLoginUserId(loginDetails.id);
+        setLoginUserId(loginDetails.id || loginDetails.user_id || loginDetails.userId);
         setFname(loginDetails.first_name);
         setLname(loginDetails.last_name);
         setEmail(loginDetails.email);
@@ -2016,132 +1990,7 @@ export default function MainProfile() {
     setProjectTypeError("");
   };
 
-  const handleUserTypeClick = (buttonId) => {
-    setUserTypeActiveButton(buttonId);
-
-    // Reset only the fields that are dependent on user type
-    form.resetFields([
-      "course",
-      "startyear",
-      "endyear",
-      "course1",
-      "class"
-    ]);
-
-    // Also clear local states if you’re still using them
-    setCourse("");
-    setFresherCourse("");
-    setStartDate("");
-    setEndDate("");
-    setFresherStartDate("");
-    setFresherEndDate("");
-    setClass("");
-  };
-
-
   const [Class, setClass] = useState(null);
-  const handleClassClick = (buttonId) => {
-    setClass((prev) => buttonId);
-  };
-
-  const handleUpload = async (info) => {
-    const file = info.file.originFileObj || info.file;
-
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-
-      reader.onloadend = async () => {
-        const imageDataUrl = reader.result;
-        setProfileImage(imageDataUrl);
-        message.success("Profile image updated!");
-
-        const payload = {
-          user_id: loginUserId,
-          profile_image: imageDataUrl,
-        };
-
-        try {
-          const response = await updateProfileImage(payload);
-          console.log("Profile updated:", response);
-        } catch (error) {
-          console.error("Failed to update profile:", error);
-        }
-      };
-
-      reader.readAsDataURL(file);
-    } else {
-      message.error("Please upload a valid image file");
-    }
-  };
-
-  const [profileStats, setProfileStats] = useState({
-    completionPercentage: 0,
-    lastUpdated: "",
-    jobPreferences: [],
-    applicationStats: {
-      jobsThisMonth: 0,
-      interviewsScheduled: 0,
-    },
-  });
-
-  useEffect(() => {
-    // Calculate profile completion percentage
-    const calculateCompletion = () => {
-      const sections = [
-        isAbout,
-        isResume,
-        isSkills.length > 0,
-        isWorkExp,
-        isEducation.length > 0,
-        isProjects.length > 0,
-        Object.values(isSocialLinks).some((link) => link),
-      ];
-
-      const completedSections = sections.filter(Boolean).length;
-      const percentage = Math.round(
-        (completedSections / sections.length) * 100
-      );
-
-      // ⭐ Save the correct new value
-      localStorage.setItem("profileProgress", percentage);
-
-      return percentage;
-    };
-
-    // Extract job preferences
-    const extractJobPreferences = () => {
-      const preferences = [];
-
-      if (userTypeactiveButton) preferences.push(userTypeactiveButton);
-      if (location) preferences.push(location);
-
-      return preferences;
-    };
-
-    const completion = calculateCompletion();
-
-    // Set final stats
-    setProfileStats({
-      completionPercentage: completion,
-      lastUpdated: createdAt || new Date().toISOString(),
-      jobPreferences: extractJobPreferences(),
-      applicationStats: {
-        jobsThisMonth: 0,
-        interviewsScheduled: 0,
-      },
-    });
-  }, [
-    isAbout,
-    isResume,
-    isSkills,
-    isWorkExp,
-    isEducation,
-    isProjects,
-    isSocialLinks,
-    userTypeactiveButton,
-    location,
-    createdAt
-  ]);
 
 
 
@@ -4205,7 +4054,7 @@ export default function MainProfile() {
                     icon={<Trash2 size={15} />}
                     onClick={() => {
                       const updated = certifications.filter((_, i) => i !== idx);
-                      handleSaveCertifications(updated);
+                      handleSaveCertifications(updated, false);
                     }}
                   />
                 </div>
@@ -4289,7 +4138,7 @@ export default function MainProfile() {
                     url: newCertUrl.trim(),
                   };
                   const updated = [...certifications, newEntry];
-                  handleSaveCertifications(updated);
+                  handleSaveCertifications(updated, true);
                   setNewCertTitle("");
                   setNewCertIssuer("");
                   setNewCertYear("");
@@ -4344,7 +4193,7 @@ export default function MainProfile() {
                     icon={<Trash2 size={15} />}
                     onClick={() => {
                       const updated = accomplishments.filter((_, i) => i !== idx);
-                      handleSaveAccomplishments(updated);
+                      handleSaveAccomplishments(updated, false);
                     }}
                   />
                 </div>
@@ -4408,7 +4257,7 @@ export default function MainProfile() {
                   title: newAccTitle.trim(),
                 };
                 const updated = [...accomplishments, newEntry];
-                handleSaveAccomplishments(updated);
+                handleSaveAccomplishments(updated, true);
                 setNewAccTitle("");
               }}
               style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)", display: "flex", alignItems: "center", gap: 8 }}
@@ -4443,7 +4292,7 @@ export default function MainProfile() {
                     closable
                     onClose={() => {
                       const updated = languages.filter((_, i) => i !== idx);
-                      handleSaveLanguages(updated);
+                      handleSaveLanguages(updated, false);
                     }}
                     style={{
                       padding: "6px 12px",
@@ -4511,7 +4360,7 @@ export default function MainProfile() {
                 }
                 const entry = `${newLangName.trim()} (${newLangProf})`;
                 const updated = [...languages, entry];
-                handleSaveLanguages(updated);
+                handleSaveLanguages(updated, true);
                 setNewLangName("");
               }}
               style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)", display: "flex", alignItems: "center", gap: 8 }}
@@ -4544,7 +4393,7 @@ export default function MainProfile() {
                   closable
                   onClose={() => {
                     const updatedStr = additionalInfo.strengths.filter((_, i) => i !== idx);
-                    handleSaveAdditionalInfo({ ...additionalInfo, strengths: updatedStr });
+                    handleSaveAdditionalInfo({ ...additionalInfo, strengths: updatedStr }, false);
                   }}
                   style={{ padding: "6px 12px", borderRadius: 14, fontSize: 13, background: "#f1f5f9", border: "1px solid #cbd5e1", color: "#1e293b" }}
                 >
@@ -4567,7 +4416,7 @@ export default function MainProfile() {
                 onClick={() => {
                   if (!newStrength.trim()) return;
                   const updatedStr = [...(additionalInfo?.strengths || []), newStrength.trim()];
-                  handleSaveAdditionalInfo({ ...additionalInfo, strengths: updatedStr });
+                  handleSaveAdditionalInfo({ ...additionalInfo, strengths: updatedStr }, false);
                   setNewStrength("");
                 }}
               >
@@ -4588,7 +4437,7 @@ export default function MainProfile() {
                   closable
                   onClose={() => {
                     const updatedInt = additionalInfo.interests.filter((_, i) => i !== idx);
-                    handleSaveAdditionalInfo({ ...additionalInfo, interests: updatedInt });
+                    handleSaveAdditionalInfo({ ...additionalInfo, interests: updatedInt }, false);
                   }}
                   style={{ padding: "6px 12px", borderRadius: 14, fontSize: 13, background: "#f1f5f9", border: "1px solid #cbd5e1", color: "#1e293b" }}
                 >
@@ -4611,7 +4460,7 @@ export default function MainProfile() {
                 onClick={() => {
                   if (!newInterest.trim()) return;
                   const updatedInt = [...(additionalInfo?.interests || []), newInterest.trim()];
-                  handleSaveAdditionalInfo({ ...additionalInfo, interests: updatedInt });
+                  handleSaveAdditionalInfo({ ...additionalInfo, interests: updatedInt }, false);
                   setNewInterest("");
                 }}
               >
@@ -4640,7 +4489,7 @@ export default function MainProfile() {
               type="primary"
               size="large"
               style={{ background: "#5f2eea", borderRadius: 8, padding: "0 32px", fontWeight: 600, boxShadow: "0 4px 12px rgba(95, 46, 234, 0.2)" }}
-              onClick={() => handleSaveAdditionalInfo(additionalInfo)}
+              onClick={() => handleSaveAdditionalInfo(additionalInfo, true)}
             >
               Save Additional Info
             </Button>
@@ -4743,27 +4592,6 @@ export default function MainProfile() {
     }
   };
 
-  // Candidate headline
-  const candidateHeadline =
-    companies && companies.length > 0 && companies[0]?.jobTitle
-      ? companies[0].jobTitle
-      : userType === "Experienced"
-        ? "Experienced Professional"
-        : userType === "Fresher"
-          ? "Graduate / Fresher"
-          : "Professional Candidate";
-
-  // Profile strength rating
-  const completionPct = profileStats?.completionPercentage || 0;
-  const strengthBadgeText =
-    completionPct >= 80 ? "All-Star Profile ⭐" : completionPct >= 50 ? "Intermediate 🚀" : "Getting Started 🎯";
-  const strengthBadgeColor =
-    completionPct >= 80 ? "#10b981" : completionPct >= 50 ? "#4f46e5" : "#f59e0b";
-
-  // Naukri UI states & helpers
-  const [militaryStatus, setMilitaryStatus] = useState("Never served");
-  const [expandedDesc, setExpandedDesc] = useState({});
-
   const displayCandidateRole =
     companies?.find((c) => !c.isNew && c.jobTitle)?.jobTitle ||
     userType ||
@@ -4786,20 +4614,30 @@ export default function MainProfile() {
     return socialLinks[platform] || socialLinks[platform.toLowerCase()] || "";
   };
 
-  const completenessChecks = [
-    { key: "basic", label: "Basic information", done: Boolean(fname && email && phoneNumber) },
-    { key: "about", label: "Add profile summary", done: Boolean(displayAbout) },
-    { key: "resume", label: "Upload resume", done: Boolean(isResume) },
-    { key: "skills", label: "Add key skills", done: Boolean(isSkills && isSkills.length > 0) },
-    { key: "experience", label: "Add work experience", done: Boolean(companies && companies.some((c) => !c.isNew && (c.workingCompanyName || c.jobTitle))) },
-    { key: "education", label: "Add education", done: Boolean(isEducation && isEducation.length > 0) },
-    { key: "projects", label: "Add projects", done: Boolean(isProjects && isProjects.length > 0) },
-    { key: "certifications", label: "Add certifications", done: Boolean(certifications && certifications.length > 0) },
-  ];
+  const completenessChecks = getProfileCompletenessChecks({
+    first_name: fname,
+    last_name: lname,
+    email,
+    phone: phoneNumber,
+    about: displayAbout,
+    resume: isResume,
+    skills: isSkills,
+    companies,
+    education: isEducation,
+    projects: isProjects,
+    certifications,
+    user_type: userType,
+    experince_type: isWorkExp,
+    total_years: totalYearsExperience,
+  });
   const completedChecksCount = completenessChecks.filter((c) => c.done).length;
   const profileCompletionPercentage = Math.round((completedChecksCount / completenessChecks.length) * 100);
   const profileDonutOffset = 150.8 - (150.8 * profileCompletionPercentage) / 100;
   const missingSections = completenessChecks.filter((c) => !c.done);
+
+  useEffect(() => {
+    broadcastProfileProgress(profileCompletionPercentage);
+  }, [profileCompletionPercentage]);
 
   const handleOpenCompletenessSection = (key) => {
     if (key === "experience") {
@@ -4811,6 +4649,28 @@ export default function MainProfile() {
     } else {
       setActiveTab(key);
       showDrawer();
+    }
+  };
+
+  const getSectionIcon = (key) => {
+    switch (key) {
+      case "resume":
+        return <FileText size={13} className="chip-icon-red" />;
+      case "education":
+        return <GraduationCap size={13} className="chip-icon-red" />;
+      case "projects":
+        return <Briefcase size={13} className="chip-icon-red" />;
+      case "certifications":
+        return <Award size={13} className="chip-icon-red" />;
+      case "skills":
+        return <Code2 size={13} className="chip-icon-red" />;
+      case "experience":
+        return <Building2 size={13} className="chip-icon-red" />;
+      case "about":
+        return <Sparkles size={13} className="chip-icon-red" />;
+      case "basic":
+      default:
+        return <User size={13} className="chip-icon-red" />;
     }
   };
 
@@ -4897,7 +4757,7 @@ export default function MainProfile() {
                   <circle cx="58" cy="58" r="54" fill="none" stroke="#e2e8f0" strokeWidth="4" />
                   <circle
                     cx="58" cy="58" r="54" fill="none"
-                    stroke={profileCompletionPercentage === 100 ? "#22c55e" : "#5f2eea"}
+                    stroke={profileCompletionPercentage >= 80 ? "#22c55e" : profileCompletionPercentage >= 50 ? "#5f2eea" : "#f59e0b"}
                     strokeWidth="4" strokeDasharray="339.29"
                     strokeDashoffset={339.29 - (339.29 * profileCompletionPercentage) / 100}
                     strokeLinecap="round" style={{ transition: "stroke-dashoffset 1s ease-in-out" }}
@@ -4916,9 +4776,9 @@ export default function MainProfile() {
                   ) : (
                     <span>{fname ? `${fname[0]}${lname ? lname[0] : ""}`.toUpperCase() : "U"}</span>
                   )}
-                  
+
                   {/* Hover Overlay */}
-                  <div 
+                  <div
                     style={{
                       position: "absolute", inset: 0,
                       backgroundColor: "rgba(0,0,0,0.6)",
@@ -4937,13 +4797,13 @@ export default function MainProfile() {
                     <span style={{ fontSize: "11px", fontWeight: 600, color: "#ffffff", lineHeight: 1.2 }}>photo</span>
                   </div>
                 </div>
-                
+
                 {/* Completion Badge */}
                 <div style={{
                   position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)",
                   background: "#fff", padding: "2px 10px", borderRadius: "12px",
-                  fontSize: "11px", fontWeight: 700, 
-                  color: profileCompletionPercentage === 100 ? "#22c55e" : "#5f2eea",
+                  fontSize: "11px", fontWeight: 700,
+                  color: "#0f172a",
                   border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
                   whiteSpace: "nowrap"
                 }}>
@@ -5167,6 +5027,8 @@ export default function MainProfile() {
 
             {/* Right: 3 Summary Metrics */}
             <div className="profile-hero-metrics">
+              <div className="hero-metric-divider" />
+
               <div className="hero-metric-item">
                 <div className="hero-metric-icon">
                   <Briefcase size={16} />
@@ -5185,7 +5047,7 @@ export default function MainProfile() {
 
               <div className="hero-metric-item">
                 <div className="hero-metric-icon">
-                  <GraduationCap size={16} />
+                  <BarChart size={16} />
                 </div>
                 <div className="hero-metric-info">
                   <div className="hero-metric-value">{userType || "Fresher"}</div>
@@ -5200,7 +5062,7 @@ export default function MainProfile() {
                   <Clock size={16} />
                 </div>
                 <div className="hero-metric-info">
-                  <div className="hero-metric-value green">{noticePeriod || "Open to Work"}</div>
+                  <div className="hero-metric-value">{noticePeriod || "Open to Work"}</div>
                   <div className="hero-metric-label">Notice Period</div>
                 </div>
               </div>
@@ -5209,47 +5071,56 @@ export default function MainProfile() {
         </div>
 
         {/* PROFILE COMPLETION ALERT & HR VISIBILITY BANNER */}
-        {profileCompletionPercentage < 100 ? (
+        {profileCompletionPercentage < 100 && !proBannerDismissed ? (
           <div className="profile-completion-pro-banner">
+            <button
+              type="button"
+              className="pro-banner-close-btn"
+              onClick={() => setProBannerDismissed(true)}
+              aria-label="Dismiss banner"
+              title="Dismiss banner"
+            >
+              <X size={13} />
+            </button>
+
             <div className="pro-banner-left">
-              <div className="pro-banner-meta-row">
-                <span className="pro-banner-badge">
-                  <Zap size={12} className="pro-zap-icon" /> 3x Recruiter Attention
-                </span>
-                <span className="pro-banner-missing-pill">
-                  {completenessChecks.length - completedChecksCount} section{completenessChecks.length - completedChecksCount > 1 ? "s" : ""} left to reach 100%
-                </span>
+              <div className="pro-banner-alert-icon">
+                <span>!</span>
               </div>
 
-              <h3 className="pro-banner-title">
-                Complete your profile to stand out to Recruiters & HR Managers
-              </h3>
-              <p className="pro-banner-desc">
-                Profiles with <span className="pro-highlight-purple">100% completeness</span> get prioritized in search results and receive up to <span className="pro-highlight-orange">3x more direct interview calls</span>.
-              </p>
+              <div className="pro-banner-content">
+                <h3 className="pro-banner-title">
+                  Profile not completed
+                </h3>
+                <p className="pro-banner-desc">
+                  Complete your profile to get prioritized by recruiters and receive more relevant job opportunities.
+                </p>
 
-              {missingSections.length > 0 && (
-                <div className="pro-banner-chips-row">
-                  <span className="pro-banner-chips-label">Missing:</span>
-                  <div className="pro-banner-chips-list">
-                    {missingSections.map((item) => (
-                      <button
-                        key={item.key}
-                        type="button"
-                        className="pro-banner-chip-btn"
-                        onClick={() => handleOpenCompletenessSection(item.key)}
-                        title={`Click to add ${item.label}`}
-                      >
-                        <span className="chip-plus-circle"><Plus size={11} /></span>
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
+                {missingSections.length > 0 && (
+                  <div className="pro-banner-chips-row">
+                    <span className="pro-banner-chips-label">MISSING:</span>
+                    <div className="pro-banner-chips-list">
+                      {missingSections.map((item) => (
+                        <button
+                          key={item.key}
+                          type="button"
+                          className="pro-banner-chip-btn"
+                          onClick={() => handleOpenCompletenessSection(item.key)}
+                          title={`Click to add ${item.label}`}
+                        >
+                          {getSectionIcon(item.key)}
+                          <span>{item.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             <div className="pro-banner-right">
+              <div className="pro-banner-divider" />
+
               <div className="pro-banner-metric-box">
                 <div className="pro-banner-donut-wrap">
                   <svg className="pro-banner-donut-svg" viewBox="0 0 44 44">
@@ -5268,8 +5139,10 @@ export default function MainProfile() {
                   <span className="pro-banner-donut-num">{profileCompletionPercentage}%</span>
                 </div>
                 <div className="pro-banner-metric-info">
-                  <span className="pro-banner-metric-title">{completedChecksCount} of {completenessChecks.length} done</span>
-                  <span className="pro-banner-metric-sub">⭐ Reach 100% for All-Star</span>
+                  <span className="pro-banner-metric-title">Profile completed</span>
+                  <span className="pro-banner-metric-sub">
+                    {completenessChecks.length - completedChecksCount} section{completenessChecks.length - completedChecksCount > 1 ? "s" : ""} left to complete
+                  </span>
                 </div>
               </div>
 
@@ -5286,12 +5159,12 @@ export default function MainProfile() {
                   }
                 }}
               >
-                <span>{missingSections[0] ? `+ ${missingSections[0].label}` : "Complete Profile"}</span>
+                <span>Complete Profile</span>
                 <ArrowRight size={14} />
               </button>
             </div>
           </div>
-        ) : (
+        ) : profileCompletionPercentage >= 100 ? (
           <div className="profile-completion-allstar-card">
             <div className="allstar-left">
               <div className="allstar-icon-box">
@@ -5322,7 +5195,7 @@ export default function MainProfile() {
               </button>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* TWO COLUMN GRID CONTAINER */}
         <div className="profile-grid-container">
@@ -5388,16 +5261,6 @@ export default function MainProfile() {
                   <FileText size={16} className="section-header-icon" />
                   <h3 className="section-title">Resume</h3>
                 </div>
-                <button
-                  type="button"
-                  className="btn-section-action"
-                  onClick={() => {
-                    setActiveTab("resume");
-                    showDrawer();
-                  }}
-                >
-                  {isResume ? "Update Resume" : "Upload Resume"}
-                </button>
               </div>
               {isResume ? (
                 <>
@@ -5668,13 +5531,6 @@ export default function MainProfile() {
                     <MdEdit size={14} />
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="btn-section-action"
-                  onClick={handleAddNewEducation}
-                >
-                  <Plus size={13} /> Add Education
-                </button>
               </div>
 
               {isEducation && isEducation.length > 0 ? (
@@ -5766,13 +5622,6 @@ export default function MainProfile() {
                     <MdEdit size={14} />
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="btn-section-action"
-                  onClick={handleAddNewProject}
-                >
-                  <Plus size={13} /> Add Project
-                </button>
               </div>
 
               {isProjects && isProjects.length > 0 ? (
@@ -5877,16 +5726,6 @@ export default function MainProfile() {
                     <MdEdit size={14} />
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="btn-section-action"
-                  onClick={() => {
-                    setActiveTab("certifications");
-                    showDrawer();
-                  }}
-                >
-                  <Plus size={13} /> Add Certification
-                </button>
               </div>
 
               {certifications && certifications.length > 0 ? (
@@ -5958,16 +5797,6 @@ export default function MainProfile() {
                     <MdEdit size={14} />
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="btn-section-action"
-                  onClick={() => {
-                    setActiveTab("accomplishments");
-                    showDrawer();
-                  }}
-                >
-                  <Plus size={13} /> Add
-                </button>
               </div>
 
               {accomplishments && accomplishments.length > 0 ? (
@@ -6017,16 +5846,6 @@ export default function MainProfile() {
                     <MdEdit size={14} />
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="btn-section-action"
-                  onClick={() => {
-                    setActiveTab("languages");
-                    showDrawer();
-                  }}
-                >
-                  <Plus size={13} /> Add Language
-                </button>
               </div>
 
               {languages && languages.length > 0 ? (

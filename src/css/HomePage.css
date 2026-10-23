@@ -17,11 +17,12 @@
 
 /* Hero Section */
 .hp-hero {
-  padding: 80px 20px 70px;
+  padding: 155px 20px 70px;
   text-align: center;
   background-color: #f8f9ff;
   position: relative;
   overflow: visible;
+  margin-top: -96px;
 }
 
 .hp-hero-title {
@@ -3272,19 +3273,16 @@
    HomePage Profile Completion Alert Banner & Floating Quick-Badge
    ========================================================================== */
 .hp-profile-alert-banner {
-  background: linear-gradient(90deg, #5f2eea 0%, #4318ff 60%, #3010b8 100%);
-  color: #ffffff;
-  padding: 14px 24px;
+  background: transparent;
+  padding: 12px 24px 4px 24px;
   position: relative;
   z-index: 99;
-  box-shadow: 0 4px 16px rgba(67, 24, 255, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  animation: slideDownBanner 0.35s ease-out;
+  animation: slideDownBanner 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes slideDownBanner {
   from {
-    transform: translateY(-100%);
+    transform: translateY(-8px);
     opacity: 0;
   }
 
@@ -3295,165 +3293,306 @@
 }
 
 .hp-profile-alert-container {
-  max-width: 1280px;
+  max-width: 1240px;
   margin: 0 auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-left: 3.5px solid #f97316;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+  padding: 12px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  flex-wrap: wrap;
+  box-sizing: border-box;
+  transition: all 0.25s ease;
 }
 
+/* Percentage Tier Containers: Clean borders without garish background tint */
+.hp-profile-alert-container.hp-tier-basic {
+  border-left-color: #ef4444;
+}
+
+.hp-profile-alert-container.hp-tier-mid {
+  border-left-color: #f97316;
+}
+
+.hp-profile-alert-container.hp-tier-strong {
+  border-left-color: #10b981;
+}
+
+.hp-profile-alert-container:hover {
+  box-shadow: 0 6px 20px -2px rgba(15, 23, 42, 0.08), 0 2px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* Left section: Icon + Title & Subtitle */
 .hp-profile-alert-left {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
-  min-width: 280px;
+  gap: 14px;
+  flex: 0.9;
+  min-width: 0;
 }
 
-.hp-profile-alert-badge {
-  display: inline-flex;
+.hp-profile-alert-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #fde047;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.hp-profile-alert-zap {
-  font-size: 13px;
-  color: #facc15;
-  animation: zapPulse 2s infinite ease-in-out;
+/* Tiered Icon Colors */
+.hp-profile-alert-icon-wrap.hp-icon-tier-basic {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
 }
 
-@keyframes zapPulse {
+.hp-profile-alert-icon-wrap.hp-icon-tier-mid {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #ea580c;
+}
 
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+.hp-profile-alert-icon-wrap.hp-icon-tier-strong {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #059669;
+}
 
-  50% {
-    transform: scale(1.25);
-    opacity: 0.85;
-  }
+.hp-profile-alert-container:hover .hp-profile-alert-icon-wrap {
+  transform: scale(1.05);
 }
 
 .hp-profile-alert-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+}
+
+.hp-profile-alert-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .hp-profile-alert-title {
   font-size: 14.5px;
-  font-weight: 500;
-  color: #ffffff;
-  line-height: 1.35;
+  font-weight: 650;
+  color: #0f172a;
+  line-height: 1.25;
+  letter-spacing: -0.15px;
+  margin: 0;
 }
 
-.hp-profile-alert-title strong {
-  color: #fde047;
-  font-weight: 700;
+/* Tag Pills */
+.hp-profile-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 550;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.25;
+}
+
+.hp-profile-tag-pill.hp-tag-visibility {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.hp-profile-tag-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
 }
 
 .hp-profile-alert-subtitle {
   font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.3;
+  font-weight: 400;
+  color: #64748b;
+  line-height: 1.4;
+  margin: 0;
 }
 
-.hp-profile-missing-preview {
-  color: #fed7aa;
-  font-weight: 600;
-}
-
-.hp-profile-alert-right {
+/* Middle: Progress Section */
+.hp-profile-progress-section {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 6px;
   flex-shrink: 0;
+  width: 170px;
 }
 
-.hp-profile-progress-mini {
+.hp-profile-progress-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: baseline;
+  justify-content: space-between;
+  line-height: 1;
 }
 
-.hp-profile-progress-bar {
-  width: 90px;
+.hp-profile-progress-lbl {
+  font-size: 13px;
+  font-weight: 500;
+  color: #3f3f3f;
+}
+
+.hp-profile-pct-text {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.hp-profile-pct-text strong {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.hp-profile-pct-text.hp-text-tier-basic strong {
+  color: #dc2626;
+}
+
+.hp-profile-pct-text.hp-text-tier-mid strong {
+  color: #ea580c;
+}
+
+.hp-profile-pct-text.hp-text-tier-strong strong {
+  color: #059669;
+}
+
+.hp-tier-sep {
+  color: #cbd5e1;
+  margin: 0 3px;
+}
+
+.hp-profile-progress-track {
+  width: 100%;
   height: 8px;
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 99px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
   overflow: hidden;
 }
 
+/* Tiered Progress Fills */
 .hp-profile-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #f59e0b 0%, #10b981 100%);
-  border-radius: 99px;
-  transition: width 0.5s ease;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.hp-profile-progress-label {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: #ffffff;
-  min-width: 34px;
+.hp-profile-progress-fill.hp-fill-tier-basic {
+  background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+}
+
+.hp-profile-progress-fill.hp-fill-tier-mid {
+  background: linear-gradient(90deg, #fb923c 0%, #ea580c 100%);
+}
+
+.hp-profile-progress-fill.hp-fill-tier-strong {
+  background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+}
+
+/* Right: Action Button & Dismiss */
+.hp-profile-alert-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .hp-profile-complete-btn {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: #ffffff;
-  color: #4318ff;
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: #ffffff;
   border: none;
   font-size: 13px;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 20px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.22);
+}
+
+.hp-profile-complete-btn.hp-btn-tier-basic {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.22);
+}
+
+.hp-profile-complete-btn.hp-btn-tier-basic:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.32);
+}
+
+.hp-profile-complete-btn.hp-btn-tier-mid {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  box-shadow: 0 2px 6px rgba(234, 88, 12, 0.22);
+}
+
+.hp-profile-complete-btn.hp-btn-tier-mid:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.32);
+}
+
+.hp-profile-complete-btn.hp-btn-tier-strong {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.22);
+}
+
+.hp-profile-complete-btn.hp-btn-tier-strong:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.32);
 }
 
 .hp-profile-complete-btn:hover {
-  background: #f8fafc;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-  color: #3108c9;
+  color: #ffffff;
+}
+
+.hp-profile-btn-chevron {
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.hp-profile-complete-btn:hover .hp-profile-btn-chevron {
+  transform: translateX(3px);
 }
 
 .hp-profile-dismiss-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.65);
-  font-size: 18px;
+  color: #94a3b8;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
-  border-radius: 50%;
+  padding: 0;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .hp-profile-dismiss-btn:hover {
-  color: #ffffff;
-  transform: scale(1.1);
+  background: #f1f5f9;
+  color: #334155;
 }
 
 /* Floating profile pill (bottom right) */
@@ -3550,22 +3689,68 @@
   margin-top: 1px;
 }
 
-@media (max-width: 768px) {
-  .hp-profile-alert-banner {
+@media (max-width: 960px) {
+  .hp-profile-alert-container {
+    flex-wrap: wrap;
+    gap: 14px;
     padding: 12px 16px;
   }
 
+  .hp-profile-alert-left {
+    width: 100%;
+  }
+
+  .hp-profile-progress-section {
+    order: 2;
+    flex: 1;
+    max-width: 200px;
+  }
+
+  .hp-profile-alert-actions {
+    order: 3;
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .hp-profile-alert-banner {
+    padding: 10px 14px 2px 14px;
+  }
+
   .hp-profile-alert-container {
-    flex-direction: column;
-    align-items: flex-start;
+    padding: 12px 14px;
     gap: 12px;
   }
 
-  .hp-profile-alert-right {
+  .hp-profile-alert-title {
+    font-size: 15px;
+  }
+
+  .hp-profile-alert-subtitle {
+    font-size: 12px;
+  }
+
+  .hp-profile-progress-section {
+    width: 100%;
+  }
+
+  .hp-profile-progress-track {
+    flex: 1;
+    width: auto;
+  }
+
+  .hp-profile-alert-actions {
     width: 100%;
     justify-content: space-between;
   }
 
+  .hp-profile-complete-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
   .hp-profile-floating-pill {
     bottom: 16px;
     right: 16px;

@@ -1,6 +1,7 @@
 'use client';
 import { getImageUrl } from "../utils/getImageUrl";
 import { compressImage } from "../utils/imageCompressor";
+import { isInternshipOpportunity, processDescription } from "../utils/slug";
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -42,7 +43,6 @@ import {
   CoffeeOutlined,
   MinusCircleFilled,
   PlusCircleFilled,
-  InfoCircleFilled,
 } from "@ant-design/icons";
 import {
   getJobCategoryData,
@@ -84,19 +84,14 @@ import {
   FaAngleDown,
   FaCheckCircle,
 } from "react-icons/fa";
-import { State, City } from "country-state-city";
 import { HiMiniComputerDesktop } from "react-icons/hi2";
 import { MdOutlineEventNote } from "react-icons/md";
-import { MdOutlineSchool, MdOutlineWorkOutline, MdCurrencyRupee } from "react-icons/md";
+import { MdOutlineWorkOutline, MdCurrencyRupee } from "react-icons/md";
 import currencySymbol from "currency-symbols";
 import currencyCodes from "currency-codes";
-import { FaTransgender } from "react-icons/fa6";
 import {
-  FaRegCalendarAlt,
-  FaRegBuilding,
   FaMapMarkerAlt,
   FaRegHeart,
-  FaHeart,
 } from "react-icons/fa";
 import { IoIosShareAlt } from "react-icons/io";
 import { useParams } from "@/routing-shim";
@@ -177,12 +172,6 @@ const OptionCard = ({ children, style, onMouseEnter, onMouseLeave, ...props }) =
     </StyledCard>
   );
 };
-
-const StatsCard = ({ children, ...props }) => (
-  <StyledCard styles={{ body: { padding: "20px" } }} {...props}>
-    {children}
-  </StyledCard>
-);
 
 const editOptions = [
   {
@@ -637,7 +626,7 @@ const EditOpportunity = () => {
       logo: job.company_logo,
       created_date: job.created_at,
       benefits: job.benefits,
-      job_description: job.job_description,
+      job_description: processDescription(job.job_description),
       postedDate,
       job_category: job.job_category,
       working_days: job.working_days,
@@ -653,7 +642,6 @@ const EditOpportunity = () => {
         }`,
       diversity_hiring: job.diversity_hiring,
       type: job.job_nature,
-      job_category: job.job_category,
       openings: job.openings,
       premium: true,
       urgent: false,
@@ -1032,7 +1020,7 @@ const EditOpportunity = () => {
   const handleDescriptionSave = async () => {
     const payload = {
       job_post_id: currentPostId,
-      description: jobDescription,
+      description: jobDescription ? jobDescription.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '<p><br /></p>') : "",
       formattedBenefits: allBenefitsData,
     };
 
@@ -1571,7 +1559,6 @@ const EditOpportunity = () => {
                       style={{ marginTop: "20px" }}
                       showSearch={true}
                       mode="multiple"
-                      showSearch={true}
                       placeholder={"Search worldwide city, area, country (e.g. Kochi, Guindy, London)..."}
                       value={specificLocation}
                       onChange={(value) => {
@@ -2181,7 +2168,7 @@ const EditOpportunity = () => {
                             <div className="njd-header-stats">
                               <div className="njd-stat-item">
                                 <MdOutlineWorkOutline className="njd-stat-icon" />
-                                <span>{job.eligibility || "0-2 years"}</span>
+                                <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "0-2 years")}</span>
                               </div>
                               <div className="njd-stat-sep"></div>
                               <div className="njd-stat-item">
@@ -2279,9 +2266,9 @@ const EditOpportunity = () => {
                               {job.company} is hiring for the role of {job.title}!
                             </h6>
                             <div
-                              className="njd-jd-text"
+                              className="njd-jd-text ql-editor rich-text"
                               dangerouslySetInnerHTML={{
-                                __html: job.job_description,
+                                __html: processDescription(job.job_description),
                               }}
                             />
 

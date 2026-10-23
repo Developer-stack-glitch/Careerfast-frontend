@@ -60,13 +60,47 @@ export const getJobSlug = (job) => {
   return parts.join("-").replace(/-{3,}/g, "--");
 };
 
+export const processDescription = (html) => {
+  if (!html) return "";
+  let str = String(html)
+    .replace(/\u00AD/g, '')
+    .replace(/\u200B/g, '');
+
+  // If plain text (no HTML tags), convert newlines to paragraphs
+  if (!/<[a-z][\s\S]*>/i.test(str)) {
+    str = str
+      .split(/\r?\n/)
+      .map(line => line.trim() === "" ? "<p><br /></p>" : `<p>${line}</p>`)
+      .join("");
+  } else {
+    // Convert empty paragraphs (<p></p>, <p> </p>, <p>&nbsp;</p>) to <p><br /></p>
+    // so empty lines created by pressing Enter always render with height
+    str = str.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '<p><br /></p>');
+  }
+
+  return str.trim();
+};
+
+export const isInternshipOpportunity = (job, context = {}) => {
+  if (!job) return false;
+  const nature = String(job.job_nature || job.type || "").trim().toLowerCase();
+  if (nature.includes("intern")) return true;
+  const empType = String(job.employment_type || "").trim().toLowerCase();
+  if (empType.includes("intern")) return true;
+  const title = String(job.title || job.job_title || "").trim();
+  if (/\bintern(?:ship)?s?\b/i.test(title)) return true;
+  if (context.jobNatureSelected && String(context.jobNatureSelected).toLowerCase().includes("intern")) return true;
+  if (typeof window !== "undefined" && (window.location.pathname.includes("/internship") || window.location.pathname.includes("internships"))) return true;
+  return false;
+};
+
 export const getJobDetailsUrl = (job, preview = false) => {
   if (!job) return "/jobs";
   const slug = getJobSlug(job);
   const id = job.id || job.job_id || job.job_post_id;
   const isPending = job.approval_status === 'pending' || job.approval_status === 'rejected' || preview;
 
-  const isInternship = String(job.job_nature || job.type || '').toLowerCase().includes('intern');
+  const isInternship = isInternshipOpportunity(job);
   const basePath = isInternship ? '/internship-details' : '/job-details';
 
   if (isPending || preview) {

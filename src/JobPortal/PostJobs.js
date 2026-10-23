@@ -726,7 +726,7 @@ export default function PostJobs() {
       created_at: fetchDateTime,
       openings: jobOpenings,
       working_days: workingDaysName,
-      job_description: value,
+      job_description: value ? value.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '<p><br /></p>') : "",
       seo_description: seoDescription,
     };
   };

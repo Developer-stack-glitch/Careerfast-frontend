@@ -51,6 +51,7 @@ import company_logos3 from "../images/applied.png";
 import need_guidence1 from "../images/need_guidence1.png";
 import post_jobs from "../images/post_jobs.jpg";
 import { getImageUrl } from "../utils/getImageUrl";
+import { isInternshipOpportunity } from "../utils/slug";
 import {
   FaLaptopCode,
   FaBullhorn,
@@ -658,7 +659,7 @@ export default function InternshipLandingPage() {
                             <span className="elite-detail-label">
                               Level
                             </span>
-                            <span>{jobs.experience_type}</span>
+                            <span>{isInternshipOpportunity(jobs) ? "Internship" : (jobs.experience_type || "Internship")}</span>
                           </div>
                         </div>
                       </div>

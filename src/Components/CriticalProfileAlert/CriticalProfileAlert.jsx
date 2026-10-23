@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "@/routing-shim";
 import { getUserProfile } from "../../ApiService/action";
+import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../../utils/profileCompletion";
 import "./CriticalProfileAlert.css";
 
 const CACHE_KEY = "cachedCandidateProfileStats";
@@ -89,34 +90,11 @@ export default function CriticalProfileAlert({
       const rawData = res?.data?.data || {};
       const prof = Array.isArray(rawData) ? rawData[0] : rawData;
 
-      const checks = [
-        { key: "resume", label: "Resume", done: Boolean(prof?.resume && prof.resume !== "null" && prof.resume !== "#") },
-        { key: "skills", label: "Key Skills", done: Boolean(prof?.skills && prof.skills.length > 0) },
-        {
-          key: "experience",
-          label: "Experience",
-          done: Boolean(
-            (prof?.professional && prof.professional.length > 0) ||
-            (prof?.experience && prof.experience.length > 0) ||
-            (prof?.companies && prof.companies.length > 0) ||
-            prof?.user_type === "Fresher" ||
-            prof?.experince_type === "Fresher" ||
-            (prof?.total_years && String(prof.total_years) !== "0")
-          )
-        },
-        { key: "education", label: "Education", done: Boolean(prof?.education && prof.education.length > 0) },
-        { key: "about", label: "Summary", done: Boolean(prof?.about && prof.about.trim()) },
-        { key: "projects", label: "Projects", done: Boolean(prof?.projects && prof.projects.length > 0) },
-        { key: "certifications", label: "Certifications", done: Boolean((prof?.certifications && prof.certifications.length > 0) || prof?.profile_image) },
-        { key: "basic", label: "Basic Info", done: Boolean((prof?.first_name || userObj.first_name) && (prof?.email || userObj.email)) }
-      ];
-
-      const completedCount = checks.filter(c => c.done).length;
-      const percentage = Math.round((completedCount / checks.length) * 100);
-      const missing = checks.filter(c => !c.done);
+      const { percentage, missing } = calculateCandidateCompletion(prof, userObj);
       const firstName = prof?.first_name || userObj.first_name || "";
       const initial = firstName ? firstName.trim().charAt(0).toUpperCase() : "C";
 
+      broadcastProfileProgress(percentage);
       localStorage.setItem("profileProgress", percentage);
       localStorage.setItem(CACHE_KEY, JSON.stringify({
         userId: userObj.id,
@@ -151,6 +129,17 @@ export default function CriticalProfileAlert({
     if (!stats.cachedAt || Date.now() - stats.cachedAt > CACHE_TTL) {
       fetchProfileDetails();
     }
+
+    const handleProgress = (e) => {
+      if (e?.detail?.percentage !== undefined) {
+        setStats((prev) => ({
+          ...prev,
+          completionPercentage: Number(e.detail.percentage),
+        }));
+      }
+    };
+    window.addEventListener(PROFILE_PROGRESS_EVENT, handleProgress);
+    return () => window.removeEventListener(PROFILE_PROGRESS_EVENT, handleProgress);
   }, [variant, stats.cachedAt, fetchProfileDetails]);
 
   // const handleDismiss = () => {
@@ -260,26 +249,23 @@ export default function CriticalProfileAlert({
             <div className="cpa-avatar-circle" title={stats.userName || "Candidate"}>
               {stats.userInitial}
             </div>
-            <div className="cpa-warning-badge" title="Critical Missing Details">
+            <div className="cpa-warning-badge" title="Profile Details Recommended">
               <svg
                 className="cpa-warning-icon"
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
+                <circle cx="12" cy="12" r="10" fill="#e54646ff" />
                 <path
-                  d="M12 2L1 21H23L12 2Z"
-                  fill="#E02424"
-                />
-                <path
-                  d="M12 9V14"
+                  d="M12 7V13"
                   stroke="#FFFFFF"
                   strokeWidth="2"
                   strokeLinecap="round"
                 />
                 <circle
                   cx="12"
-                  cy="17.5"
+                  cy="16.5"
                   r="1.25"
                   fill="#FFFFFF"
                 />

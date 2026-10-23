@@ -368,6 +368,7 @@
     margin-bottom: 24px;
     overflow-wrap: break-word !important;
     word-break: break-word !important;
+    white-space: pre-wrap !important;
     hyphens: none !important;
 }
 
@@ -375,7 +376,6 @@
     max-width: 100%;
     overflow-wrap: break-word !important;
     word-break: break-word !important;
-    white-space: normal !important;
     hyphens: none !important;
 }
 
@@ -413,8 +413,23 @@
     font-style: italic;
 }
 
-.njd-jd-text p {
-    margin-bottom: 1em;
+.njd-jd-text p,
+.njd-jd-text.ql-editor p {
+    margin-top: 0 !important;
+    margin-bottom: 0.45em !important;
+    line-height: 1.2;
+}
+
+.njd-jd-text p:empty,
+.njd-jd-text p:has(> br:only-child),
+.njd-jd-text.ql-editor p:empty {
+    min-height: 1.5em !important;
+    display: block !important;
+}
+
+.njd-jd-text p:empty::before {
+    content: "\00a0";
+    display: inline-block;
 }
 
 .njd-jd-text img {
@@ -514,7 +529,7 @@
     height: auto !important;
     overflow-y: visible !important;
     padding: 0 !important;
-    white-space: normal !important;
+    white-space: pre-wrap !important;
 }
 
 .njd-role-details {

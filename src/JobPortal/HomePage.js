@@ -32,6 +32,7 @@ import { message, Select, Row, Col, Spin } from "antd";
 import "../css/HomePage.css";
 import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getSearchSuggestions, getBlogs, getAllCourses, getTopCompanies, getUserProfile, searchLocationsAPI } from "../ApiService/action";
 import { getImageUrl, getPlaceholderSvg } from "../utils/getImageUrl";
+import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../utils/profileCompletion";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -381,32 +382,8 @@ export default function HomePage() {
                 const res = await getUserProfile({ user_id: userObj.id });
                 const profile = res?.data?.data || {};
 
-                const checks = [
-                    { key: "resume", label: "Resume", done: Boolean(profile?.resume && profile.resume !== "null" && profile.resume !== "#") },
-                    { key: "skills", label: "Key Skills", done: Boolean(profile?.skills && profile.skills.length > 0) },
-                    {
-                        key: "experience",
-                        label: "Experience",
-                        done: Boolean(
-                            (profile?.professional && profile.professional.length > 0) ||
-                            (profile?.experience && profile.experience.length > 0) ||
-                            (profile?.companies && profile.companies.length > 0) ||
-                            profile?.user_type === "Fresher" ||
-                            profile?.experince_type === "Fresher" ||
-                            (profile?.total_years && String(profile.total_years) !== "0")
-                        )
-                    },
-                    { key: "education", label: "Education", done: Boolean(profile?.education && profile.education.length > 0) },
-                    { key: "about", label: "Summary", done: Boolean(profile?.about && profile.about.trim()) },
-                    { key: "projects", label: "Projects", done: Boolean(profile?.projects && profile.projects.length > 0) },
-                    { key: "certifications", label: "Certifications", done: Boolean((profile?.certifications && profile.certifications.length > 0) || profile?.profile_image) },
-                    { key: "basic", label: "Basic Info", done: Boolean((profile?.first_name || userObj.first_name) && (profile?.email || userObj.email)) }
-                ];
-
-                const completedCount = checks.filter(c => c.done).length;
-                const percentage = Math.round((completedCount / checks.length) * 100);
-                localStorage.setItem("profileProgress", percentage);
-                const missing = checks.filter(c => !c.done);
+                const { percentage, missing } = calculateCandidateCompletion(profile, userObj);
+                broadcastProfileProgress(percentage);
 
                 setCandidateProfileStats({
                     isCandidate: true,
@@ -426,6 +403,17 @@ export default function HomePage() {
         };
 
         fetchCandidateProfile();
+
+        const handleProgressChange = (e) => {
+            if (e?.detail?.percentage !== undefined) {
+                setCandidateProfileStats(prev => ({
+                    ...prev,
+                    completionPercentage: Number(e.detail.percentage),
+                }));
+            }
+        };
+        window.addEventListener(PROFILE_PROGRESS_EVENT, handleProgressChange);
+        return () => window.removeEventListener(PROFILE_PROGRESS_EVENT, handleProgressChange);
     }, []);
 
     // Helper to get the active term after the last comma
@@ -1161,63 +1149,102 @@ export default function HomePage() {
             <Header showSearch={false} />
 
             {/* Candidate Profile Completion Alert Banner */}
-            {candidateProfileStats.isCandidate && candidateProfileStats.completionPercentage !== null && candidateProfileStats.completionPercentage < 100 && !bannerDismissed && (
-                <div className="hp-profile-alert-banner">
-                    <div className="hp-profile-alert-container">
-                        <div className="hp-profile-alert-left">
-                            <div className="hp-profile-alert-badge">
-                                <ThunderboltFilled className="hp-profile-alert-zap" />
-                                <span>3X RECRUITER VISIBILITY</span>
-                            </div>
-                            <div className="hp-profile-alert-text">
-                                <div className="hp-profile-alert-title">
-                                    {candidateProfileStats.userName ? `Hey ${candidateProfileStats.userName}, your` : "Your"} profile is <strong>{candidateProfileStats.completionPercentage}% complete</strong> — reach 100% to get prioritized!
-                                </div>
-                                <div className="hp-profile-alert-subtitle">
-                                    100% complete profiles get 3x more views & direct interview calls.
-                                    {candidateProfileStats.missingItems.length > 0 && (
-                                        <span className="hp-profile-missing-preview">
-                                            {" • "}Missing: {candidateProfileStats.missingItems.slice(0, 3).map(m => m.label).join(", ")}{candidateProfileStats.missingItems.length > 3 ? ` +${candidateProfileStats.missingItems.length - 3} more` : ""}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+            {candidateProfileStats.isCandidate && candidateProfileStats.completionPercentage !== null && candidateProfileStats.completionPercentage < 100 && !bannerDismissed && (() => {
+                const pct = candidateProfileStats.completionPercentage;
+                const tier = pct >= 80 ? "strong" : pct >= 50 ? "mid" : "basic";
+                const tierLabel = pct >= 80 ? "Strong" : pct >= 50 ? "Intermediate" : "Getting Started";
 
-                        <div className="hp-profile-alert-right">
-                            <div className="hp-profile-progress-mini">
-                                <div className="hp-profile-progress-bar">
+                return (
+                    <div className="hp-profile-alert-banner">
+                        <div className={`hp-profile-alert-container hp-tier-${tier}`}>
+                            {/* Left Side: Professional Profile Icon + Information */}
+                            <div className="hp-profile-alert-left">
+                                <div className={`hp-profile-alert-icon-wrap hp-icon-tier-${tier}`} aria-hidden="true">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                                        <circle cx="9" cy="7" r="4" />
+                                        <polyline points="16 11 18 13 22 9" />
+                                    </svg>
+                                </div>
+                                <div className="hp-profile-alert-text">
+                                    <div className="hp-profile-alert-title-row">
+                                        <span className="hp-profile-alert-title">
+                                            Complete your profile
+                                        </span>
+                                        <span className="hp-profile-tag-pill hp-tag-visibility">
+                                            <span className="hp-profile-tag-pulse" />
+                                            3x Recruiter Visibility
+                                        </span>
+                                    </div>
+                                    <div className="hp-profile-alert-subtitle">
+                                        Complete your profile to get prioritized by recruiters and unlock top job matches.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Center: Sleek Unified Progress Meter */}
+                            <div className="hp-profile-progress-section">
+                                <div className="hp-profile-progress-header">
+                                    <span className="hp-profile-progress-lbl">Profile Strength</span>
+                                    <span className={`hp-profile-pct-text hp-text-tier-${tier}`}>
+                                        <strong>{pct}%</strong> <span className="hp-tier-sep">•</span> {tierLabel}
+                                    </span>
+                                </div>
+                                <div className="hp-profile-progress-track">
                                     <div
-                                        className="hp-profile-progress-fill"
-                                        style={{ width: `${candidateProfileStats.completionPercentage}%` }}
+                                        className={`hp-profile-progress-fill hp-fill-tier-${tier}`}
+                                        style={{ width: `${pct}%` }}
                                     />
                                 </div>
-                                <span className="hp-profile-progress-label">
-                                    {candidateProfileStats.completionPercentage}%
-                                </span>
                             </div>
 
-                            <button
-                                type="button"
-                                className="hp-profile-complete-btn"
-                                onClick={() => navigate("/candidate-profile/mainprofile")}
-                            >
-                                <span>Complete Profile</span>
-                                <RightOutlined style={{ fontSize: 11 }} />
-                            </button>
+                            {/* Right: CTA & Dismiss Button */}
+                            <div className="hp-profile-alert-actions">
+                                <button
+                                    type="button"
+                                    className={`hp-profile-complete-btn hp-btn-tier-${tier}`}
+                                    onClick={() => navigate("/candidate-profile/mainprofile")}
+                                >
+                                    <span>Complete Profile</span>
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.4"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="hp-profile-btn-chevron"
+                                    >
+                                        <path d="M5 12h14M12 5l7 7-7 7" />
+                                    </svg>
+                                </button>
 
-                            <button
-                                type="button"
-                                className="hp-profile-dismiss-btn"
-                                onClick={() => setBannerDismissed(true)}
-                                title="Dismiss notification"
-                            >
-                                <CloseCircleFilled />
-                            </button>
+                                <button
+                                    type="button"
+                                    className="hp-profile-dismiss-btn"
+                                    onClick={() => setBannerDismissed(true)}
+                                    title="Dismiss notification"
+                                    aria-label="Dismiss notification"
+                                >
+                                    <svg
+                                        width="13"
+                                        height="13"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2.2"
+                                        strokeLinecap="round"
+                                    >
+                                        <path d="M18 6L6 18M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {/* Hero Section */}
             <section className="hp-hero">

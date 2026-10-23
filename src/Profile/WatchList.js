@@ -20,6 +20,7 @@ import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalPro
 import { FaRegEye, FaArrowRight, FaBookmark } from "react-icons/fa";
 import { FiMapPin, FiBriefcase, FiBarChart2, FiBookmark } from "react-icons/fi";
 import { BiSortAlt2 } from "react-icons/bi";
+import { isInternshipOpportunity } from "../utils/slug";
 
 const { Title, Text } = Typography;
 
@@ -176,7 +177,7 @@ const OpportunityCard = ({ opportunity, onSave }) => {
               <FiBriefcase size={15} /> {opportunity.workplace_type || opportunity.job_nature || "Full-time"}
             </span>
             <span className="flex items-center gap-1.5">
-              <FiBarChart2 size={15} /> {opportunity.experience_required || "1-3 Years"}
+              <FiBarChart2 size={15} /> {isInternshipOpportunity(opportunity) ? "Internship" : (opportunity.experience_required || "1-3 Years")}
             </span>
           </div>
 
