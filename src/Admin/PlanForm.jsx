@@ -183,13 +183,6 @@ export default function PlanForm({ planId = null }) {
         }));
     };
 
-    const handleToggle = (key) => {
-        setFormData(prev => ({
-            ...prev,
-            [key]: !prev[key]
-        }));
-    };
-
     const handleSubmit = async (e, andAssign = false) => {
         if (e) e.preventDefault();
 
@@ -258,7 +251,7 @@ export default function PlanForm({ planId = null }) {
     }
 
     return (
-        <div className="w-full max-w-5xl mx-auto font-sans pb-8">
+        <div className="w-full max-w-9xl mx-auto font-sans pb-8">
             {/* Top Navigation */}
             <div className="flex items-center gap-3 mb-6">
                 <button

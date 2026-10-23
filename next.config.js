@@ -56,7 +56,7 @@ const nextConfig = {
       { source: '/post-jobs', destination: '/recruiter/post-job', permanent: true },
       { source: '/my-jobs', destination: '/recruiter/my-jobs', permanent: true },
       { source: '/saved-candidates', destination: '/recruiter/saved-candidates', permanent: true },
-      { source: '/create-hr-profile', destination: '/recruiter/create-profile', permanent: true },
+      { source: '/create-hr-profile', destination: '/recruiter/profile', permanent: true },
       { source: '/hr-recruit', destination: '/recruiter/recruit', permanent: true },
       { source: '/hr-management', destination: '/recruiter/management', permanent: true },
       { source: '/applicants/:id*', destination: '/recruiter/applicants/:id*', permanent: true },
