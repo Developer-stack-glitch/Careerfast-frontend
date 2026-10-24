@@ -671,30 +671,90 @@
   font-family: "Outfit", sans-serif !important;
 }
 
+.hp-tabs-scroll-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
 .hp-tabs-container {
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding: 4px 0 16px;
+  padding: 4px 4px 16px;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .hp-tabs-container::-webkit-scrollbar {
   display: none;
 }
 
+.hp-tabs-arrow-btn {
+  position: absolute;
+  top: 50%;
+  margin-top: -8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--naukri-blue);
+  font-size: 13px;
+  padding: 0;
+  user-select: none;
+}
+
+.hp-tabs-arrow-btn:hover {
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  transform: scale(1.08);
+}
+
+.hp-tabs-arrow-btn.prev {
+  left: -8px;
+}
+
+.hp-tabs-arrow-btn.next {
+  right: -8px;
+}
+
+.hp-internship-section .hp-tabs-arrow-btn {
+  color: #FF7300;
+}
+
+.hp-tabs-arrow-btn.disabled {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
 .hp-tab-chip {
   background: #fff;
   border: 1px solid #e0e5f2;
   border-radius: 30px;
-  padding: 8px 24px;
+  padding: 8px 22px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   color: #474d6a;
   font-family: "Outfit", sans-serif !important;
+  white-space: nowrap !important;
+  flex-shrink: 0;
+  user-select: none;
 }
 
 .hp-tab-chip:hover {

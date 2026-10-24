@@ -191,16 +191,42 @@
 /* --------------------------------------------------------------------------
    PRICING CARDS GRID
    -------------------------------------------------------------------------- */
-.rp-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+.rp-cards-loading-wrap {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
   margin-bottom: 84px;
+}
+
+.rp-skeleton-card {
+  width: 360px;
+  height: 520px;
+  border-radius: var(--rp-radius-card);
+  background: linear-gradient(90deg, #F1F5F9 25%, #E2E8F0 50%, #F1F5F9 75%);
+  background-size: 200% 100%;
+  animation: rpSkeletonShimmer 1.5s infinite;
+  border: 1px solid var(--rp-border);
+}
+
+@keyframes rpSkeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.rp-cards-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 28px;
+  margin-bottom: 74px;
   align-items: stretch;
 }
 
 /* Base Card */
 .rp-price-card {
+  flex: 1 1 320px;
+  max-width: 440px;
+  min-width: 300px;
   background: var(--rp-card-bg);
   border: 1px solid var(--rp-border);
   border-radius: var(--rp-radius-card);
@@ -920,11 +946,415 @@
 }
 
 /* --------------------------------------------------------------------------
+   MATRIX TABLE HIGHLIGHTS
+   -------------------------------------------------------------------------- */
+.col-enterprise-highlight {
+  background: var(--rp-dark-card) !important;
+  color: #ffffff !important;
+}
+
+.enterprise-col-tint {
+  background: #F8FAFC !important;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+/* --------------------------------------------------------------------------
+   SEPARATE CUSTOMIZE PLAN SECTION
+   -------------------------------------------------------------------------- */
+.rp-custom-plan-section {
+  background: #FFFFFF;
+  border: 1px solid var(--rp-border);
+  border-radius: 24px;
+  padding: 48px 40px;
+  margin-bottom: 90px;
+  box-shadow: 0 10px 40px rgba(15, 23, 42, 0.04);
+  position: relative;
+  overflow: hidden;
+}
+
+.rp-custom-plan-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #5F2EEA, #9061F9, #3B82F6, #10B981);
+}
+
+.rp-custom-plan-header {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 40px;
+}
+
+.rp-custom-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--rp-theme-light);
+  color: var(--rp-theme);
+  border: 1px solid var(--rp-theme-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: var(--rp-radius-pill);
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+.rp-custom-title {
+  font-size: 2.15rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.rp-custom-title .rp-theme-word {
+  color: var(--rp-theme);
+}
+
+.rp-custom-subtitle {
+  font-size: 1.02rem;
+  color: var(--rp-text-muted);
+  line-height: 1.6;
+}
+
+/* 2-Column Builder Grid */
+.rp-custom-builder-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 36px;
+  align-items: stretch;
+}
+
+/* Controls Box */
+.rp-custom-controls-box {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.rp-custom-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rp-step-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #1E293B;
+}
+
+.rp-step-num {
+  width: 24px;
+  height: 24px;
+  background: var(--rp-theme);
+  color: #ffffff;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+/* Volume Chips */
+.rp-volume-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rp-volume-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F8FAFC;
+  border: 1px solid var(--rp-border);
+  padding: 9px 18px;
+  border-radius: var(--rp-radius-pill);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rp-volume-chip:hover {
+  border-color: var(--rp-theme);
+  color: var(--rp-theme);
+  background: var(--rp-theme-light);
+}
+
+.rp-volume-chip.active {
+  background: var(--rp-theme);
+  border-color: var(--rp-theme);
+  color: #ffffff;
+  box-shadow: 0 4px 12px var(--rp-theme-shadow);
+}
+
+/* Modules Grid */
+.rp-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.rp-module-card {
+  background: #F8FAFC;
+  border: 1.5px solid var(--rp-border);
+  border-radius: 14px;
+  padding: 16px 14px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.rp-module-card:hover {
+  border-color: #CBD5E1;
+  background: #FFFFFF;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.rp-module-card.selected {
+  border-color: var(--rp-theme);
+  background: #FFFFFF;
+  box-shadow: 0 4px 16px var(--rp-theme-tint);
+}
+
+.rp-module-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rp-module-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--rp-theme-light);
+  color: var(--rp-theme);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rp-module-card.selected .rp-module-icon {
+  background: var(--rp-theme);
+  color: #ffffff;
+}
+
+.rp-module-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid #CBD5E1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.rp-module-check.checked {
+  background: var(--rp-theme);
+  border-color: var(--rp-theme);
+  color: #ffffff;
+}
+
+.rp-module-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #0F172A;
+  margin: 0 0 4px 0;
+}
+
+.rp-module-desc {
+  font-size: 0.77rem;
+  color: var(--rp-text-muted);
+  line-height: 1.38;
+  margin: 0;
+}
+
+/* Right: Preview Card */
+.rp-custom-preview-card {
+  background: var(--rp-dark-card);
+  border: 1px solid var(--rp-dark-border);
+  border-radius: 20px;
+  padding: 32px 28px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 16px 40px rgba(10, 25, 47, 0.28);
+  position: relative;
+}
+
+.rp-preview-top-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #E2E8F0;
+  padding: 4px 12px;
+  border-radius: var(--rp-radius-pill);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  align-self: flex-start;
+  margin-bottom: 18px;
+}
+
+.rp-preview-header {
+  margin-bottom: 20px;
+}
+
+.rp-preview-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.rp-preview-sub {
+  font-size: 0.85rem;
+  color: #94A3B8;
+  margin: 0;
+}
+
+.rp-preview-sub strong {
+  color: #F8FAFC;
+}
+
+.rp-preview-price-box {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+}
+
+.rp-preview-price-label {
+  font-size: 0.74rem;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.rp-preview-price-val {
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.rp-preview-price-note {
+  font-size: 0.75rem;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+.rp-preview-included-list {
+  margin-bottom: 26px;
+}
+
+.rp-included-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #CBD5E1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 12px;
+}
+
+.rp-included-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rp-included-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.86rem;
+  color: #E2E8F0;
+  line-height: 1.35;
+}
+
+.rp-included-check {
+  color: #10B981;
+  flex-shrink: 0;
+}
+
+.rp-custom-cta-btn {
+  background: var(--rp-theme);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 18px var(--rp-theme-shadow);
+  width: 100%;
+}
+
+.rp-custom-cta-btn:hover {
+  background: var(--rp-theme-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--rp-theme-shadow);
+}
+
+.rp-custom-direct-contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 0.78rem;
+  color: #94A3B8;
+}
+
+.rp-phone-link {
+  color: #60A5FA;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.rp-phone-link:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
    RESPONSIVE MEDIA QUERIES
    -------------------------------------------------------------------------- */
 @media (max-width: 1100px) {
   .rp-cards-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rp-custom-builder-grid {
+    grid-template-columns: 1fr;
   }
 
   .rp-bento-grid-4 {
@@ -959,6 +1389,22 @@
 
   .rp-cards-grid {
     grid-template-columns: 1fr;
+  }
+
+  .rp-custom-plan-section {
+    padding: 30px 18px;
+  }
+
+  .rp-custom-title {
+    font-size: 1.65rem;
+  }
+
+  .rp-modules-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rp-custom-preview-card {
+    padding: 24px 18px;
   }
 
   .rp-bento-grid-4 {

@@ -10,6 +10,7 @@ import {
     SearchOutlined,
     EnvironmentOutlined,
     HistoryOutlined,
+    LeftOutlined,
     RightOutlined,
     ThunderboltFilled,
     HomeOutlined,
@@ -276,6 +277,107 @@ const getInstantSkillsMatches = (query) => {
     return [...startsWith, ...contains].slice(0, 8).map(s => ({ label: s }));
 };
 
+const IT_PRIORITY_ORDER = [
+    "full stack development",
+    "frontend development",
+    "backend development",
+    "software development",
+    "data science & analytics",
+    "data science & machine learning",
+    "machine learning/ai",
+    "devops",
+    "devops & cloud computing",
+    "cybersecurity",
+    "quality assurance and testing",
+    "quality assurance & testing",
+    "ui/ux design",
+    "ui / ux",
+    "database administration",
+    "web design",
+    "it support",
+    "it support & helpdesk",
+    "it & information security",
+    "business intelligence & analytics",
+    "it infrastructure services",
+    "it project management",
+    "software & qa"
+];
+
+const NON_IT_EXCLUSIONS = [
+    "accounting", "finance", "bd / pre sales", "business analysis", "digital marketing",
+    "graphic design", "hr analytics", "aerospace", "automotive", "editorial",
+    "engineering & manufacturing", "social media", "other", "real estate"
+];
+
+const isITCategoryName = (cat) => {
+    if (!cat) return false;
+    const l = cat.toLowerCase().trim();
+    if (NON_IT_EXCLUSIONS.some(n => l === n || l.startsWith(n + " ") || l.endsWith(" " + n))) return false;
+    return IT_PRIORITY_ORDER.some(p => l.includes(p) || p.includes(l));
+};
+
+const getITCategoryRank = (name) => {
+    const lower = name.toLowerCase().trim();
+    const idx = IT_PRIORITY_ORDER.findIndex(p => p === lower || lower.includes(p) || p.includes(lower));
+    return idx >= 0 ? idx : 999;
+};
+
+const extractTopITCategories = (rawCats, getIconFn) => {
+    const validRaw = Array.isArray(rawCats) ? rawCats : [];
+    const itItems = [];
+    const otherItems = [];
+
+    for (const c of validRaw) {
+        const name = c.category_name?.trim();
+        if (!name) continue;
+        if (isITCategoryName(name)) {
+            itItems.push(name);
+        } else {
+            otherItems.push(name);
+        }
+    }
+
+    itItems.sort((a, b) => getITCategoryRank(a) - getITCategoryRank(b));
+
+    const seenNorm = new Set();
+    const resultNames = [];
+
+    const getNormKey = (name) => {
+        const norm = name.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]/g, "");
+        if (norm.startsWith("uiux")) return "uiux";
+        if (norm.startsWith("qualityassurance")) return "qa";
+        if (norm.startsWith("itsupport")) return "itsupport";
+        if (norm.startsWith("devops")) return "devops";
+        if (norm.startsWith("datascience")) return norm.includes("machine") ? "dsml" : "dsanalytics";
+        return norm;
+    };
+
+    for (const name of itItems) {
+        const normKey = getNormKey(name);
+        if (!seenNorm.has(normKey)) {
+            seenNorm.add(normKey);
+            resultNames.push(name);
+        }
+        if (resultNames.length >= 10) break;
+    }
+
+    if (resultNames.length < 10) {
+        for (const name of otherItems) {
+            const normKey = getNormKey(name);
+            if (!seenNorm.has(normKey)) {
+                seenNorm.add(normKey);
+                resultNames.push(name);
+            }
+            if (resultNames.length >= 10) break;
+        }
+    }
+
+    return resultNames.map(name => ({
+        name,
+        icon: getIconFn ? getIconFn(name) : null
+    }));
+};
+
 export default function HomePage() {
     const navigate = useNavigate();
     const [skills, setSkills] = useState("");
@@ -321,6 +423,45 @@ export default function HomePage() {
     const initialFetchDone = useRef(false);
     const lastFetchedFresherTab = useRef("");
     const lastFetchedInternshipTab = useRef("");
+
+    // Horizontal Scroll State & Handlers for Category Tabs
+    const fresherTabsRef = useRef(null);
+    const internshipTabsRef = useRef(null);
+    const [fresherScroll, setFresherScroll] = useState({ canScrollLeft: false, canScrollRight: true });
+    const [internshipScroll, setInternshipScroll] = useState({ canScrollLeft: false, canScrollRight: true });
+
+    const checkScrollState = (element, setter) => {
+        if (!element) return;
+        const { scrollLeft, scrollWidth, clientWidth } = element;
+        setter({
+            canScrollLeft: scrollLeft > 10,
+            canScrollRight: scrollLeft + clientWidth < scrollWidth - 10
+        });
+    };
+
+    const scrollTabs = (ref, direction, setter) => {
+        if (ref.current) {
+            const scrollAmount = 350;
+            ref.current.scrollBy({
+                left: direction === "left" ? -scrollAmount : scrollAmount,
+                behavior: "smooth"
+            });
+            setTimeout(() => checkScrollState(ref.current, setter), 350);
+        }
+    };
+
+    useEffect(() => {
+        const updateScroll = () => {
+            checkScrollState(fresherTabsRef.current, setFresherScroll);
+            checkScrollState(internshipTabsRef.current, setInternshipScroll);
+        };
+        const timer = setTimeout(updateScroll, 250);
+        window.addEventListener("resize", updateScroll);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener("resize", updateScroll);
+        };
+    }, [fresherCategories, internshipCategories]);
 
     const [skillsSuggestions, setSkillsSuggestions] = useState({ roles: [], skills: [], companies: [] });
     const [locationSuggestions, setLocationSuggestions] = useState([]);
@@ -818,17 +959,9 @@ export default function HomePage() {
             }
             setCategories(mappedCats.slice(0, 12));
 
-            // Fresher Categories
+            // Fresher Categories (Top 10 IT-Related Categories)
             const fresherCatData = fresherCatRes.status === 'fulfilled' ? (fresherCatRes.value?.data?.data || []) : [];
-            const seenFresher = new Set();
-            const mappedFresherCats = [];
-            for (const c of fresherCatData) {
-                const name = c.category_name?.trim();
-                if (name && !seenFresher.has(name)) {
-                    seenFresher.add(name);
-                    mappedFresherCats.push({ name, icon: getCategoryIcon(name) });
-                }
-            }
+            const mappedFresherCats = extractTopITCategories(fresherCatData, getCategoryIcon);
             setFresherCategories(mappedFresherCats);
             const firstFresherTab = mappedFresherCats[0]?.name || "";
             if (firstFresherTab) {
@@ -836,17 +969,9 @@ export default function HomePage() {
                 lastFetchedFresherTab.current = firstFresherTab;
             }
 
-            // Internship Categories
+            // Internship Categories (Top 10 IT-Related Categories)
             const internshipCatData = internshipCatRes.status === 'fulfilled' ? (internshipCatRes.value?.data?.data || []) : [];
-            const seenInternship = new Set();
-            const mappedInternshipCats = [];
-            for (const c of internshipCatData) {
-                const name = c.category_name?.trim();
-                if (name && !seenInternship.has(name)) {
-                    seenInternship.add(name);
-                    mappedInternshipCats.push({ name, icon: getCategoryIcon(name) });
-                }
-            }
+            const mappedInternshipCats = extractTopITCategories(internshipCatData, getCategoryIcon);
             setInternshipCategories(mappedInternshipCats);
             const firstInternshipTab = mappedInternshipCats[0]?.name || "";
             if (firstInternshipTab) {
@@ -1588,16 +1713,40 @@ export default function HomePage() {
                 </div>
 
                 <div className="hp-fresher-header">
-                    <div className="hp-tabs-container">
-                        {fresherCategories.slice(0, 5).map((c, idx) => (
-                            <div
-                                key={`${c.name}-${idx}`}
-                                className={`hp-tab-chip ${activeTab === c.name ? "active" : ""}`}
-                                onClick={() => setActiveTab(c.name)}
-                            >
-                                {c.name}
-                            </div>
-                        ))}
+                    <div className="hp-tabs-scroll-wrapper">
+                        <button
+                            type="button"
+                            className={`hp-tabs-arrow-btn prev ${!fresherScroll.canScrollLeft ? 'disabled' : ''}`}
+                            onClick={() => scrollTabs(fresherTabsRef, "left", setFresherScroll)}
+                            aria-label="Previous categories"
+                        >
+                            <LeftOutlined />
+                        </button>
+
+                        <div
+                            className="hp-tabs-container"
+                            ref={fresherTabsRef}
+                            onScroll={() => checkScrollState(fresherTabsRef.current, setFresherScroll)}
+                        >
+                            {fresherCategories.slice(0, 10).map((c, idx) => (
+                                <div
+                                    key={`${c.name}-${idx}`}
+                                    className={`hp-tab-chip ${activeTab === c.name ? "active" : ""}`}
+                                    onClick={() => setActiveTab(c.name)}
+                                >
+                                    {c.name}
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            className={`hp-tabs-arrow-btn next ${!fresherScroll.canScrollRight ? 'disabled' : ''}`}
+                            onClick={() => scrollTabs(fresherTabsRef, "right", setFresherScroll)}
+                            aria-label="Next categories"
+                        >
+                            <RightOutlined />
+                        </button>
                     </div>
                 </div>
 
@@ -1711,16 +1860,40 @@ export default function HomePage() {
                 </div>
 
                 <div className="hp-fresher-header">
-                    <div className="hp-tabs-container">
-                        {internshipCategories.slice(0, 5).map((c, idx) => (
-                            <div
-                                key={`${c.name}-${idx}`}
-                                className={`hp-tab-chip ${activeInternshipTab === c.name ? "active" : ""}`}
-                                onClick={() => setActiveInternshipTab(c.name)}
-                            >
-                                {c.name}
-                            </div>
-                        ))}
+                    <div className="hp-tabs-scroll-wrapper">
+                        <button
+                            type="button"
+                            className={`hp-tabs-arrow-btn prev ${!internshipScroll.canScrollLeft ? 'disabled' : ''}`}
+                            onClick={() => scrollTabs(internshipTabsRef, "left", setInternshipScroll)}
+                            aria-label="Previous categories"
+                        >
+                            <LeftOutlined />
+                        </button>
+
+                        <div
+                            className="hp-tabs-container"
+                            ref={internshipTabsRef}
+                            onScroll={() => checkScrollState(internshipTabsRef.current, setInternshipScroll)}
+                        >
+                            {internshipCategories.slice(0, 10).map((c, idx) => (
+                                <div
+                                    key={`${c.name}-${idx}`}
+                                    className={`hp-tab-chip ${activeInternshipTab === c.name ? "active" : ""}`}
+                                    onClick={() => setActiveInternshipTab(c.name)}
+                                >
+                                    {c.name}
+                                </div>
+                            ))}
+                        </div>
+
+                        <button
+                            type="button"
+                            className={`hp-tabs-arrow-btn next ${!internshipScroll.canScrollRight ? 'disabled' : ''}`}
+                            onClick={() => scrollTabs(internshipTabsRef, "right", setInternshipScroll)}
+                            aria-label="Next categories"
+                        >
+                            <RightOutlined />
+                        </button>
                     </div>
                 </div>
 

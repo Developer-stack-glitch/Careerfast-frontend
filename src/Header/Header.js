@@ -927,7 +927,7 @@ export default function Header({ noSticky = false, showSearch }) {
       path: "/job-filter?job_nature=Internship",
       isDropdown: true
     },
-    { key: "mentorships", label: "Mentorships", path: "/mentors" },
+    // { key: "mentorships", label: "Mentorships", path: "/mentors" },
   ];
 
   const moreMenuItems = [
@@ -988,14 +988,14 @@ export default function Header({ noSticky = false, showSearch }) {
     },
     {
       key: "Pricing",
-      path: "/pricing",
+      path: "/recruiter-pricing",
       label: (
         <div className="menu-item">
           <CrownFilled className="menu-icon" style={{ color: "#FB6202" }} />
           <span>Recruiter Pricing</span>
         </div>
       ),
-      onClick: () => smartNavigate("/pricing"),
+      onClick: () => smartNavigate("/recruiter-pricing"),
     },
   ];
 
@@ -1026,7 +1026,7 @@ export default function Header({ noSticky = false, showSearch }) {
     {
       key: '1',
       label: <div className="employer-menu-item">Recruiter Pricing & Plans</div>,
-      onClick: () => smartNavigate("/pricing")
+      onClick: () => smartNavigate("/recruiter-pricing")
     },
     {
       key: '2',
@@ -1314,7 +1314,7 @@ export default function Header({ noSticky = false, showSearch }) {
                   </AntButton>
                   <div style={{ width: '1px', height: '20px', backgroundColor: '#cbd5e1', margin: '0 4px' }}></div>
                   <Dropdown menu={{ items: employerItems }} trigger={['hover']} placement="bottomRight">
-                    <div className="for-employers-dropdown" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: '#1e293b', fontWeight: 500, fontSize: '15px' }}>
+                    <div className="for-employers-dropdown" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: '#1e293b', fontWeight: 500, fontSize: '14px' }}>
                       For employers <IoChevronDownOutline size={14} style={{ color: '#64748b' }} />
                     </div>
                   </Dropdown>
@@ -2318,7 +2318,7 @@ export default function Header({ noSticky = false, showSearch }) {
             width: 190px;
             background: rgba(141, 63, 251, 0.05);
             border-right: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 12px 0;
+            padding: 0px 0;
           }
 
           .sidebar-item {
@@ -2479,15 +2479,8 @@ export default function Header({ noSticky = false, showSearch }) {
             color: #8d3ffb;
             transform: scale(1.1);
           }
-
-          .nav-item.active {
-             background: rgba(99, 102, 241, 0.1) !important;
-             border-radius: 8px;
-             color: #6366f1 !important;
-          }
           
           .nav-item:hover {
-             background: rgba(99, 102, 241, 0.05);
              border-radius: 8px;
              color: #6366f1 !important;
           }

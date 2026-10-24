@@ -66,8 +66,7 @@ const nextConfig = {
       { source: '/pro-subscription', destination: '/recruiter/billing', permanent: true },
       { source: '/admin/employers', destination: '/admin/recruiters', permanent: true },
       { source: '/admin/billing', destination: '/admin/plans', permanent: true },
-      { source: '/admin/getting-started', destination: '/admin/dashboard/recruiter', permanent: true },
-      { source: '/recruiter-pricing', destination: '/pricing', permanent: true },
+      { source: '/pricing', destination: '/recruiter-pricing', permanent: false },
     ];
   },
 };

@@ -20,22 +20,39 @@ import {
   Check,
   Minus,
   Plus,
-  X
+  X,
+  Sparkles,
+  Sliders,
+  PhoneCall,
+  CheckCircle2,
+  ChevronRight,
+  Layers,
+  ArrowRight
 } from 'lucide-react';
 
 export default function RecruiterPricing() {
   const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' | 'annual'
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openFaq, setOpenFaq] = useState(0); // First item open by default as shown in mockup
+  const [openFaq, setOpenFaq] = useState(0); // First item open by default
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [submittingQuote, setSubmittingQuote] = useState(false);
+
+  // Custom Plan interactive state
+  const [customHiringVolume, setCustomHiringVolume] = useState('25-50 hires/month');
+  const [selectedModules, setSelectedModules] = useState([
+    'postings',
+    'resumes',
+    'ats',
+    'manager',
+  ]);
+
   const [quoteFormData, setQuoteFormData] = useState({
     fullName: '',
     companyName: '',
     workEmail: '',
     phone: '',
-    hiringVolume: '10-25 hires/month',
+    hiringVolume: '25-50 hires/month',
     notes: '',
   });
 
@@ -73,7 +90,11 @@ export default function RecruiterPricing() {
         (p) => p.status === 'active' || p.status === 1 || p.status === '1'
       );
 
-      setPlans(processPlans(activePlans));
+      if (activePlans.length > 0) {
+        setPlans(processPlans(activePlans));
+      } else {
+        setPlans(getDefaultMockPlans());
+      }
     } catch (error) {
       console.error('Error fetching recruiter plans:', error);
       setPlans(getDefaultMockPlans());
@@ -83,112 +104,88 @@ export default function RecruiterPricing() {
   };
 
   const processPlans = (dbPlans) => {
-    const freeDb = dbPlans.find((p) => Number(p.price) === 0 || p.slug === 'free');
-    const jobPostDb = dbPlans.find((p) => Number(p.price) > 0 && p.slug === 'job-posting');
+    return dbPlans.map((plan, index) => {
+      const priceNum = Number(plan.price) || 0;
+      const isFree = priceNum === 0 || plan.slug === 'free';
+      const monthlyPrice = priceNum;
+      const annualPrice = isFree ? 0 : Math.round(priceNum * 0.8); // 20% discount on annual
 
-    return [
-      {
-        id: freeDb?.id || 'free-plan',
-        slug: 'free',
-        name: 'Free Plan',
-        tagline: 'Get started with essential hiring tools.',
-        monthlyPrice: 0,
-        annualPrice: 0,
-        description: 'Perfect for individual recruiters to explore CareerFast.',
-        icon: <Package size={22} />,
+      const jobPosts = plan.active_job_limit || plan.job_post_limit || (isFree ? 20 : 50);
+      const resumeAccess = plan.resume_view_limit
+        ? Number(plan.resume_view_limit).toLocaleString('en-IN')
+        : (isFree ? '50' : '5,000');
+
+      // Dynamic Feature Checklist based on DB properties
+      const features = [];
+      features.push(`Post up to ${jobPosts} active jobs`);
+      features.push(`Access ${resumeAccess} verified resumes`);
+      if (plan.featured_job_limit > 0) {
+        features.push(`${plan.featured_job_limit} Featured Job postings`);
+      }
+      if (plan.urgent_job_limit > 0) {
+        features.push(`${plan.urgent_job_limit} Urgent Hiring badges`);
+      }
+      if (plan.resume_download_limit > 0) {
+        features.push(`${plan.resume_download_limit} direct resume downloads`);
+      }
+      if (plan.candidate_search) {
+        features.push('Advanced candidate search filters');
+      } else {
+        features.push('Standard candidate search');
+      }
+      if (plan.interview_management) {
+        features.push('Application management & tracking');
+      }
+      if (plan.email_limit > 0) {
+        features.push(`${plan.email_limit} candidate email notifications`);
+      }
+      if (plan.whatsapp_limit > 0) {
+        features.push(`${plan.whatsapp_limit} candidate WhatsApp notifications`);
+      }
+      if (plan.excel_download_limit > 0) {
+        features.push(`${plan.excel_download_limit} candidate data exports (Excel)`);
+      }
+      if (plan.sub_recruiter_limit > 1) {
+        features.push(`Team collaboration (${plan.sub_recruiter_limit} recruiters)`);
+      } else {
+        features.push('1 Master Recruiter account');
+      }
+      features.push(isFree ? 'Email support' : 'Priority recruiter support');
+
+      const icons = [
+        <Package key="pkg" size={22} />,
+        <BarChart2 key="chart" size={22} />,
+        <Rocket key="rkt" size={22} />,
+        <Zap key="zap" size={22} />,
+      ];
+
+      return {
+        id: plan.id,
+        slug: plan.slug,
+        name: plan.name,
+        tagline:
+          plan.description ||
+          (isFree
+            ? 'Get started with essential hiring tools at zero cost.'
+            : 'For professional recruiters and rapidly scaling hiring teams.'),
+        monthlyPrice,
+        annualPrice,
+        description: isFree ? 'Perfect for individual recruiters to explore CareerFast.' : null,
+        isPopular: !isFree && (plan.is_popular || plan.slug === 'job-posting' || index === 1),
+        icon: icons[index % icons.length],
         quotas: {
-          jobPosts: freeDb?.active_job_limit || 5,
-          resumeAccess: freeDb?.resume_view_limit || 50,
+          jobPosts,
+          resumeAccess,
         },
-        features: [
-          'Post up to 5 jobs',
-          'Access 50 resumes',
-          'Basic candidate search',
-          'Email support',
-          'Standard access to platform',
-        ],
-        ctaText: 'Get Started Free',
-        ctaStyle: 'outline',
-        targetUrl: `${hrPortalUrl}/register`,
-      },
-      {
-        id: jobPostDb?.id || 'growth-pro',
-        slug: 'growth',
-        name: 'Growth Pro',
-        tagline: 'For professional recruiters and growing teams.',
-        monthlyPrice: Number(jobPostDb?.price) || 5000,
-        annualPrice: Math.round((Number(jobPostDb?.price) || 5000) * 0.8), // 20% discount on annual
-        description: null,
-        isPopular: true,
-        icon: <BarChart2 size={22} />,
-        quotas: {
-          jobPosts: jobPostDb?.job_post_limit || 50,
-          resumeAccess: '5,000',
-        },
-        features: [
-          'Post up to 50 jobs',
-          'Access 5,000 resumes',
-          'Advanced candidate filters',
-          'Save candidates & create lists',
-          'Team collaboration (up to 5 users)',
-          'Priority support',
-        ],
-        ctaText: 'Choose Growth Pro',
-        ctaStyle: 'solid',
-        targetUrl: `${hrPortalUrl}/login?redirect=subscription&plan=${jobPostDb?.slug || 'job-posting'}`,
-      },
-      {
-        id: 'talenthub-plan',
-        slug: 'talenthub',
-        name: 'TalentHub',
-        tagline: 'For high-volume recruiters and established companies.',
-        monthlyPrice: 12999,
-        annualPrice: 10399, // 20% discount
-        description: null,
-        isPopular: false,
-        icon: <Rocket size={22} />,
-        quotas: {
-          jobPosts: 200,
-          resumeAccess: '25,000',
-        },
-        features: [
-          'Post up to 200 jobs',
-          'Access 25,000 resumes',
-          'AI-powered candidate matching',
-          'Bulk actions & exports',
-          'Team collaboration (up to 15 users)',
-          'Dedicated support',
-          'Advanced analytics',
-        ],
-        ctaText: 'Choose TalentHub',
-        ctaStyle: 'outline',
-        targetUrl: `${hrPortalUrl}/login?redirect=subscription&plan=talenthub`,
-      },
-      {
-        id: 'enterprise-vip',
-        slug: 'enterprise',
-        name: 'Enterprise VIP',
-        tagline: 'Custom solution for large organizations with unique needs.',
-        monthlyPrice: null,
-        annualPrice: null,
-        description: 'Tailored to your requirements.',
-        isEnterprise: true,
-        icon: <Gem size={22} />,
-        quotas: null,
-        features: [
-          'Unlimited job postings',
-          'Unlimited resume access',
-          'Custom integrations (API)',
-          'Dedicated account manager',
-          'Advanced reporting & insights',
-          'Custom branding',
-          'SLA & on-premise options',
-        ],
-        ctaText: 'Contact Sales',
-        ctaStyle: 'enterprise',
-        targetUrl: null, // triggers modal
-      },
-    ];
+        features,
+        ctaText: isFree ? 'Get Started Free' : `Choose ${plan.name}`,
+        ctaStyle: isFree ? 'outline' : 'solid',
+        targetUrl: isFree
+          ? `${hrPortalUrl}/register?plan=${plan.slug}`
+          : `${hrPortalUrl}/login?redirect=subscription&plan=${plan.slug}`,
+        rawPlan: plan,
+      };
+    });
   };
 
   const getDefaultMockPlans = () => [
@@ -196,27 +193,29 @@ export default function RecruiterPricing() {
       id: 'free-plan',
       slug: 'free',
       name: 'Free Plan',
-      tagline: 'Get started with essential hiring tools.',
+      tagline: 'Get started with essential hiring tools at zero cost.',
       monthlyPrice: 0,
       annualPrice: 0,
       description: 'Perfect for individual recruiters to explore CareerFast.',
       icon: <Package size={22} />,
-      quotas: { jobPosts: 5, resumeAccess: 50 },
+      quotas: { jobPosts: 20, resumeAccess: 50 },
       features: [
-        'Post up to 5 jobs',
+        'Post up to 20 jobs',
         'Access 50 resumes',
         'Basic candidate search',
+        'Application management & shortlisting',
+        'Email notifications',
         'Email support',
         'Standard access to platform',
       ],
       ctaText: 'Get Started Free',
       ctaStyle: 'outline',
-      targetUrl: `${hrPortalUrl}/register`,
+      targetUrl: `${hrPortalUrl}/register?plan=free`,
     },
     {
-      id: 'growth-pro',
-      slug: 'growth',
-      name: 'Growth Pro',
+      id: 'job-posting-pro',
+      slug: 'job-posting',
+      name: 'Job Posting Pro',
       tagline: 'For professional recruiters and growing teams.',
       monthlyPrice: 5000,
       annualPrice: 4000,
@@ -226,66 +225,22 @@ export default function RecruiterPricing() {
       features: [
         'Post up to 50 jobs',
         'Access 5,000 resumes',
-        'Advanced candidate filters',
-        'Save candidates & create lists',
+        '10 Featured Job postings',
+        '10 Urgent Hiring tags',
+        '50 Candidate email alerts',
+        '50 Candidate WhatsApp alerts',
         'Team collaboration (up to 5 users)',
         'Priority support',
       ],
-      ctaText: 'Choose Growth Pro',
+      ctaText: 'Choose Job Posting Pro',
       ctaStyle: 'solid',
       targetUrl: `${hrPortalUrl}/login?redirect=subscription&plan=job-posting`,
-    },
-    {
-      id: 'talenthub-plan',
-      slug: 'talenthub',
-      name: 'TalentHub',
-      tagline: 'For high-volume recruiters and established companies.',
-      monthlyPrice: 12999,
-      annualPrice: 10399,
-      icon: <Rocket size={22} />,
-      quotas: { jobPosts: 200, resumeAccess: '25,000' },
-      features: [
-        'Post up to 200 jobs',
-        'Access 25,000 resumes',
-        'AI-powered candidate matching',
-        'Bulk actions & exports',
-        'Team collaboration (up to 15 users)',
-        'Dedicated support',
-        'Advanced analytics',
-      ],
-      ctaText: 'Choose TalentHub',
-      ctaStyle: 'outline',
-      targetUrl: `${hrPortalUrl}/login?redirect=subscription&plan=talenthub`,
-    },
-    {
-      id: 'enterprise-vip',
-      slug: 'enterprise',
-      name: 'Enterprise VIP',
-      tagline: 'Custom solution for large organizations with unique needs.',
-      monthlyPrice: null,
-      annualPrice: null,
-      description: 'Tailored to your requirements.',
-      isEnterprise: true,
-      icon: <Gem size={22} />,
-      quotas: null,
-      features: [
-        'Unlimited job postings',
-        'Unlimited resume access',
-        'Custom integrations (API)',
-        'Dedicated account manager',
-        'Advanced reporting & insights',
-        'Custom branding',
-        'SLA & on-premise options',
-      ],
-      ctaText: 'Contact Sales',
-      ctaStyle: 'enterprise',
-      targetUrl: null,
     },
   ];
 
   const handleAction = (plan) => {
-    if (plan.isEnterprise || !plan.targetUrl) {
-      setIsQuoteModalOpen(true);
+    if (!plan.targetUrl) {
+      openCustomQuoteModal();
       return;
     }
     const billingParam = billingCycle === 'annual' ? '&billing=annual' : '&billing=monthly';
@@ -293,6 +248,38 @@ export default function RecruiterPricing() {
       ? `${plan.targetUrl}${billingParam}`
       : `${plan.targetUrl}?billing=${billingCycle}`;
     window.location.href = finalUrl;
+  };
+
+  const toggleModule = (moduleId) => {
+    if (selectedModules.includes(moduleId)) {
+      if (selectedModules.length === 1) {
+        message.info('Select at least one module for your custom plan.');
+        return;
+      }
+      setSelectedModules(selectedModules.filter((m) => m !== moduleId));
+    } else {
+      setSelectedModules([...selectedModules, moduleId]);
+    }
+  };
+
+  const openCustomQuoteModal = (hiringVol = customHiringVolume) => {
+    const modulesLabels = {
+      postings: 'High-Volume Job Postings (100 - 1,000+)',
+      resumes: 'Full Talent Pool Database Access',
+      ats: 'Custom ATS & HRMS API Sync',
+      seats: 'Multi-Recruiter Seats & Team Permissions',
+      branding: 'Custom Employer Branding & Sponsored Hiring',
+      manager: 'Dedicated Account Director & Priority SLA',
+    };
+
+    const chosenModulesText = selectedModules.map((id) => modulesLabels[id] || id).join(', ');
+
+    setQuoteFormData((prev) => ({
+      ...prev,
+      hiringVolume: hiringVol,
+      notes: `Configured Modules: ${chosenModulesText}`,
+    }));
+    setIsQuoteModalOpen(true);
   };
 
   const handleQuoteSubmit = (e) => {
@@ -307,43 +294,82 @@ export default function RecruiterPricing() {
       setSubmittingQuote(false);
       setIsQuoteModalOpen(false);
       message.success(
-        'Thank you! Your custom recruitment requirement has been received. Our Enterprise Account Director will reach out to you shortly.'
+        'Thank you! Your customized recruitment requirement has been received. Our Enterprise Account Director will reach out to you within 2 hours.'
       );
       setQuoteFormData({
         fullName: '',
         companyName: '',
         workEmail: '',
         phone: '',
-        hiringVolume: '10-25 hires/month',
+        hiringVolume: customHiringVolume,
         notes: '',
       });
     }, 900);
   };
 
+  const customModulesConfig = [
+    {
+      id: 'postings',
+      title: 'High-Volume Job Postings',
+      desc: '100 - 1,000+ active job posts with custom expiration and renewal rules.',
+      icon: <Layers size={18} />,
+    },
+    {
+      id: 'resumes',
+      title: 'Unlimited Talent Database',
+      desc: 'Unrestricted candidate search, direct contacts, skills & resume downloads.',
+      icon: <FileText size={18} />,
+    },
+    {
+      id: 'ats',
+      title: 'ATS & HRMS API Sync',
+      desc: 'Native webhooks and API sync for Greenhouse, Workday, Lever & SAP.',
+      icon: <Zap size={18} />,
+    },
+    {
+      id: 'seats',
+      title: 'Multi-Recruiter Team Seats',
+      desc: 'Configurable sub-recruiter logins, activity audit logs and seat controls.',
+      icon: <Users size={18} />,
+    },
+    {
+      id: 'branding',
+      title: 'Employer Branding Suite',
+      desc: 'Featured company profile, verified badge, and dedicated hiring campaigns.',
+      icon: <Building2 size={18} />,
+    },
+    {
+      id: 'manager',
+      title: 'Dedicated Account Director',
+      desc: '1-on-1 account manager, personalized onboarding and 2-hour priority SLA.',
+      icon: <Headphones size={18} />,
+    },
+  ];
+
   const faqs = [
     {
-      q: 'Can I change my plan later?',
-      a: 'Yes, you can upgrade or downgrade your plan at any time. When you upgrade, the new plan will be applied immediately. If you downgrade, it will take effect from your next billing cycle.',
+      q: 'Can I change or upgrade my plan later?',
+      a: 'Yes, you can upgrade your plan at any time. When you upgrade, your new limits apply instantly. If you downgrade, changes take effect from your next billing cycle.',
     },
     {
-      q: 'Is there a free trial for paid plans?',
-      a: 'Our Free Plan is forever free with essential hiring tools so you can test the platform at zero risk. If you are interested in a trial of Growth Pro or TalentHub candidate discovery tools, contact our sales consultants.',
+      q: 'How does the Customize Plan work?',
+      a: 'Our Customize Plan allows you to tailor job posting volumes, candidate resume database access, API connectors, and multi-user seats. Simply select your requirements and our Enterprise team will prepare a custom proposal within 2 hours.',
     },
     {
-      q: 'How does resume access work?',
-      a: 'Resume access lets you view verified resumes, candidate direct phone/email contact details, experience history, and skill certificates from our talent database.',
+      q: 'How does resume database access work?',
+      a: 'Resume access lets you view verified candidate resumes, full contact details (phone, email), work history, portfolio links, and skill verifications from our talent pool.',
     },
     {
-      q: 'Can I get a custom plan for my organization?',
-      a: 'Yes, our Enterprise VIP plan offers completely tailored job posting credits, unlimited resume database access, ATS webhook synchronization, and multi-user seat configurations.',
+      q: 'Can we integrate CareerFast with our company ATS?',
+      a: 'Yes, with our Enterprise & Customized Plans, we provide full REST APIs and webhooks for integration with major ATS solutions including Workday, Greenhouse, Lever, and SAP SuccessFactors.',
     },
     {
-      q: 'Do you offer refunds?',
-      a: 'We provide prorated adjustments if you change or upgrade your subscription. Please contact our support team for any billing and invoice assistance.',
+      q: 'What payment methods do you support?',
+      a: 'We accept all major Credit/Debit Cards, UPI, Net Banking, and corporate invoicing (NEFT/RTGS) for customized enterprise packages.',
     },
     {
-      q: 'How can I contact support?',
-      a: 'You can reach our dedicated recruiter support desk 24/7 via the in-app helpdesk ticket system, email at careerfastcontact@gmail.com, or phone at +91 81227 38034.',
+      q: 'How can I contact the enterprise recruiter sales team?',
+      a: 'You can reach our dedicated recruiter support desk 24/7 via email at careerfastcontact@gmail.com, or phone/WhatsApp at +91 81227 38034.',
     },
   ];
 
@@ -356,6 +382,7 @@ export default function RecruiterPricing() {
         <section className="rp-hero-section">
           {/* Eyebrow Pill */}
           <div className="rp-eyebrow-pill">
+            <Sparkles size={14} style={{ color: 'var(--rp-theme)' }} />
             RECRUITER &amp; EMPLOYER PRICING
           </div>
 
@@ -426,95 +453,235 @@ export default function RecruiterPricing() {
           </div>
         </section>
 
-        {/* ================= 4 PRICING CARDS ================= */}
-        <section className="rp-cards-grid" id="pricing-plans">
-          {plans.map((plan) => {
-            const displayPrice =
-              plan.monthlyPrice === null
-                ? null
-                : billingCycle === 'annual'
-                  ? plan.annualPrice
-                  : plan.monthlyPrice;
+        {/* ================= DYNAMIC PRICING CARDS ================= */}
+        {loading ? (
+          <div className="rp-cards-loading-wrap">
+            <div className="rp-skeleton-card"></div>
+            <div className="rp-skeleton-card"></div>
+          </div>
+        ) : (
+          <section className="rp-cards-grid" id="pricing-plans">
+            {plans.map((plan) => {
+              const displayPrice =
+                plan.monthlyPrice === null
+                  ? null
+                  : billingCycle === 'annual'
+                    ? plan.annualPrice
+                    : plan.monthlyPrice;
 
-            return (
-              <div
-                key={plan.id}
-                className={`rp-price-card ${plan.isPopular ? 'popular' : ''} ${plan.isEnterprise ? 'enterprise' : ''
-                  }`}
-              >
-                {/* Floating "MOST POPULAR" Badge */}
-                {plan.isPopular && (
-                  <div className="rp-popular-top-badge">MOST POPULAR</div>
-                )}
+              return (
+                <div
+                  key={plan.id}
+                  className={`rp-price-card ${plan.isPopular ? 'popular' : ''}`}
+                >
+                  {/* Floating "MOST POPULAR" Badge */}
+                  {plan.isPopular && (
+                    <div className="rp-popular-top-badge">MOST POPULAR</div>
+                  )}
 
-                <div>
-                  {/* Card Icon */}
-                  <div className="rp-card-icon-box">{plan.icon}</div>
+                  <div>
+                    {/* Card Icon */}
+                    <div className="rp-card-icon-box">{plan.icon}</div>
 
-                  {/* Title & Tagline */}
-                  <h3 className="rp-card-title">{plan.name}</h3>
-                  <p className="rp-card-tagline">{plan.tagline}</p>
+                    {/* Title & Tagline */}
+                    <h3 className="rp-card-title">{plan.name}</h3>
+                    <p className="rp-card-tagline">{plan.tagline}</p>
 
-                  {/* Price */}
-                  {displayPrice === null ? (
-                    <div className="rp-card-price-block">
-                      <div className="rp-card-price-value">Custom Quote</div>
-                    </div>
-                  ) : (
+                    {/* Price */}
                     <div className="rp-card-price-block">
                       <span className="rp-card-price-value">
                         ₹{displayPrice.toLocaleString('en-IN')}
                       </span>
                       <span className="rp-card-price-period">/month</span>
                     </div>
-                  )}
 
-                  {/* Description / Subtext */}
-                  {plan.description && (
-                    <p className="rp-card-price-desc">{plan.description}</p>
-                  )}
+                    {/* Description / Subtext */}
+                    {plan.description && (
+                      <p className="rp-card-price-desc">{plan.description}</p>
+                    )}
 
-                  {/* Two Quota Stats Boxes */}
-                  {plan.quotas && (
-                    <div className="rp-quota-boxes-row">
-                      <div className="rp-quota-mini-box">
-                        <div className="rp-quota-val">{plan.quotas.jobPosts}</div>
-                        <div className="rp-quota-lbl">Job Posts per month</div>
+                    {/* Two Quota Stats Boxes */}
+                    {plan.quotas && (
+                      <div className="rp-quota-boxes-row">
+                        <div className="rp-quota-mini-box">
+                          <div className="rp-quota-val">{plan.quotas.jobPosts}</div>
+                          <div className="rp-quota-lbl">Job Posts per month</div>
+                        </div>
+                        <div className="rp-quota-mini-box">
+                          <div className="rp-quota-val">{plan.quotas.resumeAccess}</div>
+                          <div className="rp-quota-lbl">Resume Access per month</div>
+                        </div>
                       </div>
-                      <div className="rp-quota-mini-box">
-                        <div className="rp-quota-val">{plan.quotas.resumeAccess}</div>
-                        <div className="rp-quota-lbl">Resume Access per month</div>
-                      </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Feature Checklist */}
-                  <ul className="rp-card-feature-list">
-                    {plan.features.map((feat, idx) => (
-                      <li key={idx} className="rp-feature-row">
-                        <Check className="rp-feature-check-icon" size={16} />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                    {/* Feature Checklist */}
+                    <ul className="rp-card-feature-list">
+                      {plan.features.map((feat, idx) => (
+                        <li key={idx} className="rp-feature-row">
+                          <Check className="rp-feature-check-icon" size={16} />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-                {/* Bottom CTA Button */}
-                <button
-                  type="button"
-                  onClick={() => handleAction(plan)}
-                  className={`rp-plan-btn ${plan.ctaStyle === 'solid'
-                    ? 'btn-solid-theme'
-                    : plan.ctaStyle === 'enterprise'
-                      ? 'btn-enterprise-white'
-                      : 'btn-outline-theme'
+                  {/* Bottom CTA Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleAction(plan)}
+                    className={`rp-plan-btn ${
+                      plan.ctaStyle === 'solid'
+                        ? 'btn-solid-theme'
+                        : 'btn-outline-theme'
                     }`}
-                >
-                  {plan.ctaText}
-                </button>
+                  >
+                    {plan.ctaText}
+                  </button>
+                </div>
+              );
+            })}
+          </section>
+        )}
+
+        {/* ================= SEPARATE CUSTOMIZE PLAN SECTION ================= */}
+        <section className="rp-custom-plan-section" id="customize-plan">
+          <div className="rp-custom-plan-header">
+            <div className="rp-custom-badge">
+              <Gem size={15} />
+              ENTERPRISE &amp; BESPOKE SOLUTIONS
+            </div>
+            <h2 className="rp-custom-title">
+              Need a Custom Plan? <span className="rp-theme-word">Customize It Your Way</span>
+            </h2>
+            <p className="rp-custom-subtitle">
+              Scale your hiring with tailored job volume credits, direct resume access, ATS
+              integrations, and dedicated account management designed for high-growth enterprises.
+            </p>
+          </div>
+
+          <div className="rp-custom-builder-grid">
+            {/* Left: Customizer Controls */}
+            <div className="rp-custom-controls-box">
+              {/* Step 1: Hiring Volume */}
+              <div className="rp-custom-step">
+                <div className="rp-step-label">
+                  <span className="rp-step-num">1</span>
+                  Select Estimated Monthly Hiring Volume
+                </div>
+                <div className="rp-volume-chips">
+                  {[
+                    '5-15 hires/month',
+                    '15-30 hires/month',
+                    '30-60 hires/month',
+                    '60+ hires/month (Enterprise)',
+                  ].map((vol) => (
+                    <button
+                      key={vol}
+                      type="button"
+                      className={`rp-volume-chip ${customHiringVolume === vol ? 'active' : ''}`}
+                      onClick={() => setCustomHiringVolume(vol)}
+                    >
+                      {customHiringVolume === vol && <Check size={14} />}
+                      {vol}
+                    </button>
+                  ))}
+                </div>
               </div>
-            );
-          })}
+
+              {/* Step 2: Interactive Module Checkboxes */}
+              <div className="rp-custom-step">
+                <div className="rp-step-label">
+                  <span className="rp-step-num">2</span>
+                  Select Required Enterprise Modules
+                </div>
+                <div className="rp-modules-grid">
+                  {customModulesConfig.map((mod) => {
+                    const isChecked = selectedModules.includes(mod.id);
+                    return (
+                      <div
+                        key={mod.id}
+                        className={`rp-module-card ${isChecked ? 'selected' : ''}`}
+                        onClick={() => toggleModule(mod.id)}
+                      >
+                        <div className="rp-module-header">
+                          <div className="rp-module-icon">{mod.icon}</div>
+                          <div className={`rp-module-check ${isChecked ? 'checked' : ''}`}>
+                            {isChecked && <Check size={13} />}
+                          </div>
+                        </div>
+                        <h4 className="rp-module-title">{mod.title}</h4>
+                        <p className="rp-module-desc">{mod.desc}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Custom Package Preview Card */}
+            <div className="rp-custom-preview-card">
+              <div className="rp-preview-top-badge">
+                <Sparkles size={14} /> TAILORED ENTERPRISE PACKAGE
+              </div>
+
+              <div className="rp-preview-header">
+                <h3 className="rp-preview-title">Customized Plan</h3>
+                <p className="rp-preview-sub">
+                  Volume: <strong>{customHiringVolume}</strong>
+                </p>
+              </div>
+
+              <div className="rp-preview-price-box">
+                <div className="rp-preview-price-label">Estimated Investment</div>
+                <div className="rp-preview-price-val">Custom Quote</div>
+                <div className="rp-preview-price-note">
+                  Billed monthly or annually with enterprise invoice support
+                </div>
+              </div>
+
+              <div className="rp-preview-included-list">
+                <div className="rp-included-title">What&apos;s Included in Your Package:</div>
+                <ul className="rp-included-items">
+                  {selectedModules.map((id) => {
+                    const item = customModulesConfig.find((m) => m.id === id);
+                    return (
+                      <li key={id} className="rp-included-row">
+                        <CheckCircle2 size={16} className="rp-included-check" />
+                        <span>{item?.title}</span>
+                      </li>
+                    );
+                  })}
+                  <li className="rp-included-row">
+                    <CheckCircle2 size={16} className="rp-included-check" />
+                    <span>Executive SLA &amp; 99.9% Uptime Guarantee</span>
+                  </li>
+                  <li className="rp-included-row">
+                    <CheckCircle2 size={16} className="rp-included-check" />
+                    <span>Quarterly Strategy &amp; Talent Pipeline Review</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => openCustomQuoteModal()}
+                className="rp-custom-cta-btn"
+              >
+                <span>Request Customized Quote</span>
+                <ArrowRight size={18} />
+              </button>
+
+              <div className="rp-custom-direct-contact">
+                <PhoneCall size={15} />
+                <span>
+                  Or speak directly with Enterprise Director:{' '}
+                  <a href="tel:+918122738034" className="rp-phone-link">
+                    +91 81227 38034
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* ================= WHY CHOOSE CAREERFAST BENTO ================= */}
@@ -587,103 +754,178 @@ export default function RecruiterPricing() {
                 <thead>
                   <tr>
                     <th className="col-feature-name">Features</th>
-                    <th className="col-plan-head">Free Plan</th>
-                    <th className="col-plan-head col-popular-highlight">Growth Pro</th>
-                    <th className="col-plan-head">TalentHub</th>
-                    <th className="col-plan-head">Enterprise VIP</th>
+                    {plans.map((p) => (
+                      <th
+                        key={p.id}
+                        className={`col-plan-head ${p.isPopular ? 'col-popular-highlight' : ''}`}
+                      >
+                        {p.name}
+                      </th>
+                    ))}
+                    <th className="col-plan-head col-enterprise-highlight">
+                      Customize Plan (Enterprise)
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td className="cell-feature-name">Monthly Price</td>
-                    <td className="cell-plan-data">₹0</td>
-                    <td className="cell-plan-data popular-col-tint">₹5,000</td>
-                    <td className="cell-plan-data">₹12,999</td>
-                    <td className="cell-plan-data">Custom</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.monthlyPrice === 0
+                          ? '₹0'
+                          : `₹${p.monthlyPrice.toLocaleString('en-IN')}`}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">Custom Quote</td>
                   </tr>
+
                   <tr>
                     <td className="cell-feature-name">Job Posts per Month</td>
-                    <td className="cell-plan-data">5</td>
-                    <td className="cell-plan-data popular-col-tint">50</td>
-                    <td className="cell-plan-data">200</td>
-                    <td className="cell-plan-data">Unlimited</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.quotas?.jobPosts || 20}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">Unlimited / Custom</td>
                   </tr>
+
                   <tr>
                     <td className="cell-feature-name">Resume Access per Month</td>
-                    <td className="cell-plan-data">50</td>
-                    <td className="cell-plan-data popular-col-tint">5,000</td>
-                    <td className="cell-plan-data">25,000</td>
-                    <td className="cell-plan-data">Unlimited</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.quotas?.resumeAccess || 50}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">Unlimited / Custom</td>
                   </tr>
+
                   <tr>
-                    <td className="cell-feature-name">Advanced Search Filters</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
+                    <td className="cell-feature-name">Advanced Candidate Search</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.rawPlan?.candidate_search || p.monthlyPrice > 0 ? (
+                          <Check className="rp-icon-check" size={18} />
+                        ) : (
+                          <span className="rp-icon-dash">-</span>
+                        )}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">
+                      <Check className="rp-icon-check" size={18} />
+                    </td>
                   </tr>
+
                   <tr>
-                    <td className="cell-feature-name">AI Candidate Matching</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
+                    <td className="cell-feature-name">Candidate Direct Contact (Phone/Email)</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.monthlyPrice > 0 ? (
+                          <Check className="rp-icon-check" size={18} />
+                        ) : (
+                          <span className="rp-icon-dash">-</span>
+                        )}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">
+                      <Check className="rp-icon-check" size={18} />
+                    </td>
                   </tr>
+
                   <tr>
-                    <td className="cell-feature-name">Save Candidates &amp; Lists</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
+                    <td className="cell-feature-name">Application &amp; Interview Tracking</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        <Check className="rp-icon-check" size={18} />
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">
+                      <Check className="rp-icon-check" size={18} />
+                    </td>
                   </tr>
+
                   <tr>
                     <td className="cell-feature-name">Team Collaboration</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint">Up to 5 users</td>
-                    <td className="cell-plan-data">Up to 15 users</td>
-                    <td className="cell-plan-data">Unlimited</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.rawPlan?.sub_recruiter_limit > 1
+                          ? `Up to ${p.rawPlan.sub_recruiter_limit} recruiters`
+                          : p.monthlyPrice > 0
+                            ? 'Up to 5 recruiters'
+                            : '1 Recruiter Account'}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">Unlimited / Custom Seats</td>
                   </tr>
+
                   <tr>
-                    <td className="cell-feature-name">Bulk Actions &amp; Exports</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
+                    <td className="cell-feature-name">Applicant Data Export (Excel)</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.rawPlan?.excel_download_limit > 0 || p.monthlyPrice > 0 ? (
+                          <Check className="rp-icon-check" size={18} />
+                        ) : (
+                          <span className="rp-icon-dash">-</span>
+                        )}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">
+                      <Check className="rp-icon-check" size={18} />
+                    </td>
                   </tr>
+
                   <tr>
-                    <td className="cell-feature-name">Advanced Analytics</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
+                    <td className="cell-feature-name">Custom ATS &amp; HRMS API</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        <span className="rp-icon-dash">-</span>
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">
+                      <Check className="rp-icon-check" size={18} />
+                    </td>
                   </tr>
+
                   <tr>
-                    <td className="cell-feature-name">Custom Integrations (API)</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                  </tr>
-                  <tr>
-                    <td className="cell-feature-name">Dedicated Support</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                  </tr>
-                  <tr>
-                    <td className="cell-feature-name">Account Manager</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
-                  </tr>
-                  <tr>
-                    <td className="cell-feature-name">Custom Branding</td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data popular-col-tint"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><span className="rp-icon-dash">-</span></td>
-                    <td className="cell-plan-data"><Check className="rp-icon-check" size={18} /></td>
+                    <td className="cell-feature-name">Support Level</td>
+                    {plans.map((p) => (
+                      <td
+                        key={p.id}
+                        className={`cell-plan-data ${p.isPopular ? 'popular-col-tint' : ''}`}
+                      >
+                        {p.monthlyPrice === 0 ? 'Email Support' : 'Priority Support'}
+                      </td>
+                    ))}
+                    <td className="cell-plan-data enterprise-col-tint">
+                      Dedicated Account Manager &amp; SLA
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -697,7 +939,7 @@ export default function RecruiterPricing() {
             <div className="rp-eyebrow-pill">FREQUENTLY ASKED QUESTIONS</div>
             <h2 className="rp-section-title">Frequently Asked Questions</h2>
             <p className="rp-section-desc">
-              Find answers to common questions about our pricing and plans.
+              Find answers to common questions about our recruiter plans and custom solutions.
             </p>
           </div>
 
@@ -735,10 +977,10 @@ export default function RecruiterPricing() {
             </a>
             <button
               type="button"
-              onClick={() => setIsQuoteModalOpen(true)}
+              onClick={() => openCustomQuoteModal()}
               className="rp-btn-banner-outline"
             >
-              Contact Our Sales Team
+              Request Custom Enterprise Plan
             </button>
           </div>
         </section>
@@ -750,7 +992,7 @@ export default function RecruiterPricing() {
           <div className="rp-modal-window" onClick={(e) => e.stopPropagation()}>
             <div className="rp-modal-top">
               <div>
-                <h3 className="rp-modal-headline">Contact Enterprise Sales</h3>
+                <h3 className="rp-modal-headline">Request Customized Recruiter Plan</h3>
                 <p className="rp-modal-subtext">
                   Tailored high-volume quotas, ATS integrations, and dedicated hiring support.
                 </p>
@@ -767,7 +1009,9 @@ export default function RecruiterPricing() {
             <div className="rp-modal-fields">
               <form onSubmit={handleQuoteSubmit}>
                 <div className="rp-field-block">
-                  <label className="rp-field-label">Full Name <span style={{ color: '#ff0000' }}>*</span></label>
+                  <label className="rp-field-label">
+                    Full Name <span style={{ color: '#ff0000' }}>*</span>
+                  </label>
                   <input
                     type="text"
                     required
@@ -781,7 +1025,9 @@ export default function RecruiterPricing() {
                 </div>
 
                 <div className="rp-field-block">
-                  <label className="rp-field-label">Work Email <span style={{ color: '#ff0000' }}>*</span></label>
+                  <label className="rp-field-label">
+                    Work Email <span style={{ color: '#ff0000' }}>*</span>
+                  </label>
                   <input
                     type="email"
                     required
@@ -795,7 +1041,9 @@ export default function RecruiterPricing() {
                 </div>
 
                 <div className="rp-field-block">
-                  <label className="rp-field-label">Phone Number <span style={{ color: '#ff0000' }}>*</span></label>
+                  <label className="rp-field-label">
+                    Phone Number <span style={{ color: '#ff0000' }}>*</span>
+                  </label>
                   <input
                     type="tel"
                     required
@@ -830,15 +1078,15 @@ export default function RecruiterPricing() {
                       setQuoteFormData({ ...quoteFormData, hiringVolume: e.target.value })
                     }
                   >
-                    <option value="5-10 hires/month">5 - 10 hires / month</option>
-                    <option value="10-25 hires/month">10 - 25 hires / month</option>
-                    <option value="25-50 hires/month">25 - 50 hires / month</option>
-                    <option value="50+ hires/month">50+ hires / month (High Volume)</option>
+                    <option value="5-15 hires/month">5 - 15 hires / month</option>
+                    <option value="15-30 hires/month">15 - 30 hires / month</option>
+                    <option value="30-60 hires/month">30 - 60 hires / month</option>
+                    <option value="60+ hires/month (Enterprise)">60+ hires / month (Enterprise)</option>
                   </select>
                 </div>
 
                 <div className="rp-field-block">
-                  <label className="rp-field-label">Additional Hiring Requirements</label>
+                  <label className="rp-field-label">Configuration &amp; Special Requirements</label>
                   <textarea
                     rows={3}
                     placeholder="Tell us about specific roles, tech stacks, or ATS integrations you require..."
