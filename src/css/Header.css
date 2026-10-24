@@ -1048,8 +1048,8 @@
 
 @media (min-width: 1400px) {
   .naukri-header-compact-search {
-    min-width: 340px;
-    max-width: 340px;
+    min-width: 320px;
+    max-width: 320px;
     height: 38px;
   }
 }
@@ -1101,17 +1101,16 @@
 }
 
 .naukri-compact-shortcut {
-  font-size: 11px;
+  color: #64748b;
+  letter-spacing: .5px;
+  white-space: nowrap;
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  padding: 2.5px 7px;
-  color: #64748b;
-  font-family: monospace;
   margin-right: 8px;
+  padding: 1px 4px;
+  font-size: 9px;
   font-weight: 600;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
 }
 
 /* Quick Job Search Modal Styling */
