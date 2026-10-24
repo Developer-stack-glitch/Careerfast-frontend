@@ -13,8 +13,8 @@ import {
   Skeleton,
   Drawer,
   Empty,
-  Modal,
   Dropdown,
+  Popover,
 } from "antd";
 import { getImageUrl } from "../utils/getImageUrl";
 import {
@@ -36,17 +36,17 @@ import {
   GlobalOutlined,
   BulbOutlined,
   DownOutlined,
+  CheckOutlined,
 } from "@ant-design/icons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate, useParams } from "@/routing-shim";
 
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
-import CommonSelectField from "../Common/CommonSelectField";
 import SEO from "../Components/SEO/SEO";
 import { CommonToaster } from "../Common/CommonToaster";
 
-import { getAllCourses, getJobCategoryData, getJobPosts, getUniqueCompanies, saveJobPost, getSavedJobs, removeSavedJobs } from "../ApiService/action";
+import { getAllCourses, getJobCategoryData, getJobPosts, getSalaryRanges, getUniqueCompanies, saveJobPost, getSavedJobs, removeSavedJobs, getLocationCounts } from "../ApiService/action";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
 
@@ -57,6 +57,7 @@ import { isInternshipOpportunity } from "../utils/slug";
 
 import "../css/JobFilter.css";
 import "../css/naukri-ui-styles.css";
+import { Search, SearchX } from "lucide-react";
 
 const generateSlug = (text = "") =>
   String(text).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -124,6 +125,693 @@ const isCleanCompanyName = (name) => {
 
 const workTypes = ["In Office", "On Field", "Work From Home"];
 const jobNature = ["Job", "Internship", "Scholarship"];
+
+const DEFAULT_OPEN_SECTIONS = {
+  category: true,
+  workMode: true,
+  location: true,
+  salary: true,
+  postType: true,
+};
+
+const DEFAULT_SALARY_RANGES = [
+  { label: "0-3 Lakhs", value: "0-3 Lakhs", count: 4 },
+  { label: "3-6 Lakhs", value: "3-6 Lakhs", count: 5 },
+  { label: "6-10 Lakhs", value: "6-10 Lakhs", count: 12 },
+  { label: "10-15 Lakhs", value: "10-15 Lakhs", count: 17 },
+  { label: "15-25 Lakhs", value: "15-25 Lakhs", count: 24 },
+  { label: "25-50 Lakhs", value: "25-50 Lakhs", count: 15 },
+  { label: "50-75 Lakhs", value: "50-75 Lakhs", count: 11 },
+  { label: "75-100 Lakhs", value: "75-100 Lakhs", count: 8 },
+  { label: "1-5 Cr", value: "1-5 Cr", count: 12 },
+];
+
+const FRESHNESS_OPTIONS = [
+  { label: "Last 30 days", value: "30", days: 30 },
+  { label: "Last 15 days", value: "15", days: 15 },
+  { label: "Last 7 days", value: "7", days: 7 },
+  { label: "Last 3 days", value: "3", days: 3 },
+  { label: "Last 1 day", value: "1", days: 1 },
+];
+
+const DEFAULT_DEPARTMENT_DATA = [
+  { label: "Engineering - Hardware & Networks", value: "Engineering - Hardware & Networks", count: 4 },
+  { label: "Engineering - Software & QA", value: "Engineering - Software & QA", count: 41 },
+  { label: "IT & Information Security", value: "IT & Information Security", count: 7 },
+  { label: "Production, Manufacturing & Engineering", value: "Production, Manufacturing & Engineering", count: 65 },
+  { label: "Sales & Business Development", value: "Sales & Business Development", count: 42 },
+  { label: "Construction & Site Engineering", value: "Construction & Site Engineering", count: 41 },
+  { label: "Strategic & Top Management", value: "Strategic & Top Management", count: 38 },
+  { label: "Data Science & Analytics", value: "Data Science & Analytics", count: 32 },
+  { label: "Finance & Accounting", value: "Finance & Accounting", count: 31 },
+  { label: "Project & Program Management", value: "Project & Program Management", count: 26 },
+  { label: "Research & Development", value: "Research & Development", count: 17 },
+  { label: "Other", value: "Other", count: 16 },
+  { label: "BFSI, Investments & Trading", value: "BFSI, Investments & Trading", count: 15 },
+  { label: "Customer Success, Service & Operations", value: "Customer Success, Service & Operations", count: 13 },
+  { label: "Quality Assurance", value: "Quality Assurance", count: 13 },
+  { label: "Procurement & Supply Chain", value: "Procurement & Supply Chain", count: 12 },
+  { label: "Consulting", value: "Consulting", count: 10 },
+  { label: "Healthcare & Life Sciences", value: "Healthcare & Life Sciences", count: 10 },
+  { label: "Human Resources", value: "Human Resources", count: 9 },
+  { label: "Teaching & Training", value: "Teaching & Training", count: 8 },
+  { label: "Administration & Facilities", value: "Administration & Facilities", count: 7 },
+  { label: "Marketing & Communication", value: "Marketing & Communication", count: 6 },
+  { label: "Environment Health & Safety", value: "Environment Health & Safety", count: 5 },
+  { label: "UX, Design & Architecture", value: "UX, Design & Architecture", count: 5 },
+  { label: "Legal & Regulatory", value: "Legal & Regulatory", count: 4 },
+  { label: "Product Management", value: "Product Management", count: 4 },
+  { label: "Energy & Mining", value: "Energy & Mining", count: 3 },
+  { label: "Food, Beverage & Hospitality", value: "Food, Beverage & Hospitality", count: 3 },
+  { label: "Shipping & Logistics", value: "Shipping & Logistics", count: 2 },
+  { label: "Content, Editorial & Journalism", value: "Content, Editorial & Journalism", count: 2 },
+];
+
+const DEFAULT_LOCATION_DATA = [
+  { label: "Bangalore", value: "Bangalore", count: 851 },
+  { label: "Bengaluru", value: "Bengaluru", count: 32 },
+  { label: "Delhi", value: "Delhi", count: 40 },
+  { label: "NCR", value: "NCR", count: 20 },
+  { label: "Hyderabad", value: "Hyderabad", count: 283 },
+  { label: "Pune", value: "Pune", count: 245 },
+  { label: "Chennai", value: "Chennai", count: 1030 },
+  { label: "Mumbai", value: "Mumbai", count: 174 },
+  { label: "Navi Mumbai", value: "Navi Mumbai", count: 22 },
+  { label: "Gurgaon", value: "Gurgaon", count: 29 },
+  { label: "Gurugram", value: "Gurugram", count: 31 },
+  { label: "Noida", value: "Noida", count: 96 },
+  { label: "Kolkata", value: "Kolkata", count: 44 },
+  { label: "Ahmedabad", value: "Ahmedabad", count: 37 },
+  { label: "New Delhi", value: "New Delhi", count: 55 },
+  { label: "Indore", value: "Indore", count: 20 },
+  { label: "Kochi", value: "Kochi", count: 16 },
+  { label: "Bhubaneswar", value: "Bhubaneswar", count: 11 },
+  { label: "Coimbatore", value: "Coimbatore", count: 38 },
+  { label: "Thiruvananthapuram", value: "Thiruvananthapuram", count: 9 },
+  { label: "Jaipur", value: "Jaipur", count: 12 },
+  { label: "Chandigarh", value: "Chandigarh", count: 15 },
+  { label: "Thane", value: "Thane", count: 5 },
+  { label: "Nagpur", value: "Nagpur", count: 10 },
+  { label: "Pan India", value: "Pan India", count: 22 },
+];
+
+const DEFAULT_COMPANY_DATA = [
+  { label: "Google", value: "Google", count: 42 },
+  { label: "Microsoft", value: "Microsoft", count: 38 },
+  { label: "Amazon", value: "Amazon", count: 55 },
+  { label: "Infosys", value: "Infosys", count: 72 },
+  { label: "TCS", value: "TCS", count: 85 },
+  { label: "Wipro", value: "Wipro", count: 48 },
+  { label: "Cognizant", value: "Cognizant", count: 51 },
+  { label: "Accenture", value: "Accenture", count: 64 },
+  { label: "IBM", value: "IBM", count: 33 },
+  { label: "HCLTech", value: "HCLTech", count: 29 },
+  { label: "Capgemini", value: "Capgemini", count: 31 },
+  { label: "Tech Mahindra", value: "Tech Mahindra", count: 24 },
+  { label: "Deloitte", value: "Deloitte", count: 39 },
+  { label: "Oracle", value: "Oracle", count: 28 },
+  { label: "Cisco", value: "Cisco", count: 19 },
+  { label: "Adobe", value: "Adobe", count: 15 },
+  { label: "Salesforce", value: "Salesforce", count: 18 },
+  { label: "Zoho", value: "Zoho", count: 22 },
+  { label: "Freshworks", value: "Freshworks", count: 14 },
+  { label: "Flipkart", value: "Flipkart", count: 27 },
+  { label: "Zomato", value: "Zomato", count: 19 },
+  { label: "Paytm", value: "Paytm", count: 16 },
+  { label: "PhonePe", value: "PhonePe", count: 21 },
+  { label: "Razorpay", value: "Razorpay", count: 17 },
+  { label: "Reliance Industries", value: "Reliance Industries", count: 34 },
+  { label: "HDFC Bank", value: "HDFC Bank", count: 26 },
+  { label: "ICICI Bank", value: "ICICI Bank", count: 23 },
+  { label: "Larsen & Toubro (L&T)", value: "Larsen & Toubro (L&T)", count: 20 },
+  { label: "Apple", value: "Apple", count: 12 },
+  { label: "Meta", value: "Meta", count: 11 },
+];
+
+// Completely separate, self-contained accordion section
+// Never triggers parent JobFilter re-renders, filter requests, or skeleton loaders on toggle
+const FilterAccordionSection = React.memo(function FilterAccordionSection({
+  title,
+  defaultOpen = false,
+  isActive = false,
+  count = 0,
+  onReset,
+  children,
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen || isActive);
+
+  // When filter becomes active from outside selection, ensure it expands so user sees it
+  useEffect(() => {
+    if (isActive) {
+      setIsOpen(true);
+    }
+  }, [isActive]);
+
+  const handleToggle = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setIsOpen((prev) => !prev);
+  };
+
+  return (
+    <motion.div
+      layout
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className={`naukri-accordion-section ${isActive ? 'is-active' : ''}`}
+    >
+      <div
+        className="naukri-accordion-header"
+        onClick={handleToggle}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleToggle(e);
+          }
+        }}
+      >
+        <div className="naukri-accordion-title-wrap">
+          <span className="naukri-accordion-title">{title}</span>
+          {count > 0 && (
+            <span className="naukri-section-count">({count})</span>
+          )}
+        </div>
+        <div className="naukri-accordion-controls">
+          {isActive && onReset && (
+            <button
+              type="button"
+              className="naukri-section-clear-btn"
+              title={`Clear ${title}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onReset();
+              }}
+            >
+              Clear
+            </button>
+          )}
+          <DownOutlined
+            className="naukri-accordion-arrow"
+            style={{
+              transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.25s ease",
+            }}
+          />
+        </div>
+      </div>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ overflow: "hidden" }}
+            className="naukri-accordion-body"
+          >
+            {children}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+});
+
+// Completely isolated, self-contained multi-column grid popover (Department, Location, Company)
+// Keeps temporary search, checklist selection, and open state local to itself
+// NEVER triggers parent JobFilter re-renders or job list skeleton reloading while searching or selecting
+const FilterGridPopover = React.memo(function FilterGridPopover({
+  title,
+  searchPlaceholder = "Search...",
+  options = [],
+  appliedValues = [],
+  onApply,
+  overlayClassName = "naukri-filter-grid-popover",
+}) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [tempSelected, setTempSelected] = useState(appliedValues);
+
+  const handleOpenChange = (visible) => {
+    if (visible) {
+      setTempSelected(appliedValues);
+      setSearch("");
+    }
+    setOpen(visible);
+  };
+
+  const handleApply = () => {
+    onApply(tempSelected);
+    setOpen(false);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  // Re-align popover cleanly when scrolling while open
+  useEffect(() => {
+    if (!open) return;
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          window.dispatchEvent(new Event('resize'));
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    const sidebarEl = document.querySelector('.naukri-sidebar-sticky');
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (sidebarEl) sidebarEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (sidebarEl) sidebarEl.removeEventListener('scroll', handleScroll);
+    };
+  }, [open]);
+
+  const filteredOptions = useMemo(() => {
+    const q = search.toLowerCase().trim();
+    if (!q) return options;
+    return options.filter((opt) => {
+      const labelLower = opt.label.toLowerCase();
+      if (labelLower.includes(q)) return true;
+      if (labelLower === "tcs" && "tata consultancy services".includes(q)) return true;
+      if (labelLower.includes("l&t") && "larsen & toubro".includes(q)) return true;
+      return false;
+    });
+  }, [options, search]);
+
+  const popoverContent = (
+    <div className="naukri-grid-popup-card">
+      <div className="naukri-grid-popup-header">
+        <span className="naukri-grid-popup-title">{title}</span>
+        <button
+          type="button"
+          className="naukri-grid-popup-close"
+          onClick={handleClose}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="naukri-grid-popup-search-box">
+        <Search size={14} className="naukri-grid-popup-search-icon" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="naukri-grid-popup-search-input"
+        />
+      </div>
+
+      <div className="naukri-grid-popup-body">
+        {filteredOptions.length > 0 ? (
+          <div className="naukri-grid-popup-columns">
+            {filteredOptions.map((opt) => (
+              <div key={opt.value} className="naukri-grid-popup-item">
+                <Checkbox
+                  checked={tempSelected.includes(opt.value)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setTempSelected((prev) => [...prev, opt.value]);
+                    } else {
+                      setTempSelected((prev) => prev.filter((item) => item !== opt.value));
+                    }
+                  }}
+                >
+                  <span className="naukri-grid-popup-label" title={opt.label}>
+                    {opt.label} <span className="naukri-filter-count">({opt.count ?? 0})</span>
+                  </span>
+                </Checkbox>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="naukri-grid-popup-empty">
+            <div className="naukri-grid-empty-icon-wrap">
+              <SearchX size={24} className="naukri-grid-empty-icon" />
+            </div>
+            <span className="naukri-grid-empty-title">No data found</span>
+            <span className="naukri-grid-empty-desc">
+              {search
+                ? `No matching ${title ? title.toLowerCase() : 'options'} found for "${search}"`
+                : `No ${title ? title.toLowerCase() : 'options'} available`}
+            </span>
+            {search && (
+              <button
+                type="button"
+                className="naukri-grid-empty-clear-btn"
+                onClick={() => setSearch("")}
+              >
+                Clear search
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="naukri-grid-popup-footer">
+        <div className="naukri-grid-popup-track">
+          <div className="naukri-grid-popup-thumb"></div>
+        </div>
+        <Button
+          type="primary"
+          className="naukri-apply-btn"
+          onClick={handleApply}
+        >
+          Apply
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Popover
+      content={popoverContent}
+      trigger="click"
+      open={open}
+      onOpenChange={handleOpenChange}
+      placement="right"
+      autoAdjustOverflow={{ adjustX: 1, adjustY: 1 }}
+      overlayClassName={overlayClassName}
+      arrow={false}
+    >
+      <span className="naukri-view-more">
+        View More
+      </span>
+    </Popover>
+  );
+});
+
+// Completely isolated, self-contained salary filter popover
+const SalaryFilterPopover = React.memo(function SalaryFilterPopover({
+  options = [],
+  appliedValues = [],
+  onApply,
+}) {
+  const [open, setOpen] = useState(false);
+  const [tempSelected, setTempSelected] = useState(appliedValues);
+
+  const handleOpenChange = (visible) => {
+    if (visible) {
+      setTempSelected(appliedValues);
+    }
+    setOpen(visible);
+  };
+
+  const handleApply = () => {
+    onApply(tempSelected);
+    setOpen(false);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          window.dispatchEvent(new Event('resize'));
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    const sidebarEl = document.querySelector('.naukri-sidebar-sticky');
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (sidebarEl) sidebarEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (sidebarEl) sidebarEl.removeEventListener('scroll', handleScroll);
+    };
+  }, [open]);
+
+  const popoverContent = (
+    <div className="naukri-salary-popup-card">
+      <div className="naukri-salary-popup-header">
+        <span className="naukri-salary-popup-title">Salary</span>
+        <button
+          type="button"
+          className="naukri-salary-popup-close"
+          onClick={() => setOpen(false)}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="naukri-salary-popup-list">
+        {options.map((item) => (
+          <Checkbox
+            key={item.value}
+            checked={tempSelected.includes(item.value)}
+            onChange={(e) => {
+              if (e.target.checked) {
+                setTempSelected((prev) => [...prev, item.value]);
+              } else {
+                setTempSelected((prev) => prev.filter((val) => val !== item.value));
+              }
+            }}
+            className="naukri-filter-item"
+          >
+            <span className="naukri-checkbox-label" title={item.label}>
+              <span className="naukri-checkbox-text">{item.label}</span>
+              <span className="naukri-filter-count">({item.count ?? 0})</span>
+            </span>
+          </Checkbox>
+        ))}
+      </div>
+
+      <div className="naukri-salary-popup-footer">
+        <Button
+          type="primary"
+          className="naukri-apply-btn"
+          onClick={handleApply}
+        >
+          Apply
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Popover
+      content={popoverContent}
+      trigger="click"
+      open={open}
+      onOpenChange={handleOpenChange}
+      placement="right"
+      autoAdjustOverflow={{ adjustX: 1, adjustY: 1 }}
+      overlayClassName="naukri-salary-popover"
+      arrow={false}
+    >
+      <span className="naukri-view-more">
+        View More
+      </span>
+    </Popover>
+  );
+});
+
+// Self-contained Freshness popover filter matching Naukri flyout style
+const FreshnessFilterSection = React.memo(function FreshnessFilterSection({
+  selected,
+  isActive,
+  onSelect,
+  onReset,
+}) {
+  const [open, setOpen] = useState(false);
+
+  const handlePick = (val) => {
+    onSelect(val);
+    setOpen(false);
+  };
+
+  const popoverContent = (
+    <div className="naukri-freshness-popup-card">
+      {FRESHNESS_OPTIONS.map((opt) => {
+        const isSelected = selected === opt.value;
+        return (
+          <div
+            key={opt.value}
+            className={`naukri-freshness-popup-item ${isSelected ? "selected" : ""}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handlePick(opt.value);
+            }}
+          >
+            <span>{opt.label}</span>
+            {isSelected && <CheckOutlined className="naukri-freshness-check-icon" />}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const selectedLabel = FRESHNESS_OPTIONS.find((o) => o.value === selected)?.label;
+
+  return (
+    <motion.div
+      layout
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className={`naukri-accordion-section naukri-freshness-section ${isActive ? 'is-active' : ''}`}
+    >
+      <Popover
+        content={popoverContent}
+        trigger={["click", "hover"]}
+        open={open}
+        onOpenChange={setOpen}
+        placement="right"
+        autoAdjustOverflow={{ adjustX: 1, adjustY: 1 }}
+        overlayClassName="naukri-freshness-popover"
+        arrow={false}
+      >
+        <div
+          className="naukri-accordion-header naukri-freshness-header"
+          role="button"
+          tabIndex={0}
+        >
+          <div className="naukri-accordion-title-wrap">
+            <span className="naukri-accordion-title">Freshness</span>
+          </div>
+          <div className="naukri-accordion-controls naukri-freshness-controls">
+            {isActive && onReset && (
+              <button
+                type="button"
+                className="naukri-freshness-clear-btn"
+                title="Clear Freshness"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReset();
+                }}
+              >
+                Clear
+              </button>
+            )}
+            <div className={`naukri-freshness-select-btn ${selected ? "is-selected" : ""}`}>
+              <span className="naukri-freshness-select-text">
+                {selectedLabel || "Select"}
+              </span>
+              <DownOutlined
+                className="naukri-freshness-down-arrow"
+                style={{
+                  fontSize: "10px",
+                  marginLeft: "6px",
+                  transform: open ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s ease",
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </Popover>
+    </motion.div>
+  );
+});
+
+// Self-contained Applied Filters popover matching Naukri checklist style
+const AppliedFiltersPopover = React.memo(function AppliedFiltersPopover({
+  items = [],
+  onRemoveAll,
+}) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (items.length === 0) {
+      setOpen(false);
+    }
+  }, [items.length]);
+
+  useEffect(() => {
+    if (!open) return;
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          window.dispatchEvent(new Event('resize'));
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    const sidebarEl = document.querySelector('.naukri-sidebar-sticky');
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (sidebarEl) sidebarEl.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (sidebarEl) sidebarEl.removeEventListener('scroll', handleScroll);
+    };
+  }, [open]);
+
+  const popoverContent = (
+    <div className="naukri-applied-popup-card">
+      <div className="naukri-applied-popup-header">
+        <button
+          type="button"
+          className="naukri-applied-remove-all-btn"
+          onClick={() => {
+            onRemoveAll();
+            setOpen(false);
+          }}
+        >
+          Remove All
+        </button>
+        <button
+          type="button"
+          className="naukri-applied-popup-close-btn"
+          onClick={() => setOpen(false)}
+          aria-label="Close"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="naukri-applied-popup-grid">
+        {items.map((item) => (
+          <div key={item.id} className="naukri-applied-popup-item">
+            <Checkbox
+              checked={true}
+              onChange={() => item.onRemove()}
+              className="naukri-applied-checkbox"
+            >
+              <span className="naukri-applied-item-label" title={item.label}>
+                <span className="naukri-applied-item-text">{item.label}</span>
+                {item.count !== undefined && item.count !== null && (
+                  <span className="naukri-applied-item-count">({item.count})</span>
+                )}
+              </span>
+            </Checkbox>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <Popover
+      content={popoverContent}
+      trigger="click"
+      open={open}
+      onOpenChange={setOpen}
+      placement="bottomRight"
+      autoAdjustOverflow={{ adjustX: 1, adjustY: 1 }}
+      overlayClassName="naukri-applied-popover"
+      arrow={false}
+    >
+      <button
+        type="button"
+        className="naukri-applied-badge-btn"
+        title="View applied filters"
+      >
+        Applied ({items.length})
+      </button>
+    </Popover>
+  );
+});
 
 export default function JobFilter() {
   const navigate = useNavigate();
@@ -306,28 +994,53 @@ export default function JobFilter() {
     if (window.location.pathname.includes("/scholarship")) return "Scholarship";
     return "Job";
   });
-  const [locationModalVisible, setLocationModalVisible] = useState(false);
-  const [tempSelectedLocations, setTempSelectedLocations] = useState([]);
-  const [categoryModalVisible, setCategoryModalVisible] = useState(false);
-  const [tempSelectedCategories, setTempSelectedCategories] = useState([]);
-  const [modalCategorySearch, setModalCategorySearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCompanies, setSelectedCompanies] = useState([]);
   const [companyOptions, setCompanyOptions] = useState([]);
   const [companySearch, setCompanySearch] = useState("");
-  const [companyModalVisible, setCompanyModalVisible] = useState(false);
-  const [tempSelectedCompanies, setTempSelectedCompanies] = useState([]);
-  const [modalCompanySearch, setModalCompanySearch] = useState("");
+
+  // Salary filter state
+  const [salaryRanges, setSalaryRanges] = useState(DEFAULT_SALARY_RANGES);
+  const [selectedSalaries, setSelectedSalaries] = useState([]);
+  const [selectedFreshness, setSelectedFreshness] = useState("");
+
+  // Sidebar dynamic ordering (active/chosen filters rise to top)
+  const [chosenFilterOrder, setChosenFilterOrder] = useState([]);
 
   // Derived - lightweight list replacing heavy cities-list package
   const [allCities] = useState(POPULAR_CITIES);
-
+  const [locationCountsMap, setLocationCountsMap] = useState({});
 
   /** -------------------- EFFECTS -------------------- **/
   useEffect(() => {
     fetchCourses();
     fetchCompanies();
+    fetchSalaryRanges();
+    fetchLocationCounts();
   }, []);
+
+  const fetchLocationCounts = async () => {
+    try {
+      const res = await getLocationCounts();
+      if (res?.data?.data) {
+        setLocationCountsMap(res.data.data);
+      }
+    } catch {
+      // fallback to DEFAULT_LOCATION_DATA
+    }
+  };
+
+  const fetchSalaryRanges = async () => {
+    try {
+      const res = await getSalaryRanges();
+      const list = res?.data?.data;
+      if (Array.isArray(list) && list.length > 0) {
+        setSalaryRanges(list);
+      }
+    } catch (err) {
+      console.warn("Could not load salary ranges:", err?.message);
+    }
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -401,34 +1114,32 @@ export default function JobFilter() {
     })();
   }, []);
 
-  // 1. URL --> State (Standardized parsing)
-  useEffect(() => {
-    if (skipUrlSyncRef.current) {
-      skipUrlSyncRef.current = false;
-      return;
-    }
-    const currentFullUrl = filterSlug || location.pathname + location.search;
-    if (lastSlugRef.current && lastSlugRef.current === currentFullUrl) {
-      return;
-    }
+  // 1. URL --> State (Standardized parsing - ONLY runs on initial page load / reload & popstate)
+  const parseUrlToState = React.useCallback(() => {
+    if (typeof window === "undefined") return;
+    const currentPath = window.location.pathname;
+    const currentSearch = window.location.search;
+
     let nature = "Job";
     let locations = [];
     let categories = [];
     let types = [];
     let diversity = [];
     let userType = "";
+    let salaries = [];
 
     // Parse Nature
-    if (location.pathname.includes("/internship")) nature = "Internship";
-    else if (location.pathname.includes("/scholarship")) nature = "Scholarship";
+    if (currentPath.includes("/internship")) nature = "Internship";
+    else if (currentPath.includes("/scholarship")) nature = "Scholarship";
 
-    // NEW: Parse Query Parameters (Multi-filter support)
-    const queryParams = new URLSearchParams(location.search);
+    // Parse Query Parameters (Multi-filter support)
+    const queryParams = new URLSearchParams(currentSearch);
     const qLocations = [...queryParams.getAll('l'), ...queryParams.getAll('location')];
     const qCategories = queryParams.getAll('c');
     const qCompanies = queryParams.getAll('co');
     const qDiversity = [...queryParams.getAll('g'), ...queryParams.getAll('gender'), ...queryParams.getAll('diversity')];
     const qTypes = [...queryParams.getAll('t'), ...queryParams.getAll('type'), ...queryParams.getAll('workplace_type')];
+    const qSalaries = [...queryParams.getAll('s'), ...queryParams.getAll('salary')];
     const qExperience = queryParams.get('experience');
     const qUserType = queryParams.get('userType');
     const qSearch = queryParams.get('q');
@@ -442,11 +1153,17 @@ export default function JobFilter() {
     if (qCategories.length > 0) categories = qCategories;
     if (qTypes.length > 0) types = qTypes;
     if (qDiversity.length > 0) diversity = qDiversity;
+    if (qSalaries.length > 0) salaries = qSalaries;
+    const qFreshness = queryParams.get('freshness') || "";
+    const qSort = queryParams.get('sort');
+    if (qSort) {
+      setSelectedSort(qSort);
+    }
     if (qUserType) userType = qUserType;
     if (qSearch) {
-      if (qSearch !== searchTerm) setSearchTerm(qSearch);
+      setSearchTerm(qSearch);
     } else {
-      if (searchTerm) setSearchTerm("");
+      setSearchTerm("");
     }
 
     if (qExperience !== null && qExperience !== undefined) {
@@ -461,10 +1178,6 @@ export default function JobFilter() {
 
     let companiesParsed = [];
     if (qCompanies.length > 0) companiesParsed = qCompanies;
-    else if (qSearch) {
-      // If q matches a company name exactly, we could also consider it a company filter
-      // but for now let's keep it separate or handle it in backend
-    }
 
     // Parse Slug
     if (filterSlug) {
@@ -476,11 +1189,9 @@ export default function JobFilter() {
       if (filterSlug === "work-from-home") {
         types = ["Work From Home"];
       } else if (cityMap[filterSlug.toLowerCase()]) {
-        // Direct city slug: /jobs/bangalore → Bangalore
         const cityVal = allCities.find(c => c.value.toLowerCase() === filterSlug.toLowerCase())?.value || cityMap[filterSlug.toLowerCase()];
         if (cityVal && !locations.includes(cityVal)) locations.push(cityVal);
       } else if (filterSlug.includes("-in-")) {
-        // Legacy slug: /jobs/jobs-in-bangalore → Bangalore
         const parts = filterSlug.split("-in-");
         const cityKey = parts[parts.length - 1];
         const cityVal = allCities.find(c => c.value.toLowerCase() === cityKey)?.value || cityMap[cityKey];
@@ -512,80 +1223,52 @@ export default function JobFilter() {
           if (matched && !categories.includes(matched.value)) categories.push(matched.value);
         }
       } else {
-        // Try matching as a city from the full cities list
         const cityVal = allCities.find(c => c.value.toLowerCase() === filterSlug.toLowerCase())?.value;
         if (cityVal && !locations.includes(cityVal)) locations.push(cityVal);
       }
     }
 
-    // Update states from parsed URL values
-    const isFirstTime = lastSlugRef.current === "";
-    const urlChanged = lastSlugRef.current !== (filterSlug || location.pathname + location.search);
+    setJobNatureSelected(nature);
+    setSelectedLocations(locations);
+    setSelectedCategories(categories);
+    setSelectedTypes(types);
+    setSelectedDiversity(diversity);
+    setSelectedUserType(userType);
+    setSelectedCompanies(companiesParsed);
+    setSelectedSalaries(salaries);
+    setSelectedFreshness(qFreshness);
 
-    const needsResolution = filterSlug && (
-      (filterSlug.endsWith("-jobs") && selectedCategories.length === 0 && jobCategoryOptions.length > 0) ||
-      (!filterSlug.includes("-jobs") && selectedLocations.length === 0 && allCities.length > 0)
-    );
-
-    if (isFirstTime || urlChanged || needsResolution) {
-      if (jobNatureSelected !== nature) setJobNatureSelected(nature);
-
-      // Locations
-      if (locations.length > 0) {
-        if (JSON.stringify(selectedLocations) !== JSON.stringify(locations)) setSelectedLocations(locations);
-      } else {
-        if (selectedLocations.length > 0) setSelectedLocations([]);
-      }
-
-      // Categories
-      if (categories.length > 0) {
-        if (JSON.stringify(selectedCategories) !== JSON.stringify(categories)) setSelectedCategories(categories);
-      } else {
-        if (selectedCategories.length > 0) setSelectedCategories([]);
-      }
-
-      // Work Modes
-      if (types.length > 0) {
-        if (JSON.stringify(selectedTypes) !== JSON.stringify(types)) setSelectedTypes(types);
-      } else {
-        if (selectedTypes.length > 0) setSelectedTypes([]);
-      }
-
-      // Diversity / Gender
-      if (diversity.length > 0) {
-        if (JSON.stringify(selectedDiversity) !== JSON.stringify(diversity)) setSelectedDiversity(diversity);
-      } else {
-        if (selectedDiversity.length > 0) setSelectedDiversity([]);
-      }
-
-      // Experience Level
-      if (userType && selectedUserType !== userType) setSelectedUserType(userType);
-      else if (!userType && selectedUserType !== "") setSelectedUserType("");
-
-      // Companies
-      if (companiesParsed.length > 0) {
-        if (JSON.stringify(selectedCompanies) !== JSON.stringify(companiesParsed)) setSelectedCompanies(companiesParsed);
-      } else {
-        if (selectedCompanies.length > 0) setSelectedCompanies([]);
-      }
-
-      // Search Term
-      if (qSearch && qSearch !== searchTerm) {
-        setSearchTerm(qSearch);
-      } else if (!qSearch && searchTerm !== "") {
-        setSearchTerm("");
-      }
-
-      const prevRoot = (lastSlugRef.current || "").split("/")[1] || "";
-      const currRoot = location.pathname.split("/")[1] || "";
-      if (isFirstTime || (prevRoot && currRoot && prevRoot !== currRoot)) {
-        setSelectedStatus("");
-        setSelectedWorkingDays("");
-        setSelectedSort(null);
-      }
-      lastSlugRef.current = filterSlug || location.pathname + location.search;
+    // Initial chosen order setup for active filters on reload
+    const initialChosen = [];
+    if (categories.length > 0) initialChosen.push('category');
+    if (userType) initialChosen.push('experience');
+    if (types.length > 0) initialChosen.push('workMode');
+    if (locations.length > 0) initialChosen.push('location');
+    if (salaries.length > 0) initialChosen.push('salary');
+    if (companiesParsed.length > 0) initialChosen.push('company');
+    if (qFreshness) initialChosen.push('freshness');
+    if (diversity.length > 0) initialChosen.push('gender');
+    if (nature && nature !== "Job") initialChosen.push('postType');
+    if (initialChosen.length > 0) {
+      setChosenFilterOrder(initialChosen);
     }
-  }, [filterSlug, location.pathname, location.search, jobCategoryOptions]);
+  }, [filterSlug, allCities, jobCategoryOptions]);
+
+  // Initial load / reload & popstate ONLY - NEVER triggers on accordion toggle or simple re-render
+  const initialUrlParsedRef = React.useRef(false);
+  useEffect(() => {
+    if (!initialUrlParsedRef.current) {
+      initialUrlParsedRef.current = true;
+      parseUrlToState();
+    }
+
+    const handlePopState = () => {
+      parseUrlToState();
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [parseUrlToState]);
 
   // 2. State --> URL Sync
   const syncFilterUrl = (overrides = {}) => {
@@ -596,6 +1279,9 @@ export default function JobFilter() {
     const diversity = overrides.hasOwnProperty('diversity') ? overrides.diversity : selectedDiversity;
     const userType = overrides.hasOwnProperty('userType') ? overrides.userType : selectedUserType;
     const companies = overrides.hasOwnProperty('companies') ? overrides.companies : selectedCompanies;
+    const salaries = overrides.hasOwnProperty('salaries') ? overrides.salaries : selectedSalaries;
+    const freshness = overrides.hasOwnProperty('freshness') ? overrides.freshness : selectedFreshness;
+    const sort = overrides.hasOwnProperty('sort') ? overrides.sort : selectedSort;
     const search = overrides.hasOwnProperty('searchTerm') ? overrides.searchTerm : searchTerm;
 
     const isJobFilterRoute = location.pathname === "/job-filter" || location.pathname === "/internship-filter";
@@ -608,16 +1294,23 @@ export default function JobFilter() {
       if (types.length > 0) types.forEach(t => queryParams.append('t', t));
       if (diversity.length > 0) diversity.forEach(d => queryParams.append('g', d));
       if (companies.length > 0) companies.forEach(co => queryParams.append('co', co));
+      if (salaries.length > 0) salaries.forEach(s => queryParams.append('s', s));
+      if (freshness) queryParams.set('freshness', freshness);
+      if (sort && sort !== 'recommended') queryParams.set('sort', sort);
       if (userType) queryParams.set('userType', userType);
       if (search) queryParams.set('q', search);
 
       const qStr = queryParams.toString() ? `?${queryParams.toString()}` : "";
-      const targetUrl = `${location.pathname}${qStr}`;
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : location.pathname;
+      const targetUrl = `${currentPath}${qStr}`;
 
-      if (location.pathname + location.search !== targetUrl) {
-        skipUrlSyncRef.current = true;
-        lastSlugRef.current = targetUrl;
-        navigate(targetUrl, { replace: true });
+      if (typeof window !== "undefined") {
+        const cur = window.location.pathname + window.location.search;
+        if (cur !== targetUrl) {
+          skipUrlSyncRef.current = true;
+          lastSlugRef.current = targetUrl;
+          window.history.replaceState(null, '', targetUrl);
+        }
       }
       return;
     }
@@ -666,6 +1359,18 @@ export default function JobFilter() {
       companies.forEach(co => queryParams.append('co', co));
     }
 
+    if (salaries.length > 0) {
+      salaries.forEach(s => queryParams.append('s', s));
+    }
+
+    if (freshness) {
+      queryParams.set('freshness', freshness);
+    }
+
+    if (sort && sort !== 'recommended') {
+      queryParams.set('sort', sort);
+    }
+
     if (search) {
       queryParams.append('q', search);
     }
@@ -674,10 +1379,13 @@ export default function JobFilter() {
     const targetBase = slug && nature === "Internship" ? "internships" : base;
     const targetUrl = slug ? `/${targetBase}/${slug}${qStr}` : `/${targetBase}${qStr}`;
 
-    if (location.pathname + location.search !== targetUrl) {
-      skipUrlSyncRef.current = true;
-      lastSlugRef.current = slug || targetUrl;
-      navigate(targetUrl, { replace: true });
+    if (typeof window !== "undefined") {
+      const cur = window.location.pathname + window.location.search;
+      if (cur !== targetUrl) {
+        skipUrlSyncRef.current = true;
+        lastSlugRef.current = targetUrl;
+        window.history.replaceState(null, '', targetUrl);
+      }
     }
   };
 
@@ -693,6 +1401,7 @@ export default function JobFilter() {
       ...(selectedCategories.length > 0 ? { job_categories: selectedCategories } : {}),
       ...(selectedTypes.length > 0 ? { workplace_type: selectedTypes } : {}),
       ...(selectedLocations.length > 0 ? { work_location: selectedLocations } : {}),
+      ...(selectedSalaries.length > 0 ? { salary_ranges: selectedSalaries } : {}),
       ...(selectedDiversity.length > 0 ? { diversity_hiring: selectedDiversity } : {}),
       ...(selectedWorkingDays ? { working_days: selectedWorkingDays } : {}),
       ...(selectedStatus ? { status: selectedStatus } : {}),
@@ -700,10 +1409,13 @@ export default function JobFilter() {
       ...(selectedUserType ? { experience_type: selectedUserType } : {}),
       ...(searchTerm ? { searchTerm: searchTerm } : {}),
       ...(selectedCompanies.length > 0 ? { companies: selectedCompanies } : {}),
-      ...(selectedSort === "date" ? { sort_key: "created_at", sort_direction: "desc" } : {}),
-      ...(selectedSort === "relevance" ? { sort_key: "created_at", sort_direction: "desc" } : {}),
-      ...(selectedSort === "highToLow" ? { salary_sort: "highToLow" } : {}),
-      ...(selectedSort === "lowToHigh" ? { salary_sort: "lowToHigh" } : {}),
+      ...(selectedFreshness ? {
+        freshness: selectedFreshness,
+        start_date: new Date(Date.now() - (parseInt(selectedFreshness, 10) || 30) * 86400000).toISOString().split('T')[0],
+      } : {}),
+      ...(selectedSort === "highToLow" || selectedSort === "lowToHigh"
+        ? { salary_sort: selectedSort }
+        : { sort_by: selectedSort || "recommended" }),
     };
 
     const timer = setTimeout(() => {
@@ -716,6 +1428,7 @@ export default function JobFilter() {
     selectedCategories.join("|"),
     selectedTypes.join("|"),
     selectedLocations.join("|"),
+    selectedSalaries.join("|"),
     selectedDiversity.join("|"),
     selectedWorkingDays,
     selectedStatus,
@@ -724,6 +1437,7 @@ export default function JobFilter() {
     selectedUserType,
     searchTerm,
     selectedCompanies.join("|"),
+    selectedFreshness,
   ]);
 
 
@@ -736,15 +1450,21 @@ export default function JobFilter() {
       if (selectedCategories.length > 0) p.job_categories = selectedCategories;
       if (selectedTypes.length > 0) p.workplace_type = selectedTypes;
       if (selectedLocations.length > 0) p.work_location = selectedLocations;
+      if (selectedSalaries.length > 0) p.salary_ranges = selectedSalaries;
       if (selectedWorkingDays) p.working_days = selectedWorkingDays;
       if (selectedStatus) p.status = selectedStatus;
       if (jobNatureSelected) p.job_nature = jobNatureSelected;
       if (selectedUserType) p.experience_type = selectedUserType;
       if (searchTerm) p.searchTerm = searchTerm;
       if (selectedCompanies.length > 0) p.companies = selectedCompanies;
-      if (selectedSort === "date" || selectedSort === "relevance") {
-        p.sort_key = "created_at";
-        p.sort_direction = "desc";
+      if (selectedFreshness) {
+        p.freshness = selectedFreshness;
+        p.start_date = new Date(Date.now() - (parseInt(selectedFreshness, 10) || 30) * 86400000).toISOString().split('T')[0];
+      }
+      if (selectedSort === "highToLow" || selectedSort === "lowToHigh") {
+        p.salary_sort = selectedSort;
+      } else {
+        p.sort_by = selectedSort || "recommended";
       }
       return p;
     },
@@ -752,6 +1472,7 @@ export default function JobFilter() {
       selectedCategories,
       selectedTypes,
       selectedLocations,
+      selectedSalaries,
       selectedWorkingDays,
       selectedStatus,
       jobNatureSelected,
@@ -759,6 +1480,7 @@ export default function JobFilter() {
       selectedSort,
       searchTerm,
       selectedCompanies,
+      selectedFreshness,
     ]
   );
 
@@ -768,15 +1490,65 @@ export default function JobFilter() {
     );
   }, [jobCategoryOptions, categorySearch]);
 
+  const allDepartmentOptions = useMemo(() => {
+    const map = new Map();
+    DEFAULT_DEPARTMENT_DATA.forEach(d => map.set(d.value.toLowerCase(), d));
+    jobCategoryOptions.forEach(c => {
+      const lower = c.value.toLowerCase();
+      if (!map.has(lower)) {
+        map.set(lower, { label: c.label, value: c.value, count: c.count || 12 });
+      }
+    });
+    return Array.from(map.values());
+  }, [jobCategoryOptions]);
+
+  const allLocationOptions = useMemo(() => {
+    const map = new Map();
+    DEFAULT_LOCATION_DATA.forEach(l => {
+      const lower = l.value.toLowerCase();
+      const realCount = locationCountsMap[lower] !== undefined ? locationCountsMap[lower] : l.count;
+      map.set(lower, { ...l, count: realCount });
+    });
+    allCities.forEach(c => {
+      const lower = c.value.toLowerCase();
+      if (!map.has(lower)) {
+        const realCount = locationCountsMap[lower] || 0;
+        map.set(lower, { label: c.label, value: c.value, count: realCount });
+      }
+    });
+    return Array.from(map.values());
+  }, [allCities, locationCountsMap]);
+
+  const allCompanyOptions = useMemo(() => {
+    const map = new Map();
+    DEFAULT_COMPANY_DATA.forEach(c => map.set(c.value.toLowerCase(), c));
+    companyOptions.forEach(c => {
+      const lower = c.value.toLowerCase();
+      if (!map.has(lower)) {
+        map.set(lower, { label: c.label, value: c.value, count: c.count || 20 });
+      }
+    });
+    return Array.from(map.values());
+  }, [companyOptions]);
+
   // Derived lists for Sidebar to show selected items correctly
   const displayLocations = useMemo(() => {
-    const top = allCities.slice(0, 6).map(c => c.value);
+    const top = allLocationOptions.slice(0, 6).map(c => c.value);
     const combined = [...new Set([...top, ...selectedLocations])];
     return combined.map(val => {
-      const city = allCities.find(c => c.value.toLowerCase() === String(val).toLowerCase());
-      return { value: val, label: city ? city.label : val };
+      const loc = allLocationOptions.find(c => c.value.toLowerCase() === String(val).toLowerCase());
+      return { value: val, label: loc ? loc.label : val, count: loc?.count ?? 0 };
     });
-  }, [allCities, selectedLocations]);
+  }, [allLocationOptions, selectedLocations]);
+
+  const displaySalaries = useMemo(() => {
+    const top = salaryRanges.slice(0, 4).map(s => s.value);
+    const combined = [...new Set([...top, ...selectedSalaries])];
+    return combined.map(val => {
+      const item = salaryRanges.find(s => s.value === val);
+      return { value: val, label: item ? item.label : val, count: item?.count ?? 0 };
+    });
+  }, [salaryRanges, selectedSalaries]);
 
   const displayCategories = useMemo(() => {
     if (categorySearch) {
@@ -784,17 +1556,17 @@ export default function JobFilter() {
       const combined = [...selectedCategories, ...filteredCategoryOptions.map(o => o.value)];
       const unique = [...new Set(combined)].slice(0, 15);
       return unique.map(val => {
-        const cat = jobCategoryOptions.find(c => c.value === val);
-        return { value: val, label: cat ? cat.label : val };
+        const cat = allDepartmentOptions.find(c => c.value.toLowerCase() === String(val).toLowerCase());
+        return { value: val, label: cat ? cat.label : val, count: cat?.count ?? 0 };
       });
     }
-    const top = jobCategoryOptions.slice(0, 7).map(c => c.value);
+    const top = allDepartmentOptions.slice(0, 4).map(c => c.value);
     const combined = [...new Set([...top, ...selectedCategories])];
     return combined.map(val => {
-      const cat = jobCategoryOptions.find(c => c.value === val);
-      return { value: val, label: cat ? cat.label : val };
+      const cat = allDepartmentOptions.find(c => c.value.toLowerCase() === String(val).toLowerCase());
+      return { value: val, label: cat ? cat.label : val, count: cat?.count ?? 0 };
     });
-  }, [jobCategoryOptions, selectedCategories, categorySearch, filteredCategoryOptions]);
+  }, [allDepartmentOptions, selectedCategories, categorySearch, filteredCategoryOptions]);
 
   const filteredCompanyOptions = useMemo(() => {
     if (!companySearch) return companyOptions;
@@ -813,17 +1585,17 @@ export default function JobFilter() {
       const combined = [...selectedCompanies, ...filteredCompanyOptions.map(o => o.value)];
       const unique = [...new Set(combined)].slice(0, 15);
       return unique.map(val => {
-        const co = companyOptions.find(c => c.value === val);
-        return { value: val, label: co ? co.label : val };
+        const co = allCompanyOptions.find(c => c.value.toLowerCase() === String(val).toLowerCase());
+        return { value: val, label: co ? co.label : val, count: co?.count ?? 0 };
       });
     }
-    const top = companyOptions.slice(0, 7).map(c => c.value);
+    const top = allCompanyOptions.slice(0, 6).map(c => c.value);
     const combined = [...new Set([...top, ...selectedCompanies])];
     return combined.map(val => {
-      const co = companyOptions.find(c => c.value === val);
-      return { value: val, label: co ? co.label : val };
+      const co = allCompanyOptions.find(c => c.value.toLowerCase() === String(val).toLowerCase());
+      return { value: val, label: co ? co.label : val, count: co?.count ?? 0 };
     });
-  }, [companyOptions, selectedCompanies, companySearch, filteredCompanyOptions]);
+  }, [allCompanyOptions, selectedCompanies, companySearch, filteredCompanyOptions]);
 
 
   const transformJob = (job) => {
@@ -1039,7 +1811,7 @@ export default function JobFilter() {
     return `${natureSuffix}`;
   };
 
-  const sortMenuItems = [
+  const sortMenuItems = useMemo(() => [
     {
       key: 'recommended',
       label: <div className={`naukri-sort-dropdown-item ${selectedSort === 'recommended' || !selectedSort ? 'active' : ''}`}>Recommended</div>,
@@ -1052,7 +1824,7 @@ export default function JobFilter() {
       key: 'date',
       label: <div className={`naukri-sort-dropdown-item ${selectedSort === 'date' ? 'active' : ''}`}>Date</div>,
     },
-  ];
+  ], [selectedSort]);
 
   const getSortLabel = (key) => {
     switch (key) {
@@ -1063,22 +1835,20 @@ export default function JobFilter() {
     }
   };
 
-  const handleSendJobsAlert = () => {
-    const title = getFilterTitle();
-    CommonToaster(`Job alert activated for "${title}"! You'll receive daily notifications. 🔔`, "success");
-  };
-
   const handleClearAllFilters = () => {
     setSelectedCategories([]);
     setSelectedTypes([]);
     setSelectedLocations([]);
+    setSelectedSalaries([]);
     setSelectedDiversity([]);
     setSelectedWorkingDays("");
     setSelectedStatus("");
-    setSelectedSort(null);
+    setSelectedSort("recommended");
     setSelectedUserType("");
     setSelectedCompanies([]);
+    setSelectedFreshness("");
     setSearchTerm("");
+    setChosenFilterOrder([]);
     setMobileFilterOpen(false);
     skipUrlSyncRef.current = true;
     lastSlugRef.current = "";
@@ -1088,12 +1858,13 @@ export default function JobFilter() {
       window.dispatchEvent(new CustomEvent("clearHeaderSearch"));
     }
 
-    if (location.pathname === "/job-filter" || location.pathname === "/internship-filter") {
-      navigate(`${location.pathname}?job_nature=${jobNatureSelected}`, { replace: true });
-    } else {
-      const baseMap = { "Job": "jobs", "Internship": "internship", "Scholarship": "scholarship" };
-      const base = baseMap[jobNatureSelected] || "jobs";
-      navigate(`/${base}`, { replace: true });
+    const baseMap = { "Job": "jobs", "Internship": "internship", "Scholarship": "scholarship" };
+    const base = baseMap[jobNatureSelected] || "jobs";
+    const targetUrl = location.pathname === "/job-filter" || location.pathname === "/internship-filter"
+      ? `${location.pathname}?job_nature=${jobNatureSelected}`
+      : `/${base}`;
+    if (typeof window !== "undefined") {
+      window.history.replaceState(null, '', targetUrl);
     }
   };
 
@@ -1105,124 +1876,409 @@ export default function JobFilter() {
     return () => window.removeEventListener("clearHeaderSearch", handleClearFromHeader);
   }, []);
 
-  /** -------------------- SIDEBAR FILTER UI (UNCHANGED) -------------------- **/
-  const FilterSidebar = (
-    <div className="naukri-sidebar">
-      <div className="naukri-filter-card">
-        <div className="naukri-filter-title">
-          <span>Filters</span>
-          <Button
-            type="link"
-            size="small"
-            style={{ padding: 0, color: "var(--naukri-primary)" }}
-            onClick={handleClearAllFilters}
-          >
-            Reset All
-          </Button>
-        </div>
+  /** -------------------- DYNAMIC PRIORITY FILTER ORDER LOGIC -------------------- **/
+  const markFilterChosen = (key) => {
+    setChosenFilterOrder((prev) => {
+      const next = prev.filter((k) => k !== key);
+      return [key, ...next];
+    });
+  };
 
-        {/* Post Type */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">
-            Post Type
-            <SyncOutlined style={{ fontSize: 10, color: "#8292b4" }} />
-          </h4>
-          <Radio.Group
-            value={jobNatureSelected}
-            onChange={(e) => {
-              setJobNatureSelected(e.target.value);
-              syncFilterUrl({ nature: e.target.value });
-            }}
-            style={{ width: "100%" }}
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {jobNature.map((t) => (
-                <Radio key={t} value={t} className="naukri-filter-item">
-                  <span className="naukri-checkbox-label">{t}</span>
-                </Radio>
-              ))}
-            </Space>
-          </Radio.Group>
-        </div>
+  const isFilterActive = (key) => {
+    switch (key) {
+      case 'category':
+        return selectedCategories.length > 0;
+      case 'experience':
+        return Boolean(selectedUserType);
+      case 'workMode':
+        return selectedTypes.length > 0;
+      case 'location':
+        return selectedLocations.length > 0;
+      case 'salary':
+        return selectedSalaries.length > 0;
+      case 'company':
+        return selectedCompanies.length > 0;
+      case 'freshness':
+        return Boolean(selectedFreshness);
+      case 'gender':
+        return selectedDiversity.length > 0;
+      case 'postType':
+        return Boolean(jobNatureSelected && jobNatureSelected !== 'Job');
+      default:
+        return false;
+    }
+  };
 
-        {/* Location */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">
-            Location
-            <SyncOutlined style={{ fontSize: 10, color: "#8292b4" }} rotate={180} />
-          </h4>
-          <Checkbox.Group
-            value={selectedLocations}
-            onChange={(v) => { setSelectedLocations(v); syncFilterUrl({ locations: v }); }}
-            style={{ width: "100%" }}
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {displayLocations.map((city) => (
-                <Checkbox key={city.value} value={city.value} className="naukri-filter-item">
-                  <span className="naukri-checkbox-label">{city.label}</span>
-                </Checkbox>
-              ))}
-            </Space>
-          </Checkbox.Group>
-          <span
-            className="naukri-view-more"
-            onClick={() => {
-              setTempSelectedLocations(selectedLocations);
-              setLocationModalVisible(true);
-            }}
-          >
-            View More
-          </span>
-        </div>
+  const getAppliedCount = (key) => {
+    switch (key) {
+      case 'category':
+        return selectedCategories.length;
+      case 'experience':
+        return selectedUserType ? 1 : 0;
+      case 'workMode':
+        return selectedTypes.length;
+      case 'location':
+        return selectedLocations.length;
+      case 'salary':
+        return selectedSalaries.length;
+      case 'company':
+        return selectedCompanies.length;
+      case 'freshness':
+        return selectedFreshness ? 1 : 0;
+      case 'gender':
+        return selectedDiversity.length;
+      case 'postType':
+        return jobNatureSelected && jobNatureSelected !== 'Job' ? 1 : 0;
+      default:
+        return 0;
+    }
+  };
 
-        {/* Work Mode */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">
-            Work Mode
-            <SyncOutlined style={{ fontSize: 10, color: "#8292b4" }} />
-          </h4>
-          <Checkbox.Group
-            value={selectedTypes}
-            onChange={(v) => { setSelectedTypes(v); syncFilterUrl({ types: v }); }}
-            style={{ width: "100%" }}
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {workTypes.map((t) => (
-                <Checkbox key={t} value={t} className="naukri-filter-item">
-                  <span className="naukri-checkbox-label">{t}</span>
-                </Checkbox>
-              ))}
-            </Space>
-          </Checkbox.Group>
-        </div>
+  const totalAppliedCount = useMemo(() => {
+    return (
+      selectedCategories.length +
+      (selectedUserType ? 1 : 0) +
+      selectedTypes.length +
+      selectedLocations.length +
+      selectedSalaries.length +
+      selectedCompanies.length +
+      (selectedFreshness ? 1 : 0) +
+      selectedDiversity.length +
+      (jobNatureSelected && jobNatureSelected !== 'Job' ? 1 : 0)
+    );
+  }, [
+    selectedCategories,
+    selectedUserType,
+    selectedTypes,
+    selectedLocations,
+    selectedSalaries,
+    selectedCompanies,
+    selectedFreshness,
+    selectedDiversity,
+    jobNatureSelected,
+  ]);
 
-        {/* Gender / Diversity */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">
-            Gender Preference
-            <SyncOutlined style={{ fontSize: 10, color: "#8292b4" }} />
-          </h4>
-          <Checkbox.Group
-            value={selectedDiversity}
-            onChange={(v) => { setSelectedDiversity(v); syncFilterUrl({ diversity: v }); }}
-            style={{ width: "100%" }}
-          >
-            <Space direction="vertical" style={{ width: "100%" }}>
-              {["Male", "Female"].map((g) => (
-                <Checkbox key={g} value={g} className="naukri-filter-item">
-                  <span className="naukri-checkbox-label">{g} Only</span>
-                </Checkbox>
-              ))}
-            </Space>
-          </Checkbox.Group>
-        </div>
+  const appliedFilterItems = useMemo(() => {
+    const list = [];
 
-        {/* User Type */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">Experience Level</h4>
+    // 1. Categories / Departments
+    selectedCategories.forEach((catVal) => {
+      const opt = allDepartmentOptions.find(
+        (c) => c.value.toLowerCase() === String(catVal).toLowerCase()
+      );
+      list.push({
+        id: `cat-${catVal}`,
+        label: opt ? opt.label : catVal,
+        count: opt?.count,
+        onRemove: () => {
+          const next = selectedCategories.filter((c) => c !== catVal);
+          setSelectedCategories(next);
+          if (next.length === 0) {
+            setChosenFilterOrder((prev) => prev.filter((k) => k !== 'category'));
+          }
+          syncFilterUrl({ categories: next });
+        },
+      });
+    });
+
+    // 2. Experience
+    if (selectedUserType) {
+      const label = isNaN(Number(selectedUserType))
+        ? selectedUserType
+        : `${selectedUserType} Yrs`;
+      list.push({
+        id: `exp-${selectedUserType}`,
+        label,
+        count: undefined,
+        onRemove: () => {
+          setSelectedUserType('');
+          setChosenFilterOrder((prev) => prev.filter((k) => k !== 'experience'));
+          syncFilterUrl({ userType: '' });
+        },
+      });
+    }
+
+    // 3. Work mode
+    selectedTypes.forEach((typeVal) => {
+      list.push({
+        id: `mode-${typeVal}`,
+        label: typeVal,
+        count: undefined,
+        onRemove: () => {
+          const next = selectedTypes.filter((t) => t !== typeVal);
+          setSelectedTypes(next);
+          if (next.length === 0) {
+            setChosenFilterOrder((prev) => prev.filter((k) => k !== 'workMode'));
+          }
+          syncFilterUrl({ types: next });
+        },
+      });
+    });
+
+    // 4. Locations
+    selectedLocations.forEach((locVal) => {
+      const opt = allLocationOptions.find(
+        (c) => c.value.toLowerCase() === String(locVal).toLowerCase()
+      );
+      list.push({
+        id: `loc-${locVal}`,
+        label: opt ? opt.label : locVal,
+        count: opt?.count,
+        onRemove: () => {
+          const next = selectedLocations.filter((l) => l !== locVal);
+          setSelectedLocations(next);
+          if (next.length === 0) {
+            setChosenFilterOrder((prev) => prev.filter((k) => k !== 'location'));
+          }
+          syncFilterUrl({ locations: next });
+        },
+      });
+    });
+
+    // 5. Salaries
+    selectedSalaries.forEach((salVal) => {
+      const opt = salaryRanges.find((s) => s.value === salVal);
+      list.push({
+        id: `sal-${salVal}`,
+        label: opt ? opt.label : salVal,
+        count: opt?.count,
+        onRemove: () => {
+          const next = selectedSalaries.filter((s) => s !== salVal);
+          setSelectedSalaries(next);
+          if (next.length === 0) {
+            setChosenFilterOrder((prev) => prev.filter((k) => k !== 'salary'));
+          }
+          syncFilterUrl({ salaries: next });
+        },
+      });
+    });
+
+    // 6. Companies
+    selectedCompanies.forEach((compVal) => {
+      const opt = allCompanyOptions.find(
+        (c) => c.value.toLowerCase() === String(compVal).toLowerCase()
+      );
+      list.push({
+        id: `comp-${compVal}`,
+        label: opt ? opt.label : compVal,
+        count: opt?.count,
+        onRemove: () => {
+          const next = selectedCompanies.filter((c) => c !== compVal);
+          setSelectedCompanies(next);
+          if (next.length === 0) {
+            setChosenFilterOrder((prev) => prev.filter((k) => k !== 'company'));
+          }
+          syncFilterUrl({ companies: next });
+        },
+      });
+    });
+
+    // 7. Freshness
+    if (selectedFreshness) {
+      const opt = FRESHNESS_OPTIONS.find((f) => f.value === selectedFreshness);
+      list.push({
+        id: `freshness-${selectedFreshness}`,
+        label: opt ? opt.label : selectedFreshness,
+        count: undefined,
+        onRemove: () => {
+          setSelectedFreshness('');
+          setChosenFilterOrder((prev) => prev.filter((k) => k !== 'freshness'));
+          syncFilterUrl({ freshness: '' });
+        },
+      });
+    }
+
+    // 8. Gender / Diversity
+    selectedDiversity.forEach((divVal) => {
+      list.push({
+        id: `div-${divVal}`,
+        label: `${divVal} Only`,
+        count: undefined,
+        onRemove: () => {
+          const next = selectedDiversity.filter((d) => d !== divVal);
+          setSelectedDiversity(next);
+          if (next.length === 0) {
+            setChosenFilterOrder((prev) => prev.filter((k) => k !== 'gender'));
+          }
+          syncFilterUrl({ diversity: next });
+        },
+      });
+    });
+
+    // 9. Post type (Job Nature)
+    if (jobNatureSelected && jobNatureSelected !== 'Job') {
+      list.push({
+        id: `nature-${jobNatureSelected}`,
+        label: jobNatureSelected,
+        count: undefined,
+        onRemove: () => {
+          setJobNatureSelected('Job');
+          setChosenFilterOrder((prev) => prev.filter((k) => k !== 'postType'));
+          syncFilterUrl({ nature: 'Job' });
+        },
+      });
+    }
+
+    return list;
+  }, [
+    selectedCategories,
+    allDepartmentOptions,
+    selectedUserType,
+    selectedTypes,
+    selectedLocations,
+    allLocationOptions,
+    selectedSalaries,
+    salaryRanges,
+    selectedCompanies,
+    allCompanyOptions,
+    selectedFreshness,
+    selectedDiversity,
+    jobNatureSelected,
+    syncFilterUrl,
+  ]);
+
+  const resetSingleFilter = (key) => {
+    switch (key) {
+      case 'category':
+        setSelectedCategories([]);
+        syncFilterUrl({ categories: [] });
+        break;
+      case 'experience':
+        setSelectedUserType('');
+        syncFilterUrl({ userType: '' });
+        break;
+      case 'workMode':
+        setSelectedTypes([]);
+        syncFilterUrl({ types: [] });
+        break;
+      case 'location':
+        setSelectedLocations([]);
+        syncFilterUrl({ locations: [] });
+        break;
+      case 'salary':
+        setSelectedSalaries([]);
+        syncFilterUrl({ salaries: [] });
+        break;
+      case 'company':
+        setSelectedCompanies([]);
+        syncFilterUrl({ companies: [] });
+        break;
+      case 'freshness':
+        setSelectedFreshness('');
+        syncFilterUrl({ freshness: '' });
+        break;
+      case 'gender':
+        setSelectedDiversity([]);
+        syncFilterUrl({ diversity: [] });
+        break;
+      case 'postType':
+        setJobNatureSelected('Job');
+        syncFilterUrl({ nature: 'Job' });
+        break;
+      default:
+        break;
+    }
+    setChosenFilterOrder((prev) => prev.filter((k) => k !== key));
+  };
+
+  const DEFAULT_FILTER_KEYS = [
+    'category',
+    'experience',
+    'workMode',
+    'location',
+    'salary',
+    'company',
+    'gender',
+    'postType',
+    'freshness',
+  ];
+
+  const orderedFilterKeys = useMemo(() => {
+    const activeKeys = chosenFilterOrder.filter((key) => isFilterActive(key));
+
+    DEFAULT_FILTER_KEYS.forEach((key) => {
+      if (isFilterActive(key) && !activeKeys.includes(key)) {
+        activeKeys.push(key);
+      }
+    });
+
+    const inactiveKeys = DEFAULT_FILTER_KEYS.filter((key) => !isFilterActive(key));
+
+    return [...activeKeys, ...inactiveKeys];
+  }, [
+    chosenFilterOrder,
+    selectedCategories,
+    selectedUserType,
+    selectedTypes,
+    selectedLocations,
+    selectedSalaries,
+    selectedCompanies,
+    selectedFreshness,
+    selectedDiversity,
+    jobNatureSelected,
+  ]);
+
+
+  const renderFilterSection = (key) => {
+    const isActive = isFilterActive(key);
+    const count = getAppliedCount(key);
+    const defaultOpen = DEFAULT_OPEN_SECTIONS[key] ?? false;
+
+    let title = "";
+    let content = null;
+
+    switch (key) {
+      case 'category':
+        title = "Department";
+        content = (
+          <div>
+            <div>
+              <Checkbox.Group
+                value={selectedCategories}
+                onChange={(v) => {
+                  setSelectedCategories(v);
+                  if (v.length > 0) markFilterChosen('category');
+                  syncFilterUrl({ categories: v });
+                }}
+                style={{ width: "100%" }}
+              >
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  {displayCategories.map((opt) => (
+                    <Checkbox key={opt.value} value={opt.value} className="naukri-filter-item">
+                      <span className="naukri-checkbox-label" title={opt.label}>
+                        <span className="naukri-checkbox-text">{opt.label}</span>
+                        {opt.count !== undefined && <span className="naukri-filter-count">({opt.count})</span>}
+                      </span>
+                    </Checkbox>
+                  ))}
+                </Space>
+              </Checkbox.Group>
+            </div>
+            <FilterGridPopover
+              title="Department"
+              searchPlaceholder="Search Department"
+              options={allDepartmentOptions}
+              appliedValues={selectedCategories}
+              onApply={(newSelected) => {
+                setSelectedCategories(newSelected);
+                if (newSelected.length > 0) markFilterChosen('category');
+                syncFilterUrl({ categories: newSelected });
+              }}
+            />
+          </div>
+        );
+        break;
+
+      case 'experience':
+        title = "Experience";
+        content = (
           <Radio.Group
             value={selectedUserType}
-            onChange={(e) => { setSelectedUserType(e.target.value); syncFilterUrl({ userType: e.target.value }); }}
+            onChange={(e) => {
+              setSelectedUserType(e.target.value);
+              markFilterChosen('experience');
+              syncFilterUrl({ userType: e.target.value });
+            }}
             style={{ width: "100%" }}
           >
             <Space direction="vertical" style={{ width: "100%" }}>
@@ -1237,99 +2293,256 @@ export default function JobFilter() {
               </Radio>
             </Space>
           </Radio.Group>
-        </div>
+        );
+        break;
 
-        {/* Company */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">Company</h4>
-          <input
-            type="text"
-            value={companySearch}
-            onChange={(e) => setCompanySearch(e.target.value)}
-            placeholder="Search companies..."
-            className="category-search-input"
-            style={{ width: "100%", marginBottom: 10, padding: "6px 10px", borderRadius: 4, border: "1px solid #ddd" }}
-          />
-          <div>
-            <Checkbox.Group
-              value={selectedCompanies}
-              onChange={(v) => { setSelectedCompanies(v); syncFilterUrl({ companies: v }); }}
-              style={{ width: "100%" }}
-            >
-              <Space direction="vertical" style={{ width: "100%" }}>
-                {displayCompanies.map((co) => (
-                  <Checkbox key={co.value} value={co.value} className="naukri-filter-item">
-                    <span className="naukri-checkbox-label">{co.label}</span>
-                  </Checkbox>
-                ))}
-              </Space>
-            </Checkbox.Group>
-          </div>
-
-          <span
-            className="naukri-view-more"
-            onClick={() => {
-              setTempSelectedCompanies(selectedCompanies);
-              setModalCompanySearch("");
-              setCompanyModalVisible(true);
+      case 'workMode':
+        title = "Work mode";
+        content = (
+          <Checkbox.Group
+            value={selectedTypes}
+            onChange={(v) => {
+              setSelectedTypes(v);
+              if (v.length > 0) markFilterChosen('workMode');
+              syncFilterUrl({ types: v });
             }}
-          >
-            View More
-          </span>
-        </div>
-
-        {/* Category */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">Industry / Category</h4>
-          <input
-            type="text"
-            value={categorySearch}
-            onChange={(e) => setCategorySearch(e.target.value)}
-            placeholder="Search categories..."
-            className="category-search-input"
-            style={{ width: "100%", marginBottom: 10, padding: "6px 10px", borderRadius: 4, border: "1px solid #ddd" }}
-          />
-          <div>
-            <Checkbox.Group
-              value={selectedCategories}
-              onChange={(v) => { setSelectedCategories(v); syncFilterUrl({ categories: v }); }}
-              style={{ width: "100%" }}
-            >
-              <Space direction="vertical" style={{ width: "100%" }}>
-                {displayCategories.map((opt) => (
-                  <Checkbox key={opt.value} value={opt.value} className="naukri-filter-item">
-                    <span className="naukri-checkbox-label">{opt.label}</span>
-                  </Checkbox>
-                ))}
-              </Space>
-            </Checkbox.Group>
-          </div>
-
-          <span
-            className="naukri-view-more"
-            onClick={() => {
-              setTempSelectedCategories(selectedCategories);
-              setModalCategorySearch("");
-              setCategoryModalVisible(true);
-            }}
-          >
-            View More
-          </span>
-        </div>
-
-        {/* Salary Sort */}
-        <div className="naukri-filter-group">
-          <h4 className="naukri-filter-group-title">Salary Range</h4>
-          <CommonSelectField
-            placeholder="Sort by Salary"
-            value={selectedSort}
-            onChange={(v) => { setSelectedSort(v); syncFilterUrl(); }}
-            options={[
-              { label: "High to Low", value: "highToLow" },
-              { label: "Low to High", value: "lowToHigh" },
-            ]}
             style={{ width: "100%" }}
+          >
+            <Space direction="vertical" style={{ width: "100%" }}>
+              {workTypes.map((t) => (
+                <Checkbox key={t} value={t} className="naukri-filter-item">
+                  <span className="naukri-checkbox-label">{t}</span>
+                </Checkbox>
+              ))}
+            </Space>
+          </Checkbox.Group>
+        );
+        break;
+
+      case 'location':
+        title = "Location";
+        content = (
+          <div>
+            <Checkbox.Group
+              value={selectedLocations}
+              onChange={(v) => {
+                setSelectedLocations(v);
+                if (v.length > 0) markFilterChosen('location');
+                syncFilterUrl({ locations: v });
+              }}
+              style={{ width: "100%" }}
+            >
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {displayLocations.map((city) => (
+                  <Checkbox key={city.value} value={city.value} className="naukri-filter-item">
+                    <span className="naukri-checkbox-label" title={city.label}>
+                      <span className="naukri-checkbox-text">{city.label}</span>
+                      {city.count !== undefined && <span className="naukri-filter-count">({city.count})</span>}
+                    </span>
+                  </Checkbox>
+                ))}
+              </Space>
+            </Checkbox.Group>
+            <FilterGridPopover
+              title="Location"
+              searchPlaceholder="Search Location"
+              options={allLocationOptions}
+              appliedValues={selectedLocations}
+              onApply={(newSelected) => {
+                setSelectedLocations(newSelected);
+                if (newSelected.length > 0) markFilterChosen('location');
+                syncFilterUrl({ locations: newSelected });
+              }}
+            />
+          </div>
+        );
+        break;
+
+      case 'salary':
+        title = "Salary";
+        content = (
+          <div>
+            <div>
+              <Checkbox.Group
+                value={selectedSalaries}
+                onChange={(v) => {
+                  setSelectedSalaries(v);
+                  if (v.length > 0) markFilterChosen('salary');
+                  syncFilterUrl({ salaries: v });
+                }}
+                style={{ width: "100%" }}
+              >
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  {displaySalaries.map((item) => (
+                    <Checkbox key={item.value} value={item.value} className="naukri-filter-item">
+                      <span className="naukri-checkbox-label" title={item.label}>
+                        <span className="naukri-checkbox-text">{item.label}</span>
+                        <span className="naukri-filter-count">({item.count})</span>
+                      </span>
+                    </Checkbox>
+                  ))}
+                </Space>
+              </Checkbox.Group>
+            </div>
+
+            <SalaryFilterPopover
+              options={salaryRanges}
+              appliedValues={selectedSalaries}
+              onApply={(newSelected) => {
+                setSelectedSalaries(newSelected);
+                if (newSelected.length > 0) markFilterChosen('salary');
+                syncFilterUrl({ salaries: newSelected });
+              }}
+            />
+          </div>
+        );
+        break;
+
+      case 'company':
+        title = "Company type";
+        content = (
+          <div>
+            <div>
+              <Checkbox.Group
+                value={selectedCompanies}
+                onChange={(v) => {
+                  setSelectedCompanies(v);
+                  if (v.length > 0) markFilterChosen('company');
+                  syncFilterUrl({ companies: v });
+                }}
+                style={{ width: "100%" }}
+              >
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  {displayCompanies.map((co) => (
+                    <Checkbox key={co.value} value={co.value} className="naukri-filter-item">
+                      <span className="naukri-checkbox-label" title={co.label}>
+                        <span className="naukri-checkbox-text">{co.label}</span>
+                        {co.count !== undefined && <span className="naukri-filter-count">({co.count})</span>}
+                      </span>
+                    </Checkbox>
+                  ))}
+                </Space>
+              </Checkbox.Group>
+            </div>
+            <FilterGridPopover
+              title="Company / Employer"
+              searchPlaceholder="Search Company"
+              options={allCompanyOptions}
+              appliedValues={selectedCompanies}
+              onApply={(newSelected) => {
+                setSelectedCompanies(newSelected);
+                if (newSelected.length > 0) markFilterChosen('company');
+                syncFilterUrl({ companies: newSelected });
+              }}
+            />
+          </div>
+        );
+        break;
+
+      case 'gender':
+        title = "Gender Preference";
+        content = (
+          <Checkbox.Group
+            value={selectedDiversity}
+            onChange={(v) => {
+              setSelectedDiversity(v);
+              if (v.length > 0) markFilterChosen('gender');
+              syncFilterUrl({ diversity: v });
+            }}
+            style={{ width: "100%" }}
+          >
+            <Space direction="vertical" style={{ width: "100%" }}>
+              {["Male", "Female"].map((g) => (
+                <Checkbox key={g} value={g} className="naukri-filter-item">
+                  <span className="naukri-checkbox-label">{g} Only</span>
+                </Checkbox>
+              ))}
+            </Space>
+          </Checkbox.Group>
+        );
+        break;
+
+      case 'freshness':
+        return (
+          <FreshnessFilterSection
+            key="freshness"
+            selected={selectedFreshness}
+            isActive={isFilterActive('freshness')}
+            onSelect={(val) => {
+              setSelectedFreshness(val);
+              markFilterChosen('freshness');
+              syncFilterUrl({ freshness: val });
+            }}
+            onReset={() => resetSingleFilter('freshness')}
           />
+        );
+
+      case 'postType':
+        title = "Post Type";
+        content = (
+          <Radio.Group
+            value={jobNatureSelected}
+            onChange={(e) => {
+              setJobNatureSelected(e.target.value);
+              if (e.target.value !== "Job") markFilterChosen('postType');
+              syncFilterUrl({ nature: e.target.value });
+            }}
+            style={{ width: "100%" }}
+          >
+            <Space direction="vertical" style={{ width: "100%" }}>
+              {jobNature.map((t) => (
+                <Radio key={t} value={t} className="naukri-filter-item">
+                  <span className="naukri-checkbox-label">{t}</span>
+                </Radio>
+              ))}
+            </Space>
+          </Radio.Group>
+        );
+        break;
+
+      default:
+        return null;
+    }
+
+    return (
+      <FilterAccordionSection
+        key={key}
+        title={title}
+        defaultOpen={defaultOpen}
+        isActive={isActive}
+        count={count}
+        onReset={() => resetSingleFilter(key)}
+      >
+        {content}
+      </FilterAccordionSection>
+    );
+  };
+
+  /** -------------------- SIDEBAR FILTER UI -------------------- **/
+  const FilterSidebar = (
+    <div className="naukri-sidebar">
+      <div className="naukri-filter-card">
+        <div className="naukri-filter-card-header">
+          <span className="naukri-filter-main-title">All Filters</span>
+          {appliedFilterItems.length > 0 ? (
+            <AppliedFiltersPopover
+              items={appliedFilterItems}
+              onRemoveAll={handleClearAllFilters}
+            />
+          ) : (
+            <Button
+              type="link"
+              size="small"
+              className="naukri-reset-all-link"
+              onClick={handleClearAllFilters}
+            >
+              Reset All
+            </Button>
+          )}
+        </div>
+
+        <div className="naukri-filter-accordion-list">
+          {orderedFilterKeys.map((key) => renderFilterSection(key))}
         </div>
       </div>
     </div>
@@ -1407,6 +2620,7 @@ export default function JobFilter() {
                 const isSelected = selectedCategories.includes(role.name);
                 const newCats = isSelected ? selectedCategories.filter(c => c !== role.name) : [...selectedCategories, role.name];
                 setSelectedCategories(newCats);
+                if (!isSelected) markFilterChosen('category');
                 syncFilterUrl({ categories: newCats });
               }}
             >
@@ -1597,7 +2811,7 @@ export default function JobFilter() {
           ) : (
             <BsBookmark style={{ fontSize: '14px' }} />
           )}
-          <span>{savedJobs[job.id] ? "Saved" : "Save Job"}</span>
+          <span>{savedJobs[job.id] ? "Saved" : "Save"}</span>
         </div>
       </div>
     </div>
@@ -1606,9 +2820,10 @@ export default function JobFilter() {
   /** -------------------- SKELETONS -------------------- **/
   const FullPageSkeleton = () => (
     <div className="naukri-layout-container">
-      <Row gutter={[24, 24]} className="container-fluid" justify="center" style={{ maxWidth: '1300px', margin: '0 auto' }}>
-        {/* Sidebar Skeleton */}
-        <Col xs={0} md={6} lg={5} xl={6}>
+      <div className="naukri-content-wrapper">
+        <Row gutter={[20, 24]}>
+          {/* Sidebar Skeleton */}
+          <Col xs={0} md={7} lg={6} xl={6}>
           <div className="naukri-sidebar-wrapper">
             <Card className="naukri-filter-card" style={{ border: 'none' }}>
               <Skeleton active paragraph={{ rows: 2 }} />
@@ -1654,6 +2869,7 @@ export default function JobFilter() {
           </Card>
         </Col>
       </Row>
+      </div>
     </div>
   );
 
@@ -1689,10 +2905,10 @@ export default function JobFilter() {
         <FullPageSkeleton />
       ) : (
         <div className="naukri-layout-container">
-          <div className="naukri-content-wrapper" style={{ maxWidth: '1500px', margin: '0 auto', padding: '0 40px' }}>
-            <Row gutter={[40, 24]}>
+          <div className="naukri-content-wrapper">
+            <Row gutter={[20, 24]}>
               {/* Left Sidebar */}
-              <Col xs={0} md={7} lg={6} xl={5} className="desktop-sidebar-col">
+              <Col xs={0} md={7} lg={6} xl={6} className="desktop-sidebar-col">
                 <div className="naukri-sidebar-sticky">
                   {FilterSidebar}
                 </div>
@@ -1700,83 +2916,57 @@ export default function JobFilter() {
 
 
               {/* Center Content (Job List) */}
-              <Col xs={24} md={17} lg={13} xl={14}>
+              <Col xs={24} md={17} lg={13} xl={13}>
                 {/* Top Roles Carousel (Naukri style) */}
-                {loading ? (
-                  <div className="naukri-top-roles-wrapper" style={{ height: '66px', display: 'flex', alignItems: 'center', padding: '8px 12px' }}>
-                    <Skeleton.Button active block style={{ height: '48px', borderRadius: '12px' }} />
-                  </div>
-                ) : (
-                  <TopRolesCarousel />
-                )}
+                <TopRolesCarousel />
 
                 {/* Top Results Header */}
-                {loading ? (
-                  <div className="naukri-results-info" style={{ marginBottom: '24px' }}>
-                    <div className="naukri-results-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <Skeleton.Button active size="small" style={{ width: '120px', height: '14px', borderRadius: '4px' }} />
-                        <Skeleton.Button active size="default" style={{ width: '260px', height: '28px', borderRadius: '6px' }} />
-                      </div>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <Skeleton.Button active size="default" style={{ width: '160px', height: '36px', borderRadius: '20px' }} />
-                        <Skeleton.Button active size="default" style={{ width: '150px', height: '36px', borderRadius: '8px' }} />
-                      </div>
+                <div className="naukri-results-info">
+                  <div className="naukri-results-header-row">
+                    <div className="naukri-results-count-box">
+                      <span className="naukri-results-range">
+                        {totalJobs > 0
+                          ? `${(page - 1) * 20 + 1} - ${Math.min(page * 20, totalJobs)} of ${totalJobs.toLocaleString('en-IN')}`
+                          : jobs.length > 0 ? `1 - ${jobs.length} of ${jobs.length}` : '0 of 0'}
+                      </span>
+                      <h1 className="naukri-results-title">
+                        {getFilterTitle()}
+                      </h1>
                     </div>
-                  </div>
-                ) : (
-                  <div className="naukri-results-info">
-                    <div className="naukri-results-header-row">
-                      <div className="naukri-results-count-box">
-                        <span className="naukri-results-range">
-                          {totalJobs > 0
-                            ? `${(page - 1) * 20 + 1} - ${Math.min(page * 20, totalJobs)} of ${totalJobs.toLocaleString('en-IN')}`
-                            : jobs.length > 0 ? `1 - ${jobs.length} of ${jobs.length}` : '0 of 0'}
-                        </span>
-                        <h1 className="naukri-results-title">
-                          {getFilterTitle()}
-                        </h1>
-                      </div>
 
-                      <div className="naukri-results-controls">
-                        <button
-                          type="button"
-                          className="naukri-send-jobs-btn"
-                          onClick={handleSendJobsAlert}
-                        >
-                          Send me jobs like these
+                    <div className="naukri-results-controls">
+                      <Dropdown
+                        menu={{
+                          items: sortMenuItems,
+                          onClick: ({ key }) => {
+                            setSelectedSort(key);
+                            syncFilterUrl({ sort: key });
+                          },
+                          selectable: true,
+                          selectedKeys: [selectedSort || 'recommended'],
+                          className: "naukri-sort-menu-popup"
+                        }}
+                        trigger={['click']}
+                        placement="bottomRight"
+                      >
+                        <button type="button" className="naukri-sort-dropdown-btn">
+                          <span className="naukri-sort-label">Sort by:</span>
+                          <span className="naukri-sort-current">{getSortLabel(selectedSort)}</span>
+                          <DownOutlined className="naukri-sort-arrow" />
                         </button>
+                      </Dropdown>
 
-                        <Dropdown
-                          menu={{
-                            items: sortMenuItems,
-                            onClick: ({ key }) => setSelectedSort(key),
-                            selectable: true,
-                            selectedKeys: [selectedSort || 'recommended'],
-                            className: "naukri-sort-menu-popup"
-                          }}
-                          trigger={['click']}
-                          placement="bottomRight"
-                        >
-                          <button type="button" className="naukri-sort-dropdown-btn">
-                            <span className="naukri-sort-label">Sort by:</span>
-                            <span className="naukri-sort-current">{getSortLabel(selectedSort)}</span>
-                            <DownOutlined className="naukri-sort-arrow" />
-                          </button>
-                        </Dropdown>
-
-                        <Button
-                          className="mobile-filter-btn"
-                          icon={<FilterOutlined />}
-                          onClick={() => setMobileFilterOpen(true)}
-                          style={{ display: 'none', borderRadius: '20px', border: '1px solid #e2e8f0', color: '#475569', fontWeight: 500 }}
-                        >
-                          Filters
-                        </Button>
-                      </div>
+                      <Button
+                        className="mobile-filter-btn"
+                        icon={<FilterOutlined />}
+                        onClick={() => setMobileFilterOpen(true)}
+                        style={{ display: 'none', borderRadius: '20px', border: '1px solid #e2e8f0', color: '#475569', fontWeight: 500 }}
+                      >
+                        Filters
+                      </Button>
                     </div>
                   </div>
-                )}
+                </div>
 
                 <div className="naukri-job-list-wrapper" style={{ position: 'relative', minHeight: '400px' }}>
                   <CriticalProfileAlert variant="job-filter" />
@@ -1905,247 +3095,7 @@ export default function JobFilter() {
         {FilterSidebar}
       </Drawer>
 
-      {/* Location Selection Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingRight: '20px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 700, padding: '8px 0' }}>Location</span>
-            <Button
-              type="link"
-              size="small"
-              className="naukri-clear-all-link"
-              onClick={() => setTempSelectedLocations([])}
-              style={{ fontWeight: 600 }}
-            >
-              Clear All
-            </Button>
-          </div>
-        }
-        open={locationModalVisible}
-        onCancel={() => setLocationModalVisible(false)}
-        footer={null}
-        width={850}
-        closeIcon={<span style={{ fontSize: '18px' }}>×</span>}
-        className="naukri-location-modal"
-      >
-        <div className="naukri-modal-content">
-          <div className="naukri-location-grid">
-            {[
-              { label: "Bangalore", value: "Bangalore", count: 14798 },
-              { label: "Bengaluru", value: "Bengaluru", count: 8520 },
-              { label: "Delhi", value: "Delhi", count: 3737 },
-              { label: "NCR", value: "NCR", count: 2150 },
-              { label: "Hyderabad", value: "Hyderabad", count: 7750 },
-              { label: "Pune", value: "Pune", count: 5441 },
-              { label: "Chennai", value: "Chennai", count: 3784 },
-              { label: "Mumbai", value: "Mumbai", count: 2827 },
-              { label: "Navi Mumbai", value: "Navi Mumbai", count: 445 },
-              { label: "Gurgaon", value: "Gurgaon", count: 1544 },
-              { label: "Gurugram", value: "Gurugram", count: 980 },
-              { label: "Noida", value: "Noida", count: 1105 },
-              { label: "Kolkata", value: "Kolkata", count: 1001 },
-              { label: "Ahmedabad", value: "Ahmedabad", count: 807 },
-              { label: "New Delhi", value: "New Delhi", count: 442 },
-              { label: "Indore", value: "Indore", count: 387 },
-              { label: "Kochi", value: "Kochi", count: 245 },
-              { label: "Bhubaneswar", value: "Bhubaneswar", count: 219 },
-              { label: "Coimbatore", value: "Coimbatore", count: 191 },
-              { label: "Thiruvananthapuram", value: "Thiruvananthapuram", count: 136 },
-              { label: "Jaipur", value: "Jaipur", count: 123 },
-              { label: "Chandigarh", value: "Chandigarh", count: 75 },
-              { label: "Thane", value: "Thane", count: 89 },
-              { label: "Nagpur", value: "Nagpur", count: 9 },
-              { label: "Pan India", value: "Pan India", count: 218 },
-            ].map((loc) => (
-              <div key={loc.label} className="naukri-modal-item">
-                <Checkbox
-                  checked={tempSelectedLocations.includes(loc.value)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setTempSelectedLocations([...tempSelectedLocations, loc.value]);
-                    } else {
-                      setTempSelectedLocations(tempSelectedLocations.filter(item => item !== loc.value));
-                    }
-                  }}
-                >
-                  <span className="naukri-modal-label">
-                    {loc.label} <span className="naukri-modal-count">({loc.count})</span>
-                  </span>
-                </Checkbox>
-              </div>
-            ))}
-          </div>
-
-          <div className="naukri-modal-footer">
-            <div className="naukri-modal-scrollbar"></div>
-            <Button
-              type="primary"
-              className="naukri-apply-btn"
-              onClick={() => {
-                setSelectedLocations(tempSelectedLocations);
-                syncFilterUrl({ locations: tempSelectedLocations });
-                setLocationModalVisible(false);
-              }}
-            >
-              Apply
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Category Selection Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingRight: '20px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 700, padding: '8px 0' }}>Industry / Category</span>
-            <Button
-              type="link"
-              size="small"
-              className="naukri-clear-all-link"
-              onClick={() => setTempSelectedCategories([])}
-              style={{ fontWeight: 600 }}
-            >
-              Clear All
-            </Button>
-          </div>
-        }
-        open={categoryModalVisible}
-        onCancel={() => setCategoryModalVisible(false)}
-        footer={null}
-        width={900}
-        closeIcon={<span style={{ fontSize: '18px' }}>×</span>}
-        className="naukri-location-modal"
-      >
-        <div className="naukri-modal-content">
-          <div style={{ marginBottom: '20px' }}>
-            <input
-              type="text"
-              value={modalCategorySearch}
-              onChange={(e) => setModalCategorySearch(e.target.value)}
-              placeholder="Search industries / categories..."
-              className="category-search-input"
-              style={{ width: "100%", padding: "10px 15px", borderRadius: "30px", border: "1px solid #ddd", fontSize: "14px", outline: "none" }}
-            />
-          </div>
-
-          <div className="naukri-location-grid">
-            {jobCategoryOptions
-              .filter(opt => opt.label.toLowerCase().includes(modalCategorySearch.toLowerCase()))
-              .map((opt) => (
-                <div key={opt.value} className="naukri-modal-item">
-                  <Checkbox
-                    checked={tempSelectedCategories.includes(opt.value)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setTempSelectedCategories([...tempSelectedCategories, opt.value]);
-                      } else {
-                        setTempSelectedCategories(tempSelectedCategories.filter(item => item !== opt.value));
-                      }
-                    }}
-                  >
-                    <span className="naukri-modal-label">{opt.label}</span>
-                  </Checkbox>
-                </div>
-              ))}
-          </div>
-
-          <div className="naukri-modal-footer">
-            <div className="naukri-modal-scrollbar"></div>
-            <Button
-              type="primary"
-              className="naukri-apply-btn"
-              onClick={() => {
-                setSelectedCategories(tempSelectedCategories);
-                syncFilterUrl({ categories: tempSelectedCategories });
-                setCategoryModalVisible(false);
-              }}
-            >
-              Apply
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Company Selection Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', paddingRight: '20px' }}>
-            <span style={{ fontSize: '18px', fontWeight: 700, padding: '8px 0' }}>Company / Employer</span>
-            <Button
-              type="link"
-              size="small"
-              className="naukri-clear-all-link"
-              onClick={() => setTempSelectedCompanies([])}
-              style={{ fontWeight: 600 }}
-            >
-              Clear All
-            </Button>
-          </div>
-        }
-        open={companyModalVisible}
-        onCancel={() => setCompanyModalVisible(false)}
-        footer={null}
-        width={900}
-        closeIcon={<span style={{ fontSize: '18px' }}>×</span>}
-        className="naukri-location-modal"
-      >
-        <div className="naukri-modal-content">
-          <div style={{ marginBottom: '20px' }}>
-            <input
-              type="text"
-              value={modalCompanySearch}
-              onChange={(e) => setModalCompanySearch(e.target.value)}
-              placeholder="Search companies (e.g. Google, Infosys, TCS, Amazon)..."
-              className="category-search-input"
-              style={{ width: "100%", padding: "10px 15px", borderRadius: "30px", border: "1px solid #ddd", fontSize: "14px", outline: "none" }}
-            />
-          </div>
-
-          <div className="naukri-location-grid">
-            {companyOptions
-              .filter(opt => {
-                const q = modalCompanySearch.toLowerCase().trim();
-                if (!q) return true;
-                const labelLower = opt.label.toLowerCase();
-                if (labelLower.includes(q)) return true;
-                if (labelLower === "tcs" && "tata consultancy services".includes(q)) return true;
-                if (labelLower.includes("l&t") && "larsen & toubro".includes(q)) return true;
-                return false;
-              })
-              .map((opt) => (
-                <div key={opt.value} className="naukri-modal-item">
-                  <Checkbox
-                    checked={tempSelectedCompanies.includes(opt.value)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setTempSelectedCompanies([...tempSelectedCompanies, opt.value]);
-                      } else {
-                        setTempSelectedCompanies(tempSelectedCompanies.filter(item => item !== opt.value));
-                      }
-                    }}
-                  >
-                    <span className="naukri-modal-label">{opt.label}</span>
-                  </Checkbox>
-                </div>
-              ))}
-          </div>
-
-          <div className="naukri-modal-footer">
-            <div className="naukri-modal-scrollbar"></div>
-            <Button
-              type="primary"
-              className="naukri-apply-btn"
-              onClick={() => {
-                setSelectedCompanies(tempSelectedCompanies);
-                syncFilterUrl({ companies: tempSelectedCompanies });
-                setCompanyModalVisible(false);
-              }}
-            >
-              Apply
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Filter popovers are anchored directly to their sidebar View More triggers */}
 
       <LoginDrawer
         open={authDrawerOpen}

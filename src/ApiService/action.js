@@ -916,6 +916,24 @@ export const getJobPosts = async (payload) => {
   }
 };
 
+export const getSalaryRanges = async () => {
+  try {
+    const response = await api.get("/api/getSalaryRanges");
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getLocationCounts = async () => {
+  try {
+    const response = await api.get("/api/getLocationCounts");
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // applyForJob
 
 export const applyForJob = async (payload) => {

@@ -1081,7 +1081,7 @@ export default function Header({ noSticky = false, showSearch }) {
         </div>
       </div>
       <header className={`bg-white py-2 elite-header ${noSticky ? '' : 'sticky-top'}`}>
-        <div className="container-fluid" style={{ paddingLeft: 35, paddingRight: 35 }}>
+        <div className="container-fluid">
           <div className="d-flex justify-content-between align-items-center w-100">
             <div className="d-flex align-items-center gap-4 global_search">
               <div className="m-0 p-0 navbar-brand">
@@ -2195,6 +2195,15 @@ export default function Header({ noSticky = false, showSearch }) {
           
             .elite-header {
             border-bottom: 1px solid rgba(79, 70, 229, 0.1);
+          }
+
+          .elite-header .container-fluid {
+            max-width: 1240px !important;
+            margin: 0 auto !important;
+            padding-left: 20px !important;
+            padding-right: 20px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
           }
 
           /* --- Mobile Responsive Header Styles --- */

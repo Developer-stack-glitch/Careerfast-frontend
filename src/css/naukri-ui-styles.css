@@ -14,8 +14,16 @@
 .naukri-layout-container {
   background-color: var(--naukri-bg);
   min-height: 100vh;
-  padding: 60px 0;
+  padding: 30px 0 60px 0;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.naukri-content-wrapper {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .naukri-search-container {
@@ -216,7 +224,7 @@
 }
 
 .naukri-search-btn:hover {
-  background-color: #3566d6;
+  background-color: #5f2eea;
   box-shadow: 0 2px 8px rgba(68, 119, 238, 0.3);
 }
 
@@ -228,9 +236,10 @@
 .naukri-filter-card {
   background: var(--naukri-card-bg);
   border-radius: 12px;
-  padding: 24px;
+  padding: 20px 22px;
   box-shadow: var(--naukri-shadow);
   margin-bottom: 16px;
+  border: 1px solid rgb(230 230 230);
 }
 
 .naukri-filter-title {
@@ -241,6 +250,132 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+/* Modern Naukri Filter Card Styles */
+.naukri-filter-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f3f6;
+  margin-bottom: 4px;
+}
+
+.naukri-filter-main-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.2px;
+}
+
+.naukri-applied-badge-btn {
+  background: transparent;
+  border: none;
+  color: #5f2eea;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+
+.naukri-applied-badge-btn:hover {
+  text-decoration: underline;
+  color: #5f2eea;
+}
+
+.naukri-reset-all-link {
+  padding: 0 !important;
+  color: #8292b4 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+.naukri-reset-all-link:hover {
+  color: var(--naukri-primary) !important;
+}
+
+.naukri-accordion-section {
+  border-bottom: 1px solid #f1f3f6;
+  padding: 14px 0;
+  transition: background-color 0.2s ease;
+}
+
+.naukri-accordion-section:last-child {
+  border-bottom: none;
+}
+
+.naukri-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 0;
+  transition: all 0.2s ease;
+}
+
+.naukri-accordion-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.naukri-accordion-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #1e293b;
+  letter-spacing: -0.1px;
+  transition: color 0.2s ease;
+}
+
+.naukri-accordion-header:hover .naukri-accordion-title {
+  color: #7316ff;
+}
+
+.naukri-section-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5f2eea;
+  background: #f2efff;
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.naukri-accordion-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.naukri-section-clear-btn {
+  background: none;
+  border: none;
+  color: #7316ff;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: opacity 0.2s;
+}
+
+.naukri-section-clear-btn:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
+.naukri-accordion-arrow {
+  font-size: 11px;
+  color: #8292b4;
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.naukri-accordion-body {
+  padding-top: 12px;
+  padding-bottom: 4px;
 }
 
 .naukri-filter-group {
@@ -276,7 +411,7 @@
 .naukri-filter-item {
   margin-bottom: 8px;
   display: flex !important;
-  align-items: flex-start !important;
+  align-items: center !important;
   width: 100%;
   cursor: pointer;
   line-height: 1.4;
@@ -292,6 +427,7 @@
   flex: 1;
   min-width: 0;
   line-height: 1.4;
+  overflow: hidden;
 }
 
 .naukri-checkbox-label {
@@ -300,12 +436,44 @@
   margin-left: 0 !important;
   cursor: pointer;
   line-height: 1.4;
-  word-break: break-word;
-  display: block;
+  display: flex !important;
+  align-items: center !important;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.naukri-checkbox-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .naukri-filter-item:hover .naukri-checkbox-label {
   color: var(--naukri-primary);
+}
+
+/* Checked text should be dark black */
+.ant-checkbox-wrapper-checked .naukri-checkbox-label,
+.ant-checkbox-wrapper-checked .naukri-checkbox-text,
+.ant-radio-wrapper-checked .naukri-checkbox-label,
+.ant-radio-wrapper-checked .naukri-checkbox-text,
+.naukri-grid-popup-item .ant-checkbox-wrapper-checked .naukri-grid-popup-label,
+.naukri-salary-popup-list .ant-checkbox-wrapper-checked .naukri-checkbox-label,
+.naukri-applied-popup-item .naukri-applied-item-text {
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+.ant-checkbox-wrapper-checked:hover .naukri-checkbox-label,
+.ant-checkbox-wrapper-checked:hover .naukri-checkbox-text,
+.ant-radio-wrapper-checked:hover .naukri-checkbox-label,
+.ant-radio-wrapper-checked:hover .naukri-checkbox-text {
+  color: #000000 !important;
 }
 
 /* Fix for Salary Range Select Field */
@@ -339,28 +507,468 @@
   font-size: 13px;
   color: var(--naukri-text-tertiary);
   margin-left: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .naukri-view-more {
-  color: var(--naukri-primary);
-  font-size: 13px;
-  font-weight: 700;
+  color: #5f2eea;
+  font-size: 13.5px;
+  font-weight: 600;
   cursor: pointer;
   display: inline-block;
-  margin-top: 8px;
+  margin-top: 10px;
+  text-decoration: none;
+  transition: color 0.15s ease;
   text-decoration: underline;
+}
+
+.naukri-view-more:hover {
+  color: #5f2eea;
+  text-decoration: underline;
+}
+
+/* Floating Salary Filter Popover */
+.naukri-salary-popover {
+  z-index: 1050 !important;
+}
+
+.naukri-salary-popover .ant-popover-inner {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 2px 6px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+  max-height: min(440px, calc(100vh - 120px)) !important;
+}
+
+.naukri-salary-popover .ant-popover-arrow {
+  display: none !important;
+}
+
+.naukri-salary-popup-card {
+  width: 290px;
+  max-height: min(440px, calc(100vh - 120px));
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 20px 14px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.naukri-salary-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.naukri-salary-popup-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.naukri-salary-popup-close {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.naukri-salary-popup-close:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.naukri-salary-popup-list {
+  flex: 1 1 auto;
+  min-height: 100px;
+  max-height: min(280px, calc(100vh - 220px));
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.naukri-salary-popup-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.naukri-salary-popup-list::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+.naukri-salary-popup-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.naukri-salary-popup-list .naukri-filter-item {
+  margin-bottom: 10px !important;
+  width: 100%;
+}
+
+.naukri-salary-popup-list .naukri-checkbox-label {
+  font-size: 14px;
+  color: #334155;
+  font-weight: 400;
+}
+
+.naukri-salary-popup-list .naukri-filter-count {
+  color: #64748b;
+  font-size: 14px;
+  margin-left: 4px;
+}
+
+.naukri-salary-popup-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.naukri-salary-popup-footer .naukri-apply-btn {
+  background: #5f2eea !important;
+  background-color: #5f2eea !important;
+  border-color: #5f2eea !important;
+  border-radius: 20px !important;
+  height: 36px !important;
+  padding: 0 24px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease !important;
+}
+
+.naukri-salary-popup-footer .naukri-apply-btn:hover {
+  background: #5f2eea !important;
+  background-color: #5f2eea !important;
+  border-color: #5f2eea !important;
+}
+
+/* Multi-column Grid Popover (Department, Location, Company) */
+.naukri-filter-grid-popover {
+  z-index: 1050 !important;
+}
+
+.naukri-filter-grid-popover .ant-popover-inner {
+  padding: 0 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.16), 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+  border: 1px solid #e2e8f0 !important;
+  overflow: hidden !important;
+  max-height: min(440px, calc(100vh - 120px)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.naukri-filter-grid-popover .ant-popover-arrow {
+  display: none !important;
+}
+
+.naukri-grid-popup-card {
+  width: 720px;
+  max-width: min(720px, calc(100vw - 320px));
+  max-height: min(440px, calc(100vh - 120px));
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px 22px 14px 22px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.naukri-grid-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.naukri-grid-popup-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.naukri-grid-popup-close {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.naukri-grid-popup-close:hover {
+  color: #0f172a;
+  background-color: #f1f5f9;
+}
+
+.naukri-grid-popup-search-box {
+  position: relative;
+  width: 250px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.naukri-grid-popup-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 10px;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.naukri-grid-popup-search-input {
+  width: 100%;
+  padding: 6px 14px 6px 34px;
+  border-radius: 20px;
+  border: 1.5px solid #5f2eea;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.naukri-grid-popup-search-input:focus {
+  border-color: #5f2eea;
+  box-shadow: 0 0 0 3px rgba(95, 46, 234, 0.15);
+}
+
+.naukri-grid-popup-search-input::placeholder {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.naukri-grid-popup-body {
+  flex: 1 1 auto;
+  min-height: 100px;
+  max-height: min(280px, calc(100vh - 240px));
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.naukri-grid-popup-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.naukri-grid-popup-body::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+.naukri-grid-popup-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.naukri-grid-popup-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 16px;
+}
+
+.naukri-grid-popup-item {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.naukri-grid-popup-item .ant-checkbox-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  gap: 6px;
+}
+
+.naukri-grid-popup-item .ant-checkbox {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.naukri-grid-popup-label {
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+  line-height: 1.35;
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 175px;
+  vertical-align: middle;
+}
+
+.naukri-grid-popup-item:hover .naukri-grid-popup-label {
+  color: #5f2eea;
+}
+
+.naukri-grid-popup-label .naukri-filter-count {
+  color: #64748b;
+  font-weight: 400;
+  font-size: 12.5px;
+  margin-left: 3px;
+}
+
+.naukri-grid-popup-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.naukri-grid-popup-track {
+  height: 4px;
+  width: 200px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.naukri-grid-popup-thumb {
+  height: 100%;
+  width: 60%;
+  background: #94a3b8;
+  border-radius: 10px;
+}
+
+/* ==========================================================================
+   Filter Grid Popover Empty State
+   ========================================================================== */
+.naukri-grid-popup-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 16px;
+  min-height: 180px;
+}
+
+.naukri-grid-empty-icon-wrap {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #f5f3ff;
+  border: 1px solid #ede9fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.naukri-grid-empty-icon {
+  color: #5f2eea;
+}
+
+.naukri-grid-empty-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.naukri-grid-empty-desc {
+  font-size: 13px;
+  color: #64748b;
+  max-width: 320px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.naukri-grid-empty-clear-btn {
+  background: transparent;
+  border: none;
+  color: #5f2eea;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  text-decoration: underline;
+}
+
+.naukri-grid-empty-clear-btn:hover {
+  color: #4c1d95;
+  background: #f5f3ff;
+}
+
+.naukri-grid-popup-footer .naukri-apply-btn {
+  background: #5f2eea !important;
+  background-color: #5f2eea !important;
+  border-color: #5f2eea !important;
+  border-radius: 20px !important;
+  height: 38px !important;
+  padding: 0 28px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease !important;
+}
+
+.naukri-grid-popup-footer .naukri-apply-btn:hover {
+  background: #5f2eea !important;
+  background-color: #5f2eea !important;
+  border-color: #5f2eea !important;
+}
+
+@media (max-width: 991px) {
+  .naukri-grid-popup-card {
+    width: 90vw;
+    max-width: 90vw;
+  }
+
+  .naukri-grid-popup-columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 576px) {
+  .naukri-grid-popup-columns {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Job Card Styling */
 .naukri-job-card {
   background: var(--naukri-card-bg);
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin-bottom: 12px;
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   cursor: pointer;
-  border: 1px solid #f0f0f0;
+  border: none;
   position: relative;
 }
 
@@ -376,7 +984,7 @@
 }
 
 .naukri-job-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--naukri-text-primary);
   margin-bottom: 2px;
@@ -396,7 +1004,7 @@
 }
 
 .naukri-company-name {
-  font-size: 13.5px;
+  font-size: 15px;
   color: var(--naukri-text-primary);
   font-weight: 500;
 }
@@ -419,13 +1027,13 @@
 }
 
 .naukri-company-logo {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
-  border: 1px solid var(--naukri-border);
-  border-radius: 8px;
-  padding: 3px;
+  border-radius: 12px;
+  padding: 0px;
   background: #fff;
+  border: 1px solid #e3e3e3;
 }
 
 .naukri-job-meta {
@@ -439,7 +1047,7 @@
 .naukri-meta-item {
   display: flex;
   align-items: center;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--naukri-text-secondary);
   gap: 6px;
 }
@@ -481,6 +1089,7 @@
   text-overflow: ellipsis;
   word-break: break-word;
   white-space: normal;
+  font-size: 15px;
 }
 
 .naukri-skills-list {
@@ -489,7 +1098,7 @@
   align-items: center;
   gap: 0px;
   margin-bottom: 8px;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--naukri-text-tertiary);
 }
 
@@ -802,17 +1411,17 @@
 /* Enhanced Job Card */
 .naukri-job-card {
   background: var(--naukri-card-bg);
-  border-radius: 12px;
-  padding: 14px 18px;
-  margin-bottom: 12px;
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 14px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   cursor: pointer;
-  border: 1px solid #f0f0f0;
+  border: none;
 }
 
 .naukri-job-card:hover {
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 18px #c9c9c957;
   transform: translateY(-2px);
 }
 
@@ -1017,4 +1626,285 @@
   .desktop-sidebar-col {
     display: none !important;
   }
+}
+
+/* ==========================================================================
+   Freshness Filter & Popover
+   ========================================================================== */
+.naukri-freshness-popover .ant-popover-inner {
+  padding: 6px 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  border: 1px solid #edf2f7 !important;
+  background: #ffffff !important;
+  min-width: 170px;
+}
+
+.naukri-freshness-popup-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.naukri-freshness-popup-item {
+  padding: 10px 18px;
+  font-size: 14px;
+  color: #334155;
+  font-weight: 450;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.naukri-freshness-popup-item:hover {
+  background: #f8fafc;
+  color: #5f2eea;
+  padding-left: 22px;
+}
+
+.naukri-freshness-popup-item.selected {
+  color: #5f2eea;
+  font-weight: 600;
+  background: #f5f3ff;
+}
+
+.naukri-freshness-check-icon {
+  color: #5f2eea;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.naukri-freshness-section {
+  cursor: pointer;
+}
+
+.naukri-freshness-header {
+  cursor: pointer;
+}
+
+.naukri-freshness-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.naukri-freshness-clear-btn {
+  background: transparent;
+  border: none;
+  color: #8292b4;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.naukri-freshness-clear-btn:hover {
+  color: #5f2eea;
+  text-decoration: underline;
+}
+
+.naukri-freshness-select-btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.naukri-freshness-select-btn:hover {
+  color: #5f2eea;
+}
+
+.naukri-freshness-select-btn.is-selected {
+  color: #5f2eea;
+  font-weight: 600;
+}
+
+.naukri-freshness-select-text {
+  line-height: 1;
+}
+
+.naukri-freshness-down-arrow {
+  color: #64748b;
+  font-size: 10px;
+  transition: transform 0.2s ease, color 0.15s ease;
+}
+
+.naukri-freshness-select-btn:hover .naukri-freshness-down-arrow {
+  color: #5f2eea;
+}
+
+.naukri-freshness-active-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  color: #5f2eea;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 16px;
+  margin: 0 0 10px 14px;
+  gap: 6px;
+}
+
+.naukri-freshness-badge-remove {
+  cursor: pointer;
+  font-size: 11px;
+  color: #7c3aed;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.naukri-freshness-badge-remove:hover {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Applied Filters Popover (Naukri style)
+   ========================================================================== */
+.naukri-applied-popover .ant-popover-inner {
+  padding: 16px 20px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.12), 0 8px 12px -6px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #edf2f7 !important;
+  background: #ffffff !important;
+  width: 360px;
+  max-width: 90vw;
+}
+
+.naukri-applied-popup-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.naukri-applied-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.naukri-applied-remove-all-btn {
+  background: transparent;
+  border: none;
+  color: #5f2eea;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+
+.naukri-applied-remove-all-btn:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.naukri-applied-popup-close-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.naukri-applied-popup-close-btn:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.naukri-applied-popup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.naukri-applied-popup-grid::-webkit-scrollbar {
+  width: 4px;
+}
+
+.naukri-applied-popup-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.naukri-applied-popup-item {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.naukri-applied-checkbox {
+  width: 100%;
+  display: flex !important;
+  align-items: center !important;
+  margin: 0 !important;
+  gap: 6px;
+}
+
+.naukri-applied-checkbox .ant-checkbox {
+  flex-shrink: 0 !important;
+}
+
+.naukri-applied-checkbox .ant-checkbox-inner {
+  border-radius: 4px !important;
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.naukri-applied-checkbox>span:last-child {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  padding-left: 4px !important;
+}
+
+.naukri-applied-item-label {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  font-size: 13.5px;
+  color: #000000;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.naukri-applied-item-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.naukri-applied-item-count {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-left: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-weight: 400;
 }

@@ -191,10 +191,10 @@ export default function CriticalProfileAlert({
           Boost your job search: Recruiters overlook profiles with <span className="cpa-text-danger">missing details</span>
         </>
       ),
-      subtitle: customSubtitle || "500+ active recruiters are hiring right now. Complete your profile to appear at the top of recruiter searches.",
+      subtitle: customSubtitle || null,
       meta: (
         <span className="cpa-meta-text">
-          <strong>{stats.completionPercentage}% complete</strong> • {missingText}
+          <span className="cpa-missing-detail">{missingText}</span>
         </span>
       ),
       ctaText: customCtaText || "Complete Profile",
@@ -278,12 +278,16 @@ export default function CriticalProfileAlert({
             <div className="cpa-title">
               {current.title}
             </div>
-            <div className="cpa-subtitle">
-              {current.subtitle}
-            </div>
-            <div className="cpa-meta-row">
-              {current.meta}
-            </div>
+            {current.subtitle && (
+              <div className="cpa-subtitle">
+                {current.subtitle}
+              </div>
+            )}
+            {current.meta && (
+              <div className="cpa-meta-row">
+                {current.meta}
+              </div>
+            )}
           </div>
         </div>
 
