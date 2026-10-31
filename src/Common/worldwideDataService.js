@@ -7,6 +7,8 @@
  * in-memory caching, and debounced search.
  */
 
+import { City, Country } from 'country-state-city';
+
 // Cache to prevent duplicate network calls
 const roleCache = new Map();
 const locationCache = new Map();

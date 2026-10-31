@@ -5,7 +5,7 @@
 .cpa-root {
   width: 100%;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Geist', -apple-system, sans-serif;
   margin-bottom: 20px;
   animation: cpaFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }

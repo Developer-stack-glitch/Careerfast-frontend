@@ -2,7 +2,7 @@ import React, { useLayoutEffect } from 'react';
 import { useProfile } from './ProfileContext';
 import { message } from 'antd';
 import { useNavigate } from '@/routing-shim';
-import { SafetyCertificateFilled, LoadingOutlined } from '@ant-design/icons';
+import { SafetyCertificateFilled, LoadingOutlined, ArrowRightOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 
 const StepNavigation = ({ onValidateStep, isSaving }) => {
   const { currentStep, totalSteps, goToStep, registerStepValidator, setIsStepSaving } = useProfile();
@@ -42,30 +42,34 @@ const StepNavigation = ({ onValidateStep, isSaving }) => {
     }
   };
 
-
   return (
-    <div className="bg-white rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
+    <div className="bg-white rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 shadow-xs border border-gray-100">
       {/* Left Trust Badge */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-[#F5F0FF] flex items-center justify-center shrink-0">
-          <SafetyCertificateFilled className="text-base text-[#6B21A8]" />
+      <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="w-8 h-8 rounded-xl bg-[#F5F0FF] flex items-center justify-center shrink-0 border border-purple-100">
+          <SafetyCertificateFilled className="text-sm sm:text-base text-[#6B21A8]" />
         </div>
-        <div>
-          <p className="text-sm font-bold text-gray-800 mb-0 leading-tight">Your information is safe with us.</p>
-          <p className="text-[12px] text-gray-400 mt-0.5 leading-tight mb-0">We do not share your personal details without your consent.</p>
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-bold text-gray-800 mb-0 leading-tight">
+            Your information is safe with us
+          </p>
+          <p className="text-[11px] text-gray-400 mt-0.5 leading-tight mb-0">
+            We do not share your personal details without your consent.
+          </p>
         </div>
       </div>
 
-      {/* Right Action Buttons */}
-      <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+      {/* Action Buttons */}
+      <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
         {currentStep > 1 && (
           <button
             type="button"
             onClick={handleBack}
             disabled={isSaving}
-            className="text-xs font-semibold text-gray-500 hover:text-gray-800 px-3 py-2 rounded-xl transition-colors disabled:opacity-50"
+            className="flex-1 sm:flex-initial text-xs sm:text-sm font-semibold text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-2 md:px-4 sm:px-6 py-2.5 rounded-xl border border-gray-200 transition-colors disabled:opacity-50 text-center flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            Back
+            <ArrowLeftOutlined className="text-[11px]" />
+            <span>Back</span>
           </button>
         )}
 
@@ -73,7 +77,7 @@ const StepNavigation = ({ onValidateStep, isSaving }) => {
           type="button"
           onClick={handleNext}
           disabled={isSaving}
-          className="px-6 py-2.5 rounded-xl bg-[#F95721] hover:bg-[#E04B18] text-white font-medium text-sm transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+          className="flex-1 sm:flex-initial px-2 md:px-4 sm:px-6 py-2.5 rounded-xl bg-[#F95721] hover:bg-[#E04B18] text-white font-medium text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {isSaving ? (
             <>
@@ -83,7 +87,7 @@ const StepNavigation = ({ onValidateStep, isSaving }) => {
           ) : (
             <>
               <span>{currentStep < totalSteps ? 'Save & Continue' : 'Complete Profile'}</span>
-              <span>→</span>
+              <ArrowRightOutlined className="text-xs" />
             </>
           )}
         </button>

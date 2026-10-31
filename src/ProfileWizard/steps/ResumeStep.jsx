@@ -91,12 +91,12 @@ const ResumeStep = () => {
   return (
     <div className="w-full">
       {/* Top Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4 sm:mb-6">
         <div>
           <span className="text-xs font-bold text-[#6B21A8] uppercase tracking-wider block mb-1">
-            STEP 7 OF 8
+            STEP 7 OF 9
           </span>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-1.5">
             Add your resume
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xl leading-relaxed mb-0">
@@ -107,7 +107,7 @@ const ResumeStep = () => {
       </div>
 
       {/* Main White Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs border border-gray-100/80">
 
         {/* Upload Area */}
         <Dragger

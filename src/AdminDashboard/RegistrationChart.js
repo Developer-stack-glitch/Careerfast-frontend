@@ -364,7 +364,7 @@ const RegistrationDashboard = () => {
     <>
       <style>{`
         .premium-dashboard {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+          font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
         }
         
         .custom-tooltip {

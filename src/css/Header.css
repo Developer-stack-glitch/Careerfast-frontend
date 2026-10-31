@@ -6,7 +6,7 @@
   color: #f8fafc;
   font-size: 13px;
   padding: 8px 0;
-  font-family: "Outfit", sans-serif;
+  font-family: "Geist", sans-serif;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
@@ -100,7 +100,7 @@
 
 .elite-header .nav-link {
   color: #475569 !important;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   font-weight: 500;
   font-size: 17px;
   padding: 8px 16px !important;
@@ -217,7 +217,7 @@
   gap: 8px !important;
   transition: all 0.3s ease !important;
   height: auto !important;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .host-button:hover {
@@ -239,7 +239,7 @@
   gap: 8px !important;
   transition: all 0.3s ease !important;
   height: auto !important;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .login-outline-button:hover {
@@ -690,7 +690,7 @@
   padding: 0 !important;
   box-shadow: 0 20px 50px -10px rgba(15, 23, 42, 0.35) !important;
   border: 1px solid rgba(226, 232, 240, 0.9) !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
   max-height: calc(100vh - 40px) !important;
   display: flex !important;
   flex-direction: column !important;
@@ -927,7 +927,7 @@
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 500;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Geist', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -953,7 +953,7 @@
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 600;
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Geist', sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1133,7 +1133,7 @@
 
 .quick-job-search-modal {
   animation: qjsModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .quick-job-search-modal input,
@@ -1199,12 +1199,12 @@
   color: #121212;
   width: 100%;
   padding: 10px 0;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .quick-search-input::placeholder {
   color: #adb5bd !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .quick-search-divider {
@@ -1226,14 +1226,14 @@
   padding: 0 !important;
   font-size: 15px !important;
   color: #121212 !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
   cursor: pointer;
 }
 
 .quick-search-select .ant-select-selection-placeholder {
   color: #adb5bd !important;
   font-size: 15px !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .quick-search-clear-btn {
@@ -1269,7 +1269,7 @@
   font-weight: 500 !important;
   cursor: pointer;
   transition: all 0.2s ease !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
   box-shadow: 0 4px 14px rgba(127, 90, 240, 0.35);
   flex-shrink: 0;
   display: inline-flex;
@@ -1390,7 +1390,7 @@
   font-size: 14px;
   color: #334155;
   line-height: 1.4;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .hp-suggestion-item:hover,
@@ -1408,7 +1408,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .hp-suggestion-text .matched-text,
@@ -1434,7 +1434,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .hp-suggestion-loading {
@@ -1444,7 +1444,7 @@
   gap: 10px;
   font-size: 13px;
   color: #64748b;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .hp-suggestion-empty {
@@ -1452,7 +1452,7 @@
   text-align: center;
   color: #94a3b8;
   font-size: 13px;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .hp-clear-btn {
@@ -1492,7 +1492,7 @@
 .quick-search-select-dropdown .ant-select-item {
   border-radius: 0 !important;
   padding: 9px 18px !important;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
   font-size: 14px !important;
   color: #334155 !important;
   transition: all 0.12s ease !important;
@@ -1689,4 +1689,287 @@
 .naukri-header-collapse-btn:hover {
   background: #f1f5f9;
   color: #334155;
+}
+
+
+/* ============================================================
+   Mobile & Responsive Header Clean Polish
+   ============================================================ */
+.header-main-nav-row {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  flex-wrap: nowrap !important;
+}
+
+.header-brand-col {
+  order: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+}
+
+.header-nav-center-col {
+  order: 2 !important;
+}
+
+.header-brand-col .navbar-brand {
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.header-actions-col {
+  order: 3 !important;
+  display: flex !important;
+  align-items: center !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+  gap: 14px;
+}
+
+.header-guest-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px;
+  flex-wrap: nowrap !important;
+}
+
+.header-logged-in-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px;
+  flex-wrap: nowrap !important;
+}
+
+.header-actions-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #cbd5e1;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.for-employers-dropdown {
+  cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px;
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 14px;
+  white-space: nowrap !important;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.for-employers-text-full {
+  display: inline;
+}
+
+.for-employers-text-short {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .elite-header {
+    padding: 6px 0 !important;
+  }
+
+  .elite-header .container-fluid {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .header-main-nav-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+  }
+
+  .header-brand-col {
+    order: 1 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  .header-actions-col {
+    order: 2 !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    gap: 8px !important;
+  }
+
+  .header-guest-actions {
+    gap: 8px !important;
+  }
+
+  .main-logo {
+    height: 29px !important;
+    width: auto !important;
+    max-width: 125px !important;
+  }
+
+  .naukri-login-btn {
+    height: 32px !important;
+    padding: 0 13px !important;
+    font-size: 13px !important;
+    border-radius: 16px !important;
+    font-weight: 600 !important;
+  }
+
+  .naukri-register-btn {
+    height: 32px !important;
+    padding: 0 13px !important;
+    font-size: 13px !important;
+    border-radius: 16px !important;
+    font-weight: 600 !important;
+  }
+
+  .for-employers-dropdown {
+    font-size: 13px !important;
+    gap: 3px !important;
+    white-space: nowrap !important;
+  }
+
+  .header-actions-divider {
+    height: 16px !important;
+    margin: 0 2px !important;
+  }
+
+  .host-button {
+    height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    border-radius: 16px !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .elite-header {
+    padding: 5px 0 !important;
+  }
+
+  .elite-header .container-fluid {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .header-main-nav-row {
+    gap: 6px !important;
+  }
+
+  .main-logo {
+    height: 26px !important;
+    max-width: 112px !important;
+  }
+
+  .header-actions-col {
+    gap: 5px !important;
+  }
+
+  .header-guest-actions {
+    gap: 5px !important;
+  }
+
+  .naukri-login-btn {
+    height: 30px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    border-radius: 15px !important;
+  }
+
+  .naukri-register-btn {
+    height: 30px !important;
+    padding: 0 11px !important;
+    font-size: 12px !important;
+    border-radius: 15px !important;
+  }
+
+  .for-employers-dropdown {
+    font-size: 12px !important;
+    gap: 2px !important;
+  }
+
+  .for-employers-text-full {
+    display: none;
+  }
+
+  .for-employers-text-short {
+    display: inline;
+  }
+
+  .header-actions-divider {
+    height: 14px !important;
+    margin: 0 1px !important;
+  }
+
+  .host-button {
+    height: 30px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    border-radius: 15px !important;
+    width: auto !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .elite-header .container-fluid {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .header-main-nav-row {
+    gap: 4px !important;
+  }
+
+  .main-logo {
+    height: 24px !important;
+    max-width: 95px !important;
+  }
+
+  .header-actions-col {
+    gap: 4px !important;
+  }
+
+  .header-guest-actions {
+    gap: 4px !important;
+  }
+
+  .naukri-login-btn {
+    height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 11.5px !important;
+    border-radius: 14px !important;
+  }
+
+  .naukri-register-btn {
+    height: 28px !important;
+    padding: 0 9px !important;
+    font-size: 11.5px !important;
+    border-radius: 14px !important;
+  }
+
+  .for-employers-dropdown {
+    font-size: 11.5px !important;
+  }
+
+  .header-actions-divider {
+    height: 12px !important;
+    margin: 0 1px !important;
+  }
 }

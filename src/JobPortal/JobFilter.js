@@ -1,6 +1,6 @@
 'use client';
 // src/pages/JobFilter.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 
 import {
   Row,
@@ -813,6 +813,284 @@ const AppliedFiltersPopover = React.memo(function AppliedFiltersPopover({
   );
 });
 
+
+const TOP_ROLES = [
+  { name: "Software Development", icon: <CodeOutlined /> },
+  { name: "Frontend Development", icon: <DesktopOutlined /> },
+  { name: "Backend Development", icon: <DatabaseOutlined /> },
+  { name: "Full Stack Development", icon: <RocketOutlined /> },
+  { name: "Mobile App Development", icon: <MobileOutlined /> },
+  { name: "DevOps & Cloud Computing", icon: <CloudServerOutlined /> },
+  { name: "Data Science & Analytics", icon: <BarChartOutlined /> },
+  { name: "UI / UX", icon: <FormatPainterOutlined /> },
+  { name: "Digital Marketing", icon: <GlobalOutlined /> },
+  { name: "Marketing", icon: <BulbOutlined /> }
+];
+
+const TopRolesCarousel = React.memo(function TopRolesCarousel({
+  selectedCategories = [],
+  onToggleRole,
+}) {
+  const scrollRef = React.useRef(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      setShowLeftArrow(scrollLeft > 20);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 20);
+    }
+  };
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const { clientWidth } = scrollRef.current;
+      const scrollAmount = clientWidth * 0.6;
+      const scrollTo = direction === 'left'
+        ? scrollRef.current.scrollLeft - scrollAmount
+        : scrollRef.current.scrollLeft + scrollAmount;
+
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <div className="naukri-top-roles-wrapper">
+      <AnimatePresence>
+        {showLeftArrow && (
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            className="naukri-carousel-nav prev"
+            onClick={() => scroll('left')}
+            type="button"
+            aria-label="Scroll left"
+          >
+            <LeftOutlined />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      <div
+        className="naukri-top-roles-scroll"
+        ref={scrollRef}
+        onScroll={handleScroll}
+      >
+        {TOP_ROLES.map((role) => {
+          const isActive = selectedCategories.includes(role.name);
+          return (
+            <div
+              key={role.name}
+              className={`naukri-role-card ${isActive ? 'active' : ''}`}
+              onClick={() => onToggleRole && onToggleRole(role.name)}
+              role="button"
+              tabIndex={0}
+            >
+              <span className="naukri-role-icon">{role.icon}</span>
+              <span className="naukri-role-name">{role.name}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {showRightArrow && (
+          <motion.button
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            className="naukri-carousel-nav next"
+            onClick={() => scroll('right')}
+            type="button"
+            aria-label="Scroll right"
+          >
+            <RightOutlined />
+          </motion.button>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+const JobCard = React.memo(function JobCard({
+  job,
+  jobNatureSelected,
+  isSaved,
+  isSaving,
+  onSaveToggle,
+  navigate,
+}) {
+  const handleCardClick = () => {
+    const safeSlug = (val) => {
+      if (!val) return "";
+      if (Array.isArray(val)) return generateSlug(val.join(" "));
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
+        return generateSlug(parsed);
+      } catch {
+        return generateSlug(val);
+      }
+    };
+
+    const jobNature = generateSlug(job.type || "");
+    const jobTitle = generateSlug(job.title || "");
+    const companyName = generateSlug(job.company || "");
+    const locationSlug = safeSlug(job.raw_location);
+    const workplaceType = generateSlug(job.raw_workplace_type || "");
+    const experienceType = generateSlug(job.level || "");
+    const experienceRequired = safeSlug(job.raw_experience_required);
+
+    let basePath = "";
+    if (job.type === "Job") basePath = "/job-details";
+    else if (job.type === "Internship" || isInternshipOpportunity(job, { jobNatureSelected })) basePath = "/internship-details";
+    else if (job.type === "Scholarship") basePath = "/scholarship-details";
+    else basePath = isInternshipOpportunity(job, { jobNatureSelected }) ? "/internship-details" : "/job-details";
+
+    const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
+    const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
+    if (isMobile) {
+      navigate(finalUrl);
+    } else {
+      window.open(finalUrl, "_blank");
+    }
+  };
+
+  return (
+    <div className="naukri-job-card" onClick={handleCardClick}>
+      <div className="naukri-job-header">
+        <div style={{ flex: 1, paddingRight: '12px' }}>
+          <h3 className="naukri-job-title">{job.title && job.title.trim() ? job.title : "N/A"}</h3>
+          <div className="naukri-company-info">
+            <span className="naukri-company-name">{job.company && job.company.trim() ? job.company : "N/A"}</span>
+            <div className="naukri-company-rating">
+              <ThunderboltFilled className="naukri-star-icon" />
+              <span>4.2</span>
+              <span className="naukri-meta-separator"></span>
+              <span className="naukri-review-count">1.2k+ Reviews</span>
+            </div>
+          </div>
+        </div>
+        <div className="naukri-logo-container">
+          <img
+            src={getImageUrl(job.logo) || "/favicon.png"}
+            alt={job.company || "Company logo"}
+            className="naukri-company-logo"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = "/favicon.png";
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="naukri-job-meta">
+        <div className="naukri-meta-item">
+          <CgWorkAlt className="naukri-meta-icon" />
+          <span>
+            {isInternshipOpportunity(job, { jobNatureSelected })
+              ? "Internship"
+              : (job.level && job.level.trim() ? job.level : "N/A")}
+          </span>
+        </div>
+        <span className="naukri-meta-separator"></span>
+        <div className="naukri-meta-item">
+          <WalletOutlined className="naukri-meta-icon" />
+          <span>{job.salary && job.salary.trim() ? job.salary : "Not Disclosed"}</span>
+        </div>
+        <span className="naukri-meta-separator"></span>
+        <div className="naukri-meta-item">
+          <FaMapMarkerAlt className="naukri-meta-icon" />
+          <span>{job.location && job.location.trim() && job.location.trim() !== "[]" ? job.location : "N/A"}</span>
+        </div>
+      </div>
+
+      <div className="naukri-job-description">
+        <FileTextOutlined className="naukri-desc-icon" />
+        <span>
+          {(() => {
+            if (!job.job_description) return "No description available";
+
+            const decode = (str) => str
+              .replace(/&amp;/g, "&")
+              .replace(/&lt;/g, "<")
+              .replace(/&gt;/g, ">")
+              .replace(/&quot;/g, '"')
+              .replace(/&#39;/g, "'")
+              .replace(/&nbsp;/g, " ");
+
+            const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
+            const match = liRegex.exec(job.job_description);
+            if (match && match[1]) {
+              const pointText = match[1].replace(/<\/?[^>]+(>|$)/g, " ").trim();
+              if (pointText) return decode(pointText);
+            }
+
+            let cleanText = job.job_description.replace(/<\/?[^>]+(>|$)/g, " ");
+            cleanText = decode(cleanText);
+            cleanText = cleanText.replace(/\s+/g, " ").trim();
+
+            const lower = cleanText.toLowerCase();
+            if (lower.startsWith("job description")) cleanText = cleanText.substring(15).trim();
+            else if (lower.startsWith("role & responsibilities")) cleanText = cleanText.substring(23).trim();
+            else if (lower.startsWith("role and responsibilities")) cleanText = cleanText.substring(25).trim();
+
+            cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
+            return cleanText.substring(0, 110) + "...";
+          })()}
+        </span>
+      </div>
+
+      <div className="naukri-skills-list">
+        {job.skills.slice(0, 5).map((skill, index) => (
+          <React.Fragment key={skill}>
+            <span>{skill}</span>
+            {index < 4 && index < job.skills.length - 1 && <span className="naukri-skill-dot">·</span>}
+          </React.Fragment>
+        ))}
+        {job.skills.length > 5 && (
+          <>
+            <span className="naukri-skill-dot">·</span>
+            <span>+{job.skills.length - 5} more</span>
+          </>
+        )}
+      </div>
+
+      <div className="naukri-job-footer">
+        <div className="naukri-posted-time">
+          <span>Posted: {job.date_posted || "Just now"}</span>
+        </div>
+        <div
+          className={`naukri-save-container ${isSaved ? "saved-active" : ""}`}
+          onClick={(e) => onSaveToggle && onSaveToggle(e, job)}
+          title={isSaved ? "Remove from saved jobs" : "Save this job"}
+          style={{
+            cursor: 'pointer',
+            userSelect: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            color: isSaved ? '#47b749' : undefined,
+            fontWeight: 600,
+            transition: 'all 0.2s ease',
+          }}
+        >
+          {isSaving ? (
+            <SyncOutlined spin style={{ color: '#47b749', fontSize: '14px' }} />
+          ) : isSaved ? (
+            <BsBookmarkFill style={{ color: '#47b749', fontSize: '14px' }} />
+          ) : (
+            <BsBookmark style={{ fontSize: '14px' }} />
+          )}
+          <span>{isSaved ? "Saved" : "Save"}</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function JobFilter() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -901,7 +1179,7 @@ export default function JobFilter() {
     };
   }, [fetchSavedJobs, getCleanUserId]);
 
-  const handleSaveJobToggle = async (e, job) => {
+  const handleSaveJobToggle = useCallback(async (e, job) => {
     if (e && e.stopPropagation) {
       e.stopPropagation();
     }
@@ -952,7 +1230,7 @@ export default function JobFilter() {
     } finally {
       setSavingJobIds((prev) => ({ ...prev, [targetJobId]: false }));
     }
-  };
+  }, [getCleanUserId, savedJobs, fetchSavedJobs]);
 
   const handleLoginSuccess = async (userDetails) => {
     const newUserId = userDetails?.id;
@@ -1877,12 +2155,22 @@ export default function JobFilter() {
   }, []);
 
   /** -------------------- DYNAMIC PRIORITY FILTER ORDER LOGIC -------------------- **/
-  const markFilterChosen = (key) => {
+  const markFilterChosen = useCallback((key) => {
     setChosenFilterOrder((prev) => {
       const next = prev.filter((k) => k !== key);
       return [key, ...next];
     });
-  };
+  }, []);
+
+  const handleToggleRole = useCallback((roleName) => {
+    setSelectedCategories((prev) => {
+      const isSelected = prev.includes(roleName);
+      const newCats = isSelected ? prev.filter((c) => c !== roleName) : [...prev, roleName];
+      if (!isSelected) markFilterChosen('category');
+      syncFilterUrl({ categories: newCats });
+      return newCats;
+    });
+  }, [markFilterChosen, syncFilterUrl]);
 
   const isFilterActive = (key) => {
     switch (key) {
@@ -2548,275 +2836,6 @@ export default function JobFilter() {
     </div>
   );
 
-  /** -------------------- COMPONENTS -------------------- **/
-  const TopRolesCarousel = () => {
-    const roles = [
-      { name: "Software Development", icon: <CodeOutlined /> },
-      { name: "Frontend Development", icon: <DesktopOutlined /> },
-      { name: "Backend Development", icon: <DatabaseOutlined /> },
-      { name: "Full Stack Development", icon: <RocketOutlined /> },
-      { name: "Mobile App Development", icon: <MobileOutlined /> },
-      { name: "DevOps & Cloud Computing", icon: <CloudServerOutlined /> },
-      { name: "Data Science & Analytics", icon: <BarChartOutlined /> },
-      { name: "UI / UX", icon: <FormatPainterOutlined /> },
-      { name: "Digital Marketing", icon: <GlobalOutlined /> },
-      { name: "Marketing", icon: <BulbOutlined /> }
-    ];
-
-    const scrollRef = React.useRef(null);
-    const [showLeftArrow, setShowLeftArrow] = useState(false);
-    const [showRightArrow, setShowRightArrow] = useState(true);
-
-    const handleScroll = () => {
-      if (scrollRef.current) {
-        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-        setShowLeftArrow(scrollLeft > 20);
-        setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 20);
-      }
-    };
-
-    const scroll = (direction) => {
-      if (scrollRef.current) {
-        const { clientWidth } = scrollRef.current;
-        const scrollAmount = clientWidth * 0.6;
-        const scrollTo = direction === 'left'
-          ? scrollRef.current.scrollLeft - scrollAmount
-          : scrollRef.current.scrollLeft + scrollAmount;
-
-        scrollRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
-      }
-    };
-
-    return (
-      <div className="naukri-top-roles-wrapper">
-        <AnimatePresence>
-          {showLeftArrow && (
-            <motion.button
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              className="naukri-carousel-nav prev"
-              onClick={() => scroll('left')}
-            >
-              <LeftOutlined />
-            </motion.button>
-          )}
-        </AnimatePresence>
-
-        <div
-          className="naukri-top-roles-scroll"
-          ref={scrollRef}
-          onScroll={handleScroll}
-        >
-          {roles.map((role, idx) => (
-            <motion.div
-              key={role.name}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              whileTap={{ scale: 0.98 }}
-              className={`naukri-role-card ${selectedCategories.includes(role.name) ? 'active' : ''}`}
-              onClick={() => {
-                const isSelected = selectedCategories.includes(role.name);
-                const newCats = isSelected ? selectedCategories.filter(c => c !== role.name) : [...selectedCategories, role.name];
-                setSelectedCategories(newCats);
-                if (!isSelected) markFilterChosen('category');
-                syncFilterUrl({ categories: newCats });
-              }}
-            >
-              <span className="naukri-role-icon">{role.icon}</span>
-              <span className="naukri-role-name">{role.name}</span>
-            </motion.div>
-          ))}
-        </div>
-
-        <AnimatePresence>
-          {showRightArrow && (
-            <motion.button
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 10 }}
-              className="naukri-carousel-nav next"
-              onClick={() => scroll('right')}
-            >
-              <RightOutlined />
-            </motion.button>
-          )}
-        </AnimatePresence>
-      </div>
-    );
-  };
-
-  /** -------------------- JOB CARD (BRAND NEW UNIQUE CLASSES) -------------------- **/
-  const JobCard = ({ job }) => (
-    <div
-      className="naukri-job-card"
-      onClick={() => {
-        const safeSlug = (val) => {
-          if (!val) return "";
-          if (Array.isArray(val)) return generateSlug(val.join(" "));
-          try {
-            const parsed = JSON.parse(val);
-            if (Array.isArray(parsed)) return generateSlug(parsed.join(" "));
-            return generateSlug(parsed);
-          } catch {
-            return generateSlug(val);
-          }
-        };
-
-        const jobNature = generateSlug(job.type || "");
-        const jobTitle = generateSlug(job.title || "");
-        const companyName = generateSlug(job.company || "");
-        const locationSlug = safeSlug(job.raw_location);
-        const workplaceType = generateSlug(job.raw_workplace_type || "");
-        const experienceType = generateSlug(job.level || "");
-        const experienceRequired = safeSlug(job.raw_experience_required);
-
-        let basePath = "";
-        if (job.type === "Job") basePath = "/job-details";
-        else if (job.type === "Internship" || isInternshipOpportunity(job, { jobNatureSelected })) basePath = "/internship-details";
-        else if (job.type === "Scholarship") basePath = "/scholarship-details";
-        else basePath = isInternshipOpportunity(job, { jobNatureSelected }) ? "/internship-details" : "/job-details";
-
-        const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
-        window.open(finalUrl, "_blank");
-      }}
-    >
-      <div className="naukri-job-header">
-        <div style={{ flex: 1, paddingRight: '12px' }}>
-          <h3 className="naukri-job-title">{job.title && job.title.trim() ? job.title : "N/A"}</h3>
-          <div className="naukri-company-info">
-            <span className="naukri-company-name">{job.company && job.company.trim() ? job.company : "N/A"}</span>
-            <div className="naukri-company-rating">
-              <ThunderboltFilled className="naukri-star-icon" />
-              <span>4.2</span>
-              <span className="naukri-meta-separator"></span>
-              <span className="naukri-review-count">1.2k+ Reviews</span>
-            </div>
-          </div>
-        </div>
-        <div className="naukri-logo-container">
-          <img
-            src={getImageUrl(job.logo) || "/favicon.png"}
-            alt={job.company || "Company logo"}
-            className="naukri-company-logo"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = "/favicon.png";
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="naukri-job-meta">
-        <div className="naukri-meta-item">
-          <CgWorkAlt className="naukri-meta-icon" />
-          <span>
-            {isInternshipOpportunity(job, { jobNatureSelected })
-              ? "Internship"
-              : (job.level && job.level.trim() ? job.level : "N/A")}
-          </span>
-        </div>
-        <span className="naukri-meta-separator"></span>
-        <div className="naukri-meta-item">
-          <WalletOutlined className="naukri-meta-icon" />
-          <span>{job.salary && job.salary.trim() ? job.salary : "Not Disclosed"}</span>
-        </div>
-        <span className="naukri-meta-separator"></span>
-        <div className="naukri-meta-item">
-          <FaMapMarkerAlt className="naukri-meta-icon" />
-          <span>{job.location && job.location.trim() && job.location.trim() !== "[]" ? job.location : "N/A"}</span>
-        </div>
-      </div>
-
-      <div className="naukri-job-description">
-        <FileTextOutlined className="naukri-desc-icon" />
-        <span>
-          {(() => {
-            if (!job.job_description) return "No description available";
-
-            // 1. Helper to decode common HTML entities
-            const decode = (str) => str
-              .replace(/&amp;/g, "&")
-              .replace(/&lt;/g, "<")
-              .replace(/&gt;/g, ">")
-              .replace(/&quot;/g, '"')
-              .replace(/&#39;/g, "'")
-              .replace(/&nbsp;/g, " ");
-
-            // 2. Try to extract the first bullet point for a concise single-line preview
-            const liRegex = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-            const match = liRegex.exec(job.job_description);
-            if (match && match[1]) {
-              const pointText = match[1].replace(/<\/?[^>]+(>|$)/g, " ").trim();
-              if (pointText) return decode(pointText);
-            }
-
-            // 3. Fallback to cleaned paragraph text
-            let cleanText = job.job_description.replace(/<\/?[^>]+(>|$)/g, " ");
-            cleanText = decode(cleanText);
-            cleanText = cleanText.replace(/\s+/g, " ").trim();
-
-            // Remove redundant "Job description" or "Role & responsibilities" prefix
-            const lower = cleanText.toLowerCase();
-            if (lower.startsWith("job description")) cleanText = cleanText.substring(15).trim();
-            else if (lower.startsWith("role & responsibilities")) cleanText = cleanText.substring(23).trim();
-            else if (lower.startsWith("role and responsibilities")) cleanText = cleanText.substring(25).trim();
-
-            // Capitalize and truncate
-            cleanText = cleanText.charAt(0).toUpperCase() + cleanText.slice(1);
-            return cleanText.substring(0, 110) + "...";
-          })()}
-        </span>
-      </div>
-
-      <div className="naukri-skills-list">
-        {job.skills.slice(0, 5).map((skill, index) => (
-          <React.Fragment key={skill}>
-            <span>{skill}</span>
-            {index < 4 && index < job.skills.length - 1 && <span className="naukri-skill-dot">·</span>}
-          </React.Fragment>
-        ))}
-        {job.skills.length > 5 && (
-          <>
-            <span className="naukri-skill-dot">·</span>
-            <span>+{job.skills.length - 5} more</span>
-          </>
-        )}
-      </div>
-
-      <div className="naukri-job-footer">
-        <div className="naukri-posted-time">
-          <span>Posted: {job.date_posted || "Just now"}</span>
-        </div>
-        <div
-          className={`naukri-save-container ${savedJobs[job.id] ? "saved-active" : ""}`}
-          onClick={(e) => handleSaveJobToggle(e, job)}
-          title={savedJobs[job.id] ? "Remove from saved jobs" : "Save this job"}
-          style={{
-            cursor: 'pointer',
-            userSelect: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            color: savedJobs[job.id] ? '#47b749' : undefined,
-            fontWeight: 600,
-            transition: 'all 0.2s ease',
-          }}
-        >
-          {savingJobIds[job.id] ? (
-            <SyncOutlined spin style={{ color: '#47b749', fontSize: '14px' }} />
-          ) : savedJobs[job.id] ? (
-            <BsBookmarkFill style={{ color: '#47b749', fontSize: '14px' }} />
-          ) : (
-            <BsBookmark style={{ fontSize: '14px' }} />
-          )}
-          <span>{savedJobs[job.id] ? "Saved" : "Save"}</span>
-        </div>
-      </div>
-    </div>
-  );
-
   /** -------------------- SKELETONS -------------------- **/
   const FullPageSkeleton = () => (
     <div className="naukri-layout-container">
@@ -2918,7 +2937,7 @@ export default function JobFilter() {
               {/* Center Content (Job List) */}
               <Col xs={24} md={17} lg={13} xl={13}>
                 {/* Top Roles Carousel (Naukri style) */}
-                <TopRolesCarousel />
+                <TopRolesCarousel selectedCategories={selectedCategories} onToggleRole={handleToggleRole} />
 
                 {/* Top Results Header */}
                 <div className="naukri-results-info">
@@ -2957,21 +2976,37 @@ export default function JobFilter() {
                       </Dropdown>
 
                       <Button
-                        className="mobile-filter-btn"
+                        type="button"
+                        htmlType="button"
+                        className={`mobile-filter-btn ${appliedFilterItems.length > 0 ? 'has-active' : ''}`}
                         icon={<FilterOutlined />}
-                        onClick={() => setMobileFilterOpen(true)}
-                        style={{ display: 'none', borderRadius: '20px', border: '1px solid #e2e8f0', color: '#475569', fontWeight: 500 }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setMobileFilterOpen(true);
+                        }}
+                        style={{
+                          display: 'none',
+                          borderRadius: '20px',
+                          border: appliedFilterItems.length > 0 ? '1.5px solid #5f2eea' : '1px solid #e2e8f0',
+                          color: appliedFilterItems.length > 0 ? '#5f2eea' : '#475569',
+                          fontWeight: 500,
+                          backgroundColor: appliedFilterItems.length > 0 ? 'rgba(95, 46, 234, 0.06)' : '#fff',
+                        }}
                       >
-                        Filters
+                        Filters{appliedFilterItems.length > 0 ? ` (${appliedFilterItems.length})` : ''}
                       </Button>
                     </div>
                   </div>
                 </div>
 
                 <div className="naukri-job-list-wrapper" style={{ position: 'relative', minHeight: '400px' }}>
+                  {/* Subtle top indeterminate progress bar while filtering */}
+                  <div className={`naukri-filter-progress-bar ${loading && !initialLoading ? 'active' : ''}`} />
+
                   <CriticalProfileAlert variant="job-filter" />
 
-                  {loading ? (
+                  {loading && jobs.length === 0 ? (
                     <div className="naukri-filter-skeleton-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       {[1, 2, 3].map((n) => (
                         <Card key={n} className="naukri-job-card" style={{ padding: '14px 18px', borderRadius: '12px' }}>
@@ -2984,7 +3019,7 @@ export default function JobFilter() {
                         </Card>
                       ))}
                     </div>
-                  ) : jobs.length === 0 ? (
+                  ) : !loading && jobs.length === 0 ? (
                     <Card style={{ borderRadius: 12, textAlign: "center", padding: "60px 40px" }}>
                       <Empty
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -3000,9 +3035,17 @@ export default function JobFilter() {
                       </Empty>
                     </Card>
                   ) : (
-                    <div className="naukri-job-list">
+                    <div className={`naukri-job-list ${loading ? 'naukri-job-list-loading' : ''}`}>
                       {jobs.map((job) => (
-                        <JobCard key={job.id} job={job} />
+                        <JobCard
+                          key={job.id}
+                          job={job}
+                          jobNatureSelected={jobNatureSelected}
+                          isSaved={Boolean(savedJobs[job.id])}
+                          isSaving={Boolean(savingJobIds[job.id])}
+                          onSaveToggle={handleSaveJobToggle}
+                          navigate={navigate}
+                        />
                       ))}
 
                       {/* Custom Modern Pagination Matching Screenshot */}
@@ -3088,9 +3131,33 @@ export default function JobFilter() {
       <Drawer
         width={320}
         title="Filters"
+        placement="right"
         onClose={() => setMobileFilterOpen(false)}
         open={mobileFilterOpen}
         className="header-drawer"
+        destroyOnClose={false}
+        footer={
+          <div style={{ padding: '8px 4px', display: 'flex', gap: '10px' }}>
+            <Button
+              style={{ flex: 1, borderRadius: '8px' }}
+              onClick={handleClearAllFilters}
+            >
+              Reset All
+            </Button>
+            <Button
+              type="primary"
+              style={{
+                flex: 2,
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #7f5af0 0%, #5f2eea 100%)',
+                border: 'none',
+              }}
+              onClick={() => setMobileFilterOpen(false)}
+            >
+              {loading ? "Updating..." : `Show ${totalJobs > 0 ? totalJobs.toLocaleString('en-IN') : jobs.length} Jobs`}
+            </Button>
+          </div>
+        }
       >
         {FilterSidebar}
       </Drawer>

@@ -110,6 +110,25 @@ export default function Courses() {
     const [loading, setLoading] = useState(true);
     const [activeCategory, setActiveCategory] = useState("All Courses");
 
+    const scrollToCourses = () => {
+        const el = document.getElementById('courses-section');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    const handleCategoryClick = (categoryName) => {
+        const matched = categories.find(
+            c => c.toLowerCase() === categoryName.toLowerCase() ||
+                 c.toLowerCase().includes(categoryName.toLowerCase()) ||
+                 categoryName.toLowerCase().includes(c.toLowerCase())
+        );
+        if (matched) {
+            setActiveCategory(matched);
+        }
+        scrollToCourses();
+    };
+
     useEffect(() => {
         async function fetchCourses() {
             try {
@@ -223,12 +242,18 @@ export default function Courses() {
                                     <p className="card-desc">Master in-demand skills with industry-recognized certifications.</p>
 
                                     <div className="card-tags">
-                                        <div className="tag-pill">Web Development <FaChevronRight /></div>
-                                        <div className="tag-pill">Python <FaChevronRight /></div>
-                                        <div className="tag-pill">Data Science <FaChevronRight /></div>
-                                        <div className="tag-pill">Digital Marketing <FaChevronRight /></div>
-                                        {/* <div className="tag-pill">Machine Learning <FaChevronRight /></div>
-                                        <div className="tag-pill">UI/UX Design <FaChevronRight /></div> */}
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("Web Development")}>
+                                            <span>Web Development</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("Python")}>
+                                            <span>Python</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("Data Science")}>
+                                            <span>Data Science</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("Digital Marketing")}>
+                                            <span>Digital Marketing</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
                                     </div>
 
                                     <div className="card-features">
@@ -237,7 +262,9 @@ export default function Courses() {
                                         <div className="feature-item"><FaCheck /> Practical Projects</div>
                                     </div>
 
-                                    <button className="explore-btn blue-btn">Explore Certification Courses</button>
+                                    <button type="button" className="explore-btn blue-btn" onClick={scrollToCourses}>
+                                        Explore Certification Courses
+                                    </button>
                                 </div>
                                 <div className="card-image-right">
                                     <img src="https://training-uploads.internshala.com/homepage/media/new_stt_banner/banner-1920.png?v=v2" alt="Certified Person" />
@@ -252,12 +279,18 @@ export default function Courses() {
                                     <p className="card-desc">Accelerate your career journey with Job-Guaranteed programs.</p>
 
                                     <div className="card-tags">
-                                        <div className="tag-pill">Full Stack Developer <FaChevronRight /></div>
-                                        <div className="tag-pill">Data Science <FaChevronRight /></div>
-                                        <div className="tag-pill">Digital Marketing <FaChevronRight /></div>
-                                        <div className="tag-pill">HR Management <FaChevronRight /></div>
-                                        {/* <div className="tag-pill">Business Development <FaChevronRight /></div>
-                                        <div className="tag-pill">Product Management <FaChevronRight /></div> */}
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("Full Stack Developer")}>
+                                            <span>Full Stack Developer</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("Data Science")}>
+                                            <span>Data Science</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("Digital Marketing")}>
+                                            <span>Digital Marketing</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
+                                        <div className="tag-pill" onClick={() => handleCategoryClick("HR Management")}>
+                                            <span>HR Management</span> <FaChevronRight className="tag-chevron" />
+                                        </div>
                                     </div>
 
                                     <div className="card-features">
@@ -266,7 +299,9 @@ export default function Courses() {
                                         <div className="feature-item"><FaCheck /> Mock Interviews</div>
                                     </div>
 
-                                    <button className="explore-btn orange-btn">Explore Career Launchpads</button>
+                                    <button type="button" className="explore-btn orange-btn" onClick={scrollToCourses}>
+                                        Explore Career Launchpads
+                                    </button>
                                 </div>
                                 <div className="card-image-right">
                                     <img src="https://training-uploads.internshala.com/homepage/media/new_pgc_banner/banner-1920.png?v=v2" alt="Hired Person" />
@@ -351,7 +386,7 @@ export default function Courses() {
                     </div>
                 </section>
 
-                <section className="courses-section">
+                <section className="courses-section" id="courses-section">
                     <div className="main-content-layout">
                         {/* Sidebar */}
                         <aside className="courses-sidebar">
@@ -536,8 +571,8 @@ export default function Courses() {
                             <h2>Kickstart your career with CareerFast</h2>
                             <p>We'll help you with your confusion about career choices, teach you practical skills and help you land a placement. Join a network of 600K+ learners and #KaroShuruaatYahinSe.</p>
                             <div className="cta-actions">
-                                <button className="btn-dark">Certification Courses</button>
-                                <button className="btn-white">Career Launchpads</button>
+                                <button type="button" className="btn-dark" onClick={scrollToCourses}>Certification Courses</button>
+                                <button type="button" className="btn-white" onClick={scrollToCourses}>Career Launchpads</button>
                             </div>
                         </div>
                         <div className="cta-right-img">

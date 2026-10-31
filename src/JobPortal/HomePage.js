@@ -1080,6 +1080,20 @@ export default function HomePage() {
         return `/job-details/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
     };
 
+    const handleJobCardNavigation = (e, job) => {
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
+        const url = generateJobDetailsUrl(job);
+        const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
+        if (isMobile) {
+            navigate(url);
+        } else {
+            window.open(url, "_blank");
+        }
+    };
+
+
     const generateBlogUrl = (blog) => {
         const title = blog?.blogTitle || blog?.title || "";
         if (!title) return '/blogs';
@@ -1755,10 +1769,7 @@ export default function HomePage() {
                         <Slider {...sliderSettings}>
                             {fresherJobs.map((job) => (
                                 <div key={job.id}>
-                                    <div onClick={(e) => {
-                                        e.preventDefault();
-                                        window.open(generateJobDetailsUrl(job), "_blank");
-                                    }} className="hp-fresher-card">
+                                    <div onClick={(e) => handleJobCardNavigation(e, job)} className="hp-fresher-card">
                                         <div className="hp-company-violet-box">
                                             <div className="hp-company-logo-wrapper">
                                                 <img
@@ -1834,7 +1845,12 @@ export default function HomePage() {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={(e) => {
-                                                    // Allow standard browser behavior for target="_blank"
+                                                    const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
+                                                    if (isMobile) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        navigate(generateJobDetailsUrl(job));
+                                                    }
                                                 }}
                                             >
                                                 View details &gt;
@@ -1902,10 +1918,7 @@ export default function HomePage() {
                         <Slider {...sliderSettings}>
                             {internshipJobs.map((job) => (
                                 <div key={job.id}>
-                                    <div onClick={(e) => {
-                                        e.preventDefault();
-                                        window.open(generateJobDetailsUrl(job), "_blank");
-                                    }} className="hp-fresher-card">
+                                    <div onClick={(e) => handleJobCardNavigation(e, job)} className="hp-fresher-card">
                                         <div className="hp-company-violet-box">
                                             <div className="hp-company-logo-wrapper">
                                                 <img
@@ -1987,7 +2000,12 @@ export default function HomePage() {
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 onClick={(e) => {
-                                                    // Allow standard browser behavior for target="_blank"
+                                                    const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
+                                                    if (isMobile) {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        navigate(generateJobDetailsUrl(job));
+                                                    }
                                                 }}
                                             >
                                                 View details &gt;

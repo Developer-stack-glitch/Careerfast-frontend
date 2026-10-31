@@ -233,12 +233,12 @@ const ExperienceStep = () => {
   return (
     <div className="w-full">
       {/* Top Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4 sm:mb-6">
         <div>
           <span className="text-xs font-bold text-[#6B21A8] uppercase tracking-wider block mb-1">
-            STEP 3 OF 8
+            STEP 3 OF 9
           </span>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-1.5">
             {isFresher ? 'Add your internships or projects' : 'Tell us about your experience'}
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xl leading-relaxed mb-0">
@@ -251,7 +251,7 @@ const ExperienceStep = () => {
       </div>
 
       {/* Main Step White Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs border border-gray-100/80">
         {/* Subtle Status Switcher */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
@@ -479,7 +479,8 @@ const ExperienceStep = () => {
         open={isModalOpen}
         onOk={handleModalOk}
         onCancel={() => setIsModalOpen(false)}
-        width={680}
+        width="92%"
+        style={{ maxWidth: 680, top: 20 }}
         wrapClassName="profile-wizard-scope profile-wizard-modal"
         confirmLoading={loading}
         okText={isFresher ? "Save Entry" : "Save Experience"}

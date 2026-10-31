@@ -11,7 +11,7 @@ import axios from "axios";
 import { requestForToken, messaging } from "../firebase/fireBase";
 import { onMessage } from "firebase/messaging";
 
-const CLIENT_ID = "288981358654-vrhl2uqu61r1ju40blnk4ibde6sbnu47.apps.googleusercontent.com";
+const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "288981358654-vrhl2uqu61r1ju40blnk4ibde6sbnu47.apps.googleusercontent.com";
 
 // Suppress specific noisy development warnings from Dev Overlay
 if (typeof window !== "undefined") {

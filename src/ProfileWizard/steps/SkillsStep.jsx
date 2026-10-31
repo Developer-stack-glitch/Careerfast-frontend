@@ -193,12 +193,12 @@ const SkillsStep = () => {
   return (
     <div className="w-full">
       {/* Top Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4 sm:mb-6">
         <div>
           <span className="text-xs font-bold text-[#6B21A8] uppercase tracking-wider block mb-1">
-            STEP 5 OF 8
+            STEP 5 OF 9
           </span>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-1.5">
             Showcase your skills
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xl leading-relaxed mb-0">
@@ -209,7 +209,7 @@ const SkillsStep = () => {
       </div>
 
       {/* Main Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-gray-100">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs border border-gray-100">
 
         {/* Search Worldwide Skills Bar */}
         <div className="mb-6">
@@ -456,6 +456,8 @@ const SkillsStep = () => {
           setIsModalOpen(false);
           setActiveSkillIndex(null);
         }}
+        width="92%"
+        style={{ maxWidth: 500, top: 20 }}
         wrapClassName="profile-wizard-scope profile-wizard-modal"
         okText="Save Experience"
         okButtonProps={{ className: "bg-[#F95721] hover:bg-[#F95721] rounded-xl font-medium" }}

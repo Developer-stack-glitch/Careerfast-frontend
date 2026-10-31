@@ -15,7 +15,7 @@
 .blogs-page-wrapper {
   background-color: var(--bg-light);
   min-height: 100vh;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   color: var(--text-main);
 }
 
@@ -793,7 +793,7 @@
   font-size: 1.2rem;
   line-height: 1.8;
   color: #2d3436;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
   word-wrap: break-word !important;
   overflow-wrap: break-word !important;
   word-break: normal !important;
@@ -1457,7 +1457,7 @@
   max-width: 1000px;
   margin: 60px auto;
   padding: 0 20px;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
 }
 
 .addblog-card {
@@ -1519,7 +1519,7 @@
   border: none;
   min-height: 300px;
   font-size: 1.1rem;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
 }
 
 .addblog-upload-label {

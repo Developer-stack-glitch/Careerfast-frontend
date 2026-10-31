@@ -11,7 +11,7 @@
 }
 
 .course-single-page {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: var(--internshala-dark);
   background-color: #ffffff;
   padding-bottom: 0px;
@@ -1189,11 +1189,11 @@
   margin-bottom: 12px !important;
 }
 
-.module-rich-text ul > li {
+.module-rich-text ul>li {
   list-style-type: disc !important;
 }
 
-.module-rich-text ol > li {
+.module-rich-text ol>li {
   list-style-type: decimal !important;
 }
 
@@ -1223,7 +1223,7 @@
   color: inherit;
 }
 
-.module-rich-text li[data-list="bullet"] > .ql-ui {
+.module-rich-text li[data-list="bullet"]>.ql-ui {
   display: none !important;
 }
 
@@ -1247,7 +1247,7 @@
   color: inherit;
 }
 
-.module-rich-text li[data-list="ordered"] > .ql-ui {
+.module-rich-text li[data-list="ordered"]>.ql-ui {
   display: none !important;
 }
 
@@ -1841,7 +1841,7 @@
   background-color: #ffffff;
   position: relative;
   overflow: hidden;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
 }
 
 .skills-v2-container {
@@ -3666,7 +3666,7 @@
   padding: 80px 0;
   display: flex;
   justify-content: center;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
 }
 
 .promo-banner-container {
@@ -3854,7 +3854,7 @@
 .exam-cert-section {
   background-color: #f0f4f8;
   padding: 80px 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
 }
 
 .exam-cert-container {
@@ -5627,6 +5627,22 @@
 
   .hero-action-buttons {
     flex-wrap: nowrap;
+    display: grid;
+    justify-content: center;
+    justify-items: center;
+    margin-bottom: 20px !important;
+  }
+
+  .success-stories-section {
+    padding: 40px 0 !important;
+  }
+
+  .about-course-section {
+    padding: 40px 20px !important;
+  }
+
+  .curriculum-course-header {
+    justify-content: center;
   }
 
   .btn-action {
@@ -5777,7 +5793,7 @@
 .why-learn-section {
   padding: 60px 0;
   background-color: #f4f7fb;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Geist', sans-serif;
 }
 
 .why-learn-container {
@@ -6324,11 +6340,24 @@
 
 @media (max-width: 480px) {
   .success-stories-section .story-card {
-    width: 150px;
+    width: 250px;
+    padding: 40px 20px 30px;
   }
 
   .success-stories-section .real-text {
     font-size: 60px;
+  }
+
+  .projects-slider-container .slick-slide>div {
+    padding: 0 0px !important;
+  }
+
+  .cert-showcase-actions {
+    display: grid !important;
+  }
+
+  .about-course-title {
+    font-size: 28px !important;
   }
 
   .success-stories-section .stars-icon img {
@@ -6805,11 +6834,11 @@
   line-height: 1.6;
 }
 
-.about-course-desc-html ul > li {
+.about-course-desc-html ul>li {
   list-style-type: disc !important;
 }
 
-.about-course-desc-html ol > li {
+.about-course-desc-html ol>li {
   list-style-type: decimal !important;
 }
 
@@ -6834,7 +6863,7 @@
   color: #475569;
 }
 
-.about-course-desc-html li[data-list="bullet"] > .ql-ui {
+.about-course-desc-html li[data-list="bullet"]>.ql-ui {
   display: none !important;
 }
 
@@ -6858,7 +6887,7 @@
   color: #475569;
 }
 
-.about-course-desc-html li[data-list="ordered"] > .ql-ui {
+.about-course-desc-html li[data-list="ordered"]>.ql-ui {
   display: none !important;
 }
 

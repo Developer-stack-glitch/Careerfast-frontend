@@ -35,7 +35,7 @@
 .profile-layout {
   min-height: 100vh;
   background-color: var(--pf-bg);
-  font-family: 'Plus Jakarta Sans', 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Sidebar Styles */
@@ -876,7 +876,7 @@
 }
 
 .watchlist-container .ant-tabs {
-  font-family: "Inter", sans-serif;
+  font-family: "Geist", sans-serif;
 }
 
 .watchlist-container .ant-tabs-nav {
@@ -2748,7 +2748,7 @@
   font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 24px;
-  font-family: "Inter", sans-serif;
+  font-family: "Geist", sans-serif;
 }
 
 .experience-preview .summary-header h3 svg {
@@ -2843,7 +2843,7 @@
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
-  font-family: "Inter", sans-serif;
+  font-family: "Geist", sans-serif;
 }
 
 .experience-preview .company-designations {
@@ -2908,7 +2908,7 @@
 }
 
 .work-experience-section {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, sans-serif;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -3418,7 +3418,7 @@
   align-items: center;
   min-height: 100vh;
   padding: 0px 20px 20px 20px;
-  font-family: "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont,
+  font-family: "Geist", "Segoe UI", -apple-system, BlinkMacSystemFont,
     sans-serif;
 }
 
@@ -3760,7 +3760,7 @@
 .profile-layout {
   min-height: 100vh;
   background-color: #f4f5f7 !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 .profile-content-layout {
@@ -4636,7 +4636,7 @@
   font-weight: 800;
   color: #6800ad;
   letter-spacing: -0.8px;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .naukri-logo-dot {

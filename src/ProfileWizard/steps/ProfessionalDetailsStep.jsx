@@ -241,11 +241,11 @@ const ProfessionalDetailsStep = () => {
   return (
     <div className="w-full">
       {/* Top Header */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <span className="text-xs font-bold text-[#6B21A8] uppercase tracking-wider block mb-1">
-          STEP 2 OF 8
+          STEP 2 OF 9
         </span>
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-1.5">
           Build your professional identity
         </h1>
         <p className="text-xs sm:text-sm text-gray-500 max-w-xl leading-relaxed mb-0">
@@ -254,20 +254,20 @@ const ProfessionalDetailsStep = () => {
       </div>
 
       {/* Main Step White Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs border border-gray-100/80">
         {/* Experience Status Selector */}
-        <div className="mb-6 p-4 rounded-2xl bg-[#FAF5FF] border border-[#EDE9FE]">
+        <div className="mb-6 p-3.5 sm:p-4 rounded-2xl bg-[#FAF5FF] border border-[#EDE9FE]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="text-sm font-bold text-gray-900 mb-0.5">What is your experience status?</p>
               <p className="text-xs text-gray-500 mb-0">Select your status to customize your profile details.</p>
             </div>
-            <div className="flex bg-white p-1 rounded-xl border border-gray-200 shrink-0 shadow-sm">
+            <div className="flex bg-white p-1 rounded-xl border border-gray-200 w-full sm:w-auto shrink-0 shadow-xs">
               <button
                 type="button"
                 onClick={() => handleStatusChange(true)}
-                className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${isFresher
-                  ? 'bg-[#6B21A8] text-white shadow-sm'
+                className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-lg text-xs font-medium transition-all text-center ${isFresher
+                  ? 'bg-[#6B21A8] text-white shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
                   }`}
               >
@@ -276,8 +276,8 @@ const ProfessionalDetailsStep = () => {
               <button
                 type="button"
                 onClick={() => handleStatusChange(false)}
-                className={`px-4 py-2 rounded-lg text-xs font-medium transition-all ${!isFresher
-                  ? 'bg-[#6B21A8] text-white shadow-sm'
+                className={`flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-lg text-xs font-medium transition-all text-center ${!isFresher
+                  ? 'bg-[#6B21A8] text-white shadow-xs'
                   : 'text-gray-600 hover:text-gray-900'
                   }`}
               >

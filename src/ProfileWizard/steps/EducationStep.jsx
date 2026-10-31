@@ -147,12 +147,13 @@ const EducationStep = () => {
   return (
     <div className="w-full">
       {/* Top Header */}
-      <div className="flex items-start justify-between mb-6">
+      {/* Top Header */}
+      <div className="flex items-start justify-between mb-4 sm:mb-6">
         <div>
           <span className="text-xs font-bold text-[#6B21A8] uppercase tracking-wider block mb-1">
-            STEP 4 OF 8
+            STEP 4 OF 9
           </span>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-1.5">
             Add your education
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xl leading-relaxed mb-0">
@@ -163,7 +164,7 @@ const EducationStep = () => {
       </div>
 
       {/* Main White Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs border border-gray-100/80">
         {educationList.length === 0 ? (
           <div className="text-center py-10 bg-[#F8F9FE] rounded-2xl border border-dashed border-purple-200 p-8">
             <p className="text-xs text-gray-500 mb-4">You haven't added any education details yet.</p>
@@ -251,7 +252,8 @@ const EducationStep = () => {
         open={isModalOpen}
         onOk={handleModalOk}
         onCancel={() => setIsModalOpen(false)}
-        width={680}
+        width="92%"
+        style={{ maxWidth: 680, top: 20 }}
         wrapClassName="profile-wizard-scope profile-wizard-modal"
         confirmLoading={loading}
         okText="Save Education"

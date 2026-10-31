@@ -1,5 +1,5 @@
 body {
-  font-family: "Inter", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   background-color: #f9f9f9;
 }
 
@@ -795,7 +795,7 @@ a {
   box-shadow: rgb(0 0 0 / 25%) 0px 1px 3px, rgb(75 0 255 / 24%) 0px 1px 2px;
   padding: 25px 30px;
   border: none;
-  font-family: "Inter var", "Helvetica Now", system-ui, sans-serif;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   position: relative;
   overflow: hidden;
   backdrop-filter: blur(12px);
@@ -1142,7 +1142,7 @@ a {
 }
 
 .Toastify__toast {
-  font-family: "Inter", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .premium-job-details .icon {
@@ -1617,7 +1617,7 @@ a {
 /* faq */
 
 .ant-collapse-item {
-  text-align: justify;
+  text-align: left;
   padding: 20px 0px 10px 0;
 }
 
@@ -2270,6 +2270,7 @@ a {
 .cf4-time-icon {
   font-size: 13px;
 }
+
 .cf4-job-list-wrapper {
   max-height: calc(150vh - 120px);
   overflow-y: auto;
@@ -2801,7 +2802,7 @@ a {
   font-weight: 800;
   color: #1a1a1a;
   margin-bottom: 4px;
-  font-family: "Inter", sans-serif;
+  font-family: "Geist", sans-serif;
 }
 
 .results-subtitle {
@@ -2832,4 +2833,4 @@ a {
 .naukri-job-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(120, 51, 255, 0.12);
-}
+}

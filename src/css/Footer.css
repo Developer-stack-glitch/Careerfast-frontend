@@ -1,14 +1,9 @@
-* {
-  font-family: "Outfit", sans-serif !important;
-}
-
-
 .footer {
   background-color: #0f172a;
   /* Slate 900 */
   color: #f8fafc;
   padding: 60px 0 40px;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family: 'Geist', -apple-system, sans-serif;
 }
 
 .footer-container {

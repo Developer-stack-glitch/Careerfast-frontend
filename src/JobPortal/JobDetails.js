@@ -994,46 +994,128 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
         <Header noSticky={true} />
         <main className="njd-page-wrapper">
           <div className="njd-container">
-            <Row gutter={24}>
-              <Col lg={17} md={24}>
-                <div className="njd-header-card" style={{ padding: '24px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ flex: 1, paddingRight: '20px' }}>
-                      <Skeleton.Input active size="large" style={{ width: '60%', height: '32px', marginBottom: '16px' }} />
-                      <br />
-                      <Skeleton.Input active size="small" style={{ width: '40%', marginBottom: '24px' }} />
-                      <div className="njd-header-stats" style={{ display: 'flex', gap: '20px', borderBottom: '1px solid var(--njd-border)', paddingBottom: '20px' }}>
-                        <Skeleton.Input active size="small" style={{ width: '100px' }} />
-                        <Skeleton.Input active size="small" style={{ width: '120px' }} />
-                        <Skeleton.Input active size="small" style={{ width: '150px' }} />
+            <Row gutter={[24, 20]}>
+              <Col lg={17} md={24} xs={24}>
+                {/* Header Card Skeleton */}
+                <div className="njd-header-card njd-skeleton-card">
+                  <div className="njd-skeleton-top-row">
+                    <div className="njd-skeleton-info">
+                      <div className="njd-shimmer njd-skel-title" />
+                      <div className="njd-skel-company-row">
+                        <div className="njd-shimmer njd-skel-company" />
+                        <div className="njd-shimmer njd-skel-rating" />
                       </div>
-                      <div className="njd-header-footer" style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-                        <Skeleton.Input active size="small" style={{ width: '250px' }} />
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                          <Skeleton.Button active shape="round" style={{ width: '120px', height: '40px' }} />
-                          <Skeleton.Button active shape="round" style={{ width: '100px', height: '40px' }} />
+                      <div className="njd-skel-stats-row">
+                        <div className="njd-skel-stat-item">
+                          <div className="njd-shimmer njd-skel-icon" />
+                          <div className="njd-shimmer njd-skel-stat-text" style={{ width: 85 }} />
+                        </div>
+                        <div className="njd-stat-sep" />
+                        <div className="njd-skel-stat-item">
+                          <div className="njd-shimmer njd-skel-icon" />
+                          <div className="njd-shimmer njd-skel-stat-text" style={{ width: 100 }} />
+                        </div>
+                        <div className="njd-stat-sep" />
+                        <div className="njd-skel-stat-item">
+                          <div className="njd-shimmer njd-skel-icon" />
+                          <div className="njd-shimmer njd-skel-stat-text" style={{ width: 90 }} />
                         </div>
                       </div>
                     </div>
-                    <Skeleton.Avatar active shape="square" size={80} style={{ borderRadius: '8px' }} />
+                    <div className="njd-shimmer njd-skel-logo" />
+                  </div>
+
+                  <div className="njd-skel-footer-row">
+                    <div className="njd-skel-meta-group">
+                      <div className="njd-shimmer njd-skel-meta-pill" style={{ width: 110 }} />
+                      <div className="njd-shimmer njd-skel-meta-pill" style={{ width: 90 }} />
+                      <div className="njd-shimmer njd-skel-meta-pill" style={{ width: 95 }} />
+                    </div>
+                    <div className="njd-skel-action-btns">
+                      <div className="njd-shimmer njd-skel-btn-apply" />
+                      <div className="njd-shimmer njd-skel-btn-save" />
+                      <div className="njd-shimmer njd-skel-btn-share" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="njd-main-card">
-                  <Skeleton title active paragraph={{ rows: 8, width: ['100%', '100%', '100%', '90%', '85%', '95%', '80%', '60%'] }} />
-                  <br />
-                  <br />
-                  <Skeleton title active paragraph={{ rows: 4, width: ['40%', '50%', '40%', '60%'] }} />
+                {/* Main Card Skeleton (Description, Skills, Details) */}
+                <div className="njd-main-card njd-skeleton-card">
+                  {/* Job Description Section */}
+                  <div className="njd-shimmer njd-skel-section-title" style={{ width: 160 }} />
+                  <div className="njd-skel-paragraph">
+                    <div className="njd-shimmer njd-skel-line" style={{ width: '100%' }} />
+                    <div className="njd-shimmer njd-skel-line" style={{ width: '97%' }} />
+                    <div className="njd-shimmer njd-skel-line" style={{ width: '92%' }} />
+                    <div className="njd-shimmer njd-skel-line" style={{ width: '75%' }} />
+                  </div>
+
+                  <div className="njd-skel-paragraph" style={{ marginTop: 18 }}>
+                    <div className="njd-shimmer njd-skel-line" style={{ width: '99%' }} />
+                    <div className="njd-shimmer njd-skel-line" style={{ width: '94%' }} />
+                    <div className="njd-shimmer njd-skel-line" style={{ width: '60%' }} />
+                  </div>
+
+                  {/* Key Skills Section */}
+                  <div className="njd-skel-divider" />
+                  <div className="njd-shimmer njd-skel-section-title" style={{ width: 120 }} />
+                  <div className="njd-skel-skills-wrap">
+                    <div className="njd-shimmer njd-skel-skill-chip" style={{ width: 90 }} />
+                    <div className="njd-shimmer njd-skel-skill-chip" style={{ width: 120 }} />
+                    <div className="njd-shimmer njd-skel-skill-chip" style={{ width: 85 }} />
+                    <div className="njd-shimmer njd-skel-skill-chip" style={{ width: 105 }} />
+                    <div className="njd-shimmer njd-skel-skill-chip" style={{ width: 130 }} />
+                    <div className="njd-shimmer njd-skel-skill-chip" style={{ width: 95 }} />
+                  </div>
+
+                  {/* Job Details Section */}
+                  <div className="njd-skel-divider" />
+                  <div className="njd-shimmer njd-skel-section-title" style={{ width: 130 }} />
+                  <div className="njd-skel-grid">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                      <div key={i} className="njd-skel-grid-item">
+                        <div className="njd-shimmer njd-skel-grid-label" />
+                        <div className="njd-shimmer njd-skel-grid-value" />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </Col>
 
-              <Col lg={7} md={24}>
+              <Col lg={7} md={24} xs={24}>
                 <div className="njd-sidebar-sticky">
-                  <div className="njd-sidebar-card">
-                    <Skeleton title active paragraph={{ rows: 4 }} />
+                  {/* Related Jobs Skeleton Card */}
+                  <div className="njd-sidebar-card njd-skeleton-card">
+                    <div className="njd-shimmer njd-skel-section-title" style={{ width: 120, marginBottom: 18 }} />
+                    <div className="njd-skel-related-list">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="njd-skel-related-item">
+                          <div className="njd-shimmer njd-skel-related-logo" />
+                          <div className="njd-skel-related-body">
+                            <div className="njd-shimmer njd-skel-line" style={{ width: '85%', height: 14, marginBottom: 6 }} />
+                            <div className="njd-shimmer njd-skel-line" style={{ width: '60%', height: 12, marginBottom: 6 }} />
+                            <div className="njd-shimmer njd-skel-line" style={{ width: '70%', height: 11 }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="njd-sidebar-card" style={{ marginTop: '16px' }}>
-                    <Skeleton title active paragraph={{ rows: 4 }} />
+
+                  {/* Recommended Courses Skeleton Card */}
+                  <div className="njd-sidebar-card njd-skeleton-card" style={{ marginTop: 16 }}>
+                    <div className="njd-shimmer njd-skel-section-title" style={{ width: 160, marginBottom: 18 }} />
+                    <div className="njd-skel-related-list">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="njd-skel-related-item">
+                          <div className="njd-shimmer njd-skel-course-img" />
+                          <div className="njd-skel-related-body">
+                            <div className="njd-shimmer njd-skel-line" style={{ width: '90%', height: 14, marginBottom: 6 }} />
+                            <div className="njd-shimmer njd-skel-line" style={{ width: '50%', height: 12, marginBottom: 6 }} />
+                            <div className="njd-shimmer njd-skel-line" style={{ width: '65%', height: 11 }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </Col>
@@ -1043,7 +1125,6 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
       </>
     );
   }
-
 
   if (!loading && postDetails.length === 0) {
     return (
@@ -1360,8 +1441,8 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                   )}
 
                   <div className="njd-header-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ flex: 1 }}>
+                    <div className="njd-header-top-row">
+                      <div className="njd-header-main-info" style={{ flex: 1, minWidth: 0 }}>
                         <h1 className="njd-job-title">{job.title}</h1>
                         <a href="#" className="njd-company-link">{job.company}</a>
 
@@ -1591,11 +1672,35 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
               <div className="njd-sidebar-sticky">
                 {sidebarLoading ? (
                   <>
-                    <div className="njd-sidebar-card">
-                      <Skeleton title active paragraph={{ rows: 4 }} />
+                    <div className="njd-sidebar-card njd-skeleton-card">
+                      <div className="njd-shimmer njd-skel-section-title" style={{ width: 120, marginBottom: 18 }} />
+                      <div className="njd-skel-related-list">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="njd-skel-related-item">
+                            <div className="njd-shimmer njd-skel-related-logo" />
+                            <div className="njd-skel-related-body">
+                              <div className="njd-shimmer njd-skel-line" style={{ width: '85%', height: 14, marginBottom: 6 }} />
+                              <div className="njd-shimmer njd-skel-line" style={{ width: '60%', height: 12, marginBottom: 6 }} />
+                              <div className="njd-shimmer njd-skel-line" style={{ width: '70%', height: 11 }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="njd-sidebar-card" style={{ marginTop: '16px' }}>
-                      <Skeleton title active paragraph={{ rows: 4 }} />
+                    <div className="njd-sidebar-card njd-skeleton-card" style={{ marginTop: '16px' }}>
+                      <div className="njd-shimmer njd-skel-section-title" style={{ width: 160, marginBottom: 18 }} />
+                      <div className="njd-skel-related-list">
+                        {[1, 2].map((i) => (
+                          <div key={i} className="njd-skel-related-item">
+                            <div className="njd-shimmer njd-skel-course-img" />
+                            <div className="njd-skel-related-body">
+                              <div className="njd-shimmer njd-skel-line" style={{ width: '90%', height: 14, marginBottom: 6 }} />
+                              <div className="njd-shimmer njd-skel-line" style={{ width: '50%', height: 12, marginBottom: 6 }} />
+                              <div className="njd-shimmer njd-skel-line" style={{ width: '65%', height: 11 }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </>
                 ) : (

@@ -1082,13 +1082,13 @@ export default function Header({ noSticky = false, showSearch }) {
       </div>
       <header className={`bg-white py-2 elite-header ${noSticky ? '' : 'sticky-top'}`}>
         <div className="container-fluid">
-          <div className="d-flex justify-content-between align-items-center w-100">
-            <div className="d-flex align-items-center gap-4 global_search">
+          <div className="d-flex justify-content-between align-items-center w-100 header-main-nav-row">
+            <div className="d-flex align-items-center header-brand-col">
               <div className="m-0 p-0 navbar-brand">
                 <img
                   onClick={() => smartNavigate("/")}
                   src={typeof logo === 'string' ? logo : logo?.src}
-                  style={{ cursor: "pointer", width: "180px", height: "auto", objectFit: "contain" }}
+                  style={{ cursor: "pointer" }}
                   alt="CareerFast Logo"
                   className="main-logo"
                 />
@@ -1096,7 +1096,7 @@ export default function Header({ noSticky = false, showSearch }) {
             </div>
 
             {/* Desktop Navigation & Search */}
-            <div className={`d-none d-md-flex align-items-center flex-grow-1 ${shouldShowSearch ? 'px-3' : 'justify-content-center'}`}>
+            <div className={`d-none d-md-flex align-items-center flex-grow-1 header-nav-center-col ${shouldShowSearch ? 'px-3' : 'justify-content-center'}`}>
               <nav className="nav align-items-center gap-2 flex-shrink-0">
                 {menuItems.map((item) => (
                   item.isDropdown ? (
@@ -1205,7 +1205,7 @@ export default function Header({ noSticky = false, showSearch }) {
             </div>
 
             {/* User Actions */}
-            <div className="d-flex align-items-center gap-4">
+            <div className="d-flex align-items-center header-actions-col">
               {mounted && isLoggedIn === true ? (
                 <>
                   <div
@@ -1298,7 +1298,7 @@ export default function Header({ noSticky = false, showSearch }) {
                   )}
                 </>
               ) : (
-                <div className="d-flex align-items-center gap-3">
+                <div className="d-flex align-items-center header-guest-actions">
                   <AntButton
                     onClick={() => smartNavigate("/login")}
                     className="naukri-login-btn"
@@ -1312,10 +1312,12 @@ export default function Header({ noSticky = false, showSearch }) {
                   >
                     Register
                   </AntButton>
-                  <div style={{ width: '1px', height: '20px', backgroundColor: '#cbd5e1', margin: '0 4px' }}></div>
-                  <Dropdown menu={{ items: employerItems }} trigger={['hover']} placement="bottomRight">
-                    <div className="for-employers-dropdown" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: '#1e293b', fontWeight: 500, fontSize: '14px' }}>
-                      For employers <IoChevronDownOutline size={14} style={{ color: '#64748b' }} />
+                  <div className="header-actions-divider"></div>
+                  <Dropdown menu={{ items: employerItems }} trigger={['click', 'hover']} placement="bottomRight">
+                    <div className="for-employers-dropdown" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', color: '#1e293b', fontWeight: 500 }}>
+                      <span className="for-employers-text-full">For employers</span>
+                      <span className="for-employers-text-short">Employers</span>
+                      <IoChevronDownOutline className="for-employers-arrow" size={13} style={{ color: '#64748b', flexShrink: 0 }} />
                     </div>
                   </Dropdown>
                 </div>
@@ -1353,10 +1355,10 @@ export default function Header({ noSticky = false, showSearch }) {
                 <Sparkles size={13} className="text-purple-600" />
                 <span>Instant Job Search</span>
               </div>
-              <h2 className="text-[24px] sm:text-[30px] font-semibold text-slate-900 tracking-tight mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              <h2 className="text-[24px] sm:text-[30px] font-semibold text-slate-900 tracking-tight mb-1" style={{ fontFamily: "'Geist', sans-serif" }}>
                 Find your dream job now
               </h2>
-              <p className="text-[15px] sm:text-[16px] text-[#474d6a] font-normal mb-0" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              <p className="text-[15px] sm:text-[16px] text-[#474d6a] font-normal mb-0" style={{ fontFamily: "'Geist', sans-serif" }}>
                 5 lakh+ jobs for you to explore
               </p>
             </div>
@@ -1667,7 +1669,7 @@ export default function Header({ noSticky = false, showSearch }) {
             </div>
 
             <div className="profile-info-content">
-              <Title level={4} style={{ color: "white", margin: 0, fontFamily: 'Outfit', fontWeight: 600 }}>
+              <Title level={4} style={{ color: "white", margin: 0, fontFamily: 'Geist', fontWeight: 600 }}>
                 {fname} {lname}
               </Title>
               <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, display: 'block', marginBottom: 4 }}>
@@ -2213,86 +2215,314 @@ export default function Header({ noSticky = false, showSearch }) {
             }
           }
 
+          /* --- Header Layout & Mobile Clean UI --- */
+          .header-main-nav-row {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;
+            flex-wrap: nowrap !important;
+          }
+
+          .header-brand-col {
+            order: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            flex-shrink: 0 !important;
+            margin: 0 !important;
+          }
+
+          .header-nav-center-col {
+            order: 2 !important;
+          }
+
+          .header-brand-col .navbar-brand {
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+          }
+
+          .main-logo {
+            height: 38px;
+            width: auto;
+            max-width: 175px;
+            object-fit: contain;
+            transition: height 0.2s ease;
+          }
+
+          .header-actions-col {
+            order: 3 !important;
+            display: flex !important;
+            align-items: center !important;
+            flex-shrink: 0 !important;
+            margin-left: auto !important;
+            gap: 14px;
+          }
+
+          .header-guest-actions {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px;
+            flex-wrap: nowrap !important;
+          }
+
+          .header-logged-in-actions {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px;
+            flex-wrap: nowrap !important;
+          }
+
+          .header-actions-divider {
+            width: 1px;
+            height: 20px;
+            background-color: #cbd5e1;
+            margin: 0 4px;
+            flex-shrink: 0;
+          }
+
+          .for-employers-dropdown {
+            cursor: pointer;
+            display: flex !important;
+            align-items: center !important;
+            gap: 4px;
+            color: #1e293b;
+            font-weight: 500;
+            font-size: 14px;
+            white-space: nowrap !important;
+            transition: color 0.2s ease;
+            user-select: none;
+          }
+
+          .for-employers-dropdown:hover {
+            color: #ea580c !important;
+          }
+
+          .for-employers-dropdown .for-employers-arrow {
+            color: #64748b;
+            transition: color 0.2s ease, transform 0.2s ease;
+          }
+
+          .for-employers-dropdown:hover .for-employers-arrow {
+            color: #ea580c !important;
+          }
+
+          .for-employers-text-full {
+            display: inline;
+          }
+
+          .for-employers-text-short {
+            display: none;
+          }
+
           @media (max-width: 768px) {
+            .elite-header {
+              padding: 6px 0 !important;
+            }
+
             .elite-header .container-fluid {
               display: flex !important;
-              flex-wrap: wrap !important;
+              flex-wrap: nowrap !important;
               align-items: center !important;
               justify-content: space-between !important;
-              padding-left: 15px !important;
-              padding-right: 15px !important;
+              padding-left: 12px !important;
+              padding-right: 12px !important;
             }
 
-            .global_search {
-              display: contents !important;
+            .header-main-nav-row {
+              display: flex !important;
+              flex-direction: row !important;
+              justify-content: space-between !important;
+              align-items: center !important;
+              width: 100% !important;
+              flex-wrap: nowrap !important;
+              gap: 8px !important;
             }
 
-            .navbar-brand {
+            .header-brand-col {
               order: 1 !important;
               margin: 0 !important;
               padding: 0 !important;
+              flex-shrink: 0 !important;
             }
 
-            .navbar-toggler {
+            .header-actions-col {
               order: 2 !important;
               margin-left: auto !important;
-              padding: 4px 8px !important;
-              font-size: 1.1rem !important;
+              flex-shrink: 0 !important;
+              gap: 8px !important;
             }
 
-            /* Targeting the AutoComplete wrapper */
-            .elite-header .ant-select { 
-              order: 3 !important;
-              width: 100% !important;
-              margin-top: 15px !important;
-              margin-bottom: 5px !important;
-            }
-
-            .elite-search-input {
-              width: 100% !important;
-              height: 42px !important;
-              padding: 10px 15px !important;
-              font-size: 14px !important;
+            .header-guest-actions {
+              gap: 8px !important;
             }
 
             .main-logo {
-              height: 30px !important;
-              width: auto;
+              height: 29px !important;
+              width: auto !important;
+              max-width: 125px !important;
             }
 
-            .elite-search-dropdown {
-              width: calc(100vw - 30px) !important;
-              left: 15px !important;
-              max-width: none !important;
+            .naukri-login-btn {
+              height: 32px !important;
+              padding: 0 13px !important;
+              font-size: 13px !important;
+              border-radius: 16px !important;
+              font-weight: 600 !important;
             }
 
-            .mobile_sidebar {
-              width: 100%;
-              display: flex !important;
-              flex-direction: column;
-              align-items: stretch !important;
-              gap: 15px !important;
-              margin-top: 20px !important;
+            .naukri-register-btn {
+              height: 32px !important;
+              padding: 0 13px !important;
+              font-size: 13px !important;
+              border-radius: 16px !important;
+              font-weight: 600 !important;
+            }
+
+            .for-employers-dropdown {
+              font-size: 13px !important;
+              gap: 3px !important;
+              white-space: nowrap !important;
+            }
+
+            .header-actions-divider {
+              height: 16px !important;
+              margin: 0 2px !important;
             }
 
             .host-button {
-              width: 100%;
-              justify-content: center;
-              height: 45px !important;
+              height: 32px !important;
+              padding: 0 12px !important;
+              font-size: 13px !important;
+              border-radius: 16px !important;
+              width: auto !important;
+            }
+
+            .elite-search-dropdown {
+              width: calc(100vw - 24px) !important;
+              left: 12px !important;
+              max-width: none !important;
             }
           }
 
-          @media (max-width: 480px) {
-            .elite-search-input {
-              min-width: 100px;
+          @media (max-width: 576px) {
+            .elite-header {
+              padding: 5px 0 !important;
             }
-            
+
+            .elite-header .container-fluid {
+              padding-left: 10px !important;
+              padding-right: 10px !important;
+            }
+
+            .header-main-nav-row {
+              gap: 6px !important;
+            }
+
             .main-logo {
-              height: 28px !important;
+              height: 26px !important;
+              max-width: 112px !important;
             }
-            
-            .elite-search-input::placeholder {
-              font-size: 11px;
+
+            .header-actions-col {
+              gap: 12px !important;
+            }
+
+            .hp-search-btn {
+    padding: 8px 40px !important;
+}
+
+            .header-guest-actions {
+              gap: 5px !important;
+            }
+
+            .naukri-login-btn {
+              height: 30px !important;
+              padding: 0 10px !important;
+              font-size: 12px !important;
+              border-radius: 15px !important;
+            }
+
+            .naukri-register-btn {
+              height: 30px !important;
+              padding: 0 11px !important;
+              font-size: 12px !important;
+              border-radius: 15px !important;
+            }
+
+            .for-employers-dropdown {
+              font-size: 12px !important;
+              gap: 2px !important;
+            }
+
+            .for-employers-text-full {
+              display: none;
+            }
+
+            .for-employers-text-short {
+              display: inline;
+            }
+
+            .header-actions-divider {
+              height: 14px !important;
+              margin: 0 1px !important;
+            }
+
+            .host-button {
+              height: 30px !important;
+              padding: 0 10px !important;
+              font-size: 12px !important;
+              border-radius: 15px !important;
+              width: auto !important;
+            }
+          }
+
+          @media (max-width: 380px) {
+            .elite-header .container-fluid {
+              padding-left: 6px !important;
+              padding-right: 6px !important;
+            }
+
+            .header-main-nav-row {
+              gap: 4px !important;
+            }
+
+            .main-logo {
+              height: 24px !important;
+              max-width: 95px !important;
+            }
+
+            .header-actions-col {
+              gap: 4px !important;
+            }
+
+            .header-guest-actions {
+              gap: 4px !important;
+            }
+
+            .naukri-login-btn {
+              height: 28px !important;
+              padding: 0 8px !important;
+              font-size: 11.5px !important;
+              border-radius: 14px !important;
+            }
+
+            .naukri-register-btn {
+              height: 28px !important;
+              padding: 0 9px !important;
+              font-size: 11.5px !important;
+              border-radius: 14px !important;
+            }
+
+            .for-employers-dropdown {
+              font-size: 11.5px !important;
+            }
+
+            .header-actions-divider {
+              height: 12px !important;
+              margin: 0 1px !important;
             }
           }
 
@@ -2329,7 +2559,7 @@ export default function Header({ noSticky = false, showSearch }) {
             transition: all 0.25s ease;
             position: relative;
             font-weight: 500;
-            font-family: "Outfit", sans-serif !important;
+            font-family: "Geist", sans-serif !important;
           }
 
           .sidebar-item.active {
@@ -2386,7 +2616,7 @@ export default function Header({ noSticky = false, showSearch }) {
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
-            font-family: "Outfit", sans-serif !important;
+            font-family: "Geist", sans-serif !important;
           }
 
           .mega-list li:hover {
@@ -2466,7 +2696,7 @@ export default function Header({ noSticky = false, showSearch }) {
             font-size: 14px;
             color: #475569;
             font-weight: 500;
-            font-family: "Outfit", sans-serif !important;
+            font-family: "Geist", sans-serif !important;
             transition: all 0.25s ease;
           }
 
@@ -2671,7 +2901,7 @@ export default function Header({ noSticky = false, showSearch }) {
             font-size: 15px;
             font-weight: 500;
             color: #1e293b;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Geist', sans-serif;
             transition: color 0.3s ease;
           }
 
@@ -2699,7 +2929,7 @@ export default function Header({ noSticky = false, showSearch }) {
             border-radius: 12px !important;
             font-weight: 600 !important;
             font-size: 14px !important;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Geist', sans-serif;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
           }
 
@@ -2762,7 +2992,7 @@ export default function Header({ noSticky = false, showSearch }) {
             font-weight: 600;
             color: #1e293b;
             margin-bottom: 2px;
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Geist', sans-serif;
             letter-spacing: -0.01em;
           }
 

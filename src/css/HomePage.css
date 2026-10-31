@@ -10,7 +10,7 @@
 }
 
 .hp-container {
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   background-color: var(--naukri-white);
   color: var(--naukri-dark);
 }
@@ -30,13 +30,13 @@
   font-weight: 600;
   color: #121212;
   margin-bottom: 8px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-hero-subtitle {
   font-size: 18px;
   color: #474d6a;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   margin-bottom: 40px;
 }
 
@@ -236,12 +236,12 @@
   font-size: 15px;
   width: 100%;
   color: #121212;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-search-input::placeholder {
   color: #adb5bd;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-search-btn {
@@ -254,7 +254,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-search-btn:hover {
@@ -286,7 +286,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   white-space: nowrap;
   max-width: 320px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-quick-chip:hover {
@@ -302,7 +302,7 @@
   padding: 1px 6px;
   border-radius: 10px;
   font-size: 11px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-quick-chip .chip-new {
@@ -311,7 +311,7 @@
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 /* Trending Categories (Naukri Style Grid) */
@@ -378,7 +378,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 140px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   /* Prevent long words from breaking layout */
 }
 
@@ -480,7 +480,7 @@
   font-weight: 600;
   color: #121212;
   margin: 0 0 8px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-company-rating {
@@ -491,18 +491,18 @@
   align-items: center;
   gap: 4px;
   justify-content: center;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-company-rating span {
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-company-type {
   font-size: 13px;
   color: #8292b4;
   margin: 0;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 /* Roles Section */
@@ -660,7 +660,7 @@
   font-weight: 600;
   margin-bottom: 8px;
   color: #121212;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-fresher-header h3 {
@@ -668,7 +668,7 @@
   font-weight: 500;
   color: #474d6a !important;
   margin-bottom: 20px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-tabs-scroll-wrapper {
@@ -751,7 +751,7 @@
   cursor: pointer;
   transition: all 0.2s;
   color: #474d6a;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap !important;
   flex-shrink: 0;
   user-select: none;
@@ -811,7 +811,7 @@
   margin-bottom: 8px;
   font-size: 32px;
   font-weight: 600;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-section-subtitle {
@@ -820,7 +820,7 @@
   margin-bottom: 40px;
   font-weight: 400;
   text-align: center;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-fresher-card:hover {
@@ -837,7 +837,7 @@
   align-items: center;
   gap: 4px;
   margin-bottom: 16px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   animation: hp-glow-pulse 2s ease-in-out infinite;
   letter-spacing: 0.5px;
 }
@@ -864,7 +864,7 @@
   font-weight: 500;
   margin-bottom: 7px;
   color: #121212;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -892,7 +892,7 @@
   font-size: 14px;
   color: var(--naukri-light-grey);
   display: block;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -937,7 +937,7 @@
   background: #f8fafc;
   padding: 4px 10px;
   border-radius: 6px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-card-skills {
@@ -978,7 +978,7 @@
   padding: 2px 8px;
   border-radius: 6px;
   font-weight: 500;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   flex-shrink: 0;
   border: 1px solid #e0e7ff;
@@ -991,7 +991,7 @@
   padding: 2px 8px;
   border-radius: 6px;
   font-weight: 500;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   flex-shrink: 0;
   border: 1px solid #ffedd5;
@@ -1001,7 +1001,7 @@
   margin-top: auto;
   border-top: 1px solid #f0f3f7;
   padding-top: 16px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-card-meta-item {
@@ -1011,11 +1011,11 @@
   font-size: 13px;
   color: #474d6a;
   margin-bottom: 8px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-card-meta-item span {
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-card-footer {
@@ -1031,7 +1031,7 @@
   padding: 2px 8px;
   border-radius: 4px;
   color: #8292b4;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-internship-section .hp-card-link {
@@ -1043,7 +1043,7 @@
   font-weight: 500;
   color: var(--naukri-blue);
   text-decoration: none;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-card-link:hover {
@@ -1153,7 +1153,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-employer-tag .briefcase-icon {
@@ -1166,7 +1166,7 @@
   line-height: 1.2;
   margin-bottom: 6px;
   color: #1a1a1a;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-employer-right p {
@@ -1174,7 +1174,7 @@
   color: #4b5563;
   margin-bottom: 32px;
   line-height: 1.6;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .highlight-orange {
@@ -1196,7 +1196,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-employer-btn:hover {
@@ -1296,7 +1296,7 @@
   font-weight: 600;
   color: #1e1e1e;
   margin: 8px 0 8px 0;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   text-align: left;
 }
 
@@ -1304,7 +1304,7 @@
   font-size: 14px;
   color: #666;
   margin: 0;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-prm-right {
@@ -1379,7 +1379,7 @@
   font-weight: 500;
   color: #1e1e1e;
   margin: 0 0 2px 0;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1391,7 +1391,7 @@
   font-size: 13px;
   color: #8292b4;
   margin: 0;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1446,7 +1446,7 @@
   align-items: center;
   gap: 6px;
   transition: gap 0.2s;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-prm-view-all:hover {
@@ -1493,11 +1493,17 @@
     flex-direction: column;
     text-align: center;
     padding: 40px 20px;
+    gap: 10px;
   }
 
   .hp-prm-left {
-    margin-bottom: 30px;
+    margin-bottom: 0px;
     width: 100%;
+    align-items: center;
+  }
+
+  .hp-prm-left-content {
+    text-align: center;
   }
 
   .hp-prm-right {
@@ -1537,7 +1543,7 @@
   color: #000;
   text-align: left;
   transition: 0.2s all;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .counter-card:hover {
@@ -1563,7 +1569,7 @@
   font-weight: 700;
   margin-bottom: 4px;
   margin-top: 0px !important;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .counter-card p {
@@ -1571,7 +1577,7 @@
   color: #555;
   margin-bottom: 16px;
   margin-top: 0px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .company-logos1,
@@ -1602,6 +1608,10 @@
 @media (max-width: 600px) {
   .counter {
     padding: 40px 10px;
+  }
+
+  .company-logos1 img {
+    margin-left: 0;
   }
 
   .counter-card {
@@ -1679,13 +1689,13 @@
   font-weight: 600;
   color: #121212;
   margin-bottom: 12px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-section-header-center p {
   font-size: 18px;
   color: #666;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-testimonial-card {
@@ -1721,7 +1731,7 @@
   margin-bottom: 30px;
   position: relative;
   z-index: 2;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-testimonial-user {
@@ -1805,7 +1815,7 @@
   letter-spacing: 2px;
   margin-bottom: 16px;
   border: 1px solid rgba(95, 46, 234, 0.15);
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   box-shadow: 0 4px 12px rgba(95, 46, 234, 0.05);
 }
 
@@ -1832,7 +1842,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
@@ -1915,7 +1925,7 @@
   text-transform: uppercase;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   z-index: 2;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 /* Body Content */
@@ -1969,7 +1979,7 @@
   border-style: solid;
   letter-spacing: 0.4px;
   text-transform: uppercase;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   flex-shrink: 0;
   max-width: 150px;
@@ -1984,7 +1994,7 @@
   color: #0f172a;
   line-height: 1.4;
   margin-bottom: 8px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
@@ -1996,7 +2006,7 @@
   color: #475569;
   line-height: 1.6;
   margin-bottom: 20px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2020,7 +2030,7 @@
   font-size: 13px;
   color: #475569;
   font-weight: 600;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 /* Prices */
@@ -2041,14 +2051,14 @@
   font-size: 20px;
   font-weight: 700;
   color: #0f172a;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-cert-price-orig {
   font-size: 14px;
   text-decoration: line-through;
   color: #94a3b8;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-cert-discount-tag {
@@ -2057,7 +2067,7 @@
   padding: 4px 10px;
   border-radius: 8px;
   letter-spacing: 0.5px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 /* Card Footer and Button */
@@ -2081,7 +2091,7 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-cert-card-v2:hover .hp-cert-btn-v2 {
@@ -2122,7 +2132,7 @@
   align-items: center;
   gap: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-cert-explore-more-btn:hover {
@@ -2218,7 +2228,7 @@
   font-weight: 500;
   margin-bottom: 12px;
   letter-spacing: -0.5px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-premium-info p {
@@ -2226,7 +2236,7 @@
   font-size: 15px;
   line-height: 1.7;
   margin-bottom: 24px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-premium-btn {
@@ -2242,7 +2252,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-premium-card:hover .hp-premium-btn {
@@ -2297,7 +2307,7 @@
   font-weight: 600;
   color: #121212;
   font-size: 16px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 /* Newsletter (LinkedIn Style) */
@@ -2434,7 +2444,7 @@
   display: inline-block;
   width: fit-content;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-ip-illustration {
@@ -2448,7 +2458,7 @@
   font-weight: 600;
   color: #121212;
   line-height: 1.2;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-ip-panel {
@@ -2472,7 +2482,7 @@
   font-size: 18px;
   font-weight: 600;
   color: #121212;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-ip-company-grid {
@@ -2510,7 +2520,7 @@
   font-size: 16px;
   font-weight: 500;
   margin: 0;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2522,7 +2532,7 @@
   color: #3c3f46;
   margin-top: 2px;
   margin-bottom: 0;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-ip-view-all {
@@ -2532,7 +2542,7 @@
   font-weight: 500;
   font-size: 15px;
   text-decoration: underline !important;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-ip-view-all:hover {
@@ -2558,13 +2568,13 @@
   font-size: 14px;
   font-weight: 400;
   color: #121212;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-ip-role-count {
   font-size: 12px;
   color: #8292b4;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 @media (max-width: 1100px) {
@@ -2761,7 +2771,7 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .hp-blog-excerpt {
@@ -2860,7 +2870,7 @@
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 16px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-testimonials-header-v2 p {
@@ -2868,7 +2878,7 @@
   color: #64748b;
   max-width: 600px;
   margin: 0 auto;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-testimonials-grid-v2 {
@@ -2915,7 +2925,7 @@
   color: #334155;
   line-height: 1.6;
   margin-bottom: 20px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-testimonial-user-v2 {
@@ -2941,7 +2951,7 @@
   font-weight: 600;
   color: #0f172a;
   line-height: 1.2;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 .hp-testimonial-role-v2 {
@@ -2949,7 +2959,7 @@
   color: #64748b;
   line-height: 1.2;
   margin-top: 2px;
-  font-family: "Outfit", sans-serif !important;
+  font-family: "Geist", sans-serif !important;
 }
 
 @media (max-width: 1024px) {
@@ -2999,7 +3009,7 @@
   color: #0f172a;
   margin-bottom: 12px;
   line-height: 1.25;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 .hp-grid-bg-label {
@@ -3029,7 +3039,7 @@
   max-width: 720px;
   margin: 0 auto;
   line-height: 1.6;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
 }
 
 /* 3-Card Grid */
@@ -3172,7 +3182,7 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-family: 'Outfit', sans-serif !important;
+  font-family: 'Geist', sans-serif !important;
   min-height: 50px;
   transition: color 0.25s ease;
 }
@@ -3311,6 +3321,7 @@
 
   .hp-hero {
     padding: 50px 20px 1px;
+    margin-top: 0px;
   }
 
   .hp-hero-title {
@@ -3323,9 +3334,12 @@
   }
 
   .hp-tabs-container {
-    display: grid;
     gap: 10px;
     text-align: center;
+  }
+
+  .hp-section-subtitle {
+    margin-bottom: 10px;
   }
 }
 
@@ -3815,5 +3829,17 @@
     bottom: 16px;
     right: 16px;
     padding: 8px 14px 8px 10px;
+  }
+
+  .hp-cert-section {
+    padding: 40px 20px;
+  }
+
+  .hp-premium-section {
+    padding: 40px 20px;
+  }
+
+  .hp-search-input-select .ant-select-selector {
+    text-align: left;
   }
 }

@@ -15,7 +15,11 @@
   background-color: var(--naukri-bg);
   min-height: 100vh;
   padding: 30px 0 60px 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-family: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+.naukri-layout-container * {
+  font-family: inherit;
 }
 
 .naukri-content-wrapper {
@@ -1908,3 +1912,71 @@
   white-space: nowrap;
   font-weight: 400;
 }
+
+/* ==========================================================================
+   Smooth In-Place Filtering & Loading States
+   ========================================================================== */
+.naukri-filter-progress-bar {
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(95, 46, 234, 0.08);
+  overflow: hidden;
+  border-radius: 3px;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.naukri-filter-progress-bar.active {
+  opacity: 1;
+}
+
+.naukri-filter-progress-bar.active::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, #ff7900, #5f2eea);
+  border-radius: 3px;
+  animation: naukriIndeterminateProgress 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes naukriIndeterminateProgress {
+  0% {
+    left: -40%;
+    width: 30%;
+  }
+  50% {
+    left: 30%;
+    width: 50%;
+  }
+  100% {
+    left: 100%;
+    width: 30%;
+  }
+}
+
+.naukri-job-list {
+  transition: opacity 0.25s ease;
+}
+
+.naukri-job-list-loading {
+  opacity: 0.55 !important;
+  transition: opacity 0.25s ease !important;
+  pointer-events: none !important;
+}
+
+.mobile-filter-btn.has-active {
+  border-color: #5f2eea !important;
+  color: #5f2eea !important;
+  background-color: rgba(95, 46, 234, 0.06) !important;
+  font-weight: 600 !important;
+}
+
+

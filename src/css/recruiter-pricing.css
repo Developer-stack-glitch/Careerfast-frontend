@@ -30,7 +30,7 @@
   --rp-green-text: #059669;
 
   /* Typography */
-  --rp-font: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --rp-font: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
   --rp-radius-card: 18px;
   --rp-radius-pill: 9999px;
 }

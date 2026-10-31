@@ -83,12 +83,12 @@ const ReviewStep = () => {
   return (
     <div className="w-full">
       {/* Top Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4 sm:mb-6">
         <div>
           <span className="text-xs font-bold text-[#6B21A8] uppercase tracking-wider block mb-1">
-            FINAL REVIEW
+            STEP 9 OF 9 • FINAL REVIEW
           </span>
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-1.5">
             Review your profile
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 max-w-xl leading-relaxed mb-0">
@@ -98,7 +98,7 @@ const ReviewStep = () => {
       </div>
 
       {/* Profile Header Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-7 mb-4 border border-gray-100 shadow-xs">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 mb-4 border border-gray-100 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Avatar + Main Info */}
           <div className="flex items-center gap-5 min-w-0">
@@ -180,7 +180,7 @@ const ReviewStep = () => {
       <div className="space-y-4">
 
         {/* Professional Summary */}
-        <div className="bg-white rounded-3xl p-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100/80 shadow-xs">
           <SectionHeader title="Professional Summary" stepNumber={2} onEdit={handleEdit} />
           {profileData.professional.headline && (
             <p className="text-xs font-bold text-gray-800 mb-1.5">{profileData.professional.headline}</p>
@@ -193,7 +193,7 @@ const ReviewStep = () => {
         </div>
 
         {/* Work Experience */}
-        <div className="bg-white rounded-3xl p-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100/80 shadow-xs">
           <SectionHeader title="Work Experience" stepNumber={3} onEdit={handleEdit} />
 
           {profileData.experience.list.length > 0 ? (
@@ -221,7 +221,7 @@ const ReviewStep = () => {
         </div>
 
         {/* Education */}
-        <div className="bg-white rounded-3xl p-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100/80 shadow-xs">
           <SectionHeader title="Education" stepNumber={4} onEdit={handleEdit} />
 
           {profileData.education.length > 0 ? (
@@ -251,7 +251,7 @@ const ReviewStep = () => {
         </div>
 
         {/* Skills */}
-        <div className="bg-white rounded-3xl p-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100/80 shadow-xs">
           <SectionHeader title="Skills" stepNumber={5} onEdit={handleEdit} />
 
           {profileData.skills.length > 0 ? (
@@ -271,7 +271,7 @@ const ReviewStep = () => {
         </div>
 
         {/* Job Preferences */}
-        <div className="bg-white rounded-3xl p-6">
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100/80 shadow-xs">
           <SectionHeader title="Job Preferences" stepNumber={6} onEdit={handleEdit} />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,7 +297,7 @@ const ReviewStep = () => {
         {/* Resume & Visibility Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Resume */}
-          <div className="bg-white rounded-3xl p-6">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100/80 shadow-xs">
             <SectionHeader title="Resume" stepNumber={7} onEdit={handleEdit} />
 
             {profileData.resume ? (
@@ -320,7 +320,7 @@ const ReviewStep = () => {
           </div>
 
           {/* Visibility */}
-          <div className="bg-white rounded-3xl p-6">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-gray-100/80 shadow-xs">
             <SectionHeader title="Visibility" stepNumber={8} onEdit={handleEdit} />
 
             <div className="p-3.5 border border-gray-100 rounded-2xl bg-[#F8F9FE] space-y-2.5">

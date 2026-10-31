@@ -288,11 +288,11 @@ const BasicInformationStep = () => {
   return (
     <div className="w-full">
       {/* Top Header */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <span className="text-xs font-bold text-[#6B21A8] uppercase tracking-wider block mb-1">
-          STEP 1 OF 8
+          STEP 1 OF 9
         </span>
-        <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 tracking-tight mb-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-gray-900 tracking-tight mb-1.5">
           Tell us about yourself
         </h1>
         <p className="text-xs sm:text-sm text-gray-500 max-w-xl leading-relaxed mb-0">
@@ -301,7 +301,7 @@ const BasicInformationStep = () => {
       </div>
 
       {/* Main Step White Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-xs border border-gray-100/80">
         {/* Upload Photo Section */}
         <div className="flex flex-col items-center justify-center pb-6">
           <Upload
@@ -404,9 +404,11 @@ const BasicInformationStep = () => {
                         size="small"
                         loading={isSendingOtp}
                         onClick={handleInitiateOtp}
-                        className="bg-[#6B21A8] hover:bg-[#581C87] text-white rounded-lg text-xs font-medium px-2.5 h-7 shadow-none border-none flex items-center gap-1"
+                        className="bg-[#6B21A8] hover:bg-[#581C87] text-white rounded-lg text-xs font-medium px-2 sm:px-2.5 h-7 shadow-none border-none flex items-center gap-1 shrink-0"
                       >
-                        <SafetyCertificateOutlined /> Verify with OTP
+                        <SafetyCertificateOutlined />
+                        <span className="hidden xs:inline sm:inline">Verify with OTP</span>
+                        <span className="xs:hidden sm:hidden">Verify</span>
                       </Button>
                     )
                   }
@@ -502,7 +504,8 @@ const BasicInformationStep = () => {
         onCancel={() => setIsOtpModalOpen(false)}
         footer={null}
         centered
-        width={440}
+        width="92%"
+        style={{ maxWidth: 440 }}
         destroyOnHidden
         className="email-otp-modal"
       >

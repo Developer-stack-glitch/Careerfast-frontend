@@ -28,7 +28,7 @@ export const getPlaceholderSvg = (text = "Logo", width = 100, height = 100) => {
   const color = palettes[hash % palettes.length];
   const fontSize = Math.max(12, Math.floor(Math.min(width, height) * 0.42));
 
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${color.bg}" rx="12"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="${color.fg}" font-family="Outfit, system-ui, -apple-system, sans-serif" font-size="${fontSize}px" font-weight="700">${displayText}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${color.bg}" rx="12"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="${color.fg}" font-family="Geist, system-ui, -apple-system, sans-serif" font-size="${fontSize}px" font-weight="700">${displayText}</text></svg>`;
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 };
 
