@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "@/routing-shim";
+import {
+  useNavigate, useParams } from "@/routing-shim";
 import { Modal, message } from "antd";
 import "../css/Profile.css";
 import "../css/ModernCandidateProfile.css";
@@ -26,7 +27,8 @@ import ProSubscription from "./ProSubscription";
 import BookMark from "./BookMark";
 import AppliedJobs from "./AppliedJobs";
 import AccountSettings from "./AccountSettings";
-import { getUserProfile } from "../ApiService/action";
+import JobInvites from "./JobInvites";
+import { getUserProfile, getCandidateNvitesAPI } from "../ApiService/action";
 import Header from "@/Header/Header";
 
 export default function UserProfile() {
@@ -38,6 +40,7 @@ export default function UserProfile() {
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
   const [email, setEmail] = useState("");
+  const [nvitesCount, setNvitesCount] = useState(0);
   const [roleId, setRoleId] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,6 +62,12 @@ export default function UserProfile() {
       key: "applied",
       icon: <FileCheck size={18} />,
       label: "Applied Jobs",
+    },
+    {
+      key: "invites",
+      icon: <span style={{ fontSize: 16 }}>⚡</span>,
+      label: "Job Invites (Nvites)",
+      badge: nvitesCount > 0 ? nvitesCount : undefined,
     },
     {
       key: "wishlist",
@@ -131,6 +140,25 @@ export default function UserProfile() {
   useEffect(() => {
     if (loginUserId !== null && loginUserId !== undefined) {
       getUserProfileData();
+    }
+  }, [loginUserId]);
+
+    useEffect(() => {
+    const fetchNvitesCountProfile = async () => {
+      try {
+        const res = await getCandidateNvitesAPI({ limit: 1 });
+        if (res?.success) {
+          const count = (typeof res.pendingCount === 'number' && res.pendingCount > 0)
+            ? res.pendingCount
+            : (res.total || (res.data ? res.data.length : 0));
+          setNvitesCount(count || 0);
+        }
+      } catch (e) {
+        console.error("Error fetching nvites count in profile:", e);
+      }
+    };
+    if (loginUserId) {
+      fetchNvitesCountProfile();
     }
   }, [loginUserId]);
 
@@ -284,6 +312,8 @@ export default function UserProfile() {
                 <AccountSettings />
               ) : sideBar === "applied" ? (
                 <AppliedJobs />
+              ) : sideBar === "invites" || sideBar === "nvites" ? (
+                <JobInvites />
               ) : sideBar === "jobalerts" ? (
                 <div>
                   <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 12 }}>

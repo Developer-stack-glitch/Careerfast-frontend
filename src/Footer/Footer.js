@@ -74,7 +74,7 @@ export default function Footer() {
           <div className="footer-cat-grid">
             {/* Column 1: Internship by Places */}
             <div className="footer-cat-col">
-              <h4 className="footer-cat-title">Internship by Places</h4>
+              <h3 className="footer-cat-title">Internship by Places</h3>
               <ul className="footer-cat-list">
                 {displayIntLocations.map((loc, idx) => (
                   <li key={idx}>
@@ -96,7 +96,7 @@ export default function Footer() {
 
             {/* Column 2: Internship by Stream */}
             <div className="footer-cat-col">
-              <h4 className="footer-cat-title">Internship by Stream</h4>
+              <h3 className="footer-cat-title">Internship by Stream</h3>
               <ul className="footer-cat-list">
                 {displayIntStreams.map((stream, idx) => (
                   <li key={idx}>
@@ -118,7 +118,7 @@ export default function Footer() {
 
             {/* Column 3: Jobs by Places */}
             <div className="footer-cat-col">
-              <h4 className="footer-cat-title">Jobs by Places</h4>
+              <h3 className="footer-cat-title">Jobs by Places</h3>
               <ul className="footer-cat-list">
                 {displayJobLocations.map((loc, idx) => (
                   <li key={idx}>
@@ -140,7 +140,7 @@ export default function Footer() {
 
             {/* Column 4: Jobs by Stream */}
             <div className="footer-cat-col">
-              <h4 className="footer-cat-title">Jobs by Stream</h4>
+              <h3 className="footer-cat-title">Jobs by Stream</h3>
               <ul className="footer-cat-list">
                 {displayJobStreams.map((stream, idx) => (
                   <li key={idx}>
@@ -162,7 +162,7 @@ export default function Footer() {
 
             {/* Column 5: Explore Courses */}
             <div className="footer-cat-col">
-              <h4 className="footer-cat-title">Explore Courses</h4>
+              <h3 className="footer-cat-title">Explore Courses</h3>
               <ul className="footer-cat-list">
                 {displayCourses.map((course, idx) => (
                   <li key={idx}>

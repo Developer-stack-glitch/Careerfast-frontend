@@ -562,6 +562,20 @@ export default function AppliedJobs() {
           <button
             type="button"
             className="tracker-action-btn-secondary"
+            onClick={() => navigate("/candidate-profile/invites")}
+            style={{
+              background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)",
+              color: "#ffffff",
+              border: "none",
+              fontWeight: 700,
+              boxShadow: "0 4px 10px rgba(124, 58, 237, 0.25)"
+            }}
+          >
+            <span>⚡ Job Invites</span>
+          </button>
+          <button
+            type="button"
+            className="tracker-action-btn-secondary"
             onClick={handleRefresh}
             title="Refresh application statuses"
           >

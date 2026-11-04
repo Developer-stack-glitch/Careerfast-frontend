@@ -23,10 +23,22 @@ import {
     WalletOutlined,
     FileSearchOutlined,
     StarOutlined,
+    StarFilled,
+    SafetyCertificateFilled,
+    SafetyCertificateOutlined,
     EditOutlined,
     SolutionOutlined,
     ClockCircleOutlined,
     CloseCircleFilled,
+    CloudOutlined,
+    DatabaseOutlined,
+    CheckCircleOutlined,
+    CheckCircleFilled,
+    CheckOutlined,
+    RiseOutlined,
+    SendOutlined,
+    AppstoreOutlined,
+    RocketOutlined,
 } from "@ant-design/icons";
 import { message, Select, Row, Col, Spin } from "antd";
 
@@ -34,6 +46,7 @@ import "../css/HomePage.css";
 import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getSearchSuggestions, getBlogs, getAllCourses, getTopCompanies, getUserProfile, searchLocationsAPI } from "../ApiService/action";
 import { getImageUrl, getPlaceholderSvg } from "../utils/getImageUrl";
 import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../utils/profileCompletion";
+import { getRecentSearches, saveRecentSearch, removeRecentSearch, RECENT_SEARCHES_EVENT, fetchLiveCountForSearch, updateRecentSearchCount } from "../utils/recentSearches";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -65,6 +78,16 @@ const getCurrencySymbol = (currencyCode) => {
         'CAD': 'C$',
     };
     return currencyMap[currencyCode] || currencyCode;
+};
+
+// Data hygiene check to prevent placeholder or gibberish text in UI (Issue 1)
+const isCleanString = (str) => {
+    if (!str || typeof str !== 'string') return false;
+    const trimmed = str.trim();
+    if (trimmed.length < 3) return false;
+    if (/(.)\1{3,}/i.test(trimmed)) return false; // Repeated chars e.g. 'dfddgfhghghghg'
+    if (/^(dfd|wweo|asdf|qwerty|dummy|test\b)/i.test(trimmed)) return false;
+    return true;
 };
 
 const sliderSettings = {
@@ -282,12 +305,14 @@ const IT_PRIORITY_ORDER = [
     "frontend development",
     "backend development",
     "software development",
-    "data science & analytics",
     "data science & machine learning",
+    "data science & analytics",
+    "data engineering",
     "machine learning/ai",
     "devops",
     "devops & cloud computing",
     "cybersecurity",
+    "cloud computing",
     "quality assurance and testing",
     "quality assurance & testing",
     "ui/ux design",
@@ -300,20 +325,37 @@ const IT_PRIORITY_ORDER = [
     "business intelligence & analytics",
     "it infrastructure services",
     "it project management",
-    "software & qa"
+    "software & qa",
+    "ar/vr development"
 ];
 
 const NON_IT_EXCLUSIONS = [
     "accounting", "finance", "bd / pre sales", "business analysis", "digital marketing",
     "graphic design", "hr analytics", "aerospace", "automotive", "editorial",
-    "engineering & manufacturing", "social media", "other", "real estate"
+    "engineering & manufacturing", "social media", "other", "real estate", "architecture", "artists", "engineering"
+];
+
+const DEFAULT_TOP_IT_CATEGORIES = [
+    "Full Stack Development",
+    "Frontend Development",
+    "Backend Development",
+    "Software Development",
+    "Data Science & Machine Learning",
+    "Data Engineering",
+    "Machine Learning/AI",
+    "DevOps",
+    "Cybersecurity",
+    "Quality Assurance & Testing",
+    "UI/UX Design",
+    "Database Administration"
 ];
 
 const isITCategoryName = (cat) => {
     if (!cat) return false;
     const l = cat.toLowerCase().trim();
+    if (l === "engineering") return false;
     if (NON_IT_EXCLUSIONS.some(n => l === n || l.startsWith(n + " ") || l.endsWith(" " + n))) return false;
-    return IT_PRIORITY_ORDER.some(p => l.includes(p) || p.includes(l));
+    return IT_PRIORITY_ORDER.some(p => l === p || l.includes(p) || p.includes(l));
 };
 
 const getITCategoryRank = (name) => {
@@ -322,13 +364,33 @@ const getITCategoryRank = (name) => {
     return idx >= 0 ? idx : 999;
 };
 
-const extractTopITCategories = (rawCats, getIconFn) => {
+const getCategoryIcon = (name) => {
+    if (!name) return <BuildOutlined />;
+    const n = name.toLowerCase();
+    if (n.includes("full stack") || n.includes("frontend") || n.includes("backend") || n.includes("web design")) return <CodeOutlined />;
+    if (n.includes("software") || n.includes("dev") || n.includes("program")) return <LaptopOutlined />;
+    if (n.includes("data") || n.includes("analytics") || n.includes("intelligence")) return <LineChartOutlined />;
+    if (n.includes("machine learning") || n.includes("ai") || n.includes("artificial")) return <ThunderboltFilled />;
+    if (n.includes("cloud") || n.includes("devops") || n.includes("infrastructure")) return <CloudOutlined />;
+    if (n.includes("security") || n.includes("cyber")) return <SafetyCertificateOutlined />;
+    if (n.includes("qa") || n.includes("quality") || n.includes("testing")) return <CheckCircleOutlined />;
+    if (n.includes("ui") || n.includes("ux") || n.includes("design")) return <AppstoreOutlined />;
+    if (n.includes("database") || n.includes("dba") || n.includes("sql")) return <DatabaseOutlined />;
+    if (n.includes("marketing")) return <ShoppingOutlined />;
+    if (n.includes("remote")) return <HomeOutlined />;
+    if (n.includes("engineering")) return <LaptopOutlined />;
+    if (n.includes("sales")) return <GlobalOutlined />;
+    if (n.includes("management")) return <ThunderboltFilled />;
+    return <BuildOutlined />;
+};
+
+const extractTopITCategories = (rawCats, getIconFn, limit = 10) => {
     const validRaw = Array.isArray(rawCats) ? rawCats : [];
     const itItems = [];
     const otherItems = [];
 
     for (const c of validRaw) {
-        const name = c.category_name?.trim();
+        const name = (typeof c === "string" ? c : c.category_name)?.trim();
         if (!name) continue;
         if (isITCategoryName(name)) {
             itItems.push(name);
@@ -349,6 +411,7 @@ const extractTopITCategories = (rawCats, getIconFn) => {
         if (norm.startsWith("itsupport")) return "itsupport";
         if (norm.startsWith("devops")) return "devops";
         if (norm.startsWith("datascience")) return norm.includes("machine") ? "dsml" : "dsanalytics";
+        if (norm.startsWith("businessintelligence")) return "bi";
         return norm;
     };
 
@@ -358,23 +421,35 @@ const extractTopITCategories = (rawCats, getIconFn) => {
             seenNorm.add(normKey);
             resultNames.push(name);
         }
-        if (resultNames.length >= 10) break;
+        if (resultNames.length >= limit) break;
     }
 
-    if (resultNames.length < 10) {
+    if (resultNames.length < limit) {
+        for (const name of DEFAULT_TOP_IT_CATEGORIES) {
+            const normKey = getNormKey(name);
+            if (!seenNorm.has(normKey)) {
+                seenNorm.add(normKey);
+                resultNames.push(name);
+            }
+            if (resultNames.length >= limit) break;
+        }
+    }
+
+    if (resultNames.length < limit) {
         for (const name of otherItems) {
             const normKey = getNormKey(name);
             if (!seenNorm.has(normKey)) {
                 seenNorm.add(normKey);
                 resultNames.push(name);
             }
-            if (resultNames.length >= 10) break;
+            if (resultNames.length >= limit) break;
         }
     }
 
+    const iconResolver = getIconFn || getCategoryIcon;
     return resultNames.map(name => ({
         name,
-        icon: getIconFn ? getIconFn(name) : null
+        icon: iconResolver ? iconResolver(name) : null
     }));
 };
 
@@ -385,7 +460,7 @@ export default function HomePage() {
     const [defaultLocations, setDefaultLocations] = useState([]);
     const [isSearchingLocation, setIsSearchingLocation] = useState(false);
     const [experience, setExperience] = useState(null);
-    const [categories, setCategories] = useState([]);
+    const [categories, setCategories] = useState(() => extractTopITCategories([], getCategoryIcon, 12));
     const [fresherCategories, setFresherCategories] = useState([]);
     const [internshipCategories, setInternshipCategories] = useState([]);
     const [companies, setCompanies] = useState([]);
@@ -416,6 +491,7 @@ export default function HomePage() {
         totalApplications: 0
     });
     const [trendingSearches, setTrendingSearches] = useState([]);
+    const [recentSearches, setRecentSearches] = useState([]);
     const [recentBlogs, setRecentBlogs] = useState([]);
     const [coursesList, setCoursesList] = useState([]);
     const [loadingCourses, setLoadingCourses] = useState(false);
@@ -823,7 +899,110 @@ export default function HomePage() {
 
     useEffect(() => {
         fetchInitialData();
+
+        // Load initial user recent searches dynamically from localStorage
+        const stored = getRecentSearches();
+        setRecentSearches(stored);
+
+        // Fetch dynamic job counts for any recent searches that haven't been counted yet
+        stored.forEach((item) => {
+            if (item.count === null || item.count === undefined) {
+                fetchLiveCountForSearch(item).then((liveCount) => {
+                    if (typeof liveCount === "number") {
+                        updateRecentSearchCount(item.id, liveCount);
+                    }
+                }).catch(() => {});
+            }
+        });
+
+        // Event listener for dynamic search updates across components and tabs
+        const handleRecentUpdate = (e) => {
+            const list = e?.detail || getRecentSearches();
+            setRecentSearches(list);
+        };
+
+        const handleStorageEvent = (e) => {
+            if (e.key === "careerfast_recent_searches") {
+                setRecentSearches(getRecentSearches());
+            }
+        };
+
+        window.addEventListener(RECENT_SEARCHES_EVENT, handleRecentUpdate);
+        window.addEventListener("storage", handleStorageEvent);
+
+        return () => {
+            window.removeEventListener(RECENT_SEARCHES_EVENT, handleRecentUpdate);
+            window.removeEventListener("storage", handleStorageEvent);
+        };
     }, []);
+
+    // Combine user recent searches and trending searches dynamically
+    const displaySearches = useMemo(() => {
+        const userItems = (recentSearches || []).slice(0, 4);
+        const userLabels = new Set(userItems.map(item => (item.label || "").toLowerCase().trim()));
+
+        const fillerTrending = (trendingSearches || []).filter(t => {
+            const lbl = (t.label || "").toLowerCase().trim();
+            return !userLabels.has(lbl);
+        });
+
+        return [...userItems, ...fillerTrending].slice(0, 4);
+    }, [recentSearches, trendingSearches]);
+
+    const handleQuickChipClick = (search) => {
+        if (!search) return;
+
+        if (search.url) {
+            navigate(search.url);
+            return;
+        }
+
+        if (search.skills || search.location || search.experience || search.job_nature) {
+            let queryParams = [];
+            if (search.skills) queryParams.push(`q=${encodeURIComponent(search.skills)}`);
+            if (search.location) {
+                search.location.split(",").map(l => l.trim()).filter(Boolean).forEach(l => {
+                    queryParams.push(`l=${encodeURIComponent(l)}`);
+                });
+            }
+            if (search.experience) {
+                if (String(search.experience).toLowerCase() === "internship") {
+                    queryParams.push(`job_nature=Internship`);
+                } else {
+                    queryParams.push(`experience=${encodeURIComponent(search.experience)}`);
+                }
+            } else if (search.job_nature) {
+                queryParams.push(`job_nature=${encodeURIComponent(search.job_nature)}`);
+            }
+            navigate(`/job-filter?${queryParams.join("&")}`);
+            return;
+        }
+
+        // Handle string label formats
+        const lbl = (search.label || "").trim();
+        if (/^jobs,\s*/i.test(lbl)) {
+            const loc = lbl.replace(/^jobs,\s*/i, "").trim();
+            navigate(`/job-filter?l=${encodeURIComponent(loc)}`);
+        } else if (/^internship,\s*/i.test(lbl)) {
+            const cat = lbl.replace(/^internship,\s*/i, "").trim();
+            navigate(`/job-filter?c=${encodeURIComponent(cat)}&job_nature=Internship`);
+        } else if (lbl.includes(",")) {
+            const parts = lbl.split(",").map(p => p.trim()).filter(Boolean);
+            if (parts.length >= 2) {
+                navigate(`/job-filter?q=${encodeURIComponent(parts[0])}&l=${encodeURIComponent(parts.slice(1).join(", "))}`);
+            } else {
+                navigate(`/job-filter?q=${encodeURIComponent(lbl)}`);
+            }
+        } else {
+            navigate(`/job-filter?q=${encodeURIComponent(lbl)}`);
+        }
+    };
+
+    const handleRemoveRecent = (search) => {
+        if (!search) return;
+        const updated = removeRecentSearch(search.id || search.label);
+        setRecentSearches(updated);
+    };
 
     useEffect(() => {
         if (!initialFetchDone.current || !activeTab) return;
@@ -946,18 +1125,10 @@ export default function HomePage() {
                 console.warn("Could not load default locations:", locErr);
             }
 
-            // Categories (All)
+            // Trending Categories (Top 12 IT-Related Categories)
             const catData = catRes.status === 'fulfilled' ? (catRes.value?.data?.data || []) : [];
-            const seenCats = new Set();
-            const mappedCats = [];
-            for (const c of catData) {
-                const name = c.category_name?.trim();
-                if (name && !seenCats.has(name)) {
-                    seenCats.add(name);
-                    mappedCats.push({ name, icon: getCategoryIcon(name) });
-                }
-            }
-            setCategories(mappedCats.slice(0, 12));
+            const mappedCats = extractTopITCategories(catData, getCategoryIcon, 12);
+            setCategories(mappedCats);
 
             // Fresher Categories (Top 10 IT-Related Categories)
             const fresherCatData = fresherCatRes.status === 'fulfilled' ? (fresherCatRes.value?.data?.data || []) : [];
@@ -1010,18 +1181,6 @@ export default function HomePage() {
         }
     };
 
-    const getCategoryIcon = (name) => {
-        const n = name.toLowerCase();
-        if (n.includes("software") || n.includes("it")) return <CodeOutlined />;
-        if (n.includes("marketing")) return <ShoppingOutlined />;
-        if (n.includes("analytics") || n.includes("data")) return <LineChartOutlined />;
-        if (n.includes("remote")) return <HomeOutlined />;
-        if (n.includes("engineering")) return <LaptopOutlined />;
-        if (n.includes("sales")) return <GlobalOutlined />;
-        if (n.includes("management")) return <ThunderboltFilled />;
-        return <BuildOutlined />;
-    };
-
     const handleSearch = (overrides = {}) => {
         const skillsToUse = overrides.hasOwnProperty('skills') ? overrides.skills : skills;
         const locationToUse = overrides.hasOwnProperty('location') ? overrides.location : location;
@@ -1057,6 +1216,14 @@ export default function HomePage() {
                 queryParams.push(`experience=${experienceToUse}`);
             }
         }
+
+        // Save to dynamic recent searches
+        saveRecentSearch({
+            skills: skillTrimmed,
+            location: locParts.join(", "),
+            experience: experienceToUse,
+            job_nature: String(experienceToUse).toLowerCase() === "internship" ? "Internship" : ""
+        });
 
         const searchUrl = `/job-filter?${queryParams.join("&")}`;
         navigate(searchUrl);
@@ -1237,46 +1404,53 @@ export default function HomePage() {
 
     const getCourseStats = (slug) => {
         const statsMap = {
-            'full-stack-web-development': { duration: '8 Weeks', rating: '4.9', learners: '1,28,094', color: '#eef2ff', tagColor: '#5f2eea', bgGlow: 'rgba(95, 46, 234, 0.15)' },
-            'data-science-machine-learning': { duration: '10 Weeks', rating: '4.9', learners: '94,520', color: '#fff7ed', tagColor: '#ea580c', bgGlow: 'rgba(234, 88, 12, 0.15)' },
-            'digital-marketing-masterclass': { duration: '6 Weeks', rating: '4.8', learners: '78,410', color: '#f0fdf4', tagColor: '#16a34a', bgGlow: 'rgba(22, 163, 74, 0.15)' },
-            'ui-ux-design-professional': { duration: '8 Weeks', rating: '4.8', learners: '65,230', color: '#fdf2f8', tagColor: '#db2777', bgGlow: 'rgba(219, 39, 119, 0.15)' },
-            'product-management-101': { duration: '8 Weeks', rating: '4.8', learners: '42,150', color: '#f0f9ff', tagColor: '#0284c7', bgGlow: 'rgba(2, 132, 199, 0.15)' },
-            'ai-for-business': { duration: '6 Weeks', rating: '4.9', learners: '53,890', color: '#faf5ff', tagColor: '#9333ea', bgGlow: 'rgba(147, 51, 234, 0.15)' },
-            'blockchain-web3-development': { duration: '8 Weeks', rating: '4.7', learners: '29,430', color: '#f5f3ff', tagColor: '#7c3aed', bgGlow: 'rgba(124, 58, 237, 0.15)' },
-            'human-resource-management': { duration: '6 Weeks', rating: '4.6', learners: '34,210', color: '#fff1f2', tagColor: '#e11d48', bgGlow: 'rgba(225, 29, 72, 0.15)' },
-            'business-analytics': { duration: '8 Weeks', rating: '4.8', learners: '48,760', color: '#f0fdfa', tagColor: '#0d9488', bgGlow: 'rgba(13, 148, 136, 0.15)' },
-            'advanced-excel': { duration: '4 Weeks', rating: '4.7', learners: '1,54,320', color: '#f0fdf4', tagColor: '#15803d', bgGlow: 'rgba(21, 128, 61, 0.15)' },
+            'full-stack-web-development': { duration: '8 Weeks', rating: '4.9', learners: '1,28,094' },
+            'data-science-machine-learning': { duration: '10 Weeks', rating: '4.9', learners: '94,520' },
+            'digital-marketing-masterclass': { duration: '6 Weeks', rating: '4.8', learners: '78,410' },
+            'ui-ux-design-professional': { duration: '8 Weeks', rating: '4.8', learners: '65,230' },
+            'product-management-101': { duration: '8 Weeks', rating: '4.8', learners: '42,150' },
+            'ai-for-business': { duration: '6 Weeks', rating: '4.9', learners: '53,890' },
+            'blockchain-web3-development': { duration: '8 Weeks', rating: '4.7', learners: '29,430' },
+            'human-resource-management': { duration: '6 Weeks', rating: '4.6', learners: '34,210' },
+            'business-analytics': { duration: '8 Weeks', rating: '4.8', learners: '48,760' },
+            'advanced-excel': { duration: '4 Weeks', rating: '4.7', learners: '1,54,320' },
         };
-        return statsMap[slug] || { duration: '8 Weeks', rating: '4.8', learners: '15,000+', color: '#f8f9ff', tagColor: '#4f46e5', bgGlow: 'rgba(79, 70, 229, 0.15)' };
+        return statsMap[slug] || { duration: '8 Weeks', rating: '4.8', learners: '15,000+' };
     };
 
 
     const premiumServices = [
         {
             title: "Resume Display",
-            desc: "Increase your profile visibility to recruiters by 3x and get noticed by top companies.",
-            icon: <FileSearchOutlined />
+            tag: "3x Visibility",
+            desc: "Highlight your profile to active recruiters and get discovered up to 3 times faster by top employers.",
+            icon: <FileSearchOutlined />,
+            link: "/candidate-profile"
         },
         {
             title: "Priority Applicant",
-            desc: "Get your application noticed first by hiring managers and stay ahead of the curve.",
-            icon: <StarOutlined />
+            tag: "Featured",
+            desc: "Get prioritized on employer applications so hiring managers review your resume first.",
+            icon: <StarOutlined />,
+            popular: true,
+            link: "/job-filter"
         },
         {
             title: "Resume Writing",
-            desc: "Professional resume written by industry experts to highlight your strengths effectively.",
-            icon: <EditOutlined />
+            tag: "ATS-Ready",
+            desc: "Professional resume crafted by industry experts to pass ATS filters and land more interviews.",
+            icon: <EditOutlined />,
+            link: "/candidate-profile"
         }
     ];
 
     const cities = [
-        { name: "Bangalore", img: BangaloreCity },
-        { name: "Mumbai", img: MumbaiCity },
-        { name: "Delhi", img: DelhiCity },
-        { name: "Hyderabad", img: HyderabadCity },
-        { name: "Chennai", img: ChennaiCity },
-        { name: "Remote", img: RemoteCity }
+        { name: "Bangalore", img: BangaloreCity, jobs: "25k+ Jobs" },
+        { name: "Mumbai", img: MumbaiCity, jobs: "18k+ Jobs" },
+        { name: "Delhi", img: DelhiCity, jobs: "22k+ Jobs" },
+        { name: "Hyderabad", img: HyderabadCity, jobs: "15k+ Jobs" },
+        { name: "Chennai", img: ChennaiCity, jobs: "12k+ Jobs" },
+        { name: "Remote", img: RemoteCity, jobs: "10k+ Jobs" }
     ];
 
     if (loading) {
@@ -1599,28 +1773,47 @@ export default function HomePage() {
                     </div>
 
                     <div className="hp-hero-quick-links">
-                        {trendingSearches.length > 0 ? (
-                            trendingSearches.map((search, idx) => (
-                                <div key={idx} className="hp-quick-chip" onClick={() => {
-                                    if (search.label.startsWith("jobs,")) {
-                                        navigate(`/job-filter?l=${encodeURIComponent(search.label.split(",")[1].trim())}`);
-                                    } else {
-                                        navigate(`/job-filter?c=${encodeURIComponent(search.label.split(",")[1].trim())}&job_nature=Internship`);
-                                    }
-                                }}>
-                                    <HistoryOutlined /> {search.label} <span className="chip-count">{search.count}</span> {search.isNew && <span className="chip-new">new</span>}
+                        {displaySearches.length > 0 ? (
+                            displaySearches.map((search, idx) => (
+                                <div
+                                    key={search.id || `search-${idx}`}
+                                    className={`hp-quick-chip ${search.isUserRecent ? 'hp-quick-chip-user' : ''}`}
+                                    onClick={() => handleQuickChipClick(search)}
+                                    title={search.isUserRecent ? "Recent search - click to search" : "Trending search - click to search"}
+                                >
+                                    <HistoryOutlined />
+                                    <span className="hp-chip-label">{search.label}</span>
+                                    {typeof search.count === "number" && search.count > 0 && (
+                                        <span className="chip-count">{search.count}</span>
+                                    )}
+                                    {search.isNew && <span className="chip-new">new</span>}
+                                    {search.isUserRecent && (
+                                        <span
+                                            className="hp-quick-chip-remove"
+                                            title="Remove from recent searches"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveRecent(search);
+                                            }}
+                                        >
+                                            &times;
+                                        </span>
+                                    )}
                                 </div>
                             ))
                         ) : (
                             <>
-                                <div className="hp-quick-chip">
-                                    <HistoryOutlined /> jobs, chennai <span className="chip-count">38879</span> <span className="chip-new">new</span>
+                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?l=Chennai")}>
+                                    <HistoryOutlined /> <span className="hp-chip-label">jobs, Chennai</span> <span className="chip-new">new</span>
                                 </div>
-                                <div className="hp-quick-chip">
-                                    <HistoryOutlined /> internship,automotiv... <span className="chip-count">11</span> <span className="chip-new">new</span>
+                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?l=Bangalore")}>
+                                    <HistoryOutlined /> <span className="hp-chip-label">jobs, Bangalore</span> <span className="chip-new">new</span>
                                 </div>
-                                <div className="hp-quick-chip">
-                                    <HistoryOutlined /> internship,architectu... <span className="chip-count">30</span> <span className="chip-new">new</span>
+                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?c=Software%20Development&job_nature=Internship")}>
+                                    <HistoryOutlined /> <span className="hp-chip-label">internship, Software Development</span> <span className="chip-new">new</span>
+                                </div>
+                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?c=Digital%20Marketing&job_nature=Internship")}>
+                                    <HistoryOutlined /> <span className="hp-chip-label">internship, Digital Marketing</span> <span className="chip-new">new</span>
                                 </div>
                             </>
                         )}
@@ -1784,10 +1977,10 @@ export default function HomePage() {
                                                 Actively hiring
                                             </div>
                                         </div>
-                                        <h4 className="hp-card-title">{job.job_title}</h4>
+                                        <h4 className="hp-card-title" title={job.job_title}>{job.job_title}</h4>
                                         <div className="hp-card-company">
                                             <div className="hp-company-text">
-                                                <span className="hp-company-name-text">{job.company_name}</span>
+                                                <span className="hp-company-name-text" title={job.company_name}>{job.company_name}</span>
                                             </div>
                                         </div>
 
@@ -1933,10 +2126,10 @@ export default function HomePage() {
                                             </div>
                                         </div>
 
-                                        <h4 className="hp-card-title">{job.job_title}</h4>
+                                        <h4 className="hp-card-title" title={job.job_title}>{job.job_title}</h4>
                                         <div className="hp-card-company">
                                             <div className="hp-company-text">
-                                                <span className="hp-company-name-text">{job.company_name}</span>
+                                                <span className="hp-company-name-text" title={job.company_name}>{job.company_name}</span>
                                             </div>
                                         </div>
 
@@ -2026,31 +2219,77 @@ export default function HomePage() {
             {/* Featured Companies Section */}
             {companies.length > 0 && (
                 <section className="hp-companies-section">
-                    <h2 className="hp-section-title">Top companies hiring now</h2>
-                    <p className="hp-section-subtitle">Discover premium opportunities with industry leaders</p>
-                    <div className="hp-company-grid">
-                        {companies.slice(0, 5).map((company, idx) => (
-                            <motion.div
-                                key={idx}
-                                className="hp-company-card"
-                                whileHover={{ scale: 1.02 }}
-                                onClick={() => navigate(`/job-filter?co=${encodeURIComponent(company.name)}`)}
+                    <div className="hp-section-container">
+                        <div className="hp-companies-badge">
+                            <BuildOutlined className="hp-companies-badge-icon" />
+                            <span>Featured Employers</span>
+                        </div>
+                        <h2 className="hp-section-title">Top companies hiring now</h2>
+                        <p className="hp-section-subtitle">Discover premium opportunities with industry leaders</p>
+                        <div className="hp-company-grid">
+                            {companies.slice(0, 5).map((company, idx) => (
+                                <motion.div
+                                    key={idx}
+                                    className="hp-company-card"
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: idx * 0.05, duration: 0.4 }}
+                                    viewport={{ once: true }}
+                                    onClick={() => navigate(`/job-filter?co=${encodeURIComponent(company.name)}`)}
+                                >
+                                    <div className="hp-company-logo-wrapper">
+                                        <img
+                                            src={getImageUrl(company.logo, company.name)}
+                                            alt={company.name}
+                                            onError={(e) => { e.target.onerror = null; e.target.src = getPlaceholderSvg(company.name, 150, 150); }}
+                                        />
+                                    </div>
+
+                                    <div className="hp-company-info">
+                                        <h3 className="hp-company-name" title={company.name}>{company.name}</h3>
+
+                                        <div className="hp-company-rating-wrap">
+                                            <StarFilled className="hp-company-star" />
+                                            <span className="hp-company-rating-val">{company.rating || "4.5"}</span>
+                                            {company.reviews && (
+                                                <span className="hp-company-reviews-text">({company.reviews})</span>
+                                            )}
+                                        </div>
+
+                                        {company.type && (
+                                            <span className="hp-company-type-badge" title={company.type}>
+                                                {company.type}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="hp-company-footer">
+                                        <div className="hp-company-hiring-indicator">
+                                            <span className="hp-company-pulse-dot"></span>
+                                            <span>
+                                                {company.active_jobs
+                                                    ? `${company.active_jobs} ${company.active_jobs === 1 ? 'Job' : 'Jobs'} Hiring`
+                                                    : 'Actively Hiring'}
+                                            </span>
+                                        </div>
+                                        <button className="hp-company-view-btn">
+                                            <span>View jobs</span>
+                                            <RightOutlined className="hp-company-btn-arrow" />
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+
+                        <div className="hp-companies-footer-cta">
+                            <button
+                                className="hp-companies-view-all-btn"
+                                onClick={() => navigate('/job-filter')}
                             >
-                                <div className="hp-company-logo-wrapper">
-                                    <img
-                                        src={getImageUrl(company.logo, company.name)}
-                                        alt={company.name}
-                                        onError={(e) => { e.target.onerror = null; e.target.src = getPlaceholderSvg(company.name, 150, 150); }}
-                                    />
-                                </div>
-                                <h4 className="hp-company-name">{company.name}</h4>
-                                <div className="hp-company-rating">
-                                    <StarOutlined className="star" />
-                                    <span>{company.rating} | {company.active_jobs ? `${company.active_jobs} ${company.active_jobs === 1 ? 'Job' : 'Jobs'}` : company.reviews}</span>
-                                </div>
-                                <p className="hp-company-type">{company.type}</p>
-                            </motion.div>
-                        ))}
+                                <span>View all companies</span>
+                                <RightOutlined className="hp-btn-arrow-more" />
+                            </button>
+                        </div>
                     </div>
                 </section>
             )}
@@ -2059,21 +2298,38 @@ export default function HomePage() {
             <section className="hp-cities-section">
                 <div className="hp-section-container">
                     <div className="hp-section-header-center">
-                        <h2>Explore opportunities in top cities</h2>
-                        <p>Find your next role in your favorite location</p>
+                        <div className="hp-cities-badge">
+                            <EnvironmentOutlined className="hp-cities-badge-icon" />
+                            <span>Top Hiring Locations</span>
+                        </div>
+                        <h2 className="hp-section-title">Explore opportunities in top cities</h2>
+                        <p className="hp-section-subtitle">Find your next role in your favorite location</p>
                     </div>
                     <div className="hp-cities-grid">
                         {cities.map((city, idx) => (
                             <motion.div
                                 key={idx}
-                                className="hp-city-item"
-                                whileHover={{ y: -10 }}
+                                className="hp-city-card"
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.04, duration: 0.35 }}
+                                viewport={{ once: true }}
                                 onClick={() => navigate(`/job-filter?l=${encodeURIComponent(city.name)}`)}
                             >
-                                <div className="hp-city-image">
-                                    <img src={getImageUrl(city.img)} alt={city.name} />
+                                <div className="hp-city-image-wrapper">
+                                    <img
+                                        src={getImageUrl(city.img)}
+                                        alt={city.name}
+                                        className="hp-city-card-img"
+                                    />
                                 </div>
-                                <span>{city.name}</span>
+                                <div className="hp-city-card-body">
+                                    <div className="hp-city-title-row">
+                                        <h3 className="hp-city-card-name">{city.name}</h3>
+                                        <RightOutlined className="hp-city-card-arrow" />
+                                    </div>
+                                    <span className="hp-city-card-jobs">{city.jobs}</span>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
@@ -2084,17 +2340,16 @@ export default function HomePage() {
             <section className="hp-popular-roles-modern">
                 <div className="hp-prm-container">
                     <div className="hp-prm-left">
+                        <div className="hp-prm-left-content">
+                            <h2>Discover jobs across popular roles</h2>
+                            <p>Take the next step in your career</p>
+                        </div>
                         <div className="hp-prm-illustration-container">
                             <img
                                 src={getImageUrl(PopularRolesIllustration)}
                                 alt="Popular Roles"
                                 className="hp-prm-illustration"
                             />
-                        </div>
-                        <div className="hp-prm-left-content">
-                            <h2>Discover jobs across<br />
-                                popular roles</h2>
-                            <p>Take the next step in your career</p>
                         </div>
                     </div>
 
@@ -2116,7 +2371,7 @@ export default function HomePage() {
                                                                 <SolutionOutlined />
                                                             </div>
                                                             <div className="hp-prm-role-info">
-                                                                <h4>{role.title}</h4>
+                                                                <h3 className="hp-prm-role-title">{role.title}</h3>
                                                                 <p>{role.jobs.includes("Jobs") ? role.jobs : `${role.jobs} Jobs`}</p>
                                                             </div>
                                                             <RightOutlined className="hp-prm-arrow" />
@@ -2162,7 +2417,10 @@ export default function HomePage() {
             <section className="hp-cert-section">
                 <div className="hp-section-container">
                     <div className="hp-section-header-center">
-                        <span className="hp-premium-badge">RECOMMENDED PROGRAMS</span>
+                        <div className="hp-cert-badge">
+                            <SafetyCertificateFilled className="hp-cert-badge-icon" />
+                            <span>Recommended Certifications</span>
+                        </div>
                         <h2>Top-rated certifications to upskill</h2>
                         <p>Boost your career with industry-recognized courses led by domain experts</p>
                     </div>
@@ -2170,7 +2428,8 @@ export default function HomePage() {
                     {/* Category Filter Tabs */}
                     <div className="hp-cert-tabs">
                         {(() => {
-                            const dynamicCats = Array.from(new Set(coursesList.map(c => c.category?.trim()).filter(Boolean)));
+                            const cleanedCourses = coursesList.filter(c => isCleanString(c.title) && isCleanString(c.category));
+                            const dynamicCats = Array.from(new Set(cleanedCourses.map(c => c.category?.trim()).filter(Boolean)));
                             const tabsToShow = dynamicCats.length > 0
                                 ? ["All Programs", ...dynamicCats.slice(0, 5)]
                                 : ["All Programs", "Development", "Data Analytics", "Data Science", "Cloud Computing"];
@@ -2188,7 +2447,9 @@ export default function HomePage() {
 
                     <div className="hp-cert-grid">
                         {(() => {
-                            const filteredCourses = coursesList
+                            const cleanedCourses = coursesList.filter(c => isCleanString(c.title) && isCleanString(c.category));
+                            const coursesSource = cleanedCourses.length > 0 ? cleanedCourses : coursesList;
+                            const filteredCourses = coursesSource
                                 .filter(course => activeCourseCategory === "All Programs" || (course.category?.trim()?.toLowerCase() === activeCourseCategory.toLowerCase()))
                                 .slice(0, 6);
                             if (filteredCourses.length === 0) {
@@ -2213,12 +2474,11 @@ export default function HomePage() {
                                     <motion.div
                                         key={course.id || idx}
                                         className="hp-cert-card-v2"
-                                        initial={{ opacity: 0, y: 30 }}
+                                        initial={{ opacity: 0, y: 20 }}
                                         whileInView={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05, duration: 0.5 }}
+                                        transition={{ delay: idx * 0.05, duration: 0.4 }}
                                         viewport={{ once: true }}
                                         onClick={() => navigate(`/courses/${course.slug}`)}
-                                        style={{ "--card-glow": stats.bgGlow }}
                                     >
                                         <div className="hp-cert-image-wrapper-v2">
                                             <img
@@ -2230,39 +2490,34 @@ export default function HomePage() {
                                                     e.target.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3";
                                                 }}
                                             />
+                                            {course.category && (
+                                                <span className="hp-cert-category-badge">
+                                                    {course.category}
+                                                </span>
+                                            )}
                                         </div>
 
                                         <div className="hp-cert-body-v2">
-                                            <div className="hp-cert-rating-row">
-                                                <div className="hp-cert-rating-left">
-                                                    <div className="hp-cert-rating-pill">
-                                                        <StarOutlined style={{ color: "#eab308", marginRight: 4 }} />
-                                                        <span>{stats.rating}</span>
-                                                    </div>
-                                                    <span className="hp-cert-learners">({stats.learners} learners)</span>
+                                            <div className="hp-cert-meta-top">
+                                                <div className="hp-cert-rating-wrap">
+                                                    <StarFilled className="hp-cert-star-icon" />
+                                                    <span className="hp-cert-rating-num">{stats.rating}</span>
                                                 </div>
-                                                <span
-                                                    className="hp-cert-category-pill"
-                                                    style={{
-                                                        color: stats.tagColor || "#5f2eea",
-                                                        backgroundColor: stats.color || "#f5f3ff",
-                                                        borderColor: stats.tagColor ? `${stats.tagColor}35` : "#e9d5ff"
-                                                    }}
-                                                >
-                                                    {course.category || "Certification"}
-                                                </span>
+                                                <span className="hp-cert-meta-divider">•</span>
+                                                <span className="hp-cert-learners">{stats.learners} learners</span>
                                             </div>
 
-                                            <h3 className="hp-cert-title-v2">{course.title}</h3>
+                                            <h3 className="hp-cert-title-v2" title={course.title}>{course.title}</h3>
                                             <p className="hp-cert-desc-v2">{course.description}</p>
 
                                             <div className="hp-cert-stats-v2">
                                                 <div className="hp-cert-stat-item">
-                                                    <ClockCircleOutlined style={{ color: "#64748b", marginRight: 6 }} />
+                                                    <ClockCircleOutlined className="hp-cert-stat-icon" />
                                                     <span>{stats.duration}</span>
                                                 </div>
+                                                <span className="hp-cert-stat-dot">•</span>
                                                 <div className="hp-cert-stat-item">
-                                                    <ThunderboltFilled style={{ color: "#16a34a", marginRight: 6 }} />
+                                                    <SafetyCertificateOutlined className="hp-cert-stat-icon" />
                                                     <span>Placement Support</span>
                                                 </div>
                                             </div>
@@ -2272,15 +2527,16 @@ export default function HomePage() {
                                                     <span className="hp-cert-price-disc">₹{discPrice}</span>
                                                     <span className="hp-cert-price-orig">₹{origPrice}</span>
                                                 </div>
-                                                <span className="hp-cert-discount-tag" style={{ color: stats.tagColor, backgroundColor: stats.color }}>
-                                                    SAVE 50%
+                                                <span className="hp-cert-discount-tag">
+                                                    50% OFF
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div className="hp-cert-footer-v2">
-                                            <button className="hp-cert-btn-v2" style={{ borderColor: stats.tagColor, color: stats.tagColor }}>
-                                                Explore Program <RightOutlined className="hp-btn-arrow" />
+                                            <button className="hp-cert-btn-v2">
+                                                <span>Explore Program</span>
+                                                <RightOutlined className="hp-btn-arrow" />
                                             </button>
                                         </div>
                                     </motion.div>
@@ -2295,7 +2551,8 @@ export default function HomePage() {
                             className="hp-cert-explore-more-btn"
                             onClick={() => navigate("/courses")}
                         >
-                            Explore more courses <RightOutlined className="hp-btn-arrow-more" />
+                            <span>Explore all certifications</span>
+                            <RightOutlined className="hp-btn-arrow-more" />
                         </button>
                     </div>
                 </div>
@@ -2305,27 +2562,47 @@ export default function HomePage() {
             <section className="hp-premium-section">
                 <div className="hp-section-container">
                     <div className="hp-section-header-center">
-                        <h2>Accelerate your job search with Premium Services</h2>
-                        <p>Services designed to help you get hired faster</p>
+                        <div className="hp-premium-badge">
+                            <RocketOutlined className="hp-premium-badge-icon" />
+                            <span>Value Added Services</span>
+                        </div>
+                        <h2 className="hp-section-title">Accelerate your job search with Premium Services</h2>
+                        <p className="hp-section-subtitle">Services designed to help you stand out and get hired faster</p>
                     </div>
                     <div className="hp-premium-grid">
                         {premiumServices.map((service, idx) => (
                             <motion.div
                                 key={idx}
-                                className="hp-premium-card"
-                                initial={{ opacity: 0, y: 30 }}
+                                className={`hp-premium-card ${service.popular ? "hp-premium-card-popular" : ""}`}
+                                initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: idx * 0.1 }}
+                                transition={{ delay: idx * 0.08, duration: 0.4 }}
                                 viewport={{ once: true }}
+                                onClick={() => navigate(service.link)}
                             >
-                                <div className="hp-premium-icon">{service.icon}</div>
-                                <div className="hp-premium-info">
-                                    <h3>{service.title}</h3>
-                                    <p>{service.desc}</p>
+                                <div className="hp-premium-card-header">
+                                    <div className="hp-premium-icon-box">{service.icon}</div>
+                                    <span className={`hp-premium-tag ${service.popular ? "hp-premium-tag-popular" : ""}`}>
+                                        {service.tag}
+                                    </span>
                                 </div>
-                                <button className="hp-premium-btn">
-                                    View Details <RightOutlined />
-                                </button>
+                                <div className="hp-premium-info">
+                                    <h3 className="hp-premium-card-title">{service.title}</h3>
+                                    <p className="hp-premium-card-desc">{service.desc}</p>
+                                </div>
+                                <div className="hp-premium-footer">
+                                    <button
+                                        className="hp-premium-btn"
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            navigate(service.link);
+                                        }}
+                                    >
+                                        <span>View Details</span>
+                                        <RightOutlined className="hp-premium-arrow" />
+                                    </button>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
@@ -2395,9 +2672,8 @@ export default function HomePage() {
                 {recentBlogs.length > 0 && (
                     <GridBlogSection
                         title="Career Advice & Industry Insights"
-                        description="Stay ahead with the latest trends, career tips, and industry expertise to accelerate your professional growth."
-                        backgroundLabel="BLOGS"
-                        backgroundPosition="right"
+                        description="Stay ahead with expert career guidance, in-demand skills, and industry trends to accelerate your professional growth."
+                        badgeText="CAREER RESOURCES & INSIGHTS"
                         posts={recentBlogs.map(blog => {
                             let cat = blog.category;
                             if (!cat) {
@@ -2428,7 +2704,8 @@ export default function HomePage() {
                 {recentBlogs.length > 0 && (
                     <div className="hp-view-all-container">
                         <button className="hp-view-all-btn" onClick={() => navigate('/blogs')}>
-                            View All Articles <RightOutlined />
+                            <span>View all articles</span>
+                            <RightOutlined className="hp-btn-arrow-more" />
                         </button>
                     </div>
                 )}
@@ -2455,24 +2732,51 @@ export default function HomePage() {
             {/* Employer Banner Section */}
             <section className="hp-employer-section">
                 <div className="hp-employer-banner">
-                    <div className="hp-employer-left">
-                        <img src={getImageUrl(hireFreshers)} alt="Jobs Counter" />
+                    <div className="hp-employer-visual">
+                        <img
+                            src={getImageUrl(hireFreshers)}
+                            alt="Hire freshers and interns with Careerfast"
+                            className="hp-employer-img"
+                        />
                     </div>
-                    <div className="hp-employer-right">
-                        <div className="hp-employer-tag-container">
-                            <span className="hp-employer-tag">
-                                <ShoppingOutlined className="briefcase-icon" /> Careerfast for Employers
+                    <div className="hp-employer-content">
+                        <div className="hp-employer-badge">
+                            <ShoppingOutlined className="hp-employer-badge-icon" />
+                            <span>Careerfast for Employers</span>
+                        </div>
+                        <h2 className="hp-employer-title">Looking to hire freshers and interns?</h2>
+                        <p className="hp-employer-desc">
+                            Access India&apos;s largest talent pool of 3.2 crore+ candidates with AI-powered candidate matching and smart screening filters to hire faster.
+                        </p>
+                        <div className="hp-employer-features">
+                            <span className="hp-employer-feat">
+                                <CheckCircleOutlined className="hp-employer-feat-icon" />
+                                <span>3.2 Cr+ Verified Talent</span>
+                            </span>
+                            <span className="hp-employer-feat">
+                                <CheckCircleOutlined className="hp-employer-feat-icon" />
+                                <span>AI Candidate Matching</span>
+                            </span>
+                            <span className="hp-employer-feat">
+                                <CheckCircleOutlined className="hp-employer-feat-icon" />
+                                <span>Zero Setup Fee</span>
                             </span>
                         </div>
-                        <h2>Looking to hire freshers and interns?</h2>
-                        <p>Access India's largest talent pool of 3.2 crore+ candidates with <span className="highlight-orange">AI-powered tools</span> and smart filters to hire faster.</p>
-                        <button className="hp-employer-btn" onClick={() => {
-                            const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-                            const defaultHrLogin = isLocalhost ? "http://localhost:3001/login" : "http://recruit.careerfast.in/login";
-                            window.location.href = process.env.NEXT_PUBLIC_HR_PORTAL_URL ? `${process.env.NEXT_PUBLIC_HR_PORTAL_URL}/login` : defaultHrLogin;
-                        }}>
-                            Post now for free <RightOutlined className="arrow-icon" />
-                        </button>
+                        <div className="hp-employer-cta-wrap">
+                            <button
+                                className="hp-employer-btn"
+                                type="button"
+                                onClick={() => {
+                                    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+                                    const defaultHrLogin = isLocalhost ? "http://localhost:3001/login" : "http://recruit.careerfast.in/login";
+                                    window.location.href = process.env.NEXT_PUBLIC_HR_PORTAL_URL ? `${process.env.NEXT_PUBLIC_HR_PORTAL_URL}/login` : defaultHrLogin;
+                                }}
+                            >
+                                <span>Post now for free</span>
+                                <RightOutlined className="hp-employer-btn-arrow" />
+                            </button>
+                            <span className="hp-employer-note">Free job posting • No credit card required</span>
+                        </div>
                     </div>
                 </div>
             </section>

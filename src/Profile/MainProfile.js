@@ -31,7 +31,7 @@ const message = {
     }
     try {
       antdMessage.success(msg);
-    } catch {}
+    } catch { }
   },
   error: (msg) => {
     try {
@@ -41,7 +41,7 @@ const message = {
     }
     try {
       antdMessage.error(msg);
-    } catch {}
+    } catch { }
   },
   warning: (msg) => {
     try {
@@ -51,7 +51,7 @@ const message = {
     }
     try {
       antdMessage.warning(msg);
-    } catch {}
+    } catch { }
   },
   info: (msg) => {
     try {
@@ -61,7 +61,7 @@ const message = {
     }
     try {
       antdMessage.info(msg);
-    } catch {}
+    } catch { }
   },
 };
 import {
@@ -307,7 +307,7 @@ export default function MainProfile() {
           const parsed = JSON.parse(stored);
           return parsed.id || parsed.user_id || parsed.userId || null;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     return null;
   });
@@ -316,6 +316,7 @@ export default function MainProfile() {
   const [organizationNameType, setOrganizationType] = useState("");
   const [resumeError, setResumeError] = useState("");
   const [createdAt, setCreatedAt] = useState("");
+  const [updatedAt, setUpdatedAt] = useState("");
 
   //
   const [showEducationForm, setShowEducationForm] = useState(true);
@@ -682,6 +683,12 @@ export default function MainProfile() {
       setSelectedSkills(Array.isArray(fetchSkills) ? fetchSkills : []);
       setIsSkills(fetchSkills);
       setCreatedAt(response?.data?.data?.created_date || "");
+      setUpdatedAt(
+        response?.data?.data?.updated_date ||
+        response?.data?.data?.last_active ||
+        response?.data?.data?.created_date ||
+        ""
+      );
 
       if (response?.data?.data) {
         const profile = response.data.data;
@@ -4674,6 +4681,25 @@ export default function MainProfile() {
     }
   };
 
+  const formatProfileLastUpdated = (dateVal) => {
+    if (!dateVal) return "";
+    try {
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return "";
+
+      const months = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ];
+      const day = d.getDate();
+      const month = months[d.getMonth()];
+      const year = d.getFullYear();
+      return `${day}${month} , ${year}`;
+    } catch {
+      return "";
+    }
+  };
+
   if (userProfileLoading || isLoading) {
     return (
       <div className="candidate-profile-page-wrapper">
@@ -4932,50 +4958,58 @@ export default function MainProfile() {
               </div>
             </div>
 
-            {/* Right Side: Action Buttons */}
-            <div className="profile-hero-actions">
-              <button
-                type="button"
-                className="profile-btn-icon"
-                title="Share Profile"
-                onClick={() => {
-                  if (navigator.share) {
-                    navigator.share({
-                      title: 'Candidate Profile',
-                      url: window.location.href
-                    }).catch(console.error);
-                  } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-                    navigator.clipboard.writeText(window.location.href);
-                    message.success("Profile link copied to clipboard!");
-                  } else {
-                    message.info("Profile link copied!");
-                  }
-                }}
-              >
-                <Share2 size={15} />
-              </button>
+            {/* Right Side: Action Buttons & Last Updated */}
+            <div className="profile-hero-right">
+              <div className="profile-hero-actions">
+                <button
+                  type="button"
+                  className="profile-btn-icon"
+                  title="Share Profile"
+                  onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({
+                        title: 'Candidate Profile',
+                        url: window.location.href
+                      }).catch(console.error);
+                    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+                      navigator.clipboard.writeText(window.location.href);
+                      message.success("Profile link copied to clipboard!");
+                    } else {
+                      message.info("Profile link copied!");
+                    }
+                  }}
+                >
+                  <Share2 size={15} />
+                </button>
 
-              <button
-                type="button"
-                className="profile-btn-download"
-                onClick={handleDownloadResume}
-                title="Download CV"
-              >
-                <Download size={14} />
-                <span>Download CV</span>
-              </button>
+                <button
+                  type="button"
+                  className="profile-btn-download"
+                  onClick={handleDownloadResume}
+                  title="Download CV"
+                >
+                  <Download size={14} />
+                  <span>Download CV</span>
+                </button>
 
-              <button
-                type="button"
-                className="btn-edit-profile"
-                onClick={() => {
-                  setActiveTab("basic");
-                  showDrawer();
-                }}
-              >
-                <MdEdit size={14} />
-                <span>Edit Profile</span>
-              </button>
+                <button
+                  type="button"
+                  className="btn-edit-profile"
+                  onClick={() => {
+                    setActiveTab("basic");
+                    showDrawer();
+                  }}
+                >
+                  <MdEdit size={14} />
+                  <span>Edit Profile</span>
+                </button>
+              </div>
+
+              {updatedAt && (
+                <div className="profile-last-updated-text">
+                  Profile last updated - <span>{formatProfileLastUpdated(updatedAt)}</span>
+                </div>
+              )}
             </div>
           </div>
 

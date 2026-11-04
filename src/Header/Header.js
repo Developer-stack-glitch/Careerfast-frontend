@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import logo from "../images/careerfastlogofinal.png";
 import { useNavigate, usePathname, useLocation } from "@/routing-shim";
 import { getImageUrl } from "../utils/getImageUrl";
@@ -47,8 +47,9 @@ import {
 import {
   CrownFilled,
 } from "@ant-design/icons";
-import { getUserProfile, getSearchSuggestions, searchLocationsAPI } from "../ApiService/action";
+import { getUserProfile, getSearchSuggestions, searchLocationsAPI, getCandidateNvitesAPI } from "../ApiService/action";
 import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../utils/profileCompletion";
+import { saveRecentSearch } from "../utils/recentSearches";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { FaBookOpen, FaCalendarAlt, FaChalkboardTeacher, FaGraduationCap } from "react-icons/fa";
 import {
@@ -67,7 +68,8 @@ import {
   ChevronDown as LucideChevronDown,
   ArrowRight as LucideArrowRight,
   Check as LucideCheck,
-  RotateCcw
+  RotateCcw,
+  FileCheck
 } from "lucide-react";
 
 const { Title, Text } = Typography;
@@ -242,6 +244,7 @@ export default function Header({ noSticky = false, showSearch }) {
   const [fname, setFname] = useState("");
   const [lname, setLname] = useState("");
   const [email, setEmail] = useState("");
+  const [nvitesCount, setNvitesCount] = useState(0);
   const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
   const currentPath = usePathname();
@@ -671,6 +674,13 @@ export default function Header({ noSticky = false, showSearch }) {
       }
     }
 
+    saveRecentSearch({
+      skills: skillTrimmed,
+      location: locParts.join(", "),
+      experience: experienceToUse,
+      job_nature: String(experienceToUse).toLowerCase() === "internship" ? "Internship" : ""
+    });
+
     const searchUrl = `/job-filter?${queryParams.join("&")}`;
     smartNavigate(searchUrl);
     setQuickSearchOpen(false);
@@ -787,6 +797,32 @@ export default function Header({ noSticky = false, showSearch }) {
     }
   };
 
+
+    const fetchNvitesCount = useCallback(async () => {
+    try {
+      if (typeof window === 'undefined') return;
+      const stored = localStorage.getItem("loginDetails");
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      if (parsed?.role_id !== 2) return;
+
+      const res = await getCandidateNvitesAPI({ limit: 1 });
+      if (res?.success) {
+        const count = (typeof res.pendingCount === 'number' && res.pendingCount > 0)
+          ? res.pendingCount
+          : (res.total || (res.data ? res.data.length : 0));
+        setNvitesCount(count || 0);
+      }
+    } catch (e) {
+      console.error("Error fetching nvites count:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loginUserId && roleId === 2) {
+      fetchNvitesCount();
+    }
+  }, [loginUserId, roleId, open, fetchNvitesCount]);
 
   const calculateCompletion = (profile) => {
     const { percentage } = calculateCandidateCompletion(profile);
@@ -1719,6 +1755,7 @@ export default function Header({ noSticky = false, showSearch }) {
                       { title: "Wishlist", path: "/candidate-profile/wishlist", icon: <HeartOutlined /> },
                       { title: "Account Settings", path: "/candidate-profile/accountsettings", icon: <SettingOutlined /> },
                       { title: "Applied Jobs", path: "/candidate-profile/applied", icon: <UserAddOutlined />, showArrow: true },
+                      { title: "Job Invites (Nvites)", path: "/candidate-profile/invites", icon: <FileCheck />, showArrow: true, badge: nvitesCount },
                     ]
                     : [
                       { title: "Dashboard", path: "/candidate-profile/mainprofile", icon: <LayoutDashboard size={18} /> },
@@ -1740,7 +1777,34 @@ export default function Header({ noSticky = false, showSearch }) {
                       {item.icon}
                     </div>
                     <Text className="menu-item-text">{item.title}</Text>
-                    {item.showArrow && <RightOutlined style={{ marginLeft: 'auto', fontSize: '12px', color: '#94a3b8' }} />}
+                    {item.badge !== undefined && item.badge !== null && item.badge > 0 && (
+                      <span
+                        style={{
+                          marginLeft: 'auto',
+                          background: 'linear-gradient(135deg, #ff7300 0%, #ea580c 100%)',
+                          color: '#ffffff',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          padding: '1px 8px',
+                          borderRadius: '9999px',
+                          lineHeight: '16px',
+                          boxShadow: '0 2px 6px rgba(255, 115, 0, 0.35)',
+                          flexShrink: 0
+                        }}
+                      >
+                        {item.badge}
+                      </span>
+                    )}
+                    {item.showArrow && (
+                      <RightOutlined
+                        style={{
+                          marginLeft: (item.badge !== undefined && item.badge !== null && item.badge > 0) ? '8px' : 'auto',
+                          fontSize: '12px',
+                          color: '#94a3b8',
+                          flexShrink: 0
+                        }}
+                      />
+                    )}
                   </div>
                 </List.Item>
               )}

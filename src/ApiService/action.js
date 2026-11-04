@@ -2427,3 +2427,43 @@ export {
   POPULAR_WORLDWIDE_COMPANIES,
   SKILL_CATEGORIES,
 } from "../Common/worldwideDataService";
+
+
+// ==========================================
+// ⚡ Naukri-style Nvites (Job Invitations) APIs
+// ==========================================
+export const getCandidateNvitesAPI = async (params = {}) => {
+  try {
+    const response = await api.get("/api/nvites/candidate", { params });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const markNviteViewedAPI = async (id) => {
+  try {
+    const response = await api.post(`/api/nvites/${id}/view`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const acceptNviteAPI = async (id) => {
+  try {
+    const response = await api.post(`/api/nvites/${id}/accept`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const declineNviteAPI = async (id, payload = {}) => {
+  try {
+    const response = await api.post(`/api/nvites/${id}/decline`, payload);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

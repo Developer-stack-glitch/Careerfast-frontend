@@ -17,6 +17,7 @@ import {
   Popover,
 } from "antd";
 import { getImageUrl } from "../utils/getImageUrl";
+import { saveRecentSearch } from "../utils/recentSearches";
 import {
   ThunderboltFilled,
   WalletOutlined,
@@ -1442,6 +1443,14 @@ export default function JobFilter() {
       setSearchTerm(qSearch);
     } else {
       setSearchTerm("");
+    }
+    if (qSearch || (qLocations && qLocations.length > 0)) {
+      saveRecentSearch({
+        skills: qSearch || "",
+        location: (qLocations || []).join(", "),
+        experience: qExperience,
+        job_nature: qNature || nature
+      });
     }
 
     if (qExperience !== null && qExperience !== undefined) {

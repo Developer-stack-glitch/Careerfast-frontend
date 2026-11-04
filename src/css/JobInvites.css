@@ -1,0 +1,902 @@
+/* ==========================================================================
+   Job Invites (Nvites) - Master-Detail Two-Column Layout
+   CareerFast Signature Palette: Royal Purple (#6800AD) & Vibrant Orange (#FF7300)
+   ========================================================================== */
+
+:root {
+  --cf-purple: #6800ad;
+  --cf-purple-hover: #581c87;
+  --cf-purple-light: #f3e8ff;
+  --cf-purple-soft: #faf5ff;
+  --cf-purple-border: #e9d5ff;
+
+  --cf-orange: #ff7300;
+  --cf-orange-hover: #ea580c;
+  --cf-orange-light: #ffedd5;
+  --cf-orange-soft: #fff7ed;
+  --cf-orange-border: #fed7aa;
+
+  --nv-slate-900: #0f172a;
+  --nv-slate-800: #1e293b;
+  --nv-slate-700: #334155;
+  --nv-slate-600: #475569;
+  --nv-slate-500: #64748b;
+  --nv-slate-400: #94a3b8;
+  --nv-slate-200: #e2e8f0;
+  --nv-slate-100: #f1f5f9;
+  --nv-slate-50: #f8fafc;
+}
+
+.nvites-split-wrapper {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 16px 12px 48px;
+  font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  color: var(--nv-slate-900);
+}
+
+/* ── Top Header Section (Left Column Header) ── */
+.nvites-header-area {
+  margin-bottom: 16px;
+}
+
+.nvites-main-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  letter-spacing: -0.02em;
+}
+
+.nvites-subtitle {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 0 0 14px 0;
+}
+
+/* ── Filter Pills (All Invites, Pending, Accepted, Declined) ── */
+.nvites-filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.nvite-filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid var(--nv-slate-200);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nvite-filter-pill:hover {
+  background: #f8fafc;
+  color: var(--cf-purple);
+  border-color: #cbd5e1;
+}
+
+.nvite-filter-pill.active {
+  background: var(--cf-purple);
+  color: #ffffff;
+  border-color: var(--cf-purple);
+  box-shadow: 0 2px 6px rgba(104, 0, 173, 0.25);
+}
+
+.nvite-pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.nvite-filter-pill.active .nvite-pill-count {
+  background: #ffffff;
+  color: var(--cf-purple);
+}
+
+/* ── Master-Detail Two Column Layout ── */
+.nvites-grid-container {
+  display: grid;
+  grid-template-columns: 370px 1fr;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ── Left Column: Invites List ── */
+.nvites-sidebar-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nvite-list-item {
+  background: #ffffff;
+  border: 1.5px solid var(--nv-slate-200);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  display: block;
+  width: 100%;
+}
+
+.nvite-list-item:hover {
+  border-color: #cbd5e1;
+}
+
+.nvite-list-item.selected {
+  border-color: var(--cf-purple);
+  background: var(--cf-purple-soft);
+}
+
+.nvite-item-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+/* Initials Avatar Box */
+.nvite-item-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.nvite-item-avatar.orange {
+  background: var(--cf-orange-light);
+  color: var(--cf-orange-hover);
+}
+
+.nvite-item-avatar.purple {
+  background: var(--cf-purple-light);
+  color: var(--cf-purple);
+}
+
+.nvite-item-avatar.blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.nvite-item-avatar.emerald {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.nvite-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nvite-item-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.nvite-item-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nvite-item-badge-new {
+  font-size: 10.5px;
+  font-weight: 700;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 1px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.nvite-item-company {
+  font-size: 12.5px;
+  color: #475569;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Bottom specs and date row */
+.nvite-item-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.nvite-item-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.nvite-item-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.nvite-item-tag.declined {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #e11d48;
+  font-weight: 600;
+}
+
+.nvite-item-date {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Right Column: Detail View Card ── */
+.nvite-detail-card {
+  background: #ffffff;
+  border: 1px solid var(--nv-slate-200);
+  border-radius: 16px;
+  padding: 28px 30px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 16px;
+}
+
+/* Top Company Line */
+.nvite-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.nvite-detail-company-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nvite-detail-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.nvite-detail-company-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nvite-detail-company-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nvite-verified-icon {
+  color: #16a34a;
+  fill: #16a34a;
+}
+
+.nvite-detail-verified-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.nvite-btn-view-company {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--nv-slate-200);
+  background: #ffffff;
+  color: #475569;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.nvite-btn-view-company:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+/* Role Title & Badge */
+.nvite-detail-role-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.nvite-detail-role-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+.nvite-detail-invite-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--cf-purple-soft);
+  color: var(--cf-purple);
+  border: 1px solid var(--cf-purple-border);
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* Horizontal Specs Row */
+.nvite-detail-specs-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13.5px;
+  color: #475569;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.nvite-detail-spec-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+
+.nvite-spec-divider {
+  color: #cbd5e1;
+  font-size: 12px;
+}
+
+/* ── Declined Reason & Feedback Highlight Box ── */
+.nvite-declined-feedback-box {
+  background: #fff5f5;
+  border: 1px solid #fecdd3;
+  border-left: 4px solid #e11d48;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.nvite-declined-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.nvite-declined-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #be123c;
+}
+
+.nvite-declined-time {
+  font-size: 11.5px;
+  color: #9f1239;
+  font-weight: 500;
+}
+
+.nvite-declined-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nvite-declined-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nvite-declined-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #881337;
+}
+
+.nvite-declined-reason-pill {
+  display: inline-block;
+  align-self: flex-start;
+  background: #ffffff;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.nvite-declined-note-text {
+  background: #ffffff;
+  border: 1px solid #ffe4e6;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #4c0519;
+  line-height: 1.55;
+  font-style: italic;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* ── Message from Recruiter Callout Box ── */
+.nvite-recruiter-box {
+  background: #f8fafd;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin-bottom: 20px;
+}
+
+.nvite-recruiter-box-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 10px;
+}
+
+.nvite-recruiter-box-content {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: #334155;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+/* ── Key Skills Row ── */
+.nvite-detail-skills-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.nvite-detail-skills-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-right: 2px;
+}
+
+.nvite-detail-skill-chip {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Sent & Expiry Dates Bar ── */
+.nvite-detail-date-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.nvite-detail-sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.nvite-detail-expiry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--cf-orange);
+  font-weight: 600;
+}
+
+.nvite-detail-expiry.expired {
+  color: #dc2626;
+}
+
+/* ── Action Buttons Row (Accept & Apply, Decline, View Job) ── */
+.nvite-detail-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Primary Accept & Apply Button */
+.nvite-btn-accept {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  border: none;
+  background: var(--cf-purple);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nvite-btn-accept:hover:not(:disabled) {
+  background: var(--cf-purple-hover);
+  transform: translateY(-1px);
+}
+
+.nvite-btn-accept:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nvite-btn-outline-decline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--nv-slate-200);
+  background: #ffffff;
+  color: #334155;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nvite-btn-outline-decline:hover {
+  background: #fef2f2;
+  border-color: #fecdd3;
+  color: #dc2626;
+}
+
+.nvite-btn-outline-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--nv-slate-200);
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nvite-btn-outline-view:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.nvite-badge-accepted-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.nvite-badge-accepted-status:hover {
+  background: #d1fae5;
+}
+
+.nvite-badge-declined-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  color: #be123c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ── Mobile Back Button ── */
+.nvite-mobile-back-btn {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: var(--cf-purple);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+/* ── Responsive Rules ── */
+@media (max-width: 900px) {
+  .nvites-grid-container {
+    grid-template-columns: 1fr;
+  }
+
+  .nvite-mobile-back-btn {
+    display: inline-flex;
+  }
+
+  .nvite-detail-card {
+    position: static;
+  }
+}
+
+/* ==========================================================================
+   Skeleton Loading Animation & Styles
+   ========================================================================== */
+
+@keyframes nviteShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.nvite-skeleton-shimmer {
+  background: linear-gradient(90deg,
+      #f1f5f9 0%,
+      #e2e8f0 50%,
+      #f1f5f9 100%);
+  background-size: 200% 100%;
+  animation: nviteShimmer 1.5s ease-in-out infinite;
+}
+
+.nvite-skeleton-mode {
+  pointer-events: none;
+  user-select: none;
+}
+
+.nvite-skeleton-card {
+  cursor: default !important;
+  background: #ffffff !important;
+}
+
+.nvite-skeleton-card:hover {
+  border-color: var(--nv-slate-200) !important;
+  box-shadow: none !important;
+}
+
+.nvite-skeleton-detail {
+  pointer-events: none;
+  user-select: none;
+}
+
+.nvite-skeleton-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+.nvite-skeleton-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.nvite-skeleton-line {
+  border-radius: 4px;
+}
+
+.nvite-skeleton-pill {
+  border-radius: 9999px;
+}
+
+.nvite-skeleton-btn {
+  border-radius: 8px;
+}
+
+.nvite-skeleton-box {
+  background: #f8fafc !important;
+  border: 1px solid var(--nv-slate-200) !important;
+}
+
+.nvite-skeleton-title-badge {
+  display: inline-block;
+  width: 30px;
+  height: 22px;
+  border-radius: 6px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.nvite-skel-count-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Skeleton Loading Animation & Styles
+   ========================================================================== */
+
+@keyframes nviteShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.nvite-skeleton-shimmer {
+  background: linear-gradient(90deg,
+      #f1f5f9 0%,
+      #e2e8f0 50%,
+      #f1f5f9 100%);
+  background-size: 200% 100%;
+  animation: nviteShimmer 1.5s ease-in-out infinite;
+}
+
+.nvite-skeleton-mode {
+  pointer-events: none;
+  user-select: none;
+}
+
+.nvite-skeleton-card {
+  cursor: default !important;
+  background: #ffffff !important;
+}
+
+.nvite-skeleton-card:hover {
+  border-color: var(--nv-slate-200) !important;
+  box-shadow: none !important;
+}
+
+.nvite-skeleton-detail {
+  pointer-events: none;
+  user-select: none;
+}
+
+.nvite-skeleton-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  flex-shrink: 0;
+}
+
+.nvite-skeleton-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.nvite-skeleton-line {
+  border-radius: 4px;
+}
+
+.nvite-skeleton-pill {
+  border-radius: 9999px;
+}
+
+.nvite-skeleton-btn {
+  border-radius: 8px;
+}
+
+.nvite-skeleton-box {
+  background: #f8fafc !important;
+  border: 1px solid var(--nv-slate-200) !important;
+}
+
+.nvite-skeleton-title-badge {
+  display: inline-block;
+  width: 30px;
+  height: 22px;
+  border-radius: 6px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.nvite-skel-count-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+}

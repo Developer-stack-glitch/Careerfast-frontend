@@ -360,6 +360,34 @@
   color: #6800ad;
 }
 
+/* Right Side Actions Container */
+.profile-hero-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-shrink: 0;
+  align-self: stretch;
+  min-height: 105px;
+}
+
+.profile-last-updated-text {
+  font-size: 13px;
+  color: #474d6a;
+  font-weight: 400;
+  letter-spacing: -0.1px;
+  line-height: 1.4;
+  margin-top: auto;
+  padding-bottom: 2px;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.profile-last-updated-text span {
+  color: #474d6a;
+  font-weight: 500;
+}
+
 /* Right Side Actions */
 .profile-hero-actions {
   display: flex;
@@ -1400,6 +1428,13 @@
   .profile-hero-main {
     flex-direction: column;
     gap: 16px;
+  }
+
+  .profile-hero-right {
+    width: 100%;
+    align-items: flex-start;
+    gap: 12px;
+    min-height: auto;
   }
 
   .profile-hero-actions {

@@ -1,18 +1,6 @@
 import React from 'react';
 import { cn } from "../lib/utils";
-import { Calendar, Clock, ArrowRight } from "lucide-react";
-
-const getCategoryBadgeClass = (category) => {
-  const cat = (category || "").toLowerCase();
-  if (cat.includes("devops") || cat.includes("cloud") || cat.includes("tool") || cat.includes("docker") || cat.includes("kubern")) {
-    return "badge-blue";
-  }
-  if (cat.includes("career") || cat.includes("advice") || cat.includes("analyt") || cat.includes("business")) {
-    return "badge-green";
-  }
-  // Default to primary theme color (AI & Learning, Tech, etc.)
-  return "badge-theme";
-};
+import { Calendar, Clock, ArrowRight, BookOpen } from "lucide-react";
 
 const formatBlogDate = (dateStr) => {
   if (!dateStr) return "Sep 21, 2026";
@@ -45,8 +33,9 @@ const formatReadTime = (readingTime) => {
 };
 
 const GridBlogSection = ({
-  title,
-  description,
+  title = "Career Advice & Industry Insights",
+  description = "Stay ahead with the latest trends, career tips, and industry expertise to accelerate your professional growth.",
+  badgeText = "CAREER RESOURCES & INSIGHTS",
   backgroundLabel,
   backgroundPosition = "right",
   posts = [],
@@ -54,23 +43,20 @@ const GridBlogSection = ({
   onPostClick,
 }) => {
   return (
-    <section className={cn("hp-grid-section", className)}>
+    <div className={cn("hp-grid-section", className)}>
       <div className="hp-grid-header">
-        <h2 className="hp-grid-title">{title}</h2>
-        {backgroundLabel && (
-          <span className={cn(
-            "hp-grid-bg-label",
-            backgroundPosition === "left" ? "bg-left" : "bg-right"
-          )}>
-            {backgroundLabel}
-          </span>
+        {badgeText && (
+          <div className="hp-insights-badge">
+            <BookOpen size={13} className="hp-insights-badge-icon" />
+            <span>{badgeText}</span>
+          </div>
         )}
+        <h2 className="hp-grid-title">{title}</h2>
         {description && <p className="hp-grid-description">{description}</p>}
       </div>
 
       <div className="hp-cards-grid">
         {posts.map((post, index) => {
-          const categoryClass = getCategoryBadgeClass(post.category);
           const formattedDate = formatBlogDate(post.createdDate);
           const readTimeStr = formatReadTime(post.readTime);
 
@@ -96,7 +82,7 @@ const GridBlogSection = ({
                 ) : (
                   <div className="hp-blog-thumb-placeholder" />
                 )}
-                <span className={cn("hp-blog-badge", categoryClass)}>
+                <span className="hp-blog-badge">
                   {post.category || "Career Advice"}
                 </span>
               </div>
@@ -105,14 +91,15 @@ const GridBlogSection = ({
               <div className="hp-blog-card-body">
                 {/* Meta info: Date & Read Time */}
                 <div className="hp-blog-meta-row">
-                  <div className="hp-blog-meta-item">
-                    <Calendar size={14} className="hp-blog-meta-icon" />
+                  <span className="hp-blog-meta-item">
+                    <Calendar size={13} className="hp-blog-meta-icon" />
                     <span>{formattedDate}</span>
-                  </div>
-                  <div className="hp-blog-meta-item">
-                    <Clock size={14} className="hp-blog-meta-icon" />
+                  </span>
+                  <span className="hp-blog-meta-sep">•</span>
+                  <span className="hp-blog-meta-item">
+                    <Clock size={13} className="hp-blog-meta-icon" />
                     <span>{readTimeStr}</span>
-                  </div>
+                  </span>
                 </div>
 
                 {/* Blog Title */}
@@ -125,10 +112,11 @@ const GridBlogSection = ({
                   {post.overview || post.description || "Discover how in-demand skills and expert insights can give you a competitive edge in your career."}
                 </p>
 
-                {/* Read More Link */}
+                {/* Card Action / Footer */}
                 <div className="hp-blog-card-action">
                   <span className="hp-blog-read-more">
-                    Read More <ArrowRight size={15} className="hp-blog-arrow-icon" />
+                    <span>Read Article</span>
+                    <ArrowRight size={14} className="hp-blog-arrow-icon" />
                   </span>
                 </div>
               </div>
@@ -136,7 +124,7 @@ const GridBlogSection = ({
           );
         })}
       </div>
-    </section>
+    </div>
   );
 };
 
