@@ -12,7 +12,8 @@ import {
 import {
     getAdminRecruiters,
     getAdminPlans,
-    loginAsRecruiter
+    loginAsRecruiter,
+    toggleAdminRecruiterAutoApprove
 } from '../ApiService/action';
 import AdminDateFilter from './AdminDateFilter';
 import AdminSelect from './AdminSelect';
@@ -49,6 +50,7 @@ const ActionsDropdown = ({
     router,
     setChangePlanRecruiter,
     handleToggleStatus,
+    handleToggleAutoApprove,
     handleDeleteRecruiter,
     handleLoginAsRecruiter,
     onClose
@@ -178,6 +180,15 @@ const ActionsDropdown = ({
                 <span>Edit Plan</span>
             </button>
 
+            {/* 3. Toggle Auto-Approve */}
+            <button
+                onClick={() => { handleToggleAutoApprove(rec); onClose(); }}
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] font-medium transition-colors cursor-pointer text-left ${checkIsAutoApprove(rec) ? 'text-amber-700 hover:bg-amber-50' : 'text-emerald-700 hover:bg-emerald-50'}`}
+            >
+                <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                <span>{checkIsAutoApprove(rec) ? 'Disable Auto-Approve' : 'Enable Auto-Approve'}</span>
+            </button>
+
             <div className="my-1 border-t border-slate-100"></div>
 
             {/* 3. Suspend / Activate Account */}
@@ -222,6 +233,7 @@ const RecruiterActionCell = ({
     onClose,
     setChangePlanRecruiter,
     handleToggleStatus,
+    handleToggleAutoApprove,
     handleDeleteRecruiter,
     handleLoginAsRecruiter
 }) => {
@@ -248,6 +260,7 @@ const RecruiterActionCell = ({
                         router={router}
                         setChangePlanRecruiter={setChangePlanRecruiter}
                         handleToggleStatus={handleToggleStatus}
+                        handleToggleAutoApprove={handleToggleAutoApprove}
                         handleDeleteRecruiter={handleDeleteRecruiter}
                         handleLoginAsRecruiter={handleLoginAsRecruiter}
                         onClose={onClose}
@@ -505,6 +518,24 @@ export default function RecruitersList() {
 
     const handleToggleStatus = (recruiter) => {
         setStatusModalRecruiter(recruiter);
+    };
+
+    const handleToggleAutoApprove = async (rec) => {
+        const isCurrentAuto = checkIsAutoApprove(rec);
+        const nextStatus = isCurrentAuto ? 0 : 1;
+        const compName = rec.company_name || rec.organization || 'Company';
+        try {
+            const res = await toggleAdminRecruiterAutoApprove(rec.recruiter_id, { auto_approve: nextStatus });
+            if (res.data?.success) {
+                toast.success(res.data.message || `Auto-approve ${nextStatus ? 'enabled' : 'disabled'} for ${compName}.`);
+                loadData();
+            } else {
+                toast.error(res.data?.message || 'Failed to update auto-approve.');
+            }
+        } catch (err) {
+            console.error('Failed to update auto-approve:', err);
+            toast.error('Failed to update auto-approve status.');
+        }
     };
 
     const handleLoginAsRecruiter = async (rec) => {
@@ -1292,6 +1323,7 @@ export default function RecruitersList() {
                                                 onClose={() => setOpenDropdown(null)}
                                                 setChangePlanRecruiter={setChangePlanRecruiter}
                                                 handleToggleStatus={handleToggleStatus}
+                                                handleToggleAutoApprove={handleToggleAutoApprove}
                                                 handleDeleteRecruiter={handleDeleteRecruiter}
                                                 handleLoginAsRecruiter={handleLoginAsRecruiter}
                                             />

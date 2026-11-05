@@ -661,8 +661,19 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                                                         {member.first_name ? member.first_name[0].toUpperCase() : 'U'}
                                                     </div>
                                                     <div>
-                                                        <div className="font-semibold text-xs text-slate-900">
-                                                            {member.full_name || 'Sub-Recruiter'}
+                                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                                            <span className="font-semibold text-xs text-slate-900">
+                                                                {member.full_name || 'Sub-Recruiter'}
+                                                            </span>
+                                                            {Boolean(member.auto_approve === 1) && (
+                                                                <span
+                                                                    className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded border-1 border-emerald-200"
+                                                                    title="Auto-Approve Enabled: Posted jobs are approved automatically without admin review"
+                                                                >
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                                    AUTO-APPROVE
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
                                                             <Mail className="w-3 h-3 text-slate-400" />

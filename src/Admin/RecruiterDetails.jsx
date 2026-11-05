@@ -134,18 +134,21 @@ export default function RecruiterDetails({ recruiterId }) {
                 toast.success(res.data.message || `Job auto-approve ${newStatus ? 'enabled' : 'disabled'} successfully.`);
                 setRecruiterData(prev => {
                     if (!prev) return prev;
+                    const updateMasters = (list) => (list || []).map(m => ({ ...m, auto_approve: newStatus }));
                     if (prev.recruiter) {
                         return {
                             ...prev,
                             recruiter: {
                                 ...prev.recruiter,
                                 auto_approve: newStatus
-                            }
+                            },
+                            master_recruiters: updateMasters(prev.master_recruiters)
                         };
                     }
                     return {
                         ...prev,
-                        auto_approve: newStatus
+                        auto_approve: newStatus,
+                        master_recruiters: updateMasters(prev.master_recruiters)
                     };
                 });
             } else {
@@ -843,7 +846,7 @@ export default function RecruiterDetails({ recruiterId }) {
                     {renderUsageCard('Monthly Job Posts', r.job_posts_used, r.job_post_limit, 'posts', FileText, 'blue')}
                     {renderUsageCard('Active Jobs on Portal', r.active_jobs_count, r.active_job_limit, 'active', Briefcase, 'emerald')}
                     {renderUsageCard('Resume Views', r.resume_views_used, r.resume_view_limit, 'views', Eye, 'purple')}
-                    {renderUsageCard('Sub-Recruiter Seats', r.sub_recruiters_count, r.sub_recruiter_limit || 0, 'seats', Users, 'amber')}
+                    {renderUsageCard('Sub-Recruiter Seats', r.sub_recruiters_count, r.total_sub_recruiter_seats || r.sub_recruiter_limit || 0, 'seats', Users, 'amber')}
                     {renderUsageCard('Resume Downloads', r.resume_downloads_used, r.resume_download_limit, 'resumes', Download, 'rose')}
                     {renderUsageCard('Email Outreach', r.emails_used, r.email_limit, 'emails', Mail, 'sky')}
                     {renderUsageCard('WhatsApp Outreach', r.whatsapp_used, r.whatsapp_limit, 'messages', MessageCircle, 'green')}
@@ -1029,11 +1032,20 @@ export default function RecruiterDetails({ recruiterId }) {
                                                                 {mName[0]?.toUpperCase() || 'M'}
                                                             </div>
                                                             <div>
-                                                                <div className="flex items-center gap-1.5">
+                                                                <div className="flex items-center gap-1.5 flex-wrap">
                                                                     <span className="font-semibold text-slate-900 text-[13px]">{mName}</span>
                                                                     {isPrimary && (
                                                                         <span className="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded border-1 border-emerald-200">
                                                                             PRIMARY
+                                                                        </span>
+                                                                    )}
+                                                                    {Boolean(m.auto_approve === 1 || isAutoApprove) && (
+                                                                        <span
+                                                                            className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-emerald-50 text-emerald-700 text-[10px] font-bold rounded border-1 border-emerald-200"
+                                                                            title="Auto-Approve Enabled: Posted jobs are approved automatically without admin review"
+                                                                        >
+                                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                                            AUTO-APPROVE
                                                                         </span>
                                                                     )}
                                                                 </div>
@@ -1331,7 +1343,8 @@ export default function RecruiterDetails({ recruiterId }) {
                         active_job_limit: r.active_job_limit,
                         featured_job_limit: r.featured_job_limit,
                         urgent_job_limit: r.urgent_job_limit,
-                        sub_recruiter_limit: r.sub_recruiter_limit,
+                        sub_recruiter_limit: r.total_sub_recruiter_seats ?? r.sub_recruiter_limit,
+                        total_sub_recruiter_seats: r.total_sub_recruiter_seats ?? r.sub_recruiter_limit,
                         resume_view_limit: r.resume_view_limit,
                         resume_download_limit: r.resume_download_limit,
                         email_limit: r.email_limit,
@@ -1400,7 +1413,8 @@ export default function RecruiterDetails({ recruiterId }) {
                         urgent_job_limit: r.urgent_job_limit,
                         resume_view_limit: r.resume_view_limit,
                         resume_download_limit: r.resume_download_limit,
-                        sub_recruiter_limit: r.sub_recruiter_limit,
+                        sub_recruiter_limit: r.total_sub_recruiter_seats ?? r.sub_recruiter_limit,
+                        total_sub_recruiter_seats: r.total_sub_recruiter_seats ?? r.sub_recruiter_limit,
                         email_limit: r.email_limit,
                         whatsapp_limit: r.whatsapp_limit,
                         excel_download_limit: r.excel_download_limit
