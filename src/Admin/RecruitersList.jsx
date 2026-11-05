@@ -44,6 +44,16 @@ const getCompanyAvatarGradient = (name = '') => {
     return gradients[index];
 };
 
+// Helper to detect auto-approve flag reliably
+const checkIsAutoApprove = (rec) => Boolean(
+    rec && (
+        rec.auto_approve === 1 ||
+        rec.auto_approve === true ||
+        rec.auto_approve === '1' ||
+        (rec.auto_approve?.data && rec.auto_approve.data[0] === 1)
+    )
+);
+
 const ActionsDropdown = ({
     anchorRef,
     rec,
@@ -285,14 +295,6 @@ export default function RecruitersList() {
     const [statusFilter, setStatusFilter] = useState('');
     const [subscriptionStatusFilter, setSubscriptionStatusFilter] = useState('');
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
-
-    // Helper to detect auto-approve flag reliably
-    const checkIsAutoApprove = (rec) => Boolean(
-        rec.auto_approve === 1 ||
-        rec.auto_approve === true ||
-        rec.auto_approve === '1' ||
-        (rec.auto_approve?.data && rec.auto_approve.data[0] === 1)
-    );
 
     // Status counts for tabs
     const stats = React.useMemo(() => {
