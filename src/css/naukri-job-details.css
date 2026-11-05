@@ -428,8 +428,9 @@
 
 .njd-jd-text strong,
 .njd-jd-text b {
-    font-weight: 500;
+    font-weight: 600;
     color: #0f172a;
+    margin-top: 10px;
 }
 
 .njd-jd-text em,
@@ -469,7 +470,7 @@
 .njd-jd-text ol,
 .njd-company-desc ul,
 .njd-company-desc ol {
-    margin: 12px 0 16px 0 !important;
+    margin: 2px 0 16px 0 !important;
     padding-left: 28px !important;
 }
 
