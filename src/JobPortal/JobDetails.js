@@ -51,7 +51,7 @@ import Header from "../Header/Header";
 import SEO from "../Components/SEO/SEO";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
-import { getJobSlug, getJobDetailsUrl, generateSlug, isInternshipOpportunity } from "../utils/slug";
+import { getJobSlug, getJobDetailsUrl, generateSlug, isInternshipOpportunity, extractSkillsFromDescription, processDescription } from "../utils/slug";
 import { generateNaukriJobTitle, generateNaukriJobDescription } from "../utils/seo-helper";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
@@ -72,27 +72,7 @@ const getCurrencySymbol = (currencyCode) => {
   return currencyMap[currencyCode] || currencyCode;
 };
 
-// Helper function to clean and process job description HTML
-const processDescription = (html) => {
-  if (!html) return "";
-  let str = String(html)
-    .replace(/\u00AD/g, '')
-    .replace(/\u200B/g, '');
 
-  // If plain text (no HTML tags), convert newlines to paragraphs
-  if (!/<[a-z][\s\S]*>/i.test(str)) {
-    str = str
-      .split(/\r?\n/)
-      .map((line) => (line.trim() === "" ? "<p><br /></p>" : `<p>${line}</p>`))
-      .join("");
-  } else {
-    // Convert empty paragraphs (<p></p>, <p> </p>, <p>&nbsp;</p>) to <p><br /></p>
-    // so empty lines created by pressing Enter always render with height
-    str = str.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '<p><br /></p>');
-  }
-
-  return str.trim();
-};
 
 const transformJob = (job) => {
   if (!job) return null;
@@ -196,7 +176,12 @@ const transformJob = (job) => {
     type: job.job_nature,
     premium: true,
     urgent: false,
-    skills: job.skills,
+    skills: (() => {
+      if (job.skills && (Array.isArray(job.skills) ? job.skills.length > 0 : String(job.skills).trim() !== "")) {
+        return job.skills;
+      }
+      return extractSkillsFromDescription(job.job_description);
+    })(),
     eligibility: isIntern ? "Internship" : (Array.isArray(job.experience_required) ? job.experience_required.join(", ") : (job.experience_required || "")),
     status: isExpired ? "Expired" : "Live",
     raw_location: job.work_location,
@@ -1569,9 +1554,10 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                   <CriticalProfileAlert variant="job-details" />
 
                   <div className="njd-main-card">
-                    <h2 className="njd-section-title">Job description:</h2>
+                    <h2 className="njd-section-title">Job description</h2>
                     <div className="njd-jd-text ql-editor rich-text" dangerouslySetInnerHTML={{ __html: job.job_description }} />
-                    <h3 className="njd-section-title" style={{ marginTop: '30px' }}>Job Details</h3>
+                    <div className="njd-section-divider"></div>
+                    <h3 className="njd-section-title">Job Details</h3>
                     <div className="njd-role-details">
                       {job.role && <div className="njd-role-item"><span className="njd-role-label">Role:</span><span className="njd-role-value">{job.role}</span></div>}
                       {job.industry && <div className="njd-role-item"><span className="njd-role-label">Industry Type:</span><span className="njd-role-value">{job.industry}</span></div>}

@@ -60,23 +60,92 @@ export const getJobSlug = (job) => {
   return parts.join("-").replace(/-{3,}/g, "--");
 };
 
+export const extractSkillsFromDescription = (html) => {
+  if (!html) return [];
+  const str = String(html);
+  const keySkillsMatch = str.match(/(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*Key\s*Skills(?::)?\s*(?:<\/(?:strong|b)>)?\s*(?:<\/p>)?\s*(?:<p[^>]*>)?\s*([A-Za-z0-9\s,\(\)\/\-\+\#\.\&]+?)(?:<\/p>)?\s*(?=(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*(?:(?:(?<!Job\s)Role)|Industry\s*Type|Department|Employment\s*Type|About\s*Company|Company\s*Info)|$)/is);
+  if (keySkillsMatch) {
+    const rawSkills = keySkillsMatch[1].replace(/<[^>]*>/g, '').trim();
+    if (rawSkills.includes(',')) {
+      return rawSkills.split(',').map(s => s.trim().replace(/\.$/, '')).filter(Boolean);
+    }
+  }
+  return [];
+};
+
 export const processDescription = (html) => {
   if (!html) return "";
   let str = String(html)
     .replace(/\u00AD/g, '')
-    .replace(/\u200B/g, '');
+    .replace(/\u200B/g, '')
+    .trim();
 
-  // If plain text (no HTML tags), convert newlines to paragraphs
+  // 1. If plain text (no HTML tags), convert newlines to paragraphs and detect bullet lines
   if (!/<[a-z][\s\S]*>/i.test(str)) {
-    str = str
-      .split(/\r?\n/)
-      .map(line => line.trim() === "" ? "<p><br /></p>" : `<p>${line}</p>`)
-      .join("");
+    const lines = str.split(/\r?\n/).map(l => l.trim());
+    const formatted = [];
+    let inList = false;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (!line) {
+        if (inList) {
+          formatted.push('</ul>');
+          inList = false;
+        }
+        continue;
+      }
+
+      // Check if bullet point (e.g. •, -, *, etc.)
+      const bulletMatch = line.match(/^[•\u2022\u25cf\*\-]\s*(.*)$/);
+      if (bulletMatch) {
+        if (!inList) {
+          formatted.push('<ul>');
+          inList = true;
+        }
+        formatted.push(`<li>${bulletMatch[1]}</li>`);
+      } else {
+        if (inList) {
+          formatted.push('</ul>');
+          inList = false;
+        }
+        formatted.push(`<p>${line}</p>`);
+      }
+    }
+    if (inList) {
+      formatted.push('</ul>');
+    }
+    str = formatted.join("");
   } else {
-    // Convert empty paragraphs (<p></p>, <p> </p>, <p>&nbsp;</p>) to <p><br /></p>
-    // so empty lines created by pressing Enter always render with height
+    // If HTML, convert empty paragraphs to <p><br /></p>
     str = str.replace(/<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>/gi, '<p><br /></p>');
+
+    // Convert consecutive <p>• ...</p> to clean <ul><li>...</li></ul>
+    str = str.replace(/(?:<p[^>]*>\s*[•\u2022\u25cf\*\-]\s*([\s\S]*?)<\/p>\s*)+/gi, (match) => {
+      const items = match.match(/<p[^>]*>\s*[•\u2022\u25cf\*\-]\s*([\s\S]*?)<\/p>/gi) || [];
+      const lis = items.map(it => {
+        const content = it.replace(/^<p[^>]*>\s*[•\u2022\u25cf\*\-]\s*/i, '').replace(/<\/p>$/i, '');
+        return `<li>${content}</li>`;
+      }).join("");
+      return `<ul>${lis}</ul>`;
+    });
   }
+
+  // 2. Remove leading redundant "Job Description" header if already present
+  str = str.replace(/^\s*(?:<p[^>]*>)?\s*(?:<(?:strong|b|h\d)[^>]*>)?\s*Job\s*Description(?::)?\s*(?:<\/(?:strong|b|h\d)>)?\s*(?:<\/p>)?\s*/i, '');
+
+  // 3. Clean raw embedded Key Skills text block (already extracted to pills)
+  const keySkillsMatch = str.match(/(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*Key\s*Skills(?::)?\s*(?:<\/(?:strong|b)>)?\s*(?:<\/p>)?\s*(?:<p[^>]*>)?\s*([A-Za-z0-9\s,\(\)\/\-\+\#\.\&]+?)(?:<\/p>)?\s*(?=(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*(?:(?:(?<!Job\s)Role)|Industry\s*Type|Department|Employment\s*Type|About\s*Company|Company\s*Info)|$)/is);
+  if (keySkillsMatch && keySkillsMatch[1].includes(',')) {
+    str = str.replace(keySkillsMatch[0], '');
+  }
+
+  // 4. Clean trailing duplicate metadata footer (Role: ..., Industry Type: ..., Department: ..., Employment Type: ..., Role Category: ...)
+  str = str.replace(/(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*(?:(?<!Job\s)Role|Industry\s*Type|Role\s*Category)\s*:(?:<\/(?:strong|b)>)?[\s\S]*$/i, '');
+
+  // 5. Enhance standard headings into neat subheadings
+  str = str.replace(/<p[^>]*>\s*(?:<(?:strong|b)[^>]*>)?\s*(Key\s*Responsibilities|Skills\s*Required|Requirements|Qualifications|What\s*You'll\s*Do|Role\s*Overview|Job\s*Overview|About\s*The\s*Role|Key\s*Skills\s*and\s*Requirements)(?::)?\s*(?:<\/(?:strong|b)>)?\s*<\/p>/gi, 
+    '<h4 class="njd-subheading">$1</h4>');
 
   return str.trim();
 };

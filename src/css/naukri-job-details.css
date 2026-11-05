@@ -357,31 +357,38 @@
 
 /* Main Content Card Styling */
 .njd-main-card {
-    background: var(--njd-card-bg);
-    border-radius: var(--njd-radius);
-    padding: 24px;
-    box-shadow: var(--njd-shadow);
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 30px 32px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
     margin-bottom: 24px;
-    border: 1px solid var(--njd-border);
+    border: 1px solid #e2e8f0;
 }
 
 .njd-section-title {
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--njd-text-title);
-    margin-bottom: 16px;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin-bottom: 20px !important;
+    letter-spacing: -0.015em !important;
+}
+
+.njd-section-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 30px 0 26px 0;
+    border: none;
 }
 
 .njd-jd-text {
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 14px;
-    color: var(--njd-text-body);
-    line-height: 1.6;
+    font-size: 14.5px;
+    color: #334155;
+    line-height: 1.7;
     margin-bottom: 24px;
     overflow-wrap: break-word !important;
     word-break: break-word !important;
-    white-space: pre-wrap !important;
     hyphens: none !important;
 }
 
@@ -393,33 +400,36 @@
     hyphens: none !important;
 }
 
+.njd-jd-text .njd-subheading,
+.njd-jd-text h3,
+.njd-jd-text h4 {
+    font-size: 15.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin-top: 24px !important;
+    margin-bottom: 10px !important;
+    letter-spacing: -0.01em !important;
+    display: block !important;
+}
+
 .njd-jd-text h1 {
-    font-size: 2em;
-    font-weight: bold;
-    margin: 0.67em 0;
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0.8em 0 0.4em 0;
 }
 
 .njd-jd-text h2 {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin: 0.83em 0;
-}
-
-.njd-jd-text h3 {
-    font-size: 1.17em;
-    font-weight: bold;
-    margin: 1em 0;
-}
-
-.njd-jd-text h4 {
-    font-size: 1em;
-    font-weight: bold;
-    margin: 1.33em 0;
+    font-size: 1.4em;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0.8em 0 0.4em 0;
 }
 
 .njd-jd-text strong,
 .njd-jd-text b {
-    font-weight: bold;
+    font-weight: 500;
+    color: #0f172a;
 }
 
 .njd-jd-text em,
@@ -429,10 +439,13 @@
 
 .njd-jd-text p,
 .njd-jd-text.ql-editor p {
+    font-size: 14.5px !important;
+    color: #334155 !important;
     margin-top: 0 !important;
-    margin-bottom: 0.45em !important;
-    line-height: 1.2;
+    margin-bottom: 2px !important;
+    line-height: 1.68 !important;
 }
+
 
 .njd-jd-text p:empty,
 .njd-jd-text p:has(> br:only-child),
@@ -478,7 +491,14 @@
     list-style: disc !important;
     display: list-item !important;
     margin-bottom: 8px !important;
-    padding-left: 4px !important;
+    padding-left: 6px !important;
+    line-height: 1.65 !important;
+}
+
+.njd-jd-text ul>li::marker,
+.njd-company-desc ul>li::marker {
+    color: #5f2eea !important;
+    font-size: 1.1em !important;
 }
 
 .njd-jd-text ol>li:not([data-list]),
@@ -487,7 +507,8 @@
     list-style: decimal !important;
     display: list-item !important;
     margin-bottom: 8px !important;
-    padding-left: 4px !important;
+    padding-left: 6px !important;
+    line-height: 1.65 !important;
 }
 
 /* Quill 2.0+ list support (Quill outputs <ol><li data-list="bullet">) */
@@ -495,7 +516,7 @@
 .njd-company-desc ol:has(> li[data-list="bullet"]) {
     list-style-type: disc !important;
     list-style: disc !important;
-    padding-left: 28px !important;
+    padding-left: 24px !important;
 }
 
 .njd-jd-text li[data-list="bullet"],
@@ -504,12 +525,13 @@
     list-style: disc !important;
     display: list-item !important;
     margin-bottom: 8px !important;
-    padding-left: 4px !important;
+    padding-left: 6px !important;
+    line-height: 1.65 !important;
 }
 
 .njd-jd-text li[data-list="bullet"]::marker,
 .njd-company-desc li[data-list="bullet"]::marker {
-    content: "• " !important;
+    color: #5f2eea !important;
     font-size: 1.15em !important;
 }
 
@@ -522,7 +544,7 @@
 .njd-company-desc ol:has(> li[data-list="ordered"]) {
     list-style-type: decimal !important;
     list-style: decimal !important;
-    padding-left: 28px !important;
+    padding-left: 24px !important;
 }
 
 .njd-jd-text li[data-list="ordered"],
@@ -531,7 +553,8 @@
     list-style: decimal !important;
     display: list-item !important;
     margin-bottom: 8px !important;
-    padding-left: 4px !important;
+    padding-left: 6px !important;
+    line-height: 1.65 !important;
 }
 
 .njd-jd-text li[data-list="ordered"]>.ql-ui,
@@ -539,13 +562,15 @@
     display: none !important;
 }
 
-.njd-jd-text.ql-editor,
-.njd-jd-text.ql-editor * {
+.njd-jd-text.ql-editor {
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     height: auto !important;
     overflow-y: visible !important;
     padding: 0 !important;
-    white-space: pre-wrap !important;
+}
+
+.njd-jd-text.ql-editor * {
+    font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .njd-role-details,
@@ -555,33 +580,36 @@
 
 .njd-role-details {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px 24px;
+    margin-bottom: 24px;
 }
 
 .njd-role-item {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    justify-content: center;
+    justify-content: flex-start;
 }
 
 .njd-role-label {
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 13px;
-    color: var(--njd-text-muted);
+    font-size: 12.5px !important;
+    font-weight: 500 !important;
+    color: #64748b !important;
+    letter-spacing: 0.01em;
 }
 
 .njd-role-value {
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    font-size: 14px;
-    color: var(--njd-text-body);
-    font-weight: 500;
+    font-size: 14.5px !important;
+    color: #0f172a !important;
+    font-weight: 600 !important;
+    line-height: 1.4;
 }
 
 .njd-role-value a {
-    color: var(--njd-primary);
+    color: #5f2eea;
     text-decoration: none;
 }
 
@@ -593,24 +621,29 @@
 .njd-skills-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
     margin-top: 10px;
 }
 
 .njd-skill-tag {
     font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-    background: #f4f5f7;
-    color: var(--njd-text-body);
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-size: 13px;
-    border: 1px solid transparent;
-    transition: all 0.2s;
+    background: #f8fafc !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+    padding: 6px 14px !important;
+    border-radius: 20px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    transition: all 0.2s ease !important;
 }
 
 .njd-skill-tag:hover {
-    background: #fff;
-    border-color: #d1d5db;
+    background: #ffffff !important;
+    border-color: #5f2eea !important;
+    color: #5f2eea !important;
+    box-shadow: 0 2px 8px rgba(95, 46, 234, 0.12) !important;
 }
 
 /* Sidebar Styling */
@@ -1216,6 +1249,7 @@
     0% {
         background-position: -200% 0;
     }
+
     100% {
         background-position: 200% 0;
     }
@@ -1467,6 +1501,7 @@
    Job Details Mobile Responsive Overrides
    ============================================================ */
 @media (max-width: 768px) {
+
     /* Page & Container */
     .njd-page-wrapper {
         padding: 14px 0 !important;
@@ -1642,7 +1677,7 @@
         width: 100% !important;
     }
 
-    .njd-google-continue-wrap > div {
+    .njd-google-continue-wrap>div {
         width: 100% !important;
     }
 
