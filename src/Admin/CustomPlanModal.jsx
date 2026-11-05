@@ -119,7 +119,7 @@ export default function CustomPlanModal({ recruiter, isOpen, onClose, onSuccess 
                         </button>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form noValidate onSubmit={handleSubmit} className="space-y-5">
                         {/* Plan Customization Scope Dropdown */}
                         <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>

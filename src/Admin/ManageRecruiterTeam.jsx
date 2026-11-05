@@ -559,7 +559,11 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                             <span className="text-2xl font-semibold text-slate-900">{stats.sub_recruiter_limit}</span>
                             <span className="text-xs text-slate-500 font-semibold">Total Seats</span>
                         </div>
-                        <span className="text-[11px] text-slate-400 mt-1 block">Included in subscription</span>
+                        <span className="text-[11px] text-slate-400 mt-1 block">
+                            {stats.subscription_expiry
+                                ? `Company Validity: Active until ${new Date(stats.subscription_expiry).toLocaleDateString()}`
+                                : 'Included in subscription'}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -588,7 +592,7 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                                     <th className="py-3 px-4">Designation</th>
                                     <th className="py-3 px-4">Role Preset</th>
                                     <th className="py-3 px-4">Granted Permissions</th>
-                                    <th className="py-3 px-4">Status</th>
+                                    <th className="py-3 px-4">Status &amp; Validity</th>
                                     <th className="py-3 px-4 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -643,7 +647,7 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                                     <th className="py-3 px-4">Designation</th>
                                     <th className="py-3 px-4">Role Preset</th>
                                     <th className="py-3 px-4">Granted Permissions</th>
-                                    <th className="py-3 px-4">Status</th>
+                                    <th className="py-3 px-4">Status &amp; Validity</th>
                                     <th className="py-3 px-4 text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -748,14 +752,19 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
 
                                             {/* Status */}
                                             <td className="py-3.5 px-4">
-                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${member.status === 'active' && member.user_active
-                                                    ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200'
-                                                    : 'bg-rose-50 text-rose-700 border-1 border-rose-200'
-                                                    }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${member.status === 'active' && member.user_active ? 'bg-emerald-500' : 'bg-rose-500'
-                                                        }`} />
-                                                    {member.status === 'active' && member.user_active ? 'Active' : 'Suspended'}
-                                                </span>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold w-fit ${member.status === 'active' && member.user_active
+                                                        ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-200'
+                                                        : 'bg-rose-50 text-rose-700 border-1 border-rose-200'
+                                                        }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${member.status === 'active' && member.user_active ? 'bg-emerald-500' : 'bg-rose-500'
+                                                            }`} />
+                                                        {member.status === 'active' && member.user_active ? 'Active' : 'Suspended'}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400 font-medium">
+                                                        Shares Company Validity
+                                                    </span>
+                                                </div>
                                             </td>
 
                                             {/* Actions */}
@@ -871,7 +880,7 @@ export default function ManageRecruiterTeam({ recruiterId, isAdminView = false }
                         </div>
 
                         {/* Scrollable Form Body */}
-                        <form onSubmit={handleCreateSubRecruiter} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+                        <form noValidate onSubmit={handleCreateSubRecruiter} className="flex flex-col flex-1 min-h-0 overflow-hidden">
                             <div className="p-4 overflow-y-auto space-y-4 flex-1">
                                 {/* Master Recruiter Assignment */}
                                 <div>

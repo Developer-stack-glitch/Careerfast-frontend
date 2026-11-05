@@ -47,6 +47,7 @@ import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches,
 import { getImageUrl, getPlaceholderSvg } from "../utils/getImageUrl";
 import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../utils/profileCompletion";
 import { getRecentSearches, saveRecentSearch, removeRecentSearch, RECENT_SEARCHES_EVENT, fetchLiveCountForSearch, updateRecentSearchCount } from "../utils/recentSearches";
+import { getJobDetailsUrl } from "../utils/slug";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -1244,7 +1245,7 @@ export default function HomePage() {
         const experienceType = safeSlug(job.experience_type || "");
         const experienceRequired = safeSlug(job.experience_required);
 
-        return `/job-details/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
+        return getJobDetailsUrl(job) || `/job-details/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
     };
 
     const handleJobCardNavigation = (e, job) => {

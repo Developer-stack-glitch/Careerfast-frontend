@@ -54,7 +54,7 @@ import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalPro
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { CgWorkAlt } from "react-icons/cg";
 import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
-import { isInternshipOpportunity } from "../utils/slug";
+import { isInternshipOpportunity, getJobDetailsUrl, getJobSlug } from "../utils/slug";
 
 import "../css/JobFilter.css";
 import "../css/naukri-ui-styles.css";
@@ -950,7 +950,7 @@ const JobCard = React.memo(function JobCard({
     else if (job.type === "Scholarship") basePath = "/scholarship-details";
     else basePath = isInternshipOpportunity(job, { jobNatureSelected }) ? "/internship-details" : "/job-details";
 
-    const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
+    const finalUrl = getJobDetailsUrl(job) || `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
     const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
     if (isMobile) {
       navigate(finalUrl);

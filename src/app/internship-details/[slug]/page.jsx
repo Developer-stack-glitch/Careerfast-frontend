@@ -1,5 +1,13 @@
+import { notFound } from 'next/navigation';
 import JobDetails from '@/JobPortal/JobDetails';
 import { fetchJobForSEO } from '@/utils/seo-fetch';
+import { 
+  generateNaukriJobTitle, 
+  generateNaukriJobDescription, 
+  formatJobLocation, 
+  formatJobCompany, 
+  cleanHtmlText 
+} from '@/utils/seo-helper';
 
 export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
@@ -13,49 +21,58 @@ export async function generateMetadata({ params, searchParams }) {
   if (!job) {
     return {
       title: "Internship Not Found | CareerFast",
-      description: "The requested internship listing could not be found."
+      description: "The requested internship listing could not be found or has expired.",
+      robots: { index: false, follow: false }
     };
   }
 
-  const siteName = 'CareerFast';
-  
-  const location = (() => {
-    let locStr = "";
-    if (job.work_location) {
-      try {
-        const parsed = JSON.parse(job.work_location);
-        locStr = Array.isArray(parsed) ? parsed.join(", ") : job.work_location;
-      } catch {
-        locStr = job.work_location;
-      }
-    }
-    return `${job.workplace_type || ""}${locStr ? ` • ${locStr}` : ""}`.trim();
-  })();
+  const siteName = 'CareerFast.in';
+  // Ensure job object reflects internship nature for experience formatting
+  const internshipJob = { ...job, job_nature: 'Internship', employment_type: 'Internship' };
+  const fullTitle = generateNaukriJobTitle(internshipJob, siteName);
+  const fullDescription = generateNaukriJobDescription(internshipJob);
+  const cleanLocation = formatJobLocation(job);
+  const cleanCompany = formatJobCompany(job);
 
-  const experience = "Internship";
+  const keywords = [
+    job.job_title,
+    cleanCompany,
+    "Internship",
+    cleanLocation,
+    `internships in ${cleanLocation}`,
+    "internships",
+    "careers",
+    "CareerFast"
+  ].filter(Boolean).join(", ");
 
-  const fullTitle = `${job.job_title} - ${location} - ${job.company_name} - ${experience}`;
-  
-  const baseDescription = job.seo_description || (job.job_description ? 
-    job.job_description.replace(/<[^>]*>?/gm, ' ').substring(0, 200).trim() : 
-    `Apply for ${job.job_title} internship at ${job.company_name}.`);
-
-  const fullDescription = `${baseDescription} - ${location} - ${experience}`;
+  const canonicalUrl = `https://careerfast.in/internship-details/${slug}`;
 
   return {
     title: fullTitle,
     description: fullDescription,
+    keywords: keywords,
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
     openGraph: {
       title: fullTitle,
       description: fullDescription,
-      url: `https://careerfast.in/internship-details/${slug}`,
-      siteName: siteName,
+      url: canonicalUrl,
+      siteName: 'CareerFast',
       images: [
         {
           url: job.company_logo || "https://careerfast.in/og-image.png",
           width: 800,
           height: 600,
-          alt: job.company_name,
+          alt: cleanCompany,
         },
       ],
       locale: "en_US",
@@ -68,8 +85,12 @@ export async function generateMetadata({ params, searchParams }) {
       images: [job.company_logo || "https://careerfast.in/og-image.png"],
     },
     alternates: {
-      canonical: `https://careerfast.in/internship-details/${slug}`,
+      canonical: canonicalUrl,
     },
+    other: {
+      'job-id': String(job.id),
+      'company': cleanCompany,
+    }
   };
 }
 
@@ -82,30 +103,37 @@ export default async function Page({ params, searchParams }) {
   
   const job = await fetchJobForSEO(jobId, { preview: isPreview, preview_token: previewToken });
 
+  if (!job && !isPreview) {
+    notFound();
+  }
+
+  const cleanLocation = job ? formatJobLocation(job) : "India";
+  const cleanCompany = job ? formatJobCompany(job) : "Company";
+
   const jsonLd = job ? {
     "@context": "https://schema.org/",
     "@type": "JobPosting",
     "title": job.job_title,
-    "description": job.job_description,
+    "description": cleanHtmlText(job.job_description) || job.job_description,
     "identifier": {
       "@type": "PropertyValue",
-      "name": job.company_name,
-      "value": job.id
+      "name": cleanCompany,
+      "value": String(job.id)
     },
     "datePosted": job.created_at,
     "validThrough": new Date(new Date(job.created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     "employmentType": "INTERN",
     "hiringOrganization": {
       "@type": "Organization",
-      "name": job.company_name,
+      "name": cleanCompany,
       "sameAs": "https://careerfast.in",
-      "logo": job.company_logo
+      "logo": job.company_logo || "https://careerfast.in/og-image.png"
     },
     "jobLocation": {
       "@type": "Place",
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": job.work_location,
+        "addressLocality": cleanLocation,
         "addressCountry": "IN"
       }
     }
@@ -123,4 +151,3 @@ export default async function Page({ params, searchParams }) {
     </>
   );
 }
-

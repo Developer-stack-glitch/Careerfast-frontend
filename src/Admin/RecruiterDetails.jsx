@@ -255,15 +255,24 @@ export default function RecruiterDetails({ recruiterId }) {
     const handleSaveMasterSeats = async (e) => {
         e.preventDefault();
         if (!editSeatsModal.master) return;
-        const newSeats = Number(editSeatsModal.seats || 0);
+        if (editSeatsModal.seats === '' || isNaN(Number(editSeatsModal.seats))) {
+            return toast.error("Please enter a valid number of seats.");
+        }
+        const newSeats = Number(editSeatsModal.seats);
         const minAllowed = Number(editSeatsModal.master?.sub_recruiters_count || 0);
         const maxAllowed = Number(editSeatsModal.master?.allocated_seats || 0) + availableUnallocatedSeats;
 
+        if (newSeats < 0) {
+            return toast.error("Seat allocation cannot be negative.");
+        }
         if (newSeats < minAllowed) {
-            return toast.error(`Seats cannot be less than ${minAllowed} (currently active sub-recruiters for this master).`);
+            return toast.error(`Seats cannot be less than ${minAllowed} (${minAllowed} active sub-recruiter${minAllowed === 1 ? '' : 's'} currently assigned to this Master).`);
         }
         if (newSeats > maxAllowed) {
-            return toast.error(`Seats cannot exceed ${maxAllowed} (maximum available in company pool).`);
+            if (maxAllowed === 0) {
+                return toast.error(`Cannot allocate ${newSeats} seats. Company pool has 0 available seats remaining (${totalCompanySeats} total pool seats already assigned).`);
+            }
+            return toast.error(`Cannot allocate ${newSeats} seats. Maximum allowed for this Master is ${maxAllowed} seats (${availableUnallocatedSeats} unallocated seats available in company pool).`);
         }
 
         try {
@@ -470,7 +479,7 @@ export default function RecruiterDetails({ recruiterId }) {
     };
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6 pb-16">
+        <div className="max-w-9xl mx-auto space-y-6 pb-16">
             {/* Top Bar with Navigation */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl">
                 <div className="flex items-center gap-3">
@@ -681,9 +690,12 @@ export default function RecruiterDetails({ recruiterId }) {
                                     </span>
                                     <span className="text-xs font-bold text-gray-800">Days Left</span>
                                 </div>
-                                <div className="text-[11px] text-gray-400 font-medium mt-1">
+                                <div className="text-[11px] text-gray-500 font-medium mt-1">
                                     Expires on {r.subscription_expiry ? new Date(r.subscription_expiry).toLocaleDateString() : 'N/A'}
                                 </div>
+                                <span className="inline-block mt-1 px-2 py-0.5 rounded text-[9.5px] font-semibold bg-emerald-100/90 text-emerald-800">
+                                    Shared across all Master &amp; Sub-Recruiters
+                                </span>
                             </div>
                         </div>
 
@@ -1013,7 +1025,7 @@ export default function RecruiterDetails({ recruiterId }) {
                                             <th className="py-3 px-4">Contact Details</th>
                                             <th className="py-3 px-4">Created Date</th>
                                             <th className="py-3 px-4">Sub-Recruiter Quota</th>
-                                            <th className="py-3 px-4">Account Status</th>
+                                            <th className="py-3 px-4">Account Status &amp; Validity</th>
                                             <th className="py-3 px-4 text-right">Actions</th>
                                         </tr>
                                     </thead>
@@ -1075,10 +1087,15 @@ export default function RecruiterDetails({ recruiterId }) {
                                                         </div>
                                                     </td>
                                                     <td className="py-3.5 px-4">
-                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                                            Active
-                                                        </span>
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border-1 border-emerald-200 w-fit">
+                                                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                                                {m.subscription_status || 'Active'}
+                                                            </span>
+                                                            <span className="text-[10.5px] text-slate-500 font-medium">
+                                                                Expires: {m.subscription_expiry ? new Date(m.subscription_expiry).toLocaleDateString() : (r.subscription_expiry ? new Date(r.subscription_expiry).toLocaleDateString() : 'Active')}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                     <td className="py-3.5 px-4 text-right">
                                                         <div className="inline-flex items-center gap-2">
@@ -1462,7 +1479,7 @@ export default function RecruiterDetails({ recruiterId }) {
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddMasterRecruiter} className="p-6 space-y-4">
+                        <form noValidate onSubmit={handleAddMasterRecruiter} className="p-6 space-y-4">
                             <div className="p-3.5 bg-indigo-50/70 border-1 border-indigo-200/60 rounded-xl flex items-start gap-3 text-xs text-indigo-900">
                                 <ShieldCheck className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
                                 <div>
@@ -1522,11 +1539,10 @@ export default function RecruiterDetails({ recruiterId }) {
                                 </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    max={availableUnallocatedSeats}
                                     value={masterFormData.allocated_seats}
                                     onChange={(e) => setMasterFormData({ ...masterFormData, allocated_seats: e.target.value })}
                                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold"
+                                    placeholder="Enter seat count"
                                 />
                                 <span className="text-[11px] text-slate-400 mt-1 block">
                                     {availableUnallocatedSeats} unallocated seats remain in the company total pool of {totalCompanySeats}.
@@ -1633,7 +1649,7 @@ export default function RecruiterDetails({ recruiterId }) {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveMasterSeats} className="p-6 space-y-4">
+                        <form noValidate onSubmit={handleSaveMasterSeats} className="p-6 space-y-4">
                             <div className="p-3.5 bg-indigo-50/70 border-1 border-indigo-200/60 rounded-xl space-y-1.5 text-xs text-indigo-900">
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-600 font-medium">Company Total Pool:</span>
@@ -1657,12 +1673,10 @@ export default function RecruiterDetails({ recruiterId }) {
                                 </label>
                                 <input
                                     type="number"
-                                    min={Number(editSeatsModal.master?.sub_recruiters_count || 0)}
-                                    max={Number(editSeatsModal.master?.allocated_seats || 0) + availableUnallocatedSeats}
                                     value={editSeatsModal.seats}
                                     onChange={(e) => setEditSeatsModal({ ...editSeatsModal, seats: e.target.value })}
                                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-semibold"
-                                    required
+                                    placeholder="Enter allocated seats"
                                 />
                                 <span className="text-[11px] text-slate-400 mt-1 block">
                                     Cannot be less than {editSeatsModal.master?.sub_recruiters_count || 0} active members, or exceed company pool.

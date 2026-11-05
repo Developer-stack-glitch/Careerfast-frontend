@@ -1,8 +1,7 @@
-
 const getApiBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
-  return 'https://api.careerfast.in'; // Production fallback
+  return 'https://careerfast.in'; // Production fallback
 };
 
 const apiBaseUrl = getApiBaseUrl();

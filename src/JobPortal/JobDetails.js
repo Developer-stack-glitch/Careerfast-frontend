@@ -52,6 +52,7 @@ import SEO from "../Components/SEO/SEO";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
 import { getJobSlug, getJobDetailsUrl, generateSlug, isInternshipOpportunity } from "../utils/slug";
+import { generateNaukriJobTitle, generateNaukriJobDescription } from "../utils/seo-helper";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
 import "../css/naukri-job-details.css";
@@ -407,19 +408,19 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   // Keep browser URL slug in sync with full SEO slug format
   useEffect(() => {
     if (typeof window !== "undefined" && backendJobs.length > 0) {
-      const job = backendJobs[0];
-      if (job && job.id) {
-        const canonicalSlug = getJobSlug(job);
-        if (canonicalSlug) {
-          const expectedPath = `/job-details/${canonicalSlug}`;
-          if (window.location.pathname !== expectedPath && !window.location.pathname.includes(canonicalSlug)) {
-            const search = window.location.search || "";
-            window.history.replaceState(null, "", `${expectedPath}${search}`);
-          }
+      const rawJob = backendJobs[0];
+      if (rawJob && rawJob.id) {
+        const expectedUrl = getJobDetailsUrl(rawJob, isPreview);
+        const expectedPath = expectedUrl ? expectedUrl.split('?')[0] : '';
+        const currentPath = window.location.pathname;
+        // Only update if current path is a bare ID like /job-details/4345
+        if (expectedPath && currentPath !== expectedPath && !currentPath.endsWith(`-${rawJob.id}`)) {
+          const search = window.location.search || "";
+          window.history.replaceState(null, "", `${expectedPath}${search}`);
         }
       }
     }
-  }, [backendJobs]);
+  }, [backendJobs, isPreview]);
 
   // Separate effect to handle application status once user ID is loaded
   useEffect(() => {
@@ -1161,8 +1162,8 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
     <>
       {!initialData && job && (
         <SEO
-          title={`${job.title} - ${job.location} - ${job.company} - ${isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "Fresher")}`}
-          description={`${job.seo_description || (job.job_description ? job.job_description.replace(/<[^>]*>?/gm, ' ').substring(0, 160).trim() : `Job opportunities for ${job.title} at ${job.company}`)} - ${job.location} - ${job.eligibility}`}
+          title={generateNaukriJobTitle(backendJobs[0] || job)}
+          description={generateNaukriJobDescription(backendJobs[0] || job)}
           ogType="article"
           ogImage={job.logo}
           breadcrumbSchema={[
