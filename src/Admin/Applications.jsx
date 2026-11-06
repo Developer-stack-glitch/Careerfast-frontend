@@ -246,7 +246,7 @@ export default function Applications() {
     const [totalApplications, setTotalApplications] = useState(0);
     const [openDropdown, setOpenDropdown] = useState(null);
     const [selectedProfileId, setSelectedProfileId] = useState(null);
-    const itemsPerPage = 10;
+    const [itemsPerPage, setItemsPerPage] = useState(10);
     const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
 
     useEffect(() => {
@@ -258,7 +258,7 @@ export default function Applications() {
 
     useEffect(() => {
         fetchApplications();
-    }, [currentPage, debouncedSearch]);
+    }, [currentPage, itemsPerPage, debouncedSearch]);
 
     const fetchApplications = async () => {
         try {
@@ -556,10 +556,18 @@ export default function Applications() {
                         <div className="flex items-center justify-end gap-2 text-[13px] text-gray-500 w-1/3">
                             <span>Rows per page:</span>
                             <div className="relative">
-                                <select className="appearance-none border-none bg-transparent pr-4 font-medium text-gray-700 outline-none cursor-pointer">
+                                <select
+                                    value={itemsPerPage}
+                                    onChange={(e) => {
+                                        setItemsPerPage(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="appearance-none border-none bg-transparent pr-4 font-medium text-gray-700 outline-none cursor-pointer"
+                                >
                                     <option value="10">10</option>
                                     <option value="20">20</option>
                                     <option value="50">50</option>
+                                    <option value="100">100</option>
                                 </select>
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
                                     <ChevronRight className="w-3.5 h-3.5 rotate-90 text-gray-500" />

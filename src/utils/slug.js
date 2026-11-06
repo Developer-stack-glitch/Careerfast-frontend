@@ -27,14 +27,14 @@ export const getJobSlug = (job) => {
   if (!job) return "";
   const safeSlug = (val) => {
     if (!val) return "";
-    if (Array.isArray(val)) return val.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    if (Array.isArray(val)) return val.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
     try {
       if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
         const parsed = JSON.parse(val);
-        if (Array.isArray(parsed)) return parsed.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        if (Array.isArray(parsed)) return parsed.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
       }
     } catch (e) {}
-    return String(val).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    return String(val).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
   };
 
   const id = job.id || job.job_id || job.job_post_id;
@@ -55,9 +55,12 @@ export const getJobSlug = (job) => {
     experienceType,
     experienceRequired,
     id
-  ];
+  ].filter(Boolean);
 
-  return parts.join("-").replace(/-{3,}/g, "--");
+  return parts
+    .join("-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 };
 
 export const extractSkillsFromDescription = (html) => {

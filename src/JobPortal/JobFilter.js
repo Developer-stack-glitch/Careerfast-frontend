@@ -950,7 +950,17 @@ const JobCard = React.memo(function JobCard({
     else if (job.type === "Scholarship") basePath = "/scholarship-details";
     else basePath = isInternshipOpportunity(job, { jobNatureSelected }) ? "/internship-details" : "/job-details";
 
-    const finalUrl = getJobDetailsUrl(job) || `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${job.id}`;
+    const fallbackSlug = [
+      jobNature,
+      jobTitle,
+      companyName,
+      locationSlug,
+      workplaceType,
+      experienceType,
+      experienceRequired,
+      job.id
+    ].filter(Boolean).join("-").replace(/-+/g, "-");
+    const finalUrl = getJobDetailsUrl(job) || `${basePath}/${fallbackSlug}`;
     const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
     if (isMobile) {
       navigate(finalUrl);
@@ -2922,7 +2932,7 @@ export default function JobFilter() {
             "itemListElement": jobs.map((job, index) => ({
               "@type": "ListItem",
               "position": index + 1,
-              "url": `${currentOrigin}/job-details/${generateSlug(job.type)}-${generateSlug(job.title)}-${generateSlug(job.company)}-${generateSlug(job.raw_location)}-${generateSlug(job.raw_workplace_type)}-${generateSlug(job.level)}-${generateSlug(job.raw_experience_required)}-${job.id}`
+              "url": `${currentOrigin}${getJobDetailsUrl(job)}`
             }))
           }
         ]}

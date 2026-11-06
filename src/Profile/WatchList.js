@@ -116,7 +116,18 @@ const OpportunityCard = ({ opportunity, onSave }) => {
 
     const jobId = opportunity.job_post_id || opportunity.id;
 
-    const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${jobId}`;
+    const slugParts = [
+      jobNature,
+      jobTitle,
+      companyName,
+      locationSlug,
+      workplaceType,
+      experienceType,
+      experienceRequired,
+      jobId
+    ].filter(Boolean).join("-").replace(/-+/g, "-");
+
+    const finalUrl = `${basePath}/${slugParts}`;
     window.open(finalUrl, "_blank");
   };
 

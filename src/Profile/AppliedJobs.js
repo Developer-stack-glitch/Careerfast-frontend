@@ -379,7 +379,17 @@ export default function AppliedJobs() {
     if (record.job_nature === "Internship") basePath = "/internship-details";
     if (record.job_nature === "Scholarship") basePath = "/scholarship-details";
 
-    const finalUrl = `${basePath}/${jobNature}-${jobTitle}-${companyName}-${locationSlug}-${workplaceType}-${experienceType}-${experienceRequired}-${record.post_id}`;
+    const slugParts = [
+      jobNature,
+      jobTitle,
+      companyName,
+      locationSlug,
+      workplaceType,
+      experienceType,
+      experienceRequired,
+      record.post_id || record.job_post_id || record.id
+    ].filter(Boolean).join("-").replace(/-+/g, "-");
+    const finalUrl = `${basePath}/${slugParts}`;
     window.open(finalUrl, "_blank");
   };
 

@@ -55,7 +55,7 @@ export default async function sitemap() {
     const generateSlug = (text) => (text || '').toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
     const jobEntries = jobs.map((job) => ({
-      url: `${baseUrl}/job-details/${generateSlug(job.job_nature)}-${generateSlug(job.job_title)}-${generateSlug(job.company_name)}-${job.id}`,
+      url: `${baseUrl}/job-details/${[generateSlug(job.job_nature), generateSlug(job.job_title), generateSlug(job.company_name), job.id].filter(Boolean).join("-")}`,
       lastModified: new Date(job.created_at || Date.now()),
       changeFrequency: 'weekly',
       priority: 0.6,

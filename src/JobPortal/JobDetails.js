@@ -373,7 +373,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   const isPreview = isPreviewProp || searchParams?.get('preview') === 'true';
   const previewToken = previewTokenProp || searchParams?.get('preview_token') || searchParams?.get('token');
   const slug = serverSlug || clientSlug;
-  const jobId = slug?.split("-").pop();
+  const jobId = slug?.replace(/-+$/, "").split("-").pop();
 
   useEffect(() => {
     if (initialData) {
@@ -398,8 +398,8 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
         const expectedUrl = getJobDetailsUrl(rawJob, isPreview);
         const expectedPath = expectedUrl ? expectedUrl.split('?')[0] : '';
         const currentPath = window.location.pathname;
-        // Only update if current path is a bare ID like /job-details/4345
-        if (expectedPath && currentPath !== expectedPath && !currentPath.endsWith(`-${rawJob.id}`)) {
+        // Normalize URL if it is a bare ID like /job-details/4345 or has double hyphens
+        if (expectedPath && currentPath !== expectedPath && (!currentPath.endsWith(`-${rawJob.id}`) || currentPath.includes('--'))) {
           const search = window.location.search || "";
           window.history.replaceState(null, "", `${expectedPath}${search}`);
         }
