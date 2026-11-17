@@ -615,8 +615,17 @@ const EditOpportunity = () => {
     const timeDiff = today - postedDate;
     const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
-    const totalActiveDays = 355;
-    const daysLeft = totalActiveDays - daysPassed;
+    let daysLeft;
+    if (job.expires_at) {
+      const expiryDate = new Date(job.expires_at);
+      daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+    } else if (job.expire_in_months) {
+      const totalActiveDays = Number(job.expire_in_months) * 30;
+      daysLeft = totalActiveDays - daysPassed;
+    } else {
+      const totalActiveDays = 355;
+      daysLeft = totalActiveDays - daysPassed;
+    }
     setCurrentPostId(job.id);
 
     return {

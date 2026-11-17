@@ -1899,8 +1899,17 @@ export default function JobFilter() {
     const postedDate = new Date(job.created_at);
     const today = new Date();
     const daysPassed = Math.floor((today - postedDate) / (1000 * 60 * 60 * 24));
-    const totalActiveDays = 355;
-    const daysLeft = totalActiveDays - daysPassed;
+    let daysLeft;
+    if (job.expires_at) {
+      const expiryDate = new Date(job.expires_at);
+      daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+    } else if (job.expire_in_months) {
+      const totalActiveDays = Number(job.expire_in_months) * 30;
+      daysLeft = totalActiveDays - daysPassed;
+    } else {
+      const totalActiveDays = 355;
+      daysLeft = totalActiveDays - daysPassed;
+    }
 
     const safeQs = Array.isArray(job?.questions) ? job.questions : [];
 
@@ -1941,7 +1950,7 @@ export default function JobFilter() {
       job_description: job.job_description,
       date_posted: job.date_posted,
       working_days: job.working_days,
-      daysLeft: daysLeft >= 0 ? `${daysLeft} days left` : "Expired",
+      daysLeft: (daysLeft > 0 && job.is_closed != 1) ? `${daysLeft} days left` : "Expired",
       level: isIntern ? "Internship" : ((job.experience_type && job.experience_type.trim()) || "N/A"),
       salary:
         job.salary_type === "Fixed"
@@ -1957,7 +1966,7 @@ export default function JobFilter() {
       benefits: job.benefits || [],
       skills: job.skills || [],
       eligibility: job.experience_required?.join(", "),
-      status: daysLeft >= 0 ? "Live" : "Expired",
+      status: (daysLeft > 0 && job.is_closed != 1) ? "Live" : "Expired",
       // keeping questions mapping harmlessly, though not used in UI now
       raw_location: job.work_location,
       raw_workplace_type: job.workplace_type,

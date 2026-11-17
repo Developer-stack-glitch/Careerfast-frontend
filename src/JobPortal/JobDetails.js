@@ -81,10 +81,19 @@ const transformJob = (job) => {
   const timeDiff = today - postedDate;
   const daysPassed = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
 
-  const totalActiveDays = 355;
-  const daysLeft = totalActiveDays - daysPassed;
+  let daysLeft;
+  if (job.expires_at) {
+    const expiryDate = new Date(job.expires_at);
+    daysLeft = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+  } else if (job.expire_in_months) {
+    const totalActiveDays = Number(job.expire_in_months) * 30;
+    daysLeft = totalActiveDays - daysPassed;
+  } else {
+    const totalActiveDays = 355;
+    daysLeft = totalActiveDays - daysPassed;
+  }
   const isClosedVal = job.is_closed && typeof job.is_closed === 'object' && job.is_closed.data ? job.is_closed.data[0] : job.is_closed;
-  const isExpired = daysLeft < 0 || isClosedVal == 1;
+  const isExpired = daysLeft <= 0 || isClosedVal == 1;
   const isIntern = isInternshipOpportunity(job);
 
   return {
