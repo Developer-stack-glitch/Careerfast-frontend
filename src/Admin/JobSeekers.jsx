@@ -4,12 +4,13 @@ import {
     MoreVertical, Eye, Trash2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
     MapPin, GraduationCap, CheckCircle2, XCircle,
     ChevronsUpDown, ChevronUp, ChevronDown, Clock,
-    Sparkles, Calendar, AlertTriangle, AlertCircle, X, Loader2
+    Sparkles, Calendar, AlertTriangle, AlertCircle, X, Loader2, UploadCloud
 } from 'lucide-react';
 import { getUsers, updateUserStatus, deleteUser } from '../ApiService/action';
 import toast from 'react-hot-toast';
 import AdminDateFilter from './AdminDateFilter';
 import CandidateProfileModal from './CandidateProfileModal';
+import BulkCandidateUploadModal from './BulkCandidateUploadModal';
 
 // ── Helper to safely parse Date Strings (handles 'YYYY-MM-DD HH:MM:SS' and ISO) ──
 const parseDateSafe = (dateString) => {
@@ -225,6 +226,7 @@ export default function JobSeekers() {
     const [currentPage, setCurrentPage] = useState(1);
     const [userToDelete, setUserToDelete] = useState(null);
     const [isDeletingUser, setIsDeletingUser] = useState(false);
+    const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
 
     const handleViewProfile = (candidate) => {
         if (!candidate) return;
@@ -401,13 +403,24 @@ export default function JobSeekers() {
     return (
         <div className="animate-in fade-in duration-500 w-full">
             {/* Header Section */}
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
-                    <Users className="w-5 h-5" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                        <Users className="w-5 h-5" />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">Job Seekers</h1>
+                        <p className="text-[13px] text-gray-500 mt-0.5 mb-0">Manage and monitor all candidates across your platform.</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 tracking-tight mb-0">Job Seekers</h1>
-                    <p className="text-[13px] text-gray-500 mt-0.5 mb-0">Manage and monitor all candidates across your platform.</p>
+                <div className="flex items-center gap-2.5">
+                    <button
+                        onClick={() => setIsBulkUploadOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-[13px] font-bold shadow-md shadow-indigo-600/20 transition-all cursor-pointer shrink-0"
+                    >
+                        <UploadCloud className="w-4 h-4" />
+                        <span>Bulk Upload Candidates</span>
+                    </button>
                 </div>
             </div>
 
@@ -813,7 +826,7 @@ export default function JobSeekers() {
                                             <td className="px-4 py-3.5 whitespace-nowrap">
                                                 {activity.isOnline ? (
                                                     <div className="flex flex-col gap-1 items-start">
-                                                        <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[11.5px] font-semibold shadow-2xs">
+                                                        <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border-1 border-emerald-200/80 px-2.5 py-0.5 rounded-full text-[11.5px] font-semibold shadow-2xs">
                                                             <span className="relative flex h-2 w-2">
                                                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -1074,6 +1087,14 @@ export default function JobSeekers() {
                     </div>
                 </div>
             )}
+            {/* Bulk Candidate Upload Modal */}
+            <BulkCandidateUploadModal
+                isOpen={isBulkUploadOpen}
+                onClose={() => setIsBulkUploadOpen(false)}
+                onSuccess={() => {
+                    fetchUsers();
+                }}
+            />
         </div>
     );
 }

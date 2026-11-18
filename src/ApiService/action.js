@@ -2467,3 +2467,36 @@ export const declineNviteAPI = async (id, payload = {}) => {
     throw error;
   }
 };
+
+// ==========================================
+// 🚀 Bulk Candidate Upload APIs
+// ==========================================
+export const previewBulkCandidates = async (formData) => {
+  try {
+    const response = await api.post("/api/admin/bulk-upload-candidates/preview", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const uploadBulkCandidates = async (payload, isFormData = true) => {
+  try {
+    const config = isFormData
+      ? { headers: { "Content-Type": "multipart/form-data" } }
+      : {};
+    const response = await api.post("/api/admin/bulk-upload-candidates", payload, config);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const downloadCandidateTemplateUrl = (type = "standard") => {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "https://careerfast.in";
+  return `${baseUrl}/api/admin/bulk-upload-candidates/sample-template?type=${type}`;
+};
