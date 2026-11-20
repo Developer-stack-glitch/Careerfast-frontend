@@ -187,7 +187,23 @@ export default function CourseSingle() {
     }, [slug]);
 
     if (loading) {
-        return <CommonLoader text="Loading Course Details" />;
+        return (
+            <>
+                <Header />
+                <div style={{ maxWidth: '1200px', margin: '40px auto', padding: '0 20px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '32px' }}>
+                        <div>
+                            <div style={{ height: '36px', width: '60%', background: '#f1f5f9', borderRadius: '8px', marginBottom: '16px' }} />
+                            <div style={{ height: '24px', width: '40%', background: '#f1f5f9', borderRadius: '6px', marginBottom: '24px' }} />
+                            <div style={{ height: '200px', width: '100%', background: '#f1f5f9', borderRadius: '12px', marginBottom: '24px' }} />
+                        </div>
+                        <div>
+                            <div style={{ height: '320px', width: '100%', background: '#f1f5f9', borderRadius: '16px' }} />
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
     }
 
     if (!courseData) {

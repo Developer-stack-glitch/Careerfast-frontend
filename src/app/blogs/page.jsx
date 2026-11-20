@@ -1,10 +1,9 @@
 'use client';
 import dynamic from 'next/dynamic';
-import CommonLoader from '@/Common/CommonLoader';
 
 const PageComponent = dynamic(() => import('@/Blogs/Blogs'), {
   ssr: false,
-  loading: () => <CommonLoader text="Loading Career Articles" />,
+  loading: () => null,
 });
 
 export default function Page() {

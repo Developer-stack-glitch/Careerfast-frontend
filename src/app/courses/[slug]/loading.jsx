@@ -1,5 +1,5 @@
 import CommonLoader from '@/Common/CommonLoader';
 
 export default function Loading() {
-  return <CommonLoader fullScreen={true} text="Loading Course Details" />;
+  return <CommonLoader fullScreen={true} />;
 }

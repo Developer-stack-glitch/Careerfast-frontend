@@ -2,7 +2,7 @@
 import React from 'react';
 import CommonLoader from '../Common/CommonLoader';
 
-const Loader = ({ fullScreen = true, text = 'Loading...' }) => {
+const Loader = ({ fullScreen = false, text = 'Loading...' }) => {
   return <CommonLoader fullScreen={fullScreen} text={text} />;
 };
 

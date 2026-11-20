@@ -2329,3 +2329,8 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+/* Homepage Slider Skeleton Cards */
+.hp-slider-skeleton-row { display: flex; gap: 16px; overflow: hidden; padding: 10px 0; width: 100%; }
+.hp-slider-skeleton-card { flex: 1 0 280px; max-width: 320px; height: 220px; background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; animation: hpSkeletonShimmer 1.5s infinite; border-radius: 16px; border: 1px solid #e2e8f0; }
+@keyframes hpSkeletonShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+

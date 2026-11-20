@@ -57,7 +57,7 @@ import PopularRolesIllustration from "../images/popular_roles_illustration.png";
 import company_logos1 from "../images/counter_box2.png";
 import company_logos2 from "../images/verified.png";
 import company_logos3 from "../images/applied.png";
-import CommonLoader from "../Common/CommonLoader";
+
 import BangaloreCity from "../images/bangalore.jpg";
 import MumbaiCity from "../images/mumbai.jpg";
 import DelhiCity from "../images/delhi.jpg";
@@ -483,11 +483,11 @@ export default function HomePage() {
     ]);
     const [fresherJobs, setFresherJobs] = useState([]);
     const [internshipJobs, setInternshipJobs] = useState([]);
-    const [loadingFresher, setLoadingFresher] = useState(false);
-    const [loadingInternships, setLoadingInternships] = useState(false);
+    const [loadingFresher, setLoadingFresher] = useState(true);
+    const [loadingInternships, setLoadingInternships] = useState(true);
     const [activeTab, setActiveTab] = useState("");
     const [activeInternshipTab, setActiveInternshipTab] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState({
         totalJobs: 0,
         totalRecruiters: 0,
@@ -556,29 +556,11 @@ export default function HomePage() {
     const latestLocationQueryRef = useRef("");
 
     // Candidate Profile Completion & HR Attention Indicator
-    const [candidateProfileStats, setCandidateProfileStats] = useState(() => {
-        let isCand = false;
-        let userFirstName = "";
-        let savedProgress = null;
-        if (typeof window !== "undefined") {
-            savedProgress = localStorage.getItem("profileProgress");
-            try {
-                const raw = localStorage.getItem("loginDetails");
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed && (Number(parsed.role_id) === 2 || !parsed.role_id)) {
-                        isCand = true;
-                        userFirstName = parsed.first_name || "";
-                    }
-                }
-            } catch (e) { }
-        }
-        return {
-            isCandidate: isCand,
-            completionPercentage: savedProgress !== null ? Number(savedProgress) : null,
-            missingItems: [],
-            userName: userFirstName,
-        };
+    const [candidateProfileStats, setCandidateProfileStats] = useState({
+        isCandidate: false,
+        completionPercentage: null,
+        missingItems: [],
+        userName: "",
     });
     const [bannerDismissed, setBannerDismissed] = useState(false);
 
@@ -1069,7 +1051,7 @@ export default function HomePage() {
 
     const fetchInitialData = async () => {
         try {
-            // Step 1: Fetch stats, trending searches, blogs, courses, and categories
+            // Fetch all initial data in parallel for maximum speed
             const [
                 statsRes,
                 trendingRes,
@@ -1078,7 +1060,10 @@ export default function HomePage() {
                 catRes,
                 fresherCatRes,
                 internshipCatRes,
-                companiesRes
+                companiesRes,
+                fresherJobsRes,
+                internshipJobsRes,
+                locationsRes
             ] = await Promise.allSettled([
                 getHomePageStats(),
                 getTrendingSearches(),
@@ -1087,7 +1072,10 @@ export default function HomePage() {
                 getJobCategoryData({ min_jobs: 4 }),
                 getJobCategoryData({ job_nature: 'Job', experience_type: 'Fresher', min_jobs: 4 }),
                 getJobCategoryData({ job_nature: 'Internship', min_jobs: 4 }),
-                getTopCompanies({ limit: 12 })
+                getTopCompanies({ limit: 12 }),
+                getJobPosts({ limit: 12, experience_type: "Fresher" }),
+                getJobPosts({ limit: 12, job_nature: "Internship" }),
+                searchLocationsAPI("")
             ]);
 
             // Top Companies
@@ -1118,14 +1106,9 @@ export default function HomePage() {
             }
 
             // Locations initial top cities
-            try {
-                const defLocs = await searchLocationsAPI("");
-                if (Array.isArray(defLocs) && defLocs.length > 0) {
-                    setDefaultLocations(defLocs);
-                    setLocationSuggestions(defLocs);
-                }
-            } catch (locErr) {
-                console.warn("Could not load default locations:", locErr);
+            if (locationsRes.status === 'fulfilled' && Array.isArray(locationsRes.value) && locationsRes.value.length > 0) {
+                setDefaultLocations(locationsRes.value);
+                setLocationSuggestions(locationsRes.value);
             }
 
             // Trending Categories (Top 12 IT-Related Categories)
@@ -1153,21 +1136,7 @@ export default function HomePage() {
                 lastFetchedInternshipTab.current = firstInternshipTab;
             }
 
-            // Step 2: Fetch initial jobs for the active tabs so when loader finishes, all content is ready
-            const fresherParams = { limit: 12, experience_type: "Fresher" };
-            if (firstFresherTab && firstFresherTab !== "Big brands") {
-                fresherParams.job_categories = [firstFresherTab];
-            }
-            const internshipParams = { limit: 12, job_nature: "Internship" };
-            if (firstInternshipTab && firstInternshipTab !== "Big brands") {
-                internshipParams.job_categories = [firstInternshipTab];
-            }
-
-            const [fresherJobsRes, internshipJobsRes] = await Promise.allSettled([
-                getJobPosts(fresherParams),
-                getJobPosts(internshipParams)
-            ]);
-
+            // Initial Jobs
             if (fresherJobsRes.status === 'fulfilled') {
                 setFresherJobs(fresherJobsRes.value?.data?.data?.data || []);
             }
@@ -1179,8 +1148,9 @@ export default function HomePage() {
         } catch (err) {
             console.error("Failed to fetch initial homepage data", err);
         } finally {
-            // Cut off the loader only after all data has loaded
             setLoading(false);
+            setLoadingFresher(false);
+            setLoadingInternships(false);
         }
     };
 
@@ -1456,9 +1426,7 @@ export default function HomePage() {
         { name: "Remote", img: RemoteCity, jobs: "10k+ Jobs" }
     ];
 
-    if (loading) {
-        return <CommonLoader text="Loading CareerFast" />;
-    }
+
 
     return (
         <div className="hp-container">
@@ -1752,7 +1720,13 @@ export default function HomePage() {
                 </div>
 
                 <div className="hp-fresher-slider">
-                    {fresherJobs.length > 0 ? (
+                    {loadingFresher ? (
+                        <div className="hp-slider-skeleton-row">
+                            {[1, 2, 3, 4].map((n) => (
+                                <div key={n} className="hp-slider-skeleton-card" />
+                            ))}
+                        </div>
+                    ) : fresherJobs.length > 0 ? (
                         <Slider {...sliderSettings}>
                             {fresherJobs.map((job) => (
                                 <div key={job.id}>
@@ -1901,7 +1875,13 @@ export default function HomePage() {
                 </div>
 
                 <div className="hp-fresher-slider">
-                    {internshipJobs.length > 0 ? (
+                    {loadingInternships ? (
+                        <div className="hp-slider-skeleton-row">
+                            {[1, 2, 3, 4].map((n) => (
+                                <div key={n} className="hp-slider-skeleton-card" />
+                            ))}
+                        </div>
+                    ) : internshipJobs.length > 0 ? (
                         <Slider {...sliderSettings}>
                             {internshipJobs.map((job) => (
                                 <div key={job.id}>
@@ -2447,12 +2427,15 @@ export default function HomePage() {
                             <h3>Interview questions by role</h3>
                         </div>
                         <div className="hp-ip-role-list">
-                            {roles.slice(0, 6).map((role, idx) => (
-                                <div key={idx} className="hp-ip-role-item" onClick={() => navigate(`/job-filter?q=${encodeURIComponent(role.title)}`)}>
-                                    <span className="hp-ip-role-name">{role.title}</span>
-                                    <span className="hp-ip-role-count">({Math.floor(Math.random() * 8 + 1)}K+ questions)</span>
-                                </div>
-                            ))}
+                            {(() => {
+                                const roleQuestions = ["4.5K+", "3.8K+", "5.2K+", "2.9K+", "4.1K+", "3.5K+"];
+                                return roles.slice(0, 6).map((role, idx) => (
+                                    <div key={idx} className="hp-ip-role-item" onClick={() => navigate(`/job-filter?q=${encodeURIComponent(role.title)}`)}>
+                                        <span className="hp-ip-role-name">{role.title}</span>
+                                        <span className="hp-ip-role-count">({roleQuestions[idx % roleQuestions.length]} questions)</span>
+                                    </div>
+                                ));
+                            })()}
                         </div>
                         <div style={{ textAlign: 'center' }}>
                             <a href="/all-roles" className="hp-ip-view-all">View all roles &gt;</a>

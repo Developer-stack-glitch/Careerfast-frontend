@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import "../css/PostCourse.css";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
-import CommonLoader from "../Common/CommonLoader";
+
 import Link from "next/link";
 
 const testimonials = [
@@ -204,9 +204,7 @@ export default function Courses() {
         }
     };
 
-    if (loading) {
-        return <CommonLoader text="Loading Courses" />;
-    }
+
 
     return (
         <>

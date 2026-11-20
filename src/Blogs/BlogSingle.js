@@ -259,7 +259,21 @@ export default function BlogSingle({ initialData, serverSlug }) {
     };
 
     if (loading) {
-        return <CommonLoader text="Loading Article" />;
+        return (
+            <>
+                <Header />
+                <div className="singleblog-page-wrapper" style={{ padding: '60px 20px', maxWidth: '1000px', margin: '0 auto' }}>
+                    <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+                        <div style={{ height: '36px', width: '70%', background: '#f1f5f9', borderRadius: '8px', marginBottom: '16px' }} />
+                        <div style={{ height: '20px', width: '35%', background: '#f1f5f9', borderRadius: '6px', marginBottom: '28px' }} />
+                        <div style={{ height: '340px', width: '100%', background: '#f1f5f9', borderRadius: '16px', marginBottom: '32px' }} />
+                        <div style={{ height: '18px', width: '100%', background: '#f1f5f9', borderRadius: '4px', marginBottom: '12px' }} />
+                        <div style={{ height: '18px', width: '92%', background: '#f1f5f9', borderRadius: '4px', marginBottom: '12px' }} />
+                        <div style={{ height: '18px', width: '85%', background: '#f1f5f9', borderRadius: '4px', marginBottom: '12px' }} />
+                    </div>
+                </div>
+            </>
+        );
     }
     if (!blog) return <div className="singleblog-notfound">Blog not found</div>;
 
