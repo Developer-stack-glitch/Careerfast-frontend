@@ -92,8 +92,8 @@
 .elite-header .container-fluid {
   max-width: 1240px !important;
   margin: 0 auto !important;
-  padding-left: 20px !important;
-  padding-right: 20px !important;
+  padding-left: 10px !important;
+  padding-right: 10px !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -472,6 +472,7 @@
   display: flex !important;
   align-items: center;
   justify-content: center;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .naukri-login-btn:hover {
@@ -491,6 +492,7 @@
   display: flex !important;
   align-items: center;
   justify-content: center;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .naukri-register-btn:hover {
@@ -500,6 +502,7 @@
 
 .for-employers-dropdown {
   transition: color 0.2s;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .for-employers-dropdown:hover {
@@ -1070,6 +1073,7 @@
   padding-right: 10px;
   font-family: inherit;
   font-weight: 400;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
 .naukri-compact-placeholder.has-value {
@@ -1874,8 +1878,8 @@
   }
 
   .main-logo {
-    height: 26px !important;
-    max-width: 112px !important;
+    height: 36px !important;
+    max-width: 150px !important;
   }
 
   .header-actions-col {

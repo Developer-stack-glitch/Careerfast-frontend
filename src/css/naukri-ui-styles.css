@@ -25,7 +25,7 @@
 .naukri-content-wrapper {
   max-width: 1240px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 0px;
   box-sizing: border-box;
   width: 100%;
 }
@@ -1228,12 +1228,12 @@
 
 .naukri-pagination-number:hover:not(.active) {
   background: #f1f5f9;
-  color: #0f172a;
-  border: 1px solid #0f172a;
+  color: #5f2eea;
+  border: 1px solid #5f2eea;
 }
 
 .naukri-pagination-number.active {
-  background: #0d1322;
+  background: #5f2eea;
   color: #ffffff;
   font-weight: 500;
   cursor: default;
@@ -1442,17 +1442,18 @@
 }
 
 /* Right Side Promo Polish */
+/* Right Side Promo Polish & Modern CareerFast Sidebar */
 .naukri-promo-card {
   background: #fff;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: var(--naukri-shadow);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
   margin-bottom: 16px;
   border: 1px solid #f0f0f0;
 }
 
 .naukri-promo-title {
-  font-size: 14px;
+  font-size: 14.5px;
   font-weight: 600;
   color: var(--naukri-text-primary);
   margin-bottom: 8px;
@@ -1472,6 +1473,409 @@
 .naukri-promo-link:hover {
   border-color: var(--naukri-primary);
   color: var(--naukri-primary);
+}
+
+/* ============================================================
+   Job & Internship Sidebar (Registration Promo & Related Courses)
+   ============================================================ */
+.cf-sidebar-sticky {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* 1. Register Card (Image 3 Style with CareerFast Theme Colors) */
+.cf-sidebar-reg-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #ede9fe;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cf-reg-banner-graphic {
+  width: 100%;
+  overflow: hidden;
+  background: #f5f3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cf-reg-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.cf-sidebar-reg-body {
+  padding: 16px 18px 18px;
+}
+
+.cf-sidebar-reg-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 14px 0;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.cf-reg-benefits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.cf-reg-benefit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: #334155;
+  line-height: 1.4;
+  font-weight: 450;
+}
+
+.cf-reg-check-icon {
+  color: #5f2eea;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cf-sidebar-google-box {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 9999px;
+  margin-top: 4px;
+}
+
+.cf-sidebar-google-box>div {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.cf-sidebar-google-box iframe {
+  width: 100% !important;
+  margin: 0 auto !important;
+}
+
+.cf-sidebar-email-btn {
+  width: 100%;
+  background: transparent;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #5f2eea;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  padding: 6px 0;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.cf-sidebar-email-btn:hover {
+  color: #4c1d95;
+  text-decoration: underline;
+}
+
+.cf-sidebar-terms {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  margin: 10px 0 0 0;
+  line-height: 1.3;
+}
+
+.cf-sidebar-terms a {
+  color: #64748b;
+  text-decoration: underline;
+}
+
+.cf-sidebar-terms a:hover {
+  color: #0f172a;
+}
+
+/* 2. Logged In Profile Card */
+.cf-sidebar-profile-card {
+  background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+  border-radius: 16px;
+  border: 1px solid #ede9fe;
+  padding: 18px;
+  box-shadow: 0 8px 20px -4px rgba(127, 90, 240, 0.08);
+}
+
+.cf-profile-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cf-profile-icon-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #ede9fe;
+  color: #7f5af0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cf-profile-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+.cf-profile-sub {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cf-sidebar-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  background: linear-gradient(135deg, #7f5af0 0%, #5f2eea 100%);
+  color: #ffffff !important;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cf-sidebar-primary-btn:hover {
+  color: #ffffff !important;
+}
+
+/* 3. Job & Internship Related Courses Card */
+.cf-sidebar-courses-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 18px 16px 14px;
+  transition: box-shadow 0.2s ease;
+}
+
+.cf-sidebar-courses-card:hover {
+  box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.09);
+}
+
+.cf-courses-card-header {
+  margin-bottom: 14px;
+}
+
+.cf-courses-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ede9fe;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.cf-courses-badge-icon {
+  color: #7f5af0;
+}
+
+.cf-courses-card-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 3px 0;
+  line-height: 1.3;
+}
+
+.cf-courses-card-sub {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cf-courses-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cf-course-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid #f1f5f9;
+  background: #ffffff;
+  text-decoration: none;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cf-course-item:hover {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+  box-shadow: 0 6px 16px -2px rgba(127, 90, 240, 0.12);
+}
+
+.cf-course-img-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  background: #ede9fe;
+}
+
+.cf-course-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.25s ease;
+}
+
+.cf-course-item:hover .cf-course-img {
+  transform: scale(1.08);
+}
+
+.cf-course-tag-mini {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(95, 46, 234, 0.92);
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-align: center;
+  padding: 1px 0;
+  letter-spacing: 0.02em;
+}
+
+.cf-course-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cf-course-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 3px 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s ease;
+}
+
+.cf-course-item:hover .cf-course-name {
+  color: #5f2eea;
+}
+
+.cf-course-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 3px;
+}
+
+.cf-course-rating {
+  font-weight: 600;
+  color: #b45309;
+}
+
+.cf-course-dot {
+  color: #cbd5e1;
+}
+
+.cf-course-duration {
+  color: #64748b;
+}
+
+.cf-course-cta-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #7f5af0;
+  transition: gap 0.15s ease;
+}
+
+.cf-course-item:hover .cf-course-cta-row {
+  gap: 4px;
+  color: #5f2eea;
+}
+
+.cf-course-arrow {
+  flex-shrink: 0;
+}
+
+.cf-courses-card-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.cf-courses-view-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  padding: 7px 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #5f2eea;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.cf-courses-view-all:hover {
+  background: #f5f3ff;
+  color: #4338ca;
+}
+
+/* Skeleton Loading Card */
+.cf-sidebar-skeleton-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid #f0f0f0;
 }
 
 /* Animations */
@@ -1952,10 +2356,12 @@
     left: -40%;
     width: 30%;
   }
+
   50% {
     left: 30%;
     width: 50%;
   }
+
   100% {
     left: 100%;
     width: 30%;
@@ -1978,5 +2384,3 @@
   background-color: rgba(95, 46, 234, 0.06) !important;
   font-weight: 600 !important;
 }
-
-

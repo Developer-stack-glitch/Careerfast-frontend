@@ -50,6 +50,7 @@ import {
 import { getUserProfile, getSearchSuggestions, searchLocationsAPI, getCandidateNvitesAPI } from "../ApiService/action";
 import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../utils/profileCompletion";
 import { saveRecentSearch } from "../utils/recentSearches";
+import SearchWorkflow from "../Common/SearchWorkflow";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { FaBookOpen, FaCalendarAlt, FaChalkboardTeacher, FaGraduationCap } from "react-icons/fa";
 import {
@@ -798,7 +799,7 @@ export default function Header({ noSticky = false, showSearch }) {
   };
 
 
-    const fetchNvitesCount = useCallback(async () => {
+  const fetchNvitesCount = useCallback(async () => {
     try {
       if (typeof window === 'undefined') return;
       const stored = localStorage.getItem("loginDetails");
@@ -1192,7 +1193,7 @@ export default function Header({ noSticky = false, showSearch }) {
                     <span className={`naukri-compact-placeholder ${quickKeywords || quickLocation ? 'has-value' : ''}`}>
                       {quickKeywords
                         ? `${quickKeywords}${quickLocation ? ` in ${quickLocation}` : ''}`
-                        : "Skills / designations / companies"}
+                        : "Search internships, jobs, courses..."}
                     </span>
                     {(quickKeywords || quickLocation) ? (
                       <button
@@ -1373,279 +1374,14 @@ export default function Header({ noSticky = false, showSearch }) {
             }
           }}
         >
-          <div className="bg-white rounded-3xl shadow-[0_25px_60px_-15px_rgba(15,23,42,0.25)] border border-slate-200/90 max-w-4xl w-full p-4 sm:p-7 space-y-5 relative quick-job-search-modal">
-
-            {/* Modal Hero Header (CareerFast Concept matching User Screenshot) */}
-            <div className="relative text-center pt-1 pb-1 mb-2">
-              <button
-                type="button"
-                onClick={() => setQuickSearchOpen(false)}
-                className="absolute -top-1 -right-1 text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer border-0 bg-transparent flex items-center gap-1.5"
-                title="Close (Esc)"
-              >
-                <span className="hidden sm:inline-block text-[11px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded">Esc</span>
-                <LucideX size={19} />
-              </button>
-
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11.5px] font-bold bg-purple-50 text-purple-700 border-1 border-purple-200/70 mb-2">
-                <Sparkles size={13} className="text-purple-600" />
-                <span>Instant Job Search</span>
-              </div>
-              <h2 className="text-[24px] sm:text-[30px] font-semibold text-slate-900 tracking-tight mb-1" style={{ fontFamily: "'Geist', sans-serif" }}>
-                Find your dream job now
-              </h2>
-              <p className="text-[15px] sm:text-[16px] text-[#474d6a] font-normal mb-0" style={{ fontFamily: "'Geist', sans-serif" }}>
-                5 lakh+ jobs for you to explore
-              </p>
-            </div>
-
-            {/* Search Form with CareerFast Concept Segmented Bar */}
-            <form onSubmit={handleQuickSearchSubmit} className="space-y-4 m-0">
-              <div className="quick-search-pill-container">
-
-                {/* 1. Skills / Designations / Companies */}
-                <div className="quick-search-segment skills-segment">
-                  <SearchOutlined className="quick-search-icon" />
-                  <div className="hp-input-wrapper" style={{ flex: 1, display: 'flex', alignItems: 'center', position: 'relative' }}>
-                    <input
-                      ref={quickSearchInputRef}
-                      type="text"
-                      value={quickKeywords}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setQuickKeywords(val);
-                        const term = getLastQueryTerm(val);
-                        const hasTerm = Boolean(term && term.trim());
-                        setShowSkillsDropdown(hasTerm);
-                        setSkillsActiveIndex(-1);
-                        if (hasTerm) {
-                          latestSkillsQueryRef.current = term.toLowerCase();
-                          const instant = getInstantSkillsMatches(term);
-                          setSkillsSuggestions({ roles: instant });
-                        } else {
-                          latestSkillsQueryRef.current = "";
-                          setSkillsSuggestions({});
-                        }
-                      }}
-                      onFocus={() => {
-                        const term = getLastQueryTerm(quickKeywords);
-                        if (term && term.trim()) {
-                          setShowSkillsDropdown(true);
-                        }
-                      }}
-                      onKeyDown={handleSkillsKeyDown}
-                      placeholder="Skills / designations / companies"
-                      className="quick-search-input"
-                      autoComplete="off"
-                    />
-                    {quickKeywords && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setQuickKeywords('');
-                          setShowSkillsDropdown(false);
-                          quickSearchInputRef.current?.focus();
-                        }}
-                        className="hp-clear-btn"
-                        title="Clear search"
-                      >
-                        <CloseCircleFilled />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Clean Skills Suggestions Dropdown matching Screenshot 1 */}
-                  {showSkillsDropdown && Boolean(activeSkillTerm) && currentSkillsList.length > 0 && (
-                    <div className="hp-suggestions-dropdown" ref={skillsDropdownRef}>
-                      {currentSkillsList.map((item, idx) => {
-                        const isHighlighted = skillsActiveIndex === idx;
-                        const label = typeof item === "string" ? item : (item.label || item.name || "");
-                        return (
-                          <div
-                            key={`skill-${idx}`}
-                            className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              handleSelectSkillsSuggestion(item);
-                            }}
-                            onMouseEnter={() => setSkillsActiveIndex(idx)}
-                          >
-                            <span className="hp-suggestion-text">
-                              {highlightMatch(label, activeSkillTerm)}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Divider */}
-                <div className="quick-search-divider" />
-
-                {/* 2. Select Experience */}
-                <div className="quick-search-segment exp-segment" style={{ cursor: 'pointer' }}>
-                  <HistoryOutlined className="quick-search-icon" />
-                  <Select
-                    placeholder="Select experience"
-                    className="hp-search-input-select quick-search-select"
-                    variant="borderless"
-                    style={{ width: '100%' }}
-                    value={quickExperience !== null && quickExperience !== undefined ? quickExperience : undefined}
-                    onChange={(val) => setQuickExperience(val)}
-                    allowClear
-                    getPopupContainer={(trigger) => trigger.parentElement || document.body}
-                    classNames={{ popup: { root: "hp-experience-select-dropdown" } }}
-                    styles={{ popup: { root: { zIndex: 99999 } } }}
-                    suffixIcon={<IoChevronDownOutline size={13} style={{ color: '#8292b4' }} />}
-                  >
-                    <Select.Option value="Internship" className="hp-exp-internship-opt">Internship</Select.Option>
-                    <Select.Option value={0}>Fresher (less than 1 year)</Select.Option>
-                    <Select.Option value={1}>1 Year</Select.Option>
-                    <Select.Option value={2}>2 Years</Select.Option>
-                    <Select.Option value={3}>3 Years</Select.Option>
-                    <Select.Option value={4}>4 Years</Select.Option>
-                    <Select.Option value={5}>5+ Years</Select.Option>
-                  </Select>
-                </div>
-
-                {/* Divider */}
-                <div className="quick-search-divider" />
-
-                {/* 3. Enter Location */}
-                <div className="quick-search-segment loc-segment">
-                  <EnvironmentOutlined className="quick-search-icon" />
-                  <div className="hp-input-wrapper" style={{ flex: 1, display: 'flex', alignItems: 'center', position: 'relative' }}>
-                    <input
-                      ref={locationInputRef}
-                      type="text"
-                      value={quickLocation}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setQuickLocation(val);
-                        const term = getLastQueryTerm(val);
-                        const hasTerm = Boolean(term && term.trim());
-                        setShowLocationDropdown(hasTerm);
-                        setLocationActiveIndex(-1);
-                        if (hasTerm) {
-                          latestLocationQueryRef.current = term.toLowerCase();
-                          const instant = getInstantLocationMatches(term);
-                          setLocationSuggestions(instant);
-                        } else {
-                          latestLocationQueryRef.current = "";
-                          setLocationSuggestions([]);
-                        }
-                      }}
-                      onFocus={() => {
-                        const term = getLastQueryTerm(quickLocation);
-                        if (term && term.trim()) {
-                          setShowLocationDropdown(true);
-                        }
-                      }}
-                      onKeyDown={handleLocationKeyDown}
-                      placeholder="Enter location"
-                      className="quick-search-input"
-                      autoComplete="off"
-                    />
-                    {quickLocation && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setQuickLocation('');
-                          setShowLocationDropdown(false);
-                          locationInputRef.current?.focus();
-                        }}
-                        className="hp-clear-btn"
-                        title="Clear location"
-                      >
-                        <CloseCircleFilled />
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Clean Location Suggestions Dropdown matching Naukri UI */}
-                  {showLocationDropdown && Boolean(activeLocTerm) && (
-                    <div className="hp-suggestions-dropdown hp-suggestions-dropdown-location" ref={locationDropdownRef}>
-                      {currentLocationList && currentLocationList.length > 0 ? (
-                        currentLocationList.map((item, idx) => {
-                          const isHighlighted = locationActiveIndex === idx;
-                          const rawLabel = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
-                          const labelText = cleanSingleLocationName(rawLabel);
-                          return (
-                            <div
-                              key={`loc-${idx}`}
-                              className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                handleSelectLocationSuggestion(item);
-                              }}
-                              onMouseEnter={() => setLocationActiveIndex(idx)}
-                            >
-                              <span className="hp-suggestion-text">
-                                {highlightMatch(labelText, activeLocTerm)}
-                              </span>
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div
-                          className="hp-suggestion-empty"
-                          style={{ cursor: activeLocTerm ? "pointer" : "default" }}
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            if (activeLocTerm) {
-                              handleSelectLocationSuggestion(activeLocTerm);
-                            }
-                          }}
-                        >
-                          Press Enter to add "<strong>{activeLocTerm}</strong>"
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* 4. Search Button */}
-                <button
-                  type="submit"
-                  className="quick-search-submit-btn"
-                >
-                  Search
-                </button>
-              </div>
-            </form>
-
-            {/* Modal Footer: All Jobs & Filters Link & Reset */}
-            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-center gap-3 text-center sm:text-left">
-              <div className="text-[12.5px] text-slate-500 font-medium">
-                Need more precise filters? Use{' '}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setQuickSearchOpen(false);
-                    smartNavigate('/jobs');
-                  }}
-                  className="font-bold text-purple-600 hover:text-purple-800 hover:underline inline-flex items-center gap-1 cursor-pointer border-0 bg-transparent p-0"
-                >
-                  <span>All Jobs &amp; Filters</span>
-                  <LucideArrowRight size={13} />
-                </button>
-                {' '}for salary brackets, work modes, and company filters.
-              </div>
-
-              {(quickKeywords || quickLocation || quickExperience !== null) && (
-                <button
-                  type="button"
-                  onClick={handleClearQuickFilters}
-                  className="text-[12px] font-bold text-slate-500 hover:text-slate-800 flex items-center gap-1 cursor-pointer transition-colors border-0 bg-transparent"
-                >
-                  <RotateCcw size={12} />
-                  <span>Reset filters</span>
-                </button>
-              )}
-            </div>
+          <div className="bg-white rounded-3xl shadow-[0_25px_60px_-15px_rgba(15,23,42,0.25)] border border-slate-200/90 max-w-4xl w-full p-4 sm:p-7 relative quick-job-search-modal">
+            <SearchWorkflow
+              mode="modal"
+              onClose={() => setQuickSearchOpen(false)}
+              navigate={smartNavigate}
+              initialType="Jobs"
+              showRecent={true}
+            />
           </div>
         </div>
       )}
@@ -2266,8 +2002,8 @@ export default function Header({ noSticky = false, showSearch }) {
           .elite-header .container-fluid {
             max-width: 1240px !important;
             margin: 0 auto !important;
-            padding-left: 20px !important;
-            padding-right: 20px !important;
+            padding-left: 0px !important;
+            padding-right: 0px !important;
             width: 100% !important;
             box-sizing: border-box !important;
           }
@@ -2435,6 +2171,7 @@ export default function Header({ noSticky = false, showSearch }) {
               font-size: 13px !important;
               border-radius: 16px !important;
               font-weight: 600 !important;
+              font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
             }
 
             .naukri-register-btn {
@@ -2449,6 +2186,7 @@ export default function Header({ noSticky = false, showSearch }) {
               font-size: 13px !important;
               gap: 3px !important;
               white-space: nowrap !important;
+              font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
             }
 
             .header-actions-divider {

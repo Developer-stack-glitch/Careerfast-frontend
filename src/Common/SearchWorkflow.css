@@ -1,0 +1,615 @@
+/* ============================================================
+   CareerFast Search Workflow - Modern Job Portal Search UI
+   ============================================================ */
+
+.search-flow-wrapper {
+  position: relative;
+  width: 100%;
+  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  text-align: left;
+}
+
+.search-flow-wrapper * {
+  box-sizing: border-box;
+}
+
+/* Modal Container Mode */
+.search-flow-wrapper.mode-modal {
+  max-width: 860px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Hero Container Mode */
+.search-flow-wrapper.mode-hero {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
+/* Top Close Button (for Modal) */
+.search-flow-close-btn {
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  z-index: 20;
+}
+
+.search-flow-close-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  transform: rotate(90deg);
+}
+
+/* ============================================================
+   Search Bar (Pill Shape with Type Dropdown + Input + Search Btn)
+   ============================================================ */
+.search-flow-bar {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #e0e7ff;
+  border-radius: 9999px;
+  padding: 5px 6px 5px 14px;
+  box-shadow: 0 10px 30px -4px rgba(15, 23, 42, 0.06), 0 4px 16px -2px rgba(127, 90, 240, 0.08);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  width: 100%;
+  z-index: 105;
+}
+
+.search-flow-bar:focus-within {
+  border-color: #7f5af0;
+}
+
+/* 1. Type Selector (Jobs / Internships / Courses) */
+.search-flow-type-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.search-flow-type-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  transition: all 0.18s ease;
+  font-family: inherit;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.search-flow-type-btn:hover {
+  background: #f5f3ff;
+  border-color: #ede9fe;
+  color: #5f2eea;
+}
+
+.search-flow-type-icon {
+  color: #7f5af0;
+  flex-shrink: 0;
+}
+
+.search-flow-type-arrow {
+  color: #64748b;
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.search-flow-type-btn:hover .search-flow-type-arrow {
+  color: #5f2eea;
+}
+
+.search-flow-type-arrow.open {
+  transform: rotate(180deg);
+  color: #5f2eea;
+}
+
+/* Dropdown Menu */
+.search-flow-type-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  background: #ffffff;
+  border: 1px solid #ede9fe;
+  border-radius: 16px;
+  box-shadow: 0 18px 45px -8px rgba(95, 46, 234, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 8px 0;
+  min-width: 230px;
+  z-index: 1200;
+  animation: searchFlowMenuFade 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes searchFlowMenuFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.search-flow-type-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.search-flow-type-item:hover {
+  background: #f5f3ff;
+  color: #5f2eea;
+  padding-left: 20px;
+}
+
+.search-flow-type-item.selected {
+  color: #5f2eea;
+  font-weight: 600;
+  background: #faf8ff;
+}
+
+.search-flow-type-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search-flow-type-item-icon {
+  color: #7f5af0;
+  flex-shrink: 0;
+}
+
+.search-flow-type-check {
+  color: #5f2eea;
+  flex-shrink: 0;
+}
+
+/* 2. Vertical Divider */
+.search-flow-divider {
+  width: 1.5px;
+  height: 28px;
+  background: #e2e8f0;
+  margin: 0 10px;
+  flex-shrink: 0;
+}
+
+/* 3. Input Segment */
+.search-flow-input-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding: 0px 10px;
+}
+
+.search-flow-icon {
+  color: #7f5af0;
+  font-size: 17px;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.search-flow-input {
+  width: 100%;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 15px;
+  font-weight: 450;
+  color: #0f172a;
+  font-family: inherit !important;
+  height: 44px;
+  padding: 0;
+}
+
+.search-flow-input::placeholder {
+  color: #94a3b8 !important;
+  font-family: inherit !important;
+  font-weight: 400;
+}
+
+.search-flow-clear-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.search-flow-clear-btn:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+/* 4. Search Button (CareerFast Theme) */
+.search-flow-submit-btn {
+  background: linear-gradient(135deg, #7f5af0 0%, #5f2eea 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  height: 48px;
+  min-height: 48px;
+  padding: 0 30px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit !important;
+  user-select: none;
+  letter-spacing: 0.01em;
+}
+
+.search-flow-submit-btn:hover {
+  background: linear-gradient(135deg, #744cee 0%, #5322e2 100%) !important;
+}
+
+.search-flow-submit-btn:active {
+  transform: translateY(0);
+}
+
+/* ============================================================
+   Autocomplete Suggestions Dropdown
+   ============================================================ */
+.search-flow-suggestions {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  right: 0;
+  max-height: 290px;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  padding: 6px;
+  z-index: 1100;
+  animation: searchFlowMenuFade 0.16s ease-out;
+}
+
+.search-flow-suggestion-item {
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.12s ease;
+}
+
+.search-flow-suggestion-item:hover,
+.search-flow-suggestion-item.active {
+  background: #f5f3ff;
+  color: #5f2eea;
+  padding-left: 18px;
+}
+
+.search-flow-suggestion-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.search-flow-suggestion-icon {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.search-flow-suggestion-item:hover .search-flow-suggestion-icon,
+.search-flow-suggestion-item.active .search-flow-suggestion-icon {
+  color: #7f5af0;
+}
+
+.search-flow-suggestion-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-flow-suggestion-text strong {
+  color: #5f2eea;
+  font-weight: 700;
+}
+
+.search-flow-suggestion-badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #7f5af0;
+  background: #ede9fe;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+/* ============================================================
+   Structured Quick Discovery Pills (Locations & Categories)
+   ============================================================ */
+.search-flow-content {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Group Container (Header Badge + Pills Row) */
+.search-flow-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.search-flow-wrapper.mode-hero .search-flow-group {
+  justify-content: center;
+}
+
+.search-flow-wrapper.mode-modal .search-flow-group {
+  justify-content: flex-start;
+}
+
+/* Group Badge Label */
+.search-flow-group-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.search-flow-group-badge .loc-accent {
+  color: #7f5af0;
+}
+
+.search-flow-group-badge .cat-accent {
+  color: #f97316;
+}
+
+/* Pills Row */
+.search-flow-pills-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.search-flow-wrapper.mode-hero .search-flow-pills-row {
+  justify-content: center;
+}
+
+.search-flow-wrapper.mode-modal .search-flow-pills-row {
+  justify-content: flex-start;
+}
+
+/* Base Pill Chip */
+.search-flow-pill {
+  background: #ffffff;
+  border: 1px solid #e2e8f000;
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+  font-family: inherit;
+  outline: none;
+}
+
+.search-flow-pill:hover {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+  color: #6d28d9;
+}
+
+.search-flow-pill:active {
+  transform: translateY(0);
+}
+
+/* Colored Category Icons */
+.search-flow-pill-icon {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.search-flow-pill:hover .search-flow-pill-icon {
+  transform: scale(1.15);
+}
+
+.search-flow-pill-icon.icon-building {
+  color: #6366f1;
+  /* Indigo */
+}
+
+.search-flow-pill-icon.icon-laptop {
+  color: #10b981;
+  /* Emerald */
+}
+
+.search-flow-pill-icon.icon-clock {
+  color: #f59e0b;
+  /* Amber */
+}
+
+.search-flow-pill-icon.icon-grad {
+  color: #8b5cf6;
+  /* Purple */
+}
+
+.search-flow-pill-icon.icon-code {
+  color: #3b82f6;
+  /* Blue */
+}
+
+.search-flow-pill-icon.icon-media {
+  color: #ec4899;
+  /* Pink */
+}
+
+.search-flow-pill-icon.icon-palette {
+  color: #f43f5e;
+  /* Rose */
+}
+
+.search-flow-pill-icon.icon-data {
+  color: #06b6d4;
+  /* Cyan */
+}
+
+.search-flow-pill-icon.icon-default {
+  color: #7f5af0;
+}
+
+/* Recent Searches Pill Customization */
+.search-flow-chip-count {
+  background: #ede9fe;
+  color: #6d28d9;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  line-height: 1.3;
+}
+
+.search-flow-chip-new {
+  color: #ef4444;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: 1;
+}
+
+.search-flow-chip-remove {
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  margin-left: 2px;
+  padding: 2px 5px;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+}
+
+.search-flow-chip-remove:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+/* ============================================================
+   Responsive Styles
+   ============================================================ */
+@media (max-width: 768px) {
+  .search-flow-bar {
+    flex-direction: column;
+    border-radius: 20px;
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .search-flow-type-container {
+    width: 100%;
+  }
+
+  .search-flow-type-btn {
+    width: 100%;
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+
+  .search-flow-type-menu {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .search-flow-divider {
+    width: 100%;
+    height: 1px;
+    margin: 2px 0;
+  }
+
+  .search-flow-input-wrap {
+    width: 100%;
+    padding: 0 4px;
+  }
+
+  .search-flow-submit-btn {
+    width: 100%;
+    border-radius: 12px !important;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .search-flow-close-btn {
+    top: -10px;
+    right: -4px;
+  }
+
+  .search-flow-group {
+    justify-content: flex-start !important;
+  }
+
+  .search-flow-pills-row {
+    justify-content: flex-start !important;
+  }
+
+  .search-flow-pill {
+    font-size: 12.5px;
+    padding: 5px 12px;
+  }
+}

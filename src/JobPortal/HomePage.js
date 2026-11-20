@@ -43,6 +43,8 @@ import {
 import { message, Select, Row, Col, Spin } from "antd";
 
 import "../css/HomePage.css";
+import SearchWorkflow from "../Common/SearchWorkflow";
+import { Sparkles } from "lucide-react";
 import { getJobCategoryData, getJobPosts, getHomePageStats, getTrendingSearches, getSearchSuggestions, getBlogs, getAllCourses, getTopCompanies, getUserProfile, searchLocationsAPI } from "../ApiService/action";
 import { getImageUrl, getPlaceholderSvg } from "../utils/getImageUrl";
 import { calculateCandidateCompletion, broadcastProfileProgress, PROFILE_PROGRESS_EVENT } from "../utils/profileCompletion";
@@ -912,7 +914,7 @@ export default function HomePage() {
                     if (typeof liveCount === "number") {
                         updateRecentSearchCount(item.id, liveCount);
                     }
-                }).catch(() => {});
+                }).catch(() => { });
             }
         });
 
@@ -1565,8 +1567,8 @@ export default function HomePage() {
                 <div className="hp-hero-bg-shapes">
                     <div className="shape shape-1"></div>
                     <div className="shape shape-2"></div>
+                    <div className="shape shape-3"></div>
                 </div>
-
 
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -1574,251 +1576,42 @@ export default function HomePage() {
                     transition={{ duration: 0.6 }}
                     style={{ position: 'relative', zIndex: 2 }}
                 >
-                    <h1 className="hp-hero-title">Find your dream job now</h1>
-                    <p className="hp-hero-subtitle">5 lakh+ jobs for you to explore</p>
-
-                    <div className="hp-search-bar-container">
-                        {/* 1. Skills / Designations / Companies Segment */}
-                        <div className="hp-search-segment">
-                            <SearchOutlined className="hp-search-icon" />
-                            <div className="hp-input-wrapper">
-                                <input
-                                    ref={skillsInputRef}
-                                    type="text"
-                                    placeholder="Skills / designations / companies"
-                                    className="hp-search-input"
-                                    value={skills}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setSkills(val);
-                                        const term = getLastQueryTerm(val);
-                                        const hasTerm = Boolean(term && term.trim());
-                                        setShowSkillsDropdown(hasTerm);
-                                        setSkillsActiveIndex(-1);
-                                        if (hasTerm) {
-                                            latestSkillsQueryRef.current = term.toLowerCase();
-                                            const instant = getInstantSkillsMatches(term);
-                                            setSkillsSuggestions({ roles: instant });
-                                        } else {
-                                            latestSkillsQueryRef.current = "";
-                                            setSkillsSuggestions({});
-                                        }
-                                    }}
-                                    onFocus={() => {
-                                        const term = getLastQueryTerm(skills);
-                                        if (term && term.trim()) {
-                                            setShowSkillsDropdown(true);
-                                        }
-                                    }}
-                                    onKeyDown={handleSkillsKeyDown}
-                                    autoComplete="off"
-                                />
-                                {skills && (
-                                    <button
-                                        type="button"
-                                        className="hp-clear-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSkills("");
-                                            setShowSkillsDropdown(false);
-                                            skillsInputRef.current?.focus();
-                                        }}
-                                        title="Clear search"
-                                    >
-                                        <CloseCircleFilled />
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Clean Skills Suggestion Dropdown */}
-                            {showSkillsDropdown && Boolean(activeSkillTerm) && currentSkillsList.length > 0 && (
-                                <div className="hp-suggestions-dropdown" ref={skillsDropdownRef}>
-                                    {currentSkillsList.map((item, idx) => {
-                                        const isHighlighted = skillsActiveIndex === idx;
-                                        return (
-                                            <div
-                                                key={`skill-${idx}`}
-                                                className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                                                onMouseDown={(e) => {
-                                                    e.preventDefault();
-                                                    handleSelectSkillsSuggestion(item);
-                                                }}
-                                            >
-                                                <span className="hp-suggestion-text">
-                                                    {highlightMatch(item.label, activeSkillTerm)}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* 2. Select Experience Segment */}
-                        <div className="hp-search-segment">
-                            <HistoryOutlined className="hp-search-icon" />
-                            <Select
-                                placeholder="Select experience"
-                                className="hp-search-input-select"
-                                variant="borderless"
-                                style={{ width: '100%' }}
-                                value={experience}
-                                onChange={(val) => setExperience(val)}
-                                allowClear
-                            >
-                                <Option value="Internship">Internship</Option>
-                                <Option value={0}>Fresher (less than 1 year)</Option>
-                                <Option value={1}>1 Year</Option>
-                                <Option value={2}>2 Years</Option>
-                                <Option value={3}>3 Years</Option>
-                                <Option value={4}>4 Years</Option>
-                                <Option value={5}>5+ Years</Option>
-                            </Select>
-                        </div>
-
-                        {/* 3. Location Segment */}
-                        <div className="hp-search-segment">
-                            <EnvironmentOutlined className="hp-search-icon" />
-                            <div className="hp-input-wrapper">
-                                <input
-                                    ref={locationInputRef}
-                                    type="text"
-                                    placeholder="Enter location"
-                                    className="hp-search-input"
-                                    value={location}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        setLocation(val);
-                                        const term = getLastQueryTerm(val);
-                                        const hasTerm = Boolean(term && term.trim());
-                                        setShowLocationDropdown(hasTerm);
-                                        setLocationActiveIndex(-1);
-                                        if (hasTerm) {
-                                            latestLocationQueryRef.current = term.toLowerCase();
-                                            const instant = getInstantLocationMatches(term);
-                                            setLocationSuggestions(instant);
-                                        } else {
-                                            latestLocationQueryRef.current = "";
-                                            setLocationSuggestions([]);
-                                        }
-                                    }}
-                                    onFocus={() => {
-                                        const term = getLastQueryTerm(location);
-                                        if (term && term.trim()) {
-                                            setShowLocationDropdown(true);
-                                        }
-                                    }}
-                                    onKeyDown={handleLocationKeyDown}
-                                    autoComplete="off"
-                                />
-                                {location && (
-                                    <button
-                                        type="button"
-                                        className="hp-clear-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setLocation("");
-                                            setShowLocationDropdown(false);
-                                            locationInputRef.current?.focus();
-                                        }}
-                                        title="Clear location"
-                                    >
-                                        <CloseCircleFilled />
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Clean Location Suggestions Dropdown */}
-                            {showLocationDropdown && Boolean(activeLocTerm) && (
-                                <div className="hp-suggestions-dropdown hp-suggestions-dropdown-location" ref={locationDropdownRef}>
-                                    {currentLocationList && currentLocationList.length > 0 ? (
-                                        currentLocationList.map((item, idx) => {
-                                            const isHighlighted = locationActiveIndex === idx;
-                                            const rawLabel = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
-                                            const labelText = cleanSingleLocationName(rawLabel);
-                                            return (
-                                                <div
-                                                    key={`loc-${idx}`}
-                                                    className={`hp-suggestion-item ${isHighlighted ? "active" : ""}`}
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault();
-                                                        handleSelectLocationSuggestion(item);
-                                                    }}
-                                                    onMouseEnter={() => setLocationActiveIndex(idx)}
-                                                >
-                                                    <span className="hp-suggestion-text">
-                                                        {highlightMatch(labelText, activeLocTerm)}
-                                                    </span>
-                                                </div>
-                                            );
-                                        })
-                                    ) : (
-                                        <div
-                                            className="hp-suggestion-empty"
-                                            style={{ cursor: activeLocTerm ? "pointer" : "default" }}
-                                            onMouseDown={(e) => {
-                                                e.preventDefault();
-                                                if (activeLocTerm) {
-                                                    handleSelectLocationSuggestion(activeLocTerm);
-                                                }
-                                            }}
-                                        >
-                                            Press Enter to add "<strong>{activeLocTerm}</strong>"
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        <button className="hp-search-btn" onClick={handleSearch}>Search</button>
+                    <div className="hp-hero-badge">
+                        <Sparkles size={14} className="hp-hero-badge-icon" />
+                        <span>#1 Job Platform • 500,000+ Verified Opportunities</span>
                     </div>
 
-                    <div className="hp-hero-quick-links">
-                        {displaySearches.length > 0 ? (
-                            displaySearches.map((search, idx) => (
-                                <div
-                                    key={search.id || `search-${idx}`}
-                                    className={`hp-quick-chip ${search.isUserRecent ? 'hp-quick-chip-user' : ''}`}
-                                    onClick={() => handleQuickChipClick(search)}
-                                    title={search.isUserRecent ? "Recent search - click to search" : "Trending search - click to search"}
-                                >
-                                    <HistoryOutlined />
-                                    <span className="hp-chip-label">{search.label}</span>
-                                    {typeof search.count === "number" && search.count > 0 && (
-                                        <span className="chip-count">{search.count}</span>
-                                    )}
-                                    {search.isNew && <span className="chip-new">new</span>}
-                                    {search.isUserRecent && (
-                                        <span
-                                            className="hp-quick-chip-remove"
-                                            title="Remove from recent searches"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRemoveRecent(search);
-                                            }}
-                                        >
-                                            &times;
-                                        </span>
-                                    )}
-                                </div>
-                            ))
-                        ) : (
-                            <>
-                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?l=Chennai")}>
-                                    <HistoryOutlined /> <span className="hp-chip-label">jobs, Chennai</span> <span className="chip-new">new</span>
-                                </div>
-                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?l=Bangalore")}>
-                                    <HistoryOutlined /> <span className="hp-chip-label">jobs, Bangalore</span> <span className="chip-new">new</span>
-                                </div>
-                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?c=Software%20Development&job_nature=Internship")}>
-                                    <HistoryOutlined /> <span className="hp-chip-label">internship, Software Development</span> <span className="chip-new">new</span>
-                                </div>
-                                <div className="hp-quick-chip" onClick={() => navigate("/job-filter?c=Digital%20Marketing&job_nature=Internship")}>
-                                    <HistoryOutlined /> <span className="hp-chip-label">internship, Digital Marketing</span> <span className="chip-new">new</span>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    <h1 className="hp-hero-title">
+                        Find your <span className="hp-hero-highlight">dream job</span> now
+                    </h1>
+                    <p className="hp-hero-subtitle">
+                        5 lakh+ jobs for you to explore across top MNCs, fast-growing tech startups &amp; remote teams
+                    </p>
+
+                    <SearchWorkflow
+                        mode="hero"
+                        navigate={navigate}
+                        initialType="Jobs"
+                        showRecent={true}
+                    />
+
+                    {/* Trust Highlights */}
+                    {/* <div className="hp-hero-trust-bar">
+                        <div className="hp-hero-trust-item">
+                            <span className="hp-trust-icon">✨</span>
+                            <span><strong>500K+</strong> Active Jobs</span>
+                        </div>
+                        <div className="hp-hero-trust-divider"></div>
+                        <div className="hp-hero-trust-item">
+                            <span className="hp-trust-icon">🏢</span>
+                            <span><strong>25K+</strong> Verified Employers</span>
+                        </div>
+                        <div className="hp-hero-trust-divider"></div>
+                        <div className="hp-hero-trust-item">
+                            <span className="hp-trust-icon">⚡</span>
+                            <span><strong>Direct HR</strong> Shortlisting</span>
+                        </div>
+                    </div> */}
                 </motion.div>
             </section>
 

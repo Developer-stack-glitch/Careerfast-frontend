@@ -47,9 +47,12 @@ import Footer from "../Footer/Footer";
 import SEO from "../Components/SEO/SEO";
 import { CommonToaster } from "../Common/CommonToaster";
 
-import { getAllCourses, getJobCategoryData, getJobPosts, getSalaryRanges, getUniqueCompanies, saveJobPost, getSavedJobs, removeSavedJobs, getLocationCounts } from "../ApiService/action";
+import { getAllCourses, getJobCategoryData, getJobPosts, getSalaryRanges, getUniqueCompanies, saveJobPost, getSavedJobs, removeSavedJobs, getLocationCounts, googleLogin } from "../ApiService/action";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
+import { GoogleLogin } from "@react-oauth/google";
+import { useDispatch } from "react-redux";
+import { storeLoginStatus } from "../Redux/Slice";
 
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { CgWorkAlt } from "react-icons/cg";
@@ -58,7 +61,67 @@ import { isInternshipOpportunity, getJobDetailsUrl, getJobSlug } from "../utils/
 
 import "../css/JobFilter.css";
 import "../css/naukri-ui-styles.css";
-import { Search, SearchX } from "lucide-react";
+import { Search, SearchX, CheckCircle2, Sparkles, GraduationCap, ArrowRight, ChevronRight, Briefcase } from "lucide-react";
+
+// Default curated courses for high-converting job & internship skill recommendations
+const DEFAULT_SIDEBAR_COURSES = [
+  {
+    id: "c-1",
+    slug: "full-stack-web-development",
+    title: "Full Stack Web Development",
+    category: "Development",
+    duration: "8 Weeks",
+    rating: "4.9",
+    tag: "High Hiring",
+    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    id: "c-2",
+    slug: "data-science-machine-learning",
+    title: "Data Science & AI / ML",
+    category: "Data & AI",
+    duration: "10 Weeks",
+    rating: "4.9",
+    tag: "Trending",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    id: "c-3",
+    slug: "ui-ux-design-professional",
+    title: "UI/UX Product Design",
+    category: "Design",
+    duration: "8 Weeks",
+    rating: "4.8",
+    tag: "Fast Track",
+    image: "https://images.unsplash.com/photo-1581291518655-9523c932deb2?w=400&auto=format&fit=crop&q=60"
+  },
+  {
+    id: "c-4",
+    slug: "digital-marketing-masterclass",
+    title: "Digital Marketing & Growth",
+    category: "Marketing",
+    duration: "6 Weeks",
+    rating: "4.8",
+    tag: "Popular",
+    image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&auto=format&fit=crop&q=60"
+  }
+];
+
+const getCourseStats = (slug) => {
+  const statsMap = {
+    'full-stack-web-development': { duration: '8 Weeks', rating: '4.9', learners: '1,28,094' },
+    'data-science-machine-learning': { duration: '10 Weeks', rating: '4.9', learners: '94,520' },
+    'digital-marketing-masterclass': { duration: '6 Weeks', rating: '4.8', learners: '78,410' },
+    'ui-ux-design-professional': { duration: '8 Weeks', rating: '4.8', learners: '65,230' },
+    'product-management-101': { duration: '8 Weeks', rating: '4.8', learners: '42,150' },
+    'ai-for-business': { duration: '6 Weeks', rating: '4.9', learners: '53,890' },
+    'blockchain-web3-development': { duration: '8 Weeks', rating: '4.7', learners: '29,430' },
+    'human-resource-management': { duration: '6 Weeks', rating: '4.6', learners: '34,210' },
+    'business-analytics': { duration: '8 Weeks', rating: '4.8', learners: '48,760' },
+    'advanced-excel': { duration: '4 Weeks', rating: '4.7', learners: '1,54,320' },
+  };
+  return statsMap[slug] || { duration: '8 Weeks', rating: '4.8', learners: '15,000+' };
+};
 
 const generateSlug = (text = "") =>
   String(text).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -1299,6 +1362,98 @@ export default function JobFilter() {
   // Derived - lightweight list replacing heavy cities-list package
   const [allCities] = useState(POPULAR_CITIES);
   const [locationCountsMap, setLocationCountsMap] = useState({});
+
+  const dispatch = useDispatch();
+  const [candidateDetails, setCandidateDetails] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("loginDetails");
+        if (raw) return JSON.parse(raw);
+      } catch (e) { }
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("loginDetails");
+        if (raw) {
+          setCandidateDetails(JSON.parse(raw));
+        }
+      } catch (e) { }
+    }
+  }, [loginUserId]);
+
+  const isCandidateLoggedIn = useMemo(() => {
+    if (loginUserId) return true;
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("AccessToken");
+      return Boolean(token);
+    }
+    return false;
+  }, [loginUserId]);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const response = await googleLogin({
+        token: credentialResponse.credential,
+        role_id: 2, // Candidate role
+      });
+
+      const token = response?.data?.token;
+      const userDetails = response?.data?.user;
+
+      if (!token || !userDetails) {
+        throw new Error(response?.data?.message || "Invalid response from server");
+      }
+
+      localStorage.setItem("AccessToken", token);
+      localStorage.setItem("loginDetails", JSON.stringify(userDetails));
+
+      document.cookie = `AccessToken=${token}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `loginDetails=${encodeURIComponent(
+        JSON.stringify(userDetails)
+      )}; path=/; max-age=2592000; SameSite=Lax`;
+
+      if (dispatch) {
+        dispatch(storeLoginStatus(true));
+      }
+      window.dispatchEvent(new Event("storage"));
+      window.dispatchEvent(new CustomEvent("authChange", { detail: userDetails }));
+
+      CommonToaster("Logged in with Google successfully! 🚀", "success");
+      setLoginUserId(userDetails.id);
+      setCandidateDetails(userDetails);
+    } catch (error) {
+      console.error("Google Login Error in JobFilter:", error);
+      CommonToaster(error?.response?.data?.message || "Google sign-in failed. Please try again.", "error");
+    }
+  };
+
+  const displayCourses = useMemo(() => {
+    const rawList = Array.isArray(courses) && courses.length > 0
+      ? courses
+      : (courses?.data && Array.isArray(courses.data) ? courses.data : DEFAULT_SIDEBAR_COURSES);
+    const list = rawList.length > 0 ? rawList : DEFAULT_SIDEBAR_COURSES;
+
+    const q = (searchTerm || "").toLowerCase().trim();
+    const cat = selectedCategories && selectedCategories.length > 0 ? selectedCategories[0].toLowerCase() : "";
+
+    const scored = list.map((c) => {
+      let score = 0;
+      const title = (c.title || "").toLowerCase();
+      const desc = (c.description || "").toLowerCase();
+      const cCat = (c.category || c.course_type || "").toLowerCase();
+      if (q && (title.includes(q) || desc.includes(q) || cCat.includes(q))) score += 10;
+      if (cat && (title.includes(cat) || cCat.includes(cat))) score += 5;
+      if (jobNatureSelected === "Internship" && (title.includes("web") || title.includes("design") || title.includes("python"))) score += 2;
+      return { ...c, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 3);
+  }, [courses, searchTerm, selectedCategories, jobNatureSelected]);
 
   /** -------------------- EFFECTS -------------------- **/
   useEffect(() => {
@@ -2908,12 +3063,12 @@ export default function JobFilter() {
 
         {/* Right Promo Skeleton */}
         <Col xs={0} lg={5} xl={5}>
-          <Card className="naukri-promo-card" style={{ border: 'none' }}>
-            <Skeleton active paragraph={{ rows: 3 }} />
-          </Card>
-          <Card className="naukri-promo-card" style={{ border: 'none', marginTop: '20px' }}>
-            <Skeleton active paragraph={{ rows: 3 }} />
-          </Card>
+          <div className="cf-sidebar-skeleton-card">
+            <Skeleton active avatar paragraph={{ rows: 3 }} />
+          </div>
+          <div className="cf-sidebar-skeleton-card" style={{ marginTop: '16px' }}>
+            <Skeleton active paragraph={{ rows: 4 }} />
+          </div>
         </Col>
       </Row>
       </div>
@@ -3131,20 +3286,175 @@ export default function JobFilter() {
                 </div>
               </Col>
 
-              {/* Right Sidebar (Promo / Ads) */}
+              {/* Right Sidebar (Registration Promo & Related Courses) */}
               <Col xs={0} lg={5} xl={5}>
-                <div className="naukri-promo-sticky">
-                  <div className="naukri-promo-card">
-                    <h4 className="naukri-promo-title">See 20+ jobs in your preferred location</h4>
-                    <p style={{ fontSize: "13px", color: "var(--naukri-text-secondary)", lineHeight: '1.4' }}>Get better results by updating your profile details.</p>
-                    <a href="/candidate-profile/mainprofile" className="naukri-promo-link">Update Profile</a>
+                <div className="cf-sidebar-sticky">
+
+                  {/* 1. NOT Logged In: Registration Card matching Image 3 with CareerFast Theme */}
+                  {!isCandidateLoggedIn ? (
+                    <div className="cf-sidebar-reg-card">
+                      {/* Top Banner Graphic (Briefcase + Airplane + Sparkles) */}
+                      <div className="cf-reg-banner-graphic">
+                        <svg viewBox="0 0 280 115" fill="none" xmlns="http://www.w3.org/2000/svg" className="cf-reg-svg">
+                          <rect width="280" height="115" rx="14" fill="url(#cfRegBgGrad)" />
+                          <defs>
+                            <linearGradient id="cfRegBgGrad" x1="0" y1="0" x2="280" y2="115" gradientUnits="userSpaceOnUse">
+                              <stop stopColor="#f5f3ff" />
+                              <stop offset="1" stopColor="#ede9fe" />
+                            </linearGradient>
+                            <linearGradient id="cfThemeCaseGrad" x1="90" y1="35" x2="180" y2="105" gradientUnits="userSpaceOnUse">
+                              <stop stopColor="#93c5fd" />
+                              <stop offset="1" stopColor="#60a5fa" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Sparkles */}
+                          <path d="M 68 28 Q 68 34 62 34 Q 68 34 68 40 Q 68 34 74 34 Q 68 34 68 28 Z" fill="#f59e0b" />
+                          <path d="M 58 76 Q 58 80 54 80 Q 58 80 58 84 Q 58 80 62 80 Q 58 80 58 76 Z" fill="#fbbf24" />
+                          <path d="M 215 80 Q 215 85 210 85 Q 215 85 215 90 Q 215 85 220 85 Q 215 85 215 80 Z" fill="#f59e0b" />
+
+                          {/* Flight Trajectory */}
+                          <path d="M 158 65 C 182 60, 194 42, 216 28" stroke="#93c5fd" strokeWidth="1.8" strokeDasharray="3 3" strokeLinecap="round" />
+
+                          {/* Paper Airplane */}
+                          <g transform="translate(214, 18) rotate(15)">
+                            <polygon points="0,14 18,0 8,18 7,12" fill="#60a5fa" />
+                            <polygon points="18,0 8,18 7,12" fill="#3b82f6" />
+                            <polygon points="0,14 18,0 7,12" fill="#93c5fd" />
+                          </g>
+
+                          {/* Briefcase */}
+                          <path d="M 122 36 C 122 30, 148 30, 148 36" stroke="#5f2eea" strokeWidth="3" fill="none" strokeLinecap="round" />
+                          <rect x="98" y="38" width="74" height="48" rx="8" fill="url(#cfThemeCaseGrad)" />
+                          <path d="M 98 48 L 135 58 L 172 48" stroke="#ffffff" strokeWidth="2" fill="none" opacity="0.8" />
+                          <rect x="130" y="54" width="10" height="8" rx="2" fill="#ffffff" />
+                        </svg>
+                      </div>
+
+                      <div className="cf-sidebar-reg-body">
+                        <h3 className="cf-sidebar-reg-title">Register now to</h3>
+                        
+                        <div className="cf-reg-benefits-list">
+                          <div className="cf-reg-benefit-item">
+                            <CheckCircle2 size={16} className="cf-reg-check-icon" />
+                            <span>Find all {jobNatureSelected === "Internship" ? "internships & starter roles" : "work from home & top jobs"}</span>
+                          </div>
+                          <div className="cf-reg-benefit-item">
+                            <CheckCircle2 size={16} className="cf-reg-check-icon" />
+                            <span>Get contacted by top recruiters</span>
+                          </div>
+                          <div className="cf-reg-benefit-item">
+                            <CheckCircle2 size={16} className="cf-reg-check-icon" />
+                            <span>Free AI mock interviews &amp; Resume Builder</span>
+                          </div>
+                        </div>
+
+                        <div className="cf-sidebar-google-box">
+                          <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => CommonToaster("Google sign-in failed. Please try again.", "error")}
+                            shape="pill"
+                            size="large"
+                            text="continue_with"
+                            width="100%"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          className="cf-sidebar-email-btn"
+                          onClick={() => setAuthDrawerOpen(true)}
+                        >
+                          <span>Use email instead</span>
+                          <ChevronRight size={14} />
+                        </button>
+
+                        <p className="cf-sidebar-terms">
+                          By continuing, you agree to our <a href="/about" target="_blank" rel="noopener noreferrer">T&amp;C</a>.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    /* 1. Logged In: Personalized Profile Optimizer */
+                    <div className="cf-sidebar-profile-card">
+                      <div className="cf-profile-card-top">
+                        <div className="cf-profile-icon-badge">
+                          <Briefcase size={20} />
+                        </div>
+                        <div>
+                          <h4 className="cf-profile-title">
+                            {candidateDetails?.first_name ? `Hi, ${candidateDetails.first_name}!` : "Boost Your Job Search"}
+                          </h4>
+                          <p className="cf-profile-sub">See 20+ jobs in your preferred location by updating your details.</p>
+                        </div>
+                      </div>
+                      <a href="/candidate-profile/mainprofile" className="cf-sidebar-primary-btn">
+                        <span>Update Profile</span>
+                        <ArrowRight size={14} />
+                      </a>
+                    </div>
+                  )}
+
+                  {/* 2. Job / Internship Related Courses Section */}
+                  <div className="cf-sidebar-courses-card">
+                    <div className="cf-courses-card-header">
+                      <div className="cf-courses-badge">
+                        <GraduationCap size={13} className="cf-courses-badge-icon" />
+                        <span>{jobNatureSelected === "Internship" ? "Internship Skill Boosters" : "Job-Ready Certifications"}</span>
+                      </div>
+                      <h4 className="cf-courses-card-title">Upskill &amp; Stand Out</h4>
+                      <p className="cf-courses-card-sub">Certifications top hiring managers look for</p>
+                    </div>
+
+                    <div className="cf-courses-list">
+                      {displayCourses.map((course, idx) => {
+                        const stats = getCourseStats(course.slug);
+                        return (
+                          <a
+                            key={course.id || idx}
+                            href={`/courses/${course.slug || ""}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="cf-course-item"
+                          >
+                            <div className="cf-course-img-wrap">
+                              <img
+                                src={course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&auto=format&fit=crop&q=60"}
+                                alt={course.title}
+                                className="cf-course-img"
+                                onError={(e) => {
+                                  e.target.src = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&auto=format&fit=crop&q=60";
+                                }}
+                              />
+                              {course.tag && (
+                                <span className="cf-course-tag-mini">{course.tag}</span>
+                              )}
+                            </div>
+                            <div className="cf-course-info">
+                              <h5 className="cf-course-name">{course.title}</h5>
+                              <div className="cf-course-meta">
+                                <span className="cf-course-rating">⭐ {stats.rating}</span>
+                                <span className="cf-course-dot">•</span>
+                                <span className="cf-course-duration">{stats.duration}</span>
+                              </div>
+                              <div className="cf-course-cta-row">
+                                <span className="cf-course-action">Explore Course</span>
+                                <ChevronRight size={12} className="cf-course-arrow" />
+                              </div>
+                            </div>
+                          </a>
+                        );
+                      })}
+                    </div>
+
+                    <div className="cf-courses-card-footer">
+                      <a href="/courses" target="_blank" rel="noopener noreferrer" className="cf-courses-view-all">
+                        <span>View All Courses (50+)</span>
+                        <ArrowRight size={13} />
+                      </a>
+                    </div>
                   </div>
 
-                  <div className="naukri-promo-card" style={{ background: "linear-gradient(135deg, #fff5f5 0%, #fff 100%)" }}>
-                    <h4 className="naukri-promo-title">Premium Services</h4>
-                    <p style={{ fontSize: "13px", color: "var(--naukri-text-secondary)", lineHeight: '1.4' }}>Boost your job search with Careerfast Professional services.</p>
-                    <a href="/services" className="naukri-promo-link">Explore Services</a>
-                  </div>
                 </div>
               </Col>
             </Row>

@@ -7,7 +7,7 @@
 }
 
 .footer-container {
-  max-width: 1430px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 0 0px;
 }
@@ -326,7 +326,7 @@
    ============================================================ */
 .footer-quick-connect-bar {
   display: grid;
-  grid-template-columns: 1.35fr 1.25fr 1.15fr 1fr;
+  grid-template-columns: 2.35fr 1.25fr 1.15fr 0fr;
   gap: 16px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);

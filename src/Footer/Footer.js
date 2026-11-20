@@ -293,7 +293,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="fqc-card fqc-lang-card">
+          {/* <div className="fqc-card fqc-lang-card">
             <div className="fqc-icon-badge fqc-lang-badge">
               <GlobalOutlined />
             </div>
@@ -305,7 +305,7 @@ export default function Footer() {
                 <span className="fqc-region-code">• India</span>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom Bar */}
