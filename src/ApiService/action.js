@@ -101,6 +101,39 @@ export const cachedGet = async (url, config = {}, ttlMs = 10000) => {
   return promise;
 };
 
+export const cachedPost = async (url, payload = {}, ttlMs = 15000) => {
+  const isPublic = !payload?.admin_user_id && !payload?.include_stats;
+  if (!isPublic) {
+    return api.post(url, payload);
+  }
+
+  const cacheKey = 'POST_' + url + '_' + JSON.stringify(payload);
+  const now = Date.now();
+
+  const cached = cacheMap.get(cacheKey);
+  if (cached && (now - cached.timestamp < ttlMs)) {
+    return cached.data;
+  }
+
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey);
+  }
+
+  const promise = api.post(url, payload)
+    .then((response) => {
+      inFlightRequests.delete(cacheKey);
+      cacheMap.set(cacheKey, { timestamp: Date.now(), data: response });
+      return response;
+    })
+    .catch((error) => {
+      inFlightRequests.delete(cacheKey);
+      throw error;
+    });
+
+  inFlightRequests.set(cacheKey, promise);
+  return promise;
+};
+
 export const clearApiCache = (urlPrefix = '') => {
   if (!urlPrefix) {
     cacheMap.clear();
@@ -909,7 +942,7 @@ export const getCourseType = async () => {
 
 export const getJobPosts = async (payload) => {
   try {
-    const response = await api.post("/api/getJobPosts", payload);
+    const response = await cachedPost("/api/getJobPosts", payload, 20000);
     return response;
   } catch (error) {
     throw error;
@@ -1516,7 +1549,7 @@ export const createCourse = async (data) => {
 // ✅ Get all Courses
 export const getAllCourses = async (params) => {
   try {
-    const response = await api.get("/api/courses", { params });
+    const response = await cachedGet("/api/courses", { params }, 60000);
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching courses:", error);

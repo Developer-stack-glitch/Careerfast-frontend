@@ -272,7 +272,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   const [isSaved, setIsSaved] = useState({});
   const [wishlistedJobs, setWishlistedJobs] = useState({});
   const [savedJobMap, setSavedJobMap] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialData);
   const [sidebarLoading, setSidebarLoading] = useState(true);
   const [relatedJobs, setRelatedJobs] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -389,11 +389,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
       const transformed = transformJob(initialData);
       setPostDetails([transformed]);
       setBackendJobs([initialData]);
-      // Artificial delay to ensure the premium loader is seen and transition is smooth
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 800);
-      return () => clearTimeout(timer);
+      setLoading(false);
     } else if (jobId !== undefined && jobId !== null && jobId !== '') {
       fetchJobs(jobId);
     }
@@ -439,10 +435,11 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   const currentJobType = currentJob?.type;
 
   useEffect(() => {
+    let isMounted = true;
     async function fetchSidebarData() {
       setSidebarLoading(true);
       try {
-        let params = {};
+        let params = { limit: 6 };
         if (currentCategoryId) {
           let parsedCategory = currentCategoryId;
           if (typeof currentCategoryId === 'string') {
@@ -464,7 +461,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
         try {
           const [jRes, cRes] = await Promise.all([
             getJobPosts(params),
-            getAllCourses()
+            getAllCourses({ limit: 4 })
           ]);
           jobsRes = jRes;
           coursesRes = cRes;
@@ -475,31 +472,39 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
         let allJobs = jobsRes?.data?.data?.data || [];
         if (allJobs.length <= 1) {
           try {
-            const fallbackRes = await getJobPosts({});
+            const fallbackRes = await getJobPosts({ limit: 6 });
             if (fallbackRes?.data?.data?.data) {
               allJobs = fallbackRes.data.data.data;
             }
           } catch (e) { }
         }
 
+        if (!isMounted) return;
+
         if (allJobs.length > 0) {
           const filteredJobs = allJobs.filter(j => String(j.id) !== String(jobId));
           setRelatedJobs(filteredJobs.slice(0, 4).map(transformJob));
         }
 
-        if (coursesRes) {
+        if (coursesRes && Array.isArray(coursesRes)) {
           setCourses(coursesRes.slice(0, 3));
         }
       } catch (error) {
         console.error("Error fetching sidebar data:", error);
       } finally {
-        setSidebarLoading(false);
+        if (isMounted) {
+          setSidebarLoading(false);
+        }
       }
     }
 
     if (currentJob || !jobId) {
       fetchSidebarData();
     }
+
+    return () => {
+      isMounted = false;
+    };
   }, [jobId, currentCategoryId, currentJobType]);
 
   useEffect(() => {
@@ -630,9 +635,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
       console.error("getJobPosts error:", error);
       message.error("Failed to fetch job details");
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
+      setLoading(false);
     }
   };
 
