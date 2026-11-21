@@ -2177,7 +2177,7 @@ const EditOpportunity = () => {
                             <div className="njd-header-stats">
                               <div className="njd-stat-item">
                                 <MdOutlineWorkOutline className="njd-stat-icon" />
-                                <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "0-2 years")}</span>
+                                <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || (job.experience_type === "Fresher" ? "Fresher" : "Experienced"))}</span>
                               </div>
                               <div className="njd-stat-sep"></div>
                               <div className="njd-stat-item">

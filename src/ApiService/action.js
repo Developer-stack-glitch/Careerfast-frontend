@@ -942,7 +942,9 @@ export const getCourseType = async () => {
 
 export const getJobPosts = async (payload) => {
   try {
-    const response = await cachedPost("/api/getJobPosts", payload, 20000);
+    const response = (payload && (payload.id || payload.preview))
+      ? await api.post("/api/getJobPosts", payload)
+      : await cachedPost("/api/getJobPosts", payload, 20000);
     return response;
   } catch (error) {
     throw error;
@@ -2109,7 +2111,7 @@ export const extendAdminRecruiterSubscription = async (id, payload) => {
 };
 
 export const updateAdminRecruiterCustomPlan = async (id, payload) => {
-    return await api.post(`/api/admin/recruiters/${id}/custom-plan`, payload);
+  return await api.post(`/api/admin/recruiters/${id}/custom-plan`, payload);
 };
 
 export const updateAdminRecruiterStatus = async (id, payload) => {

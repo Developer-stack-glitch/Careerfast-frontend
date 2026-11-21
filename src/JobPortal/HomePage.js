@@ -639,25 +639,6 @@ export default function HomePage() {
         return cleanPrefix.join(", ") + ", ";
     };
 
-    // Matching query highlighter for bold search terms
-    const highlightMatch = (text, query) => {
-        if (!query || !text) return text;
-        const cleanQ = query.trim();
-        if (!cleanQ) return text;
-        const index = text.toLowerCase().indexOf(cleanQ.toLowerCase());
-        if (index === -1) return text;
-        const before = text.substring(0, index);
-        const match = text.substring(index, index + cleanQ.length);
-        const after = text.substring(index + cleanQ.length);
-        return (
-            <span className="hp-suggestion-text-inner">
-                {before}
-                <strong className="matched-text">{match}</strong>
-                {after}
-            </span>
-        );
-    };
-
     // Active query terms
     const activeSkillTerm = getLastQueryTerm(skills);
     const activeLocTerm = getLastQueryTerm(location);
@@ -770,118 +751,6 @@ export default function HomePage() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleSelectSkillsSuggestion = (item) => {
-        const label = typeof item === "string" ? item : item.label;
-        if (label) {
-            setSkills(prev => appendSuggestionToInput(prev, label));
-        }
-        setShowSkillsDropdown(false);
-        setSkillsActiveIndex(-1);
-        skillsInputRef.current?.focus();
-    };
-
-    const handleSelectLocationSuggestion = (item) => {
-        const rawVal = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
-        const locName = cleanSingleLocationName(typeof rawVal === "string" ? rawVal.trim() : String(rawVal));
-        if (locName) {
-            setLocation(prev => appendSuggestionToInput(prev, locName));
-        }
-        setShowLocationDropdown(false);
-        setLocationActiveIndex(-1);
-        locationInputRef.current?.focus();
-    };
-
-    const handleSkillsKeyDown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (showSkillsDropdown && skillsActiveIndex >= 0 && currentSkillsList[skillsActiveIndex]) {
-                const item = currentSkillsList[skillsActiveIndex];
-                const label = typeof item === "string" ? item : item.label;
-                const newSkills = appendSuggestionToInput(skills, label);
-                setSkills(newSkills);
-                setShowSkillsDropdown(false);
-                setSkillsActiveIndex(-1);
-                handleSearch({ skills: newSkills });
-            } else {
-                setShowSkillsDropdown(false);
-                setSkillsActiveIndex(-1);
-                handleSearch();
-            }
-            return;
-        }
-
-        if (e.key === "Escape") {
-            setShowSkillsDropdown(false);
-            setSkillsActiveIndex(-1);
-            return;
-        }
-
-        if (!showSkillsDropdown) {
-            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                setShowSkillsDropdown(true);
-            }
-            return;
-        }
-
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setSkillsActiveIndex((prev) =>
-                prev < currentSkillsList.length - 1 ? prev + 1 : 0
-            );
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            setSkillsActiveIndex((prev) =>
-                prev > 0 ? prev - 1 : currentSkillsList.length - 1
-            );
-        }
-    };
-
-    const handleLocationKeyDown = (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            if (showLocationDropdown && locationActiveIndex >= 0 && locationSuggestions[locationActiveIndex]) {
-                const item = locationSuggestions[locationActiveIndex];
-                const rawVal = typeof item === "string" ? item : (item.label || item.mainText || item.city || item);
-                const locName = cleanSingleLocationName(typeof rawVal === "string" ? rawVal.trim() : String(rawVal));
-                const newLocation = appendSuggestionToInput(location, locName);
-                setLocation(newLocation);
-                setShowLocationDropdown(false);
-                setLocationActiveIndex(-1);
-                handleSearch({ location: newLocation });
-            } else {
-                setShowLocationDropdown(false);
-                setLocationActiveIndex(-1);
-                handleSearch();
-            }
-            return;
-        }
-
-        if (e.key === "Escape") {
-            setShowLocationDropdown(false);
-            setLocationActiveIndex(-1);
-            return;
-        }
-
-        if (!showLocationDropdown) {
-            if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-                setShowLocationDropdown(true);
-            }
-            return;
-        }
-
-        if (e.key === "ArrowDown") {
-            e.preventDefault();
-            setLocationActiveIndex((prev) =>
-                prev < locationSuggestions.length - 1 ? prev + 1 : 0
-            );
-        } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            setLocationActiveIndex((prev) =>
-                prev > 0 ? prev - 1 : locationSuggestions.length - 1
-            );
-        }
-    };
-
     useEffect(() => {
         fetchInitialData();
 
@@ -933,61 +802,6 @@ export default function HomePage() {
 
         return [...userItems, ...fillerTrending].slice(0, 4);
     }, [recentSearches, trendingSearches]);
-
-    const handleQuickChipClick = (search) => {
-        if (!search) return;
-
-        if (search.url) {
-            navigate(search.url);
-            return;
-        }
-
-        if (search.skills || search.location || search.experience || search.job_nature) {
-            let queryParams = [];
-            if (search.skills) queryParams.push(`q=${encodeURIComponent(search.skills)}`);
-            if (search.location) {
-                search.location.split(",").map(l => l.trim()).filter(Boolean).forEach(l => {
-                    queryParams.push(`l=${encodeURIComponent(l)}`);
-                });
-            }
-            if (search.experience) {
-                if (String(search.experience).toLowerCase() === "internship") {
-                    queryParams.push(`job_nature=Internship`);
-                } else {
-                    queryParams.push(`experience=${encodeURIComponent(search.experience)}`);
-                }
-            } else if (search.job_nature) {
-                queryParams.push(`job_nature=${encodeURIComponent(search.job_nature)}`);
-            }
-            navigate(`/job-filter?${queryParams.join("&")}`);
-            return;
-        }
-
-        // Handle string label formats
-        const lbl = (search.label || "").trim();
-        if (/^jobs,\s*/i.test(lbl)) {
-            const loc = lbl.replace(/^jobs,\s*/i, "").trim();
-            navigate(`/job-filter?l=${encodeURIComponent(loc)}`);
-        } else if (/^internship,\s*/i.test(lbl)) {
-            const cat = lbl.replace(/^internship,\s*/i, "").trim();
-            navigate(`/job-filter?c=${encodeURIComponent(cat)}&job_nature=Internship`);
-        } else if (lbl.includes(",")) {
-            const parts = lbl.split(",").map(p => p.trim()).filter(Boolean);
-            if (parts.length >= 2) {
-                navigate(`/job-filter?q=${encodeURIComponent(parts[0])}&l=${encodeURIComponent(parts.slice(1).join(", "))}`);
-            } else {
-                navigate(`/job-filter?q=${encodeURIComponent(lbl)}`);
-            }
-        } else {
-            navigate(`/job-filter?q=${encodeURIComponent(lbl)}`);
-        }
-    };
-
-    const handleRemoveRecent = (search) => {
-        if (!search) return;
-        const updated = removeRecentSearch(search.id || search.label);
-        setRecentSearches(updated);
-    };
 
     useEffect(() => {
         if (!initialFetchDone.current || !activeTab) return;
@@ -1152,54 +966,6 @@ export default function HomePage() {
             setLoadingFresher(false);
             setLoadingInternships(false);
         }
-    };
-
-    const handleSearch = (overrides = {}) => {
-        const skillsToUse = overrides.hasOwnProperty('skills') ? overrides.skills : skills;
-        const locationToUse = overrides.hasOwnProperty('location') ? overrides.location : location;
-        const experienceToUse = overrides.hasOwnProperty('experience') ? overrides.experience : experience;
-
-        const locParts = locationToUse
-            .split(",")
-            .map(l => l.trim())
-            .filter(Boolean);
-
-        const skillTrimmed = skillsToUse
-            .split(",")
-            .map(s => s.trim())
-            .filter(Boolean)
-            .join(", ");
-
-        const hasExperience = experienceToUse !== null && experienceToUse !== undefined && experienceToUse !== "";
-
-        if (!skillTrimmed && locParts.length === 0 && !hasExperience) {
-            message.info("Please enter some search criteria");
-            return;
-        }
-
-        let queryParams = [];
-        if (skillTrimmed) queryParams.push(`q=${encodeURIComponent(skillTrimmed)}`);
-        locParts.forEach(loc => {
-            queryParams.push(`l=${encodeURIComponent(loc)}`);
-        });
-        if (hasExperience) {
-            if (String(experienceToUse).toLowerCase() === "internship") {
-                queryParams.push(`job_nature=Internship`);
-            } else {
-                queryParams.push(`experience=${experienceToUse}`);
-            }
-        }
-
-        // Save to dynamic recent searches
-        saveRecentSearch({
-            skills: skillTrimmed,
-            location: locParts.join(", "),
-            experience: experienceToUse,
-            job_nature: String(experienceToUse).toLowerCase() === "internship" ? "Internship" : ""
-        });
-
-        const searchUrl = `/job-filter?${queryParams.join("&")}`;
-        navigate(searchUrl);
     };
 
     const generateJobDetailsUrl = (job) => {

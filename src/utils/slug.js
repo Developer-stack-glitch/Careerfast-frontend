@@ -33,7 +33,7 @@ export const getJobSlug = (job) => {
         const parsed = JSON.parse(val);
         if (Array.isArray(parsed)) return parsed.join("-").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
       }
-    } catch (e) {}
+    } catch (e) { }
     return String(val).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-+|-+$/g, "");
   };
 
@@ -143,11 +143,13 @@ export const processDescription = (html) => {
     str = str.replace(keySkillsMatch[0], '');
   }
 
-  // 4. Clean trailing duplicate metadata footer (Role: ..., Industry Type: ..., Department: ..., Employment Type: ..., Role Category: ...)
-  str = str.replace(/(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*(?:(?<!Job\s)Role|Industry\s*Type|Role\s*Category)\s*:(?:<\/(?:strong|b)>)?[\s\S]*$/i, '');
+  // 4. Safe cleanup of trailing Naukri metadata footer:
+  // Only match standalone footer lines like <p><strong>Role:</strong> ...</p> where "Role" is the exact standalone field name (not "About the Role", etc.)
+  // AND it must be followed by at least another footer line (Industry Type or Role Category or Employment Type) towards the very end.
+  str = str.replace(/(?:<p[^>]*>)?\s*(?:<(?:strong|b)[^>]*>)?\s*(?:^|(?<=>))\s*Role\s*:\s*[^<]+<\/(?:strong|b|p)>[\s\S]*?(?:Industry\s*Type|Role\s*Category|Employment\s*Type)\s*:[\s\S]*$/i, '');
 
   // 5. Enhance standard headings into neat subheadings
-  str = str.replace(/<p[^>]*>\s*(?:<(?:strong|b)[^>]*>)?\s*(Key\s*Responsibilities|Skills\s*Required|Requirements|Qualifications|What\s*You'll\s*Do|Role\s*Overview|Job\s*Overview|About\s*The\s*Role|Key\s*Skills\s*and\s*Requirements)(?::)?\s*(?:<\/(?:strong|b)>)?\s*<\/p>/gi, 
+  str = str.replace(/<p[^>]*>\s*(?:<(?:strong|b)[^>]*>)?\s*(Key\s*Responsibilities|Skills\s*Required|Requirements|Qualifications|What\s*You'll\s*Do|Role\s*Overview|Job\s*Overview|About\s*The\s*Role|Key\s*Skills\s*and\s*Requirements)(?::)?\s*(?:<\/(?:strong|b)>)?\s*<\/p>/gi,
     '<h4 class="njd-subheading">$1</h4>');
 
   return str.trim();

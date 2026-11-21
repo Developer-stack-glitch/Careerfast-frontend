@@ -2120,7 +2120,19 @@ export default function JobFilter() {
       openings: job.openings,
       benefits: job.benefits || [],
       skills: job.skills || [],
-      eligibility: job.experience_required?.join(", "),
+      eligibility: (() => {
+        let exp = job.experience_required;
+        if (typeof exp === 'string' && (exp.startsWith('[') || exp.startsWith('{'))) {
+          try { exp = JSON.parse(exp); } catch (_) { }
+        }
+        if (Array.isArray(exp)) {
+          const valid = exp.filter(x => x !== null && x !== undefined && String(x).trim() !== "" && String(x).trim().toLowerCase() !== "all");
+          if (valid.length > 0) return valid.join(", ");
+        } else if (exp && String(exp).trim() !== "" && String(exp).trim().toLowerCase() !== "all") {
+          return String(exp).trim();
+        }
+        return (job.experience_type && job.experience_type.trim()) || "";
+      })(),
       status: (daysLeft > 0 && job.is_closed != 1) ? "Live" : "Expired",
       // keeping questions mapping harmlessly, though not used in UI now
       raw_location: job.work_location,
@@ -3026,51 +3038,51 @@ export default function JobFilter() {
         <Row gutter={[20, 24]}>
           {/* Sidebar Skeleton */}
           <Col xs={0} md={7} lg={6} xl={6}>
-          <div className="naukri-sidebar-wrapper">
-            <Card className="naukri-filter-card" style={{ border: 'none' }}>
-              <Skeleton active paragraph={{ rows: 2 }} />
-              <div style={{ marginTop: '30px' }}>
-                <Skeleton active paragraph={{ rows: 4 }} title={false} />
-              </div>
-              <div style={{ marginTop: '30px' }}>
-                <Skeleton active paragraph={{ rows: 4 }} title={false} />
-              </div>
-            </Card>
-          </div>
-        </Col>
-
-        {/* Main Content Skeleton */}
-        <Col xs={24} md={18} lg={13} xl={13}>
-          <div className="naukri-top-roles-section" style={{ height: '60px', marginBottom: '24px' }}>
-            <Skeleton.Button active block style={{ height: '52px', borderRadius: '12px' }} />
-          </div>
-          <div className="naukri-results-info">
-            <Skeleton.Button active size="large" style={{ width: 250, marginBottom: 20 }} />
-          </div>
-          <Space direction="vertical" size={12} style={{ width: "100%" }}>
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="naukri-job-card" style={{ padding: '14px 18px' }}>
-                <div style={{ display: 'flex', gap: '16px' }}>
-                  <Skeleton.Avatar active size="large" shape="square" style={{ width: 42, height: 42, borderRadius: 8 }} />
-                  <div style={{ flex: 1 }}>
-                    <Skeleton active paragraph={{ rows: 2 }} />
-                  </div>
+            <div className="naukri-sidebar-wrapper">
+              <Card className="naukri-filter-card" style={{ border: 'none' }}>
+                <Skeleton active paragraph={{ rows: 2 }} />
+                <div style={{ marginTop: '30px' }}>
+                  <Skeleton active paragraph={{ rows: 4 }} title={false} />
+                </div>
+                <div style={{ marginTop: '30px' }}>
+                  <Skeleton active paragraph={{ rows: 4 }} title={false} />
                 </div>
               </Card>
-            ))}
-          </Space>
-        </Col>
+            </div>
+          </Col>
 
-        {/* Right Promo Skeleton */}
-        <Col xs={0} lg={5} xl={5}>
-          <div className="cf-sidebar-skeleton-card">
-            <Skeleton active avatar paragraph={{ rows: 3 }} />
-          </div>
-          <div className="cf-sidebar-skeleton-card" style={{ marginTop: '16px' }}>
-            <Skeleton active paragraph={{ rows: 4 }} />
-          </div>
-        </Col>
-      </Row>
+          {/* Main Content Skeleton */}
+          <Col xs={24} md={18} lg={13} xl={13}>
+            <div className="naukri-top-roles-section" style={{ height: '60px', marginBottom: '24px' }}>
+              <Skeleton.Button active block style={{ height: '52px', borderRadius: '12px' }} />
+            </div>
+            <div className="naukri-results-info">
+              <Skeleton.Button active size="large" style={{ width: 250, marginBottom: 20 }} />
+            </div>
+            <Space direction="vertical" size={12} style={{ width: "100%" }}>
+              {[...Array(3)].map((_, i) => (
+                <Card key={i} className="naukri-job-card" style={{ padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', gap: '16px' }}>
+                    <Skeleton.Avatar active size="large" shape="square" style={{ width: 42, height: 42, borderRadius: 8 }} />
+                    <div style={{ flex: 1 }}>
+                      <Skeleton active paragraph={{ rows: 2 }} />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </Space>
+          </Col>
+
+          {/* Right Promo Skeleton */}
+          <Col xs={0} lg={5} xl={5}>
+            <div className="cf-sidebar-skeleton-card">
+              <Skeleton active avatar paragraph={{ rows: 3 }} />
+            </div>
+            <div className="cf-sidebar-skeleton-card" style={{ marginTop: '16px' }}>
+              <Skeleton active paragraph={{ rows: 4 }} />
+            </div>
+          </Col>
+        </Row>
       </div>
     </div>
   );
@@ -3333,7 +3345,7 @@ export default function JobFilter() {
 
                       <div className="cf-sidebar-reg-body">
                         <h3 className="cf-sidebar-reg-title">Register now to</h3>
-                        
+
                         <div className="cf-reg-benefits-list">
                           <div className="cf-reg-benefit-item">
                             <CheckCircle2 size={16} className="cf-reg-check-icon" />

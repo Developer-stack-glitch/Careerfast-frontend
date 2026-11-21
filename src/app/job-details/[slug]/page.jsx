@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import JobDetails from '@/JobPortal/JobDetails';
-import { fetchJobForSEO } from '@/utils/seo-fetch';
+import { fetchJobForSEO, fetchRelatedJobsForSEO, fetchCoursesForSEO } from '@/utils/seo-fetch';
 import { 
   generateNaukriJobTitle, 
   generateNaukriJobDescription, 
@@ -100,8 +100,12 @@ export default async function Page({ params, searchParams }) {
   const previewToken = sParams?.preview_token || sParams?.token;
   const jobId = slug.split("-").pop();
   
-  // Fetch initial data on server to pass to client component
-  const job = await fetchJobForSEO(jobId, { preview: isPreview, preview_token: previewToken });
+  // Fetch initial data on server to pass to client component in parallel
+  const [job, initialRelatedJobs, initialCourses] = await Promise.all([
+    fetchJobForSEO(jobId, { preview: isPreview, preview_token: previewToken }),
+    fetchRelatedJobsForSEO(jobId),
+    fetchCoursesForSEO(4)
+  ]);
 
   if (!job && !isPreview) {
     notFound();
@@ -147,7 +151,14 @@ export default async function Page({ params, searchParams }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       )}
-      <JobDetails initialData={job} serverSlug={slug} isPreview={isPreview} previewToken={previewToken} />
+      <JobDetails
+        initialData={job}
+        initialRelatedJobs={initialRelatedJobs}
+        initialCourses={initialCourses}
+        serverSlug={slug}
+        isPreview={isPreview}
+        previewToken={previewToken}
+      />
     </>
   );
 }

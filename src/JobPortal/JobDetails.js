@@ -103,7 +103,7 @@ const transformJob = (job) => {
     logo: job.company_logo,
     company_description: processDescription(job.company_description || job.about_us),
     created_date: job.created_at,
-    job_description: processDescription(job.job_description),
+    job_description: processDescription(job.job_description || job.description || job.seo_description || ""),
     seo_description: job.seo_description,
     benefits: job.benefits,
     openings: job.openings,
@@ -191,7 +191,25 @@ const transformJob = (job) => {
       }
       return extractSkillsFromDescription(job.job_description);
     })(),
-    eligibility: isIntern ? "Internship" : (Array.isArray(job.experience_required) ? job.experience_required.join(", ") : (job.experience_required || "")),
+    eligibility: (() => {
+      if (isIntern) return "Internship";
+      let expList = job.experience_required;
+      if (typeof expList === 'string' && (expList.startsWith('[') || expList.startsWith('{'))) {
+        try {
+          expList = JSON.parse(expList);
+        } catch (_) {}
+      }
+      if (Array.isArray(expList)) {
+        const cleaned = expList.filter(x => x !== null && x !== undefined && String(x).trim() !== "" && String(x).trim().toLowerCase() !== "all");
+        if (cleaned.length > 0) return cleaned.join(", ");
+      } else if (expList && String(expList).trim() !== "" && String(expList).trim().toLowerCase() !== "all") {
+        return String(expList).trim();
+      }
+      if (String(job.experience_type).toLowerCase() === "fresher") {
+        return "Fresher";
+      }
+      return job.experience_type || "Fresher";
+    })(),
     status: isExpired ? "Expired" : "Live",
     raw_location: job.work_location,
     raw_workplace_type: job.workplace_type,
@@ -245,7 +263,7 @@ const transformJob = (job) => {
   };
 };
 
-export default function JobDetails({ initialData, serverSlug, isPreview: isPreviewProp, previewToken: previewTokenProp }) {
+export default function JobDetails({ initialData, initialRelatedJobs, initialCourses, serverSlug, isPreview: isPreviewProp, previewToken: previewTokenProp }) {
   const dispatch = useDispatch();
   const [postDetails, setPostDetails] = useState(initialData ? [transformJob(initialData)] : []);
   const [backendJobs, setBackendJobs] = useState(initialData ? [initialData] : []);
@@ -273,9 +291,14 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   const [wishlistedJobs, setWishlistedJobs] = useState({});
   const [savedJobMap, setSavedJobMap] = useState({});
   const [loading, setLoading] = useState(!initialData);
-  const [sidebarLoading, setSidebarLoading] = useState(true);
-  const [relatedJobs, setRelatedJobs] = useState([]);
-  const [courses, setCourses] = useState([]);
+  const [sidebarLoading, setSidebarLoading] = useState(
+    !(initialRelatedJobs && initialRelatedJobs.length > 0) &&
+    !(initialCourses && initialCourses.length > 0)
+  );
+  const [relatedJobs, setRelatedJobs] = useState(
+    initialRelatedJobs ? initialRelatedJobs.map(transformJob).filter(Boolean) : []
+  );
+  const [courses, setCourses] = useState(initialCourses || []);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [isAlertModalOpen, setIsAlertModalOpen] = useState(false);
   const [alertEmail, setAlertEmail] = useState("");
@@ -390,10 +413,13 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
       setPostDetails([transformed]);
       setBackendJobs([initialData]);
       setLoading(false);
+      if ((!initialData.job_description || isPreview) && jobId) {
+        fetchJobs(jobId);
+      }
     } else if (jobId !== undefined && jobId !== null && jobId !== '') {
       fetchJobs(jobId);
     }
-  }, [jobId, initialData]);
+  }, [jobId, initialData, isPreview]);
 
   // Keep browser URL slug in sync with full SEO slug format
   useEffect(() => {
@@ -437,7 +463,9 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
   useEffect(() => {
     let isMounted = true;
     async function fetchSidebarData() {
-      setSidebarLoading(true);
+      if (!initialRelatedJobs && !initialCourses) {
+        setSidebarLoading(true);
+      }
       try {
         let params = { limit: 6 };
         if (currentCategoryId) {
@@ -1311,7 +1339,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
             <div className="njd-alert-job-meta">
               <span>🏢 <strong>{job.company}</strong></span>
               {job.location && <span>📍 {job.location}</span>}
-              <span>💼 {isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "Fresher")}</span>
+              <span>💼 {isInternshipOpportunity(job) ? "Internship" : (job.eligibility || (job.experience_type === "Fresher" ? "Fresher" : "Experienced"))}</span>
             </div>
           </div>
 
@@ -1447,7 +1475,7 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
                         <div className="njd-header-stats" style={job.is_walk_in ? { borderBottom: 'none', paddingBottom: '10px' } : {}}>
                           <div className="njd-stat-item">
                             <MdOutlineWorkOutline className="njd-stat-icon" />
-                            <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || "0-2 years")}</span>
+                            <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || (job.experience_type === "Fresher" ? "Fresher" : "Experienced"))}</span>
                           </div>
                           <div className="njd-stat-sep"></div>
                           <div className="njd-stat-item">
@@ -1567,7 +1595,14 @@ export default function JobDetails({ initialData, serverSlug, isPreview: isPrevi
 
                   <div className="njd-main-card">
                     <h2 className="njd-section-title">Job description</h2>
-                    <div className="njd-jd-text ql-editor rich-text" dangerouslySetInnerHTML={{ __html: job.job_description }} />
+                    <div
+                      className="njd-jd-text ql-editor rich-text"
+                      dangerouslySetInnerHTML={{
+                        __html: (job.job_description && job.job_description.trim())
+                          ? job.job_description
+                          : (job.seo_description ? `<p>${job.seo_description}</p>` : '<p class="text-slate-500 italic">No detailed description available.</p>')
+                      }}
+                    />
                     <div className="njd-section-divider"></div>
                     <h3 className="njd-section-title">Job Details</h3>
                     <div className="njd-role-details">
