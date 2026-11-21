@@ -882,6 +882,7 @@ export default function AddRecruiter() {
                                     <input
                                         type="tel"
                                         required
+                                        maxLength={20}
                                         value={formData.company_phone}
                                         onChange={(e) => setFormData({ ...formData, company_phone: e.target.value })}
                                         placeholder="+91 98765 43210"
@@ -1390,6 +1391,7 @@ export default function AddRecruiter() {
                                     <input
                                         type="tel"
                                         required
+                                        maxLength={20}
                                         value={formData.mobile_number}
                                         onChange={(e) => setFormData({ ...formData, mobile_number: e.target.value })}
                                         placeholder="+91 99887 76655"
@@ -1544,6 +1546,7 @@ export default function AddRecruiter() {
                                     <label className="block text-xs font-semibold text-gray-700 mb-1">Mobile Number</label>
                                     <input
                                         type="tel"
+                                        maxLength={20}
                                         value={master.phone}
                                         onChange={(e) => handleUpdateAdditionalMaster(idx, 'phone', e.target.value)}
                                         placeholder="+91 98111 22334"
@@ -1795,6 +1798,7 @@ export default function AddRecruiter() {
                                             <label className="block text-xs font-semibold text-gray-700 mb-1">Mobile Number</label>
                                             <input
                                                 type="tel"
+                                                maxLength={20}
                                                 value={sub.phone}
                                                 onChange={(e) => handleUpdateSubRecruiter(idx, 'phone', e.target.value)}
                                                 placeholder="+91 97777 88888"
