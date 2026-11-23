@@ -65,6 +65,8 @@ export function formatJobExperience(job) {
     // Matches "0-3" or "0 - 3" or "0 to 3" or "0–3"
     const rangeMatch = cleanExp.match(/^(\d+)\s*(?:-|to|–|—)\s*(\d+)(?:\s*(?:yrs|years?))?/i);
     if (rangeMatch) {
+      if (rangeMatch[1] === '0' && rangeMatch[2] === '0') return 'Fresher';
+      if (rangeMatch[1] === rangeMatch[2]) return `${rangeMatch[1]} years of experience`;
       return `${rangeMatch[1]} to ${rangeMatch[2]} years of experience`;
     }
     const singleMatch = cleanExp.match(/^(\d+)\+?\s*(?:yrs|years?)?/i);

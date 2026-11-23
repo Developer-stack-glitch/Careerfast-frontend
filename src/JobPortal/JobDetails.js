@@ -51,7 +51,7 @@ import Header from "../Header/Header";
 import SEO from "../Components/SEO/SEO";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
-import { getJobSlug, getJobDetailsUrl, generateSlug, isInternshipOpportunity, extractSkillsFromDescription, processDescription } from "../utils/slug";
+import { getJobSlug, getJobDetailsUrl, generateSlug, isInternshipOpportunity, extractSkillsFromDescription, processDescription, formatExperienceDisplay } from "../utils/slug";
 import { generateNaukriJobTitle, generateNaukriJobDescription } from "../utils/seo-helper";
 import "../css/JobFilter.css";
 import "../css/ProfileDetailsPage.css";
@@ -193,22 +193,7 @@ const transformJob = (job) => {
     })(),
     eligibility: (() => {
       if (isIntern) return "Internship";
-      let expList = job.experience_required;
-      if (typeof expList === 'string' && (expList.startsWith('[') || expList.startsWith('{'))) {
-        try {
-          expList = JSON.parse(expList);
-        } catch (_) {}
-      }
-      if (Array.isArray(expList)) {
-        const cleaned = expList.filter(x => x !== null && x !== undefined && String(x).trim() !== "" && String(x).trim().toLowerCase() !== "all");
-        if (cleaned.length > 0) return cleaned.join(", ");
-      } else if (expList && String(expList).trim() !== "" && String(expList).trim().toLowerCase() !== "all") {
-        return String(expList).trim();
-      }
-      if (String(job.experience_type).toLowerCase() === "fresher") {
-        return "Fresher";
-      }
-      return job.experience_type || "Fresher";
+      return formatExperienceDisplay(job.experience_required, job.experience_type);
     })(),
     status: isExpired ? "Expired" : "Live",
     raw_location: job.work_location,
@@ -1475,7 +1460,7 @@ export default function JobDetails({ initialData, initialRelatedJobs, initialCou
                         <div className="njd-header-stats" style={job.is_walk_in ? { borderBottom: 'none', paddingBottom: '10px' } : {}}>
                           <div className="njd-stat-item">
                             <MdOutlineWorkOutline className="njd-stat-icon" />
-                            <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || (job.experience_type === "Fresher" ? "Fresher" : "Experienced"))}</span>
+                            <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || formatExperienceDisplay(job.experience_required, job.experience_type))}</span>
                           </div>
                           <div className="njd-stat-sep"></div>
                           <div className="njd-stat-item">

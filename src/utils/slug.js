@@ -183,3 +183,59 @@ export const getJobDetailsUrl = (job, preview = false) => {
   }
   return `${basePath}/${slug}`;
 };
+
+export const formatExperienceDisplay = (expList, experienceType) => {
+  let raw = expList;
+  if (typeof raw === 'string' && (raw.startsWith('[') || raw.startsWith('{'))) {
+    try {
+      raw = JSON.parse(raw);
+    } catch (_) {}
+  }
+
+  let text = "";
+  if (Array.isArray(raw)) {
+    const cleaned = raw.filter(x => x !== null && x !== undefined && String(x).trim() !== "" && String(x).trim().toLowerCase() !== "all");
+    if (cleaned.length > 0) {
+      text = cleaned.join(", ");
+    }
+  } else if (raw && String(raw).trim() !== "" && String(raw).trim().toLowerCase() !== "all") {
+    text = String(raw).trim();
+  }
+
+  const expTypeLower = String(experienceType || "").trim().toLowerCase();
+
+  // If text is empty or missing, fallback to experienceType or Fresher
+  if (!text) {
+    if (expTypeLower === "fresher") return "Fresher";
+    if (experienceType && String(experienceType).trim() !== "") return String(experienceType).trim();
+    return "Fresher";
+  }
+
+  const cleanText = text.replace(/^[\[\]"'\s]+|[\[\]"'\s]+$/g, '').trim();
+
+  // If already "Fresher"
+  if (/^fresher$/i.test(cleanText)) {
+    return "Fresher";
+  }
+
+  // Check for 0-0 or 0 - 0 (e.g. "0-0 Years", "0 - 0 Years", "0-0", "0 - 0", "0-0 yrs")
+  if (/^0\s*[-–—to]\s*0(\s*(?:yrs|years?))?$/i.test(cleanText)) {
+    return "Fresher";
+  }
+
+  // Check for single "0", "0 Years", "0 Year", "0 yrs"
+  if (/^0\s*(?:yrs|years?)?$/i.test(cleanText)) {
+    return "Fresher";
+  }
+
+  // Check for identical range like "2-2 Years" -> "2 Years"
+  const sameRangeMatch = cleanText.match(/^(\d+)\s*[-–—to]\s*\1\s*(?:yrs|years?)?$/i);
+  if (sameRangeMatch) {
+    const n = Number(sameRangeMatch[1]);
+    if (n === 0) return "Fresher";
+    return `${n} Year${n !== 1 ? 's' : ''}`;
+  }
+
+  return cleanText;
+};
+

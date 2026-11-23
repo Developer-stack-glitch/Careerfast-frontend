@@ -57,7 +57,7 @@ import { storeLoginStatus } from "../Redux/Slice";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { CgWorkAlt } from "react-icons/cg";
 import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
-import { isInternshipOpportunity, getJobDetailsUrl, getJobSlug } from "../utils/slug";
+import { isInternshipOpportunity, getJobDetailsUrl, getJobSlug, formatExperienceDisplay } from "../utils/slug";
 
 import "../css/JobFilter.css";
 import "../css/naukri-ui-styles.css";
@@ -1066,7 +1066,7 @@ const JobCard = React.memo(function JobCard({
           <span>
             {isInternshipOpportunity(job, { jobNatureSelected })
               ? "Internship"
-              : (job.level && job.level.trim() ? job.level : "N/A")}
+              : (job.eligibility || job.level || "Fresher")}
           </span>
         </div>
         <span className="naukri-meta-separator"></span>
@@ -2106,7 +2106,7 @@ export default function JobFilter() {
       date_posted: job.date_posted,
       working_days: job.working_days,
       daysLeft: (daysLeft > 0 && job.is_closed != 1) ? `${daysLeft} days left` : "Expired",
-      level: isIntern ? "Internship" : ((job.experience_type && job.experience_type.trim()) || "N/A"),
+      level: isIntern ? "Internship" : formatExperienceDisplay(job.experience_required, job.experience_type),
       salary:
         job.salary_type === "Fixed"
           ? (!job.min_salary || String(job.min_salary) === "0") ? "Not Disclosed" : `${getCurrencySymbol(job.currency)} ${job.min_salary || "N/A"} ${job.salary_duration?.toLowerCase() === "monthly" ? "Per Month" : "LPA"}`
@@ -2121,17 +2121,8 @@ export default function JobFilter() {
       benefits: job.benefits || [],
       skills: job.skills || [],
       eligibility: (() => {
-        let exp = job.experience_required;
-        if (typeof exp === 'string' && (exp.startsWith('[') || exp.startsWith('{'))) {
-          try { exp = JSON.parse(exp); } catch (_) { }
-        }
-        if (Array.isArray(exp)) {
-          const valid = exp.filter(x => x !== null && x !== undefined && String(x).trim() !== "" && String(x).trim().toLowerCase() !== "all");
-          if (valid.length > 0) return valid.join(", ");
-        } else if (exp && String(exp).trim() !== "" && String(exp).trim().toLowerCase() !== "all") {
-          return String(exp).trim();
-        }
-        return (job.experience_type && job.experience_type.trim()) || "";
+        if (isIntern) return "Internship";
+        return formatExperienceDisplay(job.experience_required, job.experience_type);
       })(),
       status: (daysLeft > 0 && job.is_closed != 1) ? "Live" : "Expired",
       // keeping questions mapping harmlessly, though not used in UI now
