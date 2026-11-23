@@ -2143,7 +2143,7 @@ export default function AddRecruiter() {
 
             {/* Success Credential Modal */}
             {createdModalData && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="fixed inset-0 mt-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-gray-100 overflow-hidden max-h-[90vh] flex flex-col">
                         {/* Header */}
                         <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-center shrink-0">

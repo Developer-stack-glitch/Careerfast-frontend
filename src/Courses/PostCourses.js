@@ -232,14 +232,47 @@ export default function PostCourses() {
         }
     };
 
+    const getAuthHeaders = () => {
+        const headers = { "Content-Type": "application/json" };
+        try {
+            const token = localStorage.getItem("AccessToken") || 
+                          localStorage.getItem("token") || 
+                          (typeof document !== 'undefined' && document.cookie.match(/(?:^|;\s*)AccessToken=([^;]*)/)?.[1] ? decodeURIComponent(document.cookie.match(/(?:^|;\s*)AccessToken=([^;]*)/)[1]) : null);
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+        } catch (e) {
+            console.error("Error reading auth token:", e);
+        }
+        return headers;
+    };
+
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
+
+        if (!courseData.title || !courseData.title.trim()) {
+            toast.error("Please enter Course Title in Hero & Overview before saving");
+            setCurrentStep(0);
+            return;
+        }
+
         setLoading(true);
 
         const url = formMode === "edit" ? `${API_URL}/api/courses/${currentCourseId}` : `${API_URL}/api/courses`;
         const method = formMode === "edit" ? "PUT" : "POST";
 
         const payload = JSON.parse(JSON.stringify(courseData));
+
+        if (!payload.slug || !payload.slug.trim()) {
+            payload.slug = payload.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+
+        if (!payload.description && payload.content?.aboutCourse?.description) {
+            payload.description = payload.content.aboutCourse.description.replace(/<[^>]+>/g, '').trim().slice(0, 300);
+        }
+        payload.description = payload.description || "";
+        payload.link = payload.link || "";
+
         if (typeof payload.content?.skills === 'string') {
             payload.content.skills = payload.content.skills.split(",").map(s => s.trim()).filter(Boolean);
         }
@@ -253,20 +286,31 @@ export default function PostCourses() {
         try {
             const response = await fetch(url, {
                 method: method,
-                headers: { "Content-Type": "application/json" },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             });
 
-            const data = await response.json();
+            let data = {};
+            try {
+                data = await response.json();
+            } catch (jsonErr) {
+                data = {};
+            }
+
             if (response.ok) {
-                toast.success(`Course ${formMode === "edit" ? "updated" : "created"} successfully!`);
+                toast.success(`Course ${formMode === "edit" ? "updated" : "saved"} successfully!`);
+                if (data.id) {
+                    setCurrentCourseId(data.id);
+                }
                 fetchCourses();
                 setTimeout(() => setFormMode("list"), 1500);
             } else {
-                toast.error(data.error || "Failed to save course");
+                const errMsg = data.error || data.details || data.message || `Failed to save course (Status ${response.status})`;
+                toast.error(errMsg);
             }
         } catch (err) {
-            toast.error("Connection error");
+            console.error("Course save error:", err);
+            toast.error(err?.message ? `Connection error: ${err.message}` : "Connection error");
         } finally {
             setTimeout(() => {
                 setLoading(false);
@@ -327,12 +371,16 @@ export default function PostCourses() {
             centered: true,
             onOk: async () => {
                 try {
-                    const response = await fetch(`${API_URL}/api/courses/${id}`, { method: "DELETE" });
+                    const response = await fetch(`${API_URL}/api/courses/${id}`, { 
+                        method: "DELETE",
+                        headers: getAuthHeaders()
+                    });
+                    const data = await response.json().catch(() => ({}));
                     if (response.ok) {
                         toast.success("Course deleted successfully");
                         fetchCourses();
                     } else {
-                        toast.error("Failed to delete course");
+                        toast.error(data.error || data.message || "Failed to delete course");
                     }
                 } catch (err) {
                     toast.error("Connection error");
