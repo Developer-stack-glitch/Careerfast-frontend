@@ -1,7 +1,7 @@
 'use client';
 import { getImageUrl } from "../utils/getImageUrl";
 import { compressImage } from "../utils/imageCompressor";
-import { isInternshipOpportunity, processDescription } from "../utils/slug";
+import { isInternshipOpportunity, processDescription, formatExperienceDisplay } from "../utils/slug";
 import React, { useEffect, useState } from "react";
 import {
   Button,
@@ -2177,7 +2177,7 @@ const EditOpportunity = () => {
                             <div className="njd-header-stats">
                               <div className="njd-stat-item">
                                 <MdOutlineWorkOutline className="njd-stat-icon" />
-                                <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || (job.experience_type === "Fresher" ? "Fresher" : "Experienced"))}</span>
+                                <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || formatExperienceDisplay(job.experience_required, job.experience_type, job))}</span>
                               </div>
                               <div className="njd-stat-sep"></div>
                               <div className="njd-stat-item">

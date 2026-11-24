@@ -193,7 +193,7 @@ const transformJob = (job) => {
     })(),
     eligibility: (() => {
       if (isIntern) return "Internship";
-      return formatExperienceDisplay(job.experience_required, job.experience_type);
+      return formatExperienceDisplay(job.experience_required, job.experience_type, job);
     })(),
     status: isExpired ? "Expired" : "Live",
     raw_location: job.work_location,
@@ -1324,7 +1324,7 @@ export default function JobDetails({ initialData, initialRelatedJobs, initialCou
             <div className="njd-alert-job-meta">
               <span>🏢 <strong>{job.company}</strong></span>
               {job.location && <span>📍 {job.location}</span>}
-              <span>💼 {isInternshipOpportunity(job) ? "Internship" : (job.eligibility || (job.experience_type === "Fresher" ? "Fresher" : "Experienced"))}</span>
+              <span>💼 {isInternshipOpportunity(job) ? "Internship" : (job.eligibility || formatExperienceDisplay(job.experience_required, job.experience_type, job))}</span>
             </div>
           </div>
 
@@ -1460,7 +1460,7 @@ export default function JobDetails({ initialData, initialRelatedJobs, initialCou
                         <div className="njd-header-stats" style={job.is_walk_in ? { borderBottom: 'none', paddingBottom: '10px' } : {}}>
                           <div className="njd-stat-item">
                             <MdOutlineWorkOutline className="njd-stat-icon" />
-                            <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || formatExperienceDisplay(job.experience_required, job.experience_type))}</span>
+                            <span>{isInternshipOpportunity(job) ? "Internship" : (job.eligibility || formatExperienceDisplay(job.experience_required, job.experience_type, job))}</span>
                           </div>
                           <div className="njd-stat-sep"></div>
                           <div className="njd-stat-item">

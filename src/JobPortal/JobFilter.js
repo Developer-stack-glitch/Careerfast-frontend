@@ -2106,7 +2106,7 @@ export default function JobFilter() {
       date_posted: job.date_posted,
       working_days: job.working_days,
       daysLeft: (daysLeft > 0 && job.is_closed != 1) ? `${daysLeft} days left` : "Expired",
-      level: isIntern ? "Internship" : formatExperienceDisplay(job.experience_required, job.experience_type),
+      level: isIntern ? "Internship" : formatExperienceDisplay(job.experience_required, job.experience_type, job),
       salary:
         job.salary_type === "Fixed"
           ? (!job.min_salary || String(job.min_salary) === "0") ? "Not Disclosed" : `${getCurrencySymbol(job.currency)} ${job.min_salary || "N/A"} ${job.salary_duration?.toLowerCase() === "monthly" ? "Per Month" : "LPA"}`
@@ -2122,7 +2122,7 @@ export default function JobFilter() {
       skills: job.skills || [],
       eligibility: (() => {
         if (isIntern) return "Internship";
-        return formatExperienceDisplay(job.experience_required, job.experience_type);
+        return formatExperienceDisplay(job.experience_required, job.experience_type, job);
       })(),
       status: (daysLeft > 0 && job.is_closed != 1) ? "Live" : "Expired",
       // keeping questions mapping harmlessly, though not used in UI now
