@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
+import Link from "next/link";
 import logo from "../images/careerfastlogofinal.png";
 import { useNavigate, usePathname, useLocation } from "@/routing-shim";
 import { getImageUrl } from "../utils/getImageUrl";
@@ -857,37 +858,61 @@ export default function Header({ noSticky = false, showSearch }) {
       <div className="mega-content">
         {megaTab === "locations" && (
           <ul className="mega-list">
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-chennai"); setOpen(false); }}>Jobs in Chennai</li>
-            <li onClick={() => { smartNavigate("/jobs/work-from-home"); setOpen(false); }}>Work from home</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-bangalore"); setOpen(false); }}>Jobs in Bangalore</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-delhi"); setOpen(false); }}>Jobs in Delhi</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-hyderabad"); setOpen(false); }}>Jobs in Hyderabad</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-gurgaon"); setOpen(false); }}>Jobs in Gurgaon</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-kolkata"); setOpen(false); }}>Jobs in Kolkata</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-mumbai"); setOpen(false); }}>Jobs in Mumbai</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-pune"); setOpen(false); }}>Jobs in Pune</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-noida"); setOpen(false); }}>Jobs in Noida</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-jaipur"); setOpen(false); }}>Jobs in Jaipur</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-coimbatore"); setOpen(false); }}>Jobs in Coimbatore</li>
-            <li onClick={() => { smartNavigate("/jobs/jobs-in-lucknow"); setOpen(false); }}>Jobs in Lucknow</li>
+            {[
+              ["/jobs/jobs-in-chennai", "Jobs in Chennai"],
+              ["/jobs/work-from-home", "Work from home"],
+              ["/jobs/jobs-in-bangalore", "Jobs in Bangalore"],
+              ["/jobs/jobs-in-delhi", "Jobs in Delhi"],
+              ["/jobs/jobs-in-hyderabad", "Jobs in Hyderabad"],
+              ["/jobs/jobs-in-gurgaon", "Jobs in Gurgaon"],
+              ["/jobs/jobs-in-kolkata", "Jobs in Kolkata"],
+              ["/jobs/jobs-in-mumbai", "Jobs in Mumbai"],
+              ["/jobs/jobs-in-pune", "Jobs in Pune"],
+              ["/jobs/jobs-in-noida", "Jobs in Noida"],
+              ["/jobs/jobs-in-jaipur", "Jobs in Jaipur"],
+              ["/jobs/jobs-in-coimbatore", "Jobs in Coimbatore"],
+              ["/jobs/jobs-in-lucknow", "Jobs in Lucknow"],
+            ].map(([href, label]) => (
+              <li key={href}>
+                <Link href={href} onClick={() => setOpen(false)} style={{ color: "inherit", textDecoration: "none", display: "block" }}>
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
         {megaTab === "categories" && (
           <ul className="mega-list">
-            <li onClick={() => { smartNavigate("/jobs/full-stack-development-jobs"); setOpen(false); }}>Full Stack Development</li>
-            <li onClick={() => { smartNavigate("/jobs/devops-cloud-computing-jobs"); setOpen(false); }}>DevOps & Cloud Computing</li>
-            <li onClick={() => { smartNavigate("/jobs/data-science-analytics-jobs"); setOpen(false); }}>Data Science & Analytics</li>
-            <li onClick={() => { smartNavigate("/jobs/frontend-development-jobs"); setOpen(false); }}>Frontend Development</li>
-            <li onClick={() => { smartNavigate("/jobs/hr-analytics-jobs"); setOpen(false); }}>HR Analytics</li>
-            <li onClick={() => { smartNavigate("/jobs/software-development-jobs"); setOpen(false); }}>Software Development</li>
-            <li onClick={() => { smartNavigate("/jobs/ui-ux-design-jobs"); setOpen(false); }}>UI/UX Design</li>
+            {[
+              ["/jobs/full-stack-development-jobs", "Full Stack Development"],
+              ["/jobs/devops-cloud-computing-jobs", "DevOps & Cloud Computing"],
+              ["/jobs/data-science-analytics-jobs", "Data Science & Analytics"],
+              ["/jobs/frontend-development-jobs", "Frontend Development"],
+              ["/jobs/hr-analytics-jobs", "HR Analytics"],
+              ["/jobs/software-development-jobs", "Software Development"],
+              ["/jobs/ui-ux-design-jobs", "UI/UX Design"],
+            ].map(([href, label]) => (
+              <li key={href}>
+                <Link href={href} onClick={() => setOpen(false)} style={{ color: "inherit", textDecoration: "none", display: "block" }}>
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
         {megaTab === "fresher" && (
           <ul className="mega-list">
-            <li onClick={() => { smartNavigate("/jobs/fresher-work-from-home-jobs"); setOpen(false); }}>Work from home</li>
-            <li onClick={() => { smartNavigate("/jobs/fresher-jobs-in-chennai"); setOpen(false); }}>Freshers job in Chennai</li>
-            <li onClick={() => { smartNavigate("/jobs/fresher-jobs-in-bangalore"); setOpen(false); }}>Freshers job in Bangalore</li>
+            {[
+              ["/jobs/fresher-work-from-home-jobs", "Work from home"],
+              ["/jobs/fresher-jobs-in-chennai", "Freshers job in Chennai"],
+              ["/jobs/fresher-jobs-in-bangalore", "Freshers job in Bangalore"],
+            ].map(([href, label]) => (
+              <li key={href}>
+                <Link href={href} onClick={() => setOpen(false)} style={{ color: "inherit", textDecoration: "none", display: "block" }}>
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </div>
@@ -919,37 +944,61 @@ export default function Header({ noSticky = false, showSearch }) {
       <div className="mega-content">
         {megaTab === "locations" && (
           <ul className="mega-list">
-            <li onClick={() => { smartNavigate("/internships/internships-in-chennai"); setOpen(false); }}>Internships in Chennai</li>
-            <li onClick={() => { smartNavigate("/internships/work-from-home"); setOpen(false); }}>Work from home</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-bangalore"); setOpen(false); }}>Internships in Bangalore</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-delhi"); setOpen(false); }}>Internships in Delhi</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-hyderabad"); setOpen(false); }}>Internships in Hyderabad</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-gurgaon"); setOpen(false); }}>Internships in Gurgaon</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-kolkata"); setOpen(false); }}>Internships in Kolkata</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-mumbai"); setOpen(false); }}>Internships in Mumbai</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-pune"); setOpen(false); }}>Internships in Pune</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-noida"); setOpen(false); }}>Internships in Noida</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-jaipur"); setOpen(false); }}>Internships in Jaipur</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-coimbatore"); setOpen(false); }}>Internships in Coimbatore</li>
-            <li onClick={() => { smartNavigate("/internships/internships-in-lucknow"); setOpen(false); }}>Internships in Lucknow</li>
+            {[
+              ["/internships/internships-in-chennai", "Internships in Chennai"],
+              ["/internships/work-from-home", "Work from home"],
+              ["/internships/internships-in-bangalore", "Internships in Bangalore"],
+              ["/internships/internships-in-delhi", "Internships in Delhi"],
+              ["/internships/internships-in-hyderabad", "Internships in Hyderabad"],
+              ["/internships/internships-in-gurgaon", "Internships in Gurgaon"],
+              ["/internships/internships-in-kolkata", "Internships in Kolkata"],
+              ["/internships/internships-in-mumbai", "Internships in Mumbai"],
+              ["/internships/internships-in-pune", "Internships in Pune"],
+              ["/internships/internships-in-noida", "Internships in Noida"],
+              ["/internships/internships-in-jaipur", "Internships in Jaipur"],
+              ["/internships/internships-in-coimbatore", "Internships in Coimbatore"],
+              ["/internships/internships-in-lucknow", "Internships in Lucknow"],
+            ].map(([href, label]) => (
+              <li key={href}>
+                <Link href={href} onClick={() => setOpen(false)} style={{ color: "inherit", textDecoration: "none", display: "block" }}>
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
         {megaTab === "categories" && (
           <ul className="mega-list">
-            <li onClick={() => { smartNavigate("/internships/full-stack-development-jobs"); setOpen(false); }}>Full Stack Development</li>
-            <li onClick={() => { smartNavigate("/internships/devops-cloud-computing-jobs"); setOpen(false); }}>DevOps & Cloud Computing</li>
-            <li onClick={() => { smartNavigate("/internships/data-science-analytics-jobs"); setOpen(false); }}>Data Science & Analytics</li>
-            <li onClick={() => { smartNavigate("/internships/frontend-development-jobs"); setOpen(false); }}>Frontend Development</li>
-            <li onClick={() => { smartNavigate("/internships/hr-analytics-jobs"); setOpen(false); }}>HR Analytics</li>
-            <li onClick={() => { smartNavigate("/internships/software-development-jobs"); setOpen(false); }}>Software Development</li>
-            <li onClick={() => { smartNavigate("/internships/ui-ux-design-jobs"); setOpen(false); }}>UI/UX Design</li>
+            {[
+              ["/internships/full-stack-development-jobs", "Full Stack Development"],
+              ["/internships/devops-cloud-computing-jobs", "DevOps & Cloud Computing"],
+              ["/internships/data-science-analytics-jobs", "Data Science & Analytics"],
+              ["/internships/frontend-development-jobs", "Frontend Development"],
+              ["/internships/hr-analytics-jobs", "HR Analytics"],
+              ["/internships/software-development-jobs", "Software Development"],
+              ["/internships/ui-ux-design-jobs", "UI/UX Design"],
+            ].map(([href, label]) => (
+              <li key={href}>
+                <Link href={href} onClick={() => setOpen(false)} style={{ color: "inherit", textDecoration: "none", display: "block" }}>
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
         {megaTab === "fresher" && (
           <ul className="mega-list">
-            <li onClick={() => { smartNavigate("/internships/fresher-work-from-home-jobs"); setOpen(false); }}>Work from home</li>
-            <li onClick={() => { smartNavigate("/internships/fresher-jobs-in-chennai"); setOpen(false); }}>Freshers internship in Chennai</li>
-            <li onClick={() => { smartNavigate("/internships/fresher-jobs-in-bangalore"); setOpen(false); }}>Freshers internship in Bangalore</li>
+            {[
+              ["/internships/fresher-work-from-home-jobs", "Work from home"],
+              ["/internships/fresher-jobs-in-chennai", "Freshers internship in Chennai"],
+              ["/internships/fresher-jobs-in-bangalore", "Freshers internship in Bangalore"],
+            ].map(([href, label]) => (
+              <li key={href}>
+                <Link href={href} onClick={() => setOpen(false)} style={{ color: "inherit", textDecoration: "none", display: "block" }}>
+                  {label}
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </div>

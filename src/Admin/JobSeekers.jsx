@@ -248,6 +248,21 @@ export default function JobSeekers() {
     const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' }); // 'candidate' | 'education' | 'status' | 'last_login' | 'created_date'
     const [dateFilter, setDateFilter] = useState({ preset: 'All Time', startDate: '', endDate: '', label: 'All Time' });
 
+    // Check if any date filter is applied (e.g. Last 30 Days, Today, Custom Range, etc.)
+    const isFilterApplied = Boolean(
+        (dateFilter?.preset && dateFilter.preset !== 'All Time') ||
+        dateFilter?.startDate ||
+        dateFilter?.endDate
+    );
+
+    // If Active or New Registered was selected when filter is applied, reset to All
+    useEffect(() => {
+        if (isFilterApplied && (activeFilter === 'Active' || activeFilter === 'New Registered')) {
+            setActiveFilter('All');
+            setCurrentPage(1);
+        }
+    }, [isFilterApplied, activeFilter]);
+
     // Pagination state
     const [matchedUsers, setMatchedUsers] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
@@ -445,37 +460,41 @@ export default function JobSeekers() {
                         </span>
                     </button>
 
-                    {/* Active Tab */}
-                    <button
-                        onClick={() => { setActiveFilter('Active'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Active'
-                            ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-100 shadow-2xs'
-                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                            }`}
-                    >
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                        <span className="whitespace-nowrap">Active</span>
-                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                            {globalStats.active !== undefined ? globalStats.active : 0}
-                        </span>
-                    </button>
+                    {/* Active Tab - Hidden when filter is applied */}
+                    {!isFilterApplied && (
+                        <button
+                            onClick={() => { setActiveFilter('Active'); setCurrentPage(1); }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'Active'
+                                ? 'bg-emerald-50 text-emerald-700 border-1 border-emerald-100 shadow-2xs'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                }`}
+                        >
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                            <span className="whitespace-nowrap">Active</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                {globalStats.active !== undefined ? globalStats.active : 0}
+                            </span>
+                        </button>
+                    )}
 
-                    {/* New Registered Tab */}
-                    <button
-                        onClick={() => { setActiveFilter('New Registered'); setCurrentPage(1); }}
-                        className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'New Registered'
-                            ? 'bg-blue-50 text-blue-700 border-1 border-blue-200 shadow-2xs'
-                            : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                            }`}
-                    >
-                        <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
-                        <span className="whitespace-nowrap">New Registered</span>
-                        <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'New Registered' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                            {globalStats.new_registered !== undefined ? globalStats.new_registered : (globalStats.recent || 0)}
-                        </span>
-                    </button>
+                    {/* New Registered Tab - Hidden when filter is applied */}
+                    {!isFilterApplied && (
+                        <button
+                            onClick={() => { setActiveFilter('New Registered'); setCurrentPage(1); }}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer ${activeFilter === 'New Registered'
+                                ? 'bg-blue-50 text-blue-700 border-1 border-blue-200 shadow-2xs'
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                                }`}
+                        >
+                            <Sparkles className="w-4 h-4 text-blue-600 shrink-0" />
+                            <span className="whitespace-nowrap">New Registered</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[12px] font-bold ${activeFilter === 'New Registered' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                {globalStats.new_registered !== undefined ? globalStats.new_registered : (globalStats.recent || 0)}
+                            </span>
+                        </button>
+                    )}
 
                     {/* Last Login Tab */}
                     <button

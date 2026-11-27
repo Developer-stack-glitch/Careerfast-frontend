@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState, useMemo } from "react";
-import SEO from "../Components/SEO/SEO";
 import { getAllCourses } from "../ApiService/action";
 import { FaClock, FaExclamationCircle, FaStar, FaUsers, FaGlobe, FaChevronRight, FaTelegramPlane, FaBolt, FaCheck, FaBriefcase, FaPlayCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
@@ -120,8 +119,8 @@ export default function Courses() {
     const handleCategoryClick = (categoryName) => {
         const matched = categories.find(
             c => c.toLowerCase() === categoryName.toLowerCase() ||
-                 c.toLowerCase().includes(categoryName.toLowerCase()) ||
-                 categoryName.toLowerCase().includes(c.toLowerCase())
+                c.toLowerCase().includes(categoryName.toLowerCase()) ||
+                categoryName.toLowerCase().includes(c.toLowerCase())
         );
         if (matched) {
             setActiveCategory(matched);
@@ -208,13 +207,6 @@ export default function Courses() {
 
     return (
         <>
-            <SEO
-                title="Online Courses - Master New Skills for Your Career"
-                description="Explore our carefully crafted online courses designed to help you master new skills and advance your career."
-                keywords="online courses, career development, professional training"
-                ogImage="https://careerfast.in/og-image-courses.jpg"
-                twitterImage="https://careerfast.in/twitter-image-courses.jpg"
-            />
             <Header />
 
             <div className="courses-page-v2">

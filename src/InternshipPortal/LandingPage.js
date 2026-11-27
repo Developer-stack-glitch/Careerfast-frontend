@@ -1,9 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback } from "react";
-import { Helmet } from "react-helmet-async";
 import { Typography, Card, message, Col, Row, Empty, Spin } from "antd";
 import Footer from "../Footer/Footer";
-import SEO from "../Components/SEO/SEO";
 
 import {
   EnvironmentOutlined,
@@ -15,9 +13,11 @@ import {
 } from "@ant-design/icons";
 import "../css/LandingPage.css";
 import { motion } from "framer-motion";
-import ParticlesBg from "particles-bg";
+import dynamic from "next/dynamic";
 import Header from "../Header/Header";
 import { useNavigate } from "@/routing-shim";
+
+const ParticlesBg = dynamic(() => import("particles-bg"), { ssr: false });
 
 
 import "slick-carousel/slick/slick.css";
@@ -323,42 +323,6 @@ export default function InternshipLandingPage() {
 
   return (
     <div className="">
-      <SEO
-        title="CareerFast | Find Internships - Launch Your Career with Top Companies"
-        description="Discover premium internship opportunities with top-tier companies. Connect with 25K+ verified recruiters, explore 100K+ internship listings, and kickstart your professional journey with CareerFast."
-        keywords="internships, internship opportunities, student internships, career internships, internship portal, summer internships, paid internships, top companies, internship listings, career development, professional training, CareerFast"
-        ogUrl="https://careerfast.in/internship-portal"
-        ogImage="https://careerfast.in/og-image-internships.png"
-        twitterImage="https://careerfast.in/og-image-internships.png"
-        structuredData={[
-          {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "name": "CareerFast - Internships",
-            "url": "https://careerfast.in/internship-portal",
-            "description": "Discover premium internship opportunities with top-tier companies.",
-            "potentialAction": {
-              "@type": "SearchAction",
-              "target": "https://careerfast.in/internship-filter?search={search_term_string}",
-              "query-input": "required name=search_term_string"
-            }
-          },
-          {
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            "name": "Internship Categories",
-            "description": "Browse internships by category on CareerFast",
-            "numberOfItems": category.length,
-            "itemListElement": category.map((cat, index) => ({
-              "@type": "ListItem",
-              "position": index + 1,
-              "name": cat,
-              "url": `https://careerfast.in/internships/${generateSlug(cat)}`
-            }))
-          }
-        ]}
-      />
-
       <Header />
       <Row className="job-portal">
         <ParticlesBg type="cobweb" bg={true} color="#7f5af0" num={50} />
@@ -903,7 +867,7 @@ export default function InternshipLandingPage() {
             xs={24}
             sm={24}
           >
-            <div> <Text className="need_guidence_text">Need Guidence?</Text> <h1 className="need_guidence_title"> Get Winning Tips From <span style={{ cursor: "pointer" }}>Top Mentors</span></h1> </div>
+            <div> <Text className="need_guidence_text">Need Guidence?</Text> <h2 className="need_guidence_title"> Get Winning Tips From <span style={{ cursor: "pointer" }}>Top Mentors</span></h2> </div>
           </Col>
         </Row>
       </motion.div>
@@ -998,7 +962,7 @@ export default function InternshipLandingPage() {
             xs={24}
             sm={24}
           >
-            <div><Text className="need_guidence_text">Stuck Somewhere?</Text><h1 className="need_guidence_title">Learn From <span>Top Courses</span></h1><Text>Upskill, get certified, and stay ahead of the competition with our 50+ trending courses.</Text></div>
+            <div><Text className="need_guidence_text">Stuck Somewhere?</Text><h2 className="need_guidence_title">Learn From <span>Top Courses</span></h2><Text>Upskill, get certified, and stay ahead of the competition with our 50+ trending courses.</Text></div>
           </Col>
 
           <Col

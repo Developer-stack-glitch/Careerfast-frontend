@@ -1,3 +1,5 @@
+import { processDescription } from './slug';
+
 /**
  * SEO Helper utilities to generate dynamic Titles and Descriptions
  * matching Naukri-grade standards across Job and Internship portals.
@@ -147,5 +149,214 @@ export function generateNaukriJobDescription(job) {
   const experience = formatJobExperience(job);
 
   return `Job Description for ${title} in ${company} in ${location} for ${experience}. Apply Now!`;
+}
+
+/**
+ * Parses programmatic SEO filter slugs like:
+ * - jobs-in-bangalore
+ * - internships-in-chennai
+ * - full-stack-development-jobs
+ * - fresher-work-from-home-jobs
+ * - work-from-home
+ */
+export function parseFilterSlugMetadata(filterSlug = '', type = 'Jobs') {
+  const rawSlug = String(filterSlug || '').trim().toLowerCase();
+  const basePath =
+    type === 'Internships' ? '/internships' :
+    type === 'Scholarships' ? '/scholarship' : '/jobs';
+
+  const toTitleCase = (s) =>
+    s
+      .split(/[\s-]+/)
+      .filter(Boolean)
+      .map((w) => {
+        if (w === 'ui' || w === 'ux' || w === 'hr' || w === 'ai' || w === 'ml' || w === 'qa' || w === 'it') {
+          return w.toUpperCase();
+        }
+        return w.charAt(0).toUpperCase() + w.slice(1);
+      })
+      .join(' ');
+
+  let headline = type;
+  if (rawSlug === 'work-from-home' || rawSlug === 'fresher-work-from-home-jobs') {
+    const prefix = rawSlug.startsWith('fresher-') ? 'Fresher ' : '';
+    headline = `${prefix}Work From Home ${type}`;
+  } else if (rawSlug.includes('-in-')) {
+    const [left, loc] = rawSlug.split('-in-');
+    const locationName = toTitleCase(loc || 'India');
+    const isFresher = left.startsWith('fresher');
+    headline = `${isFresher ? 'Fresher ' : ''}${type} in ${locationName}`;
+  } else if (rawSlug) {
+    const cleaned = rawSlug.replace(/-(jobs|internships|scholarships)$/i, '');
+    const topic = toTitleCase(cleaned);
+    headline = topic ? `${topic} ${type}` : type;
+  }
+
+  return {
+    headline,
+    title: `${headline} - Apply Online | CareerFast`,
+    description: `Explore the latest ${headline.toLowerCase()} from verified companies on CareerFast. Filter by location, salary, and work mode and apply directly.`,
+    canonicalUrl: `https://careerfast.in${basePath}/${filterSlug}`,
+  };
+}
+
+function resolveSeoMediaUrl(url, fallback = 'https://careerfast.in/og-image.png') {
+  if (!url || typeof url !== 'string') return fallback;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed.startsWith('data:')) return fallback;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://api.careerfast.in';
+  if (trimmed.startsWith('/api/')) return `${apiBase}${trimmed}`;
+  if (trimmed.startsWith('/')) return `https://careerfast.in${trimmed}`;
+  return `${apiBase}/${trimmed}`;
+}
+
+function mapEmploymentType(job, type = 'job') {
+  const nature = String(job?.job_nature || job?.employment_type || '').toLowerCase();
+  if (type === 'internship' || nature.includes('intern')) return 'INTERN';
+  if (nature.includes('part')) return 'PART_TIME';
+  if (nature.includes('contract') || nature.includes('freelance')) return 'CONTRACTOR';
+  if (nature.includes('temp')) return 'TEMPORARY';
+  return 'FULL_TIME';
+}
+
+function computeValidThrough(job) {
+  if (job?.expires_at) {
+    const exp = new Date(job.expires_at);
+    if (!isNaN(exp.getTime())) return exp.toISOString();
+  }
+  const created = new Date(job?.created_at || Date.now());
+  const baseTime = isNaN(created.getTime()) ? Date.now() : created.getTime();
+  const months = Number(job?.expire_in_months);
+  const days = !isNaN(months) && months > 0 ? months * 30 : 30;
+  return new Date(baseTime + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function buildBaseSalary(job) {
+  if (!job) return undefined;
+  if (String(job.hide_salary) === 'true' || job.hide_salary === true || job.hide_salary === 1) {
+    return undefined;
+  }
+  const minRaw = Number(job.min_salary);
+  const maxRaw = Number(job.max_salary);
+  const hasMin = !isNaN(minRaw) && minRaw > 0;
+  const hasMax = !isNaN(maxRaw) && maxRaw > 0;
+  if (!hasMin && !hasMax) return undefined;
+
+  const currency = job.currency || 'INR';
+  const isMonthly = String(job.salary_duration || '').toLowerCase() === 'monthly';
+  const unitText = isMonthly ? 'MONTH' : 'YEAR';
+
+  const normalizeAmount = (val) => {
+    if (currency === 'INR' && !isMonthly && val < 1000) {
+      return Math.round(val * 100000);
+    }
+    return Math.round(val);
+  };
+
+  const minValue = hasMin ? normalizeAmount(minRaw) : undefined;
+  const maxValue = hasMax ? normalizeAmount(maxRaw) : undefined;
+
+  const valueObj = { '@type': 'QuantitativeValue', unitText };
+  if (minValue && maxValue && minValue !== maxValue) {
+    valueObj.minValue = Math.min(minValue, maxValue);
+    valueObj.maxValue = Math.max(minValue, maxValue);
+  } else {
+    valueObj.value = minValue || maxValue;
+  }
+
+  return {
+    '@type': 'MonetaryAmount',
+    currency,
+    value: valueObj,
+  };
+}
+
+export function buildJobPostingJsonLd(job, canonicalUrl, type = 'job') {
+  if (!job) return null;
+  const cleanLocation = formatJobLocation(job);
+  const cleanCompany = formatJobCompany(job);
+  const workplace = String(job.workplace_type || job.raw_workplace_type || '').toLowerCase();
+  const isRemote = workplace.includes('remote') || workplace.includes('work from home') || cleanLocation.toLowerCase() === 'remote';
+  const rawHtmlDesc = processDescription(job.job_description || job.description || job.seo_description || '');
+  const safeDescription = rawHtmlDesc
+    ? rawHtmlDesc.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
+    : cleanHtmlText(job.seo_description || job.job_title);
+
+  const baseSalary = buildBaseSalary(job);
+  const expText = formatJobExperience(job);
+
+  const schema = {
+    '@context': 'https://schema.org/',
+    '@type': 'JobPosting',
+    title: cleanHtmlText(job.job_title || job.title || 'Job Opening'),
+    description: safeDescription,
+    identifier: {
+      '@type': 'PropertyValue',
+      name: cleanCompany,
+      value: String(job.id),
+    },
+    datePosted: job.created_at,
+    validThrough: computeValidThrough(job),
+    employmentType: mapEmploymentType(job, type),
+    directApply: !job.apply_link,
+    url: canonicalUrl,
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: cleanCompany,
+      sameAs: 'https://careerfast.in',
+      logo: resolveSeoMediaUrl(job.company_logo),
+    },
+    jobLocation: {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: cleanLocation,
+        addressCountry: 'IN',
+      },
+    },
+  };
+
+  if (isRemote) {
+    schema.jobLocationType = 'TELECOMMUTE';
+    schema.applicantLocationRequirements = {
+      '@type': 'Country',
+      name: 'India',
+    };
+  }
+
+  if (baseSalary) {
+    schema.baseSalary = baseSalary;
+  }
+
+  if (expText) {
+    schema.experienceRequirements = expText;
+  }
+
+  return schema;
+}
+
+export function buildJobBreadcrumbJsonLd(job, canonicalUrl, type = 'job') {
+  if (!job) return null;
+  const isInternship = type === 'internship';
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://careerfast.in/' },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: isInternship ? 'Internships' : 'Jobs',
+        item: isInternship ? 'https://careerfast.in/internships' : 'https://careerfast.in/jobs',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: cleanHtmlText(job.job_title || job.title || 'Details'),
+        item: canonicalUrl,
+      },
+    ],
+  };
 }
 

@@ -1,7 +1,5 @@
 'use client';
 import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
-import SEO from "../Components/SEO/SEO";
 import {
   getAllWorkshops,
   getUserProfile,
@@ -214,47 +212,6 @@ export default function WorkshopFilter() {
 
   return (
     <>
-      <SEO
-        title="Professional Workshops - Skill Building & Hands-on Training"
-        description="Discover and register for professional development workshops, skill-building sessions, and hands-on training programs. Learn from industry experts and enhance your career."
-        keywords="workshops, professional workshops, skill development, training programs, career workshops, hands-on training, professional development, upskilling workshops, CareerFast workshops"
-        ogImage="https://careerfast.in/og-image-workshops.jpg"
-        twitterImage="https://careerfast.in/twitter-image-workshops.jpg"
-        breadcrumbSchema={[
-          { name: "Home", item: "/" },
-          { name: "Workshops", item: "/workshop-filter" }
-        ]}
-        structuredData={[
-          {
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            "name": "Professional Workshops - CareerFast",
-            "url": "https://careerfast.in/workshop-filter",
-            "description": "Discover and register for professional development workshops, skill-building sessions, and hands-on training programs."
-          },
-          ...(filtered.length > 0 ? [{
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            "name": "Available Workshops",
-            "numberOfItems": filtered.length,
-            "itemListElement": filtered.map((workshop, index) => ({
-              "@type": "Event",
-              "position": index + 1,
-              "name": workshop.title,
-              "description": workshop.about,
-              "eventAttendanceMode": workshop.mode === "Online" ? "https://schema.org/OnlineEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
-              "location": workshop.venue ? {
-                "@type": "Place",
-                "name": workshop.venue
-              } : undefined,
-              "organizer": workshop.organizer ? {
-                "@type": "Organization",
-                "name": workshop.organizer
-              } : undefined
-            }))
-          }] : [])
-        ]}
-      />
       <Header showSearch={true} />
 
       {loading ? (

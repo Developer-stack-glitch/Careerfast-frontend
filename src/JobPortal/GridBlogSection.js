@@ -1,5 +1,7 @@
 import React from 'react';
+import Link from 'next/link';
 import { cn } from "../lib/utils";
+import { generateSlug } from "../utils/slug";
 import { Calendar, Clock, ArrowRight, BookOpen } from "lucide-react";
 
 const formatBlogDate = (dateStr) => {
@@ -104,7 +106,13 @@ const GridBlogSection = ({
 
                 {/* Blog Title */}
                 <h3 className="hp-blog-card-title" title={post.title}>
-                  {post.title}
+                  <Link
+                    href={`/blog/${generateSlug(post.title || post.blogTitle || '')}`}
+                    style={{ color: 'inherit', textDecoration: 'none' }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {post.title}
+                  </Link>
                 </h3>
 
                 {/* Excerpt / Overview */}

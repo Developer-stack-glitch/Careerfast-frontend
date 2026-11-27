@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { IoChevronDownOutline } from "react-icons/io5";
 import { message } from "antd";
-import { getSearchSuggestions } from "@/ApiService/action";
+import { getSearchSuggestions, searchLocationsAPI } from "@/ApiService/action";
 import {
   saveRecentSearch,
   getRecentSearches,
@@ -44,6 +44,14 @@ const POPULAR_SEARCH_KEYWORDS = [
 // Locations from workflow
 const POPULAR_LOCATIONS = [
   "Mumbai", "Hyderabad", "Chennai", "Kolkata", "Bangalore", "Delhi", "Pune"
+];
+
+// Comprehensive fallback locations list for 0ms suggestions
+const ALL_LOCATIONS_LIST = [
+  "Bangalore", "Chennai", "Hyderabad", "Mumbai", "Delhi", "Noida", "Gurgaon", "Pune", "Kolkata",
+  "Ahmedabad", "Coimbatore", "Kochi", "Jaipur", "Indore", "Chandigarh", "Visakhapatnam",
+  "Nagpur", "Surat", "Lucknow", "Bhubaneswar", "Trivandrum", "Vadodara", "Bhopal", "Patna",
+  "Madurai", "Trichy", "Salem", "Vijayawada", "Mysore", "Nashik", "Remote", "Work from Home"
 ];
 
 // Categories from workflow
@@ -80,10 +88,19 @@ export default function SearchWorkflow({
   const [activeIndex, setActiveIndex] = useState(-1);
   const [recentSearches, setRecentSearches] = useState([]);
 
+  // Mobile-only location filter state
+  const [locationTerm, setLocationTerm] = useState("");
+  const [showLocSuggestions, setShowLocSuggestions] = useState(false);
+  const [locSuggestions, setLocSuggestions] = useState([]);
+  const [activeLocIndex, setActiveLocIndex] = useState(-1);
+
   const barRef = useRef(null);
   const typeMenuRef = useRef(null);
   const inputRef = useRef(null);
   const latestQueryRef = useRef("");
+  const locWrapRef = useRef(null);
+  const locInputRef = useRef(null);
+  const latestLocQueryRef = useRef("");
 
   // Helper to render intuitive category icons
   const renderCategoryIcon = (label) => {
@@ -144,6 +161,10 @@ export default function SearchWorkflow({
       }
       if (barRef.current && !barRef.current.contains(e.target)) {
         setShowSuggestions(false);
+        setShowLocSuggestions(false);
+      }
+      if (locWrapRef.current && !locWrapRef.current.contains(e.target)) {
+        setShowLocSuggestions(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -158,6 +179,8 @@ export default function SearchWorkflow({
           setShowTypeDropdown(false);
         } else if (showSuggestions) {
           setShowSuggestions(false);
+        } else if (showLocSuggestions) {
+          setShowLocSuggestions(false);
         } else if (onClose) {
           onClose();
         }
@@ -165,7 +188,7 @@ export default function SearchWorkflow({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showTypeDropdown, showSuggestions, onClose]);
+  }, [showTypeDropdown, showSuggestions, showLocSuggestions, onClose]);
 
   // Load and sync recent searches from localStorage
   useEffect(() => {
@@ -233,10 +256,53 @@ export default function SearchWorkflow({
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Instant in-memory location suggestions + API enrichment (Mobile-only location filter)
+  const instantLocationMatches = useMemo(() => {
+    if (!locationTerm || !locationTerm.trim()) {
+      return POPULAR_LOCATIONS;
+    }
+    const cleanLoc = locationTerm.trim().toLowerCase();
+    return ALL_LOCATIONS_LIST.filter(l => l.toLowerCase().includes(cleanLoc)).slice(0, 8);
+  }, [locationTerm]);
+
+  const currentLocationList = useMemo(() => {
+    if (locSuggestions.length > 0 && latestLocQueryRef.current === locationTerm.toLowerCase().trim()) {
+      return locSuggestions.slice(0, 8);
+    }
+    return instantLocationMatches.map(label => ({ label }));
+  }, [locationTerm, locSuggestions, instantLocationMatches]);
+
+  useEffect(() => {
+    if (!locationTerm || !locationTerm.trim()) {
+      setLocSuggestions([]);
+      return;
+    }
+    const cleanLoc = locationTerm.trim().toLowerCase();
+    latestLocQueryRef.current = cleanLoc;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await searchLocationsAPI(cleanLoc);
+        if (latestLocQueryRef.current === cleanLoc && Array.isArray(res)) {
+          const formatted = res
+            .map(item => (typeof item === "string" ? { label: item } : { label: item.name || item.city || item.display_name || "" }))
+            .filter(item => Boolean(item.label));
+          if (formatted.length > 0) {
+            setLocSuggestions(formatted);
+          }
+        }
+      } catch (err) {
+        // Keep fallback
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [locationTerm]);
+
   // Execute Search based on selectedType and params
   const executeSearch = (params = {}) => {
     const query = params.query !== undefined ? params.query : searchTerm;
-    const location = params.location || "";
+    const location = params.location !== undefined ? params.location : locationTerm;
     const category = params.category || "";
     const workMode = params.workMode || "";
 
@@ -245,7 +311,7 @@ export default function SearchWorkflow({
     // Type 1: Short term courses
     if (selectedType === "Short term courses") {
       if (query && query.trim()) queryParts.push(`q=${encodeURIComponent(query.trim())}`);
-      if (location) queryParts.push(`l=${encodeURIComponent(location)}`);
+      if (location && location.trim()) queryParts.push(`l=${encodeURIComponent(location.trim())}`);
       if (category) queryParts.push(`c=${encodeURIComponent(category)}`);
       const url = `/courses${queryParts.length > 0 ? `?${queryParts.join("&")}` : ""}`;
       doNavigate(url);
@@ -262,8 +328,8 @@ export default function SearchWorkflow({
     if (query && query.trim()) {
       queryParts.push(`q=${encodeURIComponent(query.trim())}`);
     }
-    if (location) {
-      queryParts.push(`l=${encodeURIComponent(location)}`);
+    if (location && location.trim()) {
+      queryParts.push(`l=${encodeURIComponent(location.trim())}`);
     }
     if (category) {
       queryParts.push(`c=${encodeURIComponent(category)}`);
@@ -282,7 +348,7 @@ export default function SearchWorkflow({
     // Save recent search
     saveRecentSearch({
       skills: query || category || "",
-      location: location || "",
+      location: (location && location.trim()) || "",
       job_nature: isInternship ? "Internship" : ""
     });
 
@@ -293,10 +359,12 @@ export default function SearchWorkflow({
   const handleFormSubmit = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setShowSuggestions(false);
+    setShowLocSuggestions(false);
     executeSearch();
   };
 
   const handleLocationClick = (loc) => {
+    setLocationTerm(loc);
     executeSearch({ location: loc });
   };
 
@@ -353,6 +421,35 @@ export default function SearchWorkflow({
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIndex(prev => (prev > 0 ? prev - 1 : currentSuggestionList.length - 1));
+    }
+  };
+
+  // Keyboard navigation for mobile location suggestions
+  const handleLocInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      if (showLocSuggestions && activeLocIndex >= 0 && currentLocationList[activeLocIndex]) {
+        e.preventDefault();
+        const selected = currentLocationList[activeLocIndex];
+        const label = typeof selected === "string" ? selected : selected.label;
+        setLocationTerm(label);
+        setShowLocSuggestions(false);
+        executeSearch({ location: label });
+        return;
+      }
+      handleFormSubmit(e);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      if (!showLocSuggestions) {
+        setShowLocSuggestions(true);
+        return;
+      }
+      e.preventDefault();
+      setActiveLocIndex(prev => (prev < currentLocationList.length - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveLocIndex(prev => (prev > 0 ? prev - 1 : currentLocationList.length - 1));
     }
   };
 
@@ -504,6 +601,77 @@ export default function SearchWorkflow({
                       {badge && (
                         <span className="search-flow-suggestion-badge">{badge}</span>
                       )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* 2b. Location Search Filter (Mobile View Only) */}
+          <div className="search-flow-divider search-flow-divider-mobile-only" />
+
+          <div
+            className="search-flow-input-wrap search-flow-location-wrap-mobile-only"
+            ref={locWrapRef}
+          >
+            <MapPin size={17} className="search-flow-icon search-flow-loc-icon" />
+            <input
+              ref={locInputRef}
+              type="text"
+              value={locationTerm}
+              onChange={(e) => {
+                setLocationTerm(e.target.value);
+                setShowLocSuggestions(Boolean(e.target.value.trim()));
+                setActiveLocIndex(-1);
+              }}
+              onFocus={() => {
+                setShowLocSuggestions(true);
+              }}
+              onKeyDown={handleLocInputKeyDown}
+              placeholder="Search by city, area, or 'Remote'..."
+              className="search-flow-input"
+              autoComplete="off"
+            />
+            {locationTerm && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocationTerm("");
+                  setShowLocSuggestions(false);
+                  locInputRef.current?.focus();
+                }}
+                className="search-flow-clear-btn"
+                title="Clear location"
+              >
+                <CloseCircleFilled />
+              </button>
+            )}
+
+            {/* Location Auto-suggestions Popover */}
+            {showLocSuggestions && currentLocationList.length > 0 && (
+              <div className="search-flow-suggestions search-flow-loc-suggestions">
+                {currentLocationList.map((item, idx) => {
+                  const isHighlighted = activeLocIndex === idx;
+                  const label = typeof item === "string" ? item : (item.label || item.name || "");
+                  return (
+                    <div
+                      key={`loc-sug-${idx}`}
+                      className={`search-flow-suggestion-item ${isHighlighted ? "active" : ""}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setLocationTerm(label);
+                        setShowLocSuggestions(false);
+                        executeSearch({ location: label });
+                      }}
+                      onMouseEnter={() => setActiveLocIndex(idx)}
+                    >
+                      <div className="search-flow-suggestion-left">
+                        <MapPin size={13} className="search-flow-suggestion-icon loc-accent" />
+                        <span className="search-flow-suggestion-text">
+                          {highlightMatch(label, locationTerm)}
+                        </span>
+                      </div>
                     </div>
                   );
                 })}

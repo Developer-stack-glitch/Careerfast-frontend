@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useState } from "react";
-import SEO from "../Components/SEO/SEO";
 import { checkIsRegistered, getAllEvents, getUserProfile, registerForEvent } from "../ApiService/action";
 import {
   Card,
@@ -436,44 +435,6 @@ export default function EventFilter() {
 
   return (
     <>
-      <SEO
-        title="Career Events - Discover Tech Competitions & Workshops"
-        description="Browse and register for career development events, tech competitions, and professional networking opportunities. Connect with industry leaders and win exciting prizes."
-        keywords="career events, tech events, professional events, networking events, competitions, hackathons, career development, tech competitions, industry events, CareerFast events"
-        ogImage="https://careerfast.in/og-image-events.jpg"
-        twitterImage="https://careerfast.in/twitter-image-events.jpg"
-        breadcrumbSchema={[
-          { name: "Home", item: "/" },
-          { name: "Events", item: "/event-filter" }
-        ]}
-        structuredData={[
-          {
-            "@context": "https://schema.org",
-            "@type": "WebPage",
-            "name": "Career Events - CareerFast",
-            "url": "https://careerfast.in/event-filter",
-            "description": "Browse and register for career development events, tech competitions, and professional networking opportunities."
-          },
-          ...(filteredEvents.length > 0 ? [{
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            "name": "Available Events",
-            "numberOfItems": filteredEvents.length,
-            "itemListElement": filteredEvents.map((event, index) => ({
-              "@type": "Event",
-              "position": index + 1,
-              "name": event.title,
-              "description": event.description,
-              "eventAttendanceMode": event.mode === "Online" ? "https://schema.org/OnlineEventAttendanceMode" : "https://schema.org/OfflineEventAttendanceMode",
-              "offers": {
-                "@type": "Offer",
-                "price": event.winnerPrize || "0",
-                "priceCurrency": "INR"
-              }
-            }))
-          }] : [])
-        ]}
-      />
       <Header showSearch={true} />
 
       {loading ? (

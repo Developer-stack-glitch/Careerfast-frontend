@@ -1,7 +1,5 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet-async';
-import SEO from '../Components/SEO/SEO';
 import './Mentors.css';
 import "../css/LandingPage.css";
 import "slick-carousel/slick/slick.css";
@@ -221,33 +219,6 @@ const MentorList = () => {
 
     return (
         <div className="mentors-page-container">
-            <SEO
-                title="Expert Mentorship - Career Guidance & Interview Prep"
-                description="Book 1:1 mentorship sessions with industry leaders from top companies. Get expert guidance on interview prep, career growth, and skill building from 500+ verified mentors."
-                keywords="mentorship, career mentors, industry experts, 1:1 sessions, career guidance, interview preparation, skill development, professional mentors, top companies, career growth, CareerFast"
-                ogImage="https://careerfast.in/og-image-mentors.jpg"
-                twitterImage="https://careerfast.in/twitter-image-mentors.jpg"
-                structuredData={[
-                    {
-                        "@context": "https://schema.org",
-                        "@type": "ItemList",
-                        "name": "Top Mentors",
-                        "description": "Industry experts from top companies available for 1:1 mentorship",
-                        "numberOfItems": mentorsData.length,
-                        "itemListElement": mentorsData.map((mentor, index) => ({
-                            "@type": "Person",
-                            "position": index + 1,
-                            "name": mentor.name,
-                            "jobTitle": mentor.title,
-                            "worksFor": {
-                                "@type": "Organization",
-                                "name": mentor.company
-                            },
-                            "url": `https://careerfast.in/mentor/${mentor.id}`
-                        }))
-                    }
-                ]}
-            />
             <Header />
             {/* 1. Hero Section */}
             <section className="mentor-hero-section">
@@ -437,7 +408,7 @@ const MentorList = () => {
                         xs={24}
                         sm={24}
                     >
-                        <div> <Text className="need_guidence_text">Need Guidence?</Text> <h1 className="need_guidence_title"> Get Winning Tips From <span>Top Mentors</span></h1> </div>
+                        <div> <Text className="need_guidence_text">Need Guidence?</Text> <h2 className="need_guidence_title"> Get Winning Tips From <span>Top Mentors</span></h2> </div>
                     </Col>
                 </Row>
             </motion.div>

@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-heading: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: var(--font-geist), 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-heading: var(--font-geist), 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 body {
@@ -16,17 +16,28 @@ body {
 }
 
 /* Headings inherit modern branding font */
-h1, h2, h3, h4, h5, h6, .font-heading {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-heading {
   font-family: var(--font-heading);
 }
 
 /* Ensure form controls inherit clean UI font */
-button, input, optgroup, select, textarea {
+button,
+input,
+optgroup,
+select,
+textarea {
   font-family: inherit;
 }
 
 /* Tabular figures for salaries, metrics, and dates */
-.tabular-nums, .font-numeric {
+.tabular-nums,
+.font-numeric {
   font-variant-numeric: tabular-nums;
 }
 
@@ -432,12 +443,12 @@ a.whatsapp-btn span {
   margin-bottom: 14px !important;
 }
 
-.ql-editor ul > li,
-.rich-text ul > li,
-.rich-text-content ul > li,
-.wysiwyg-content ul > li,
-.njd-jd-text ul > li,
-.njd-company-desc ul > li {
+.ql-editor ul>li,
+.rich-text ul>li,
+.rich-text-content ul>li,
+.wysiwyg-content ul>li,
+.njd-jd-text ul>li,
+.njd-company-desc ul>li {
   list-style-type: disc !important;
   list-style: disc !important;
   display: list-item !important;
@@ -445,12 +456,12 @@ a.whatsapp-btn span {
   padding-left: 4px !important;
 }
 
-.ql-editor ol > li:not([data-list]),
-.rich-text ol > li:not([data-list]),
-.rich-text-content ol > li:not([data-list]),
-.wysiwyg-content ol > li:not([data-list]),
-.njd-jd-text ol > li:not([data-list]),
-.njd-company-desc ol > li:not([data-list]) {
+.ql-editor ol>li:not([data-list]),
+.rich-text ol>li:not([data-list]),
+.rich-text-content ol>li:not([data-list]),
+.wysiwyg-content ol>li:not([data-list]),
+.njd-jd-text ol>li:not([data-list]),
+.njd-company-desc ol>li:not([data-list]) {
   list-style-type: decimal !important;
   list-style: decimal !important;
   display: list-item !important;
@@ -492,11 +503,11 @@ li[data-list="bullet"]::marker,
   font-size: 1.15em !important;
 }
 
-li[data-list="bullet"] > .ql-ui,
-.ql-editor li[data-list="bullet"] > .ql-ui,
-.rich-text li[data-list="bullet"] > .ql-ui,
-.njd-jd-text li[data-list="bullet"] > .ql-ui,
-.njd-company-desc li[data-list="bullet"] > .ql-ui {
+li[data-list="bullet"]>.ql-ui,
+.ql-editor li[data-list="bullet"]>.ql-ui,
+.rich-text li[data-list="bullet"]>.ql-ui,
+.njd-jd-text li[data-list="bullet"]>.ql-ui,
+.njd-company-desc li[data-list="bullet"]>.ql-ui {
   display: none !important;
 }
 
@@ -524,11 +535,11 @@ li[data-list="ordered"],
   padding-left: 4px !important;
 }
 
-li[data-list="ordered"] > .ql-ui,
-.ql-editor li[data-list="ordered"] > .ql-ui,
-.rich-text li[data-list="ordered"] > .ql-ui,
-.njd-jd-text li[data-list="ordered"] > .ql-ui,
-.njd-company-desc li[data-list="ordered"] > .ql-ui {
+li[data-list="ordered"]>.ql-ui,
+.ql-editor li[data-list="ordered"]>.ql-ui,
+.rich-text li[data-list="ordered"]>.ql-ui,
+.njd-jd-text li[data-list="ordered"]>.ql-ui,
+.njd-company-desc li[data-list="ordered"]>.ql-ui {
   display: none !important;
 }
 
@@ -537,8 +548,9 @@ li[data-list="ordered"] > .ql-ui,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
-}
+}

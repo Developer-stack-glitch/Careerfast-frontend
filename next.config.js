@@ -66,7 +66,29 @@ const nextConfig = {
       { source: '/pro-subscription', destination: '/recruiter/billing', permanent: true },
       { source: '/admin/employers', destination: '/admin/recruiters', permanent: true },
       { source: '/admin/billing', destination: '/admin/plans', permanent: true },
-      { source: '/pricing', destination: '/recruiter-pricing', permanent: false },
+      { source: '/pricing', destination: '/recruiter-pricing', permanent: true },
+      { source: '/recruiter/pricing', destination: '/recruiter-pricing', permanent: true },
+      { source: '/internship', destination: '/internships', permanent: true },
+      { source: '/internship/:filterSlug*', destination: '/internships/:filterSlug*', permanent: true },
+      { source: '/job-filter', destination: '/jobs', permanent: true },
+      { source: '/internship-filter', destination: '/internships', permanent: true },
+      { source: '/help', destination: '/support', permanent: true },
+    ];
+  },
+  async headers() {
+    const noindexHeaders = [
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+    ];
+    return [
+      { source: '/admin/:path*', headers: noindexHeaders },
+      { source: '/superadmin/:path*', headers: noindexHeaders },
+      { source: '/admin-dashboard/:path*', headers: noindexHeaders },
+      { source: '/candidate-profile/:path*', headers: noindexHeaders },
+      { source: '/login', headers: noindexHeaders },
+      { source: '/register', headers: noindexHeaders },
+      { source: '/accountsetting', headers: noindexHeaders },
+      { source: '/main-profile', headers: noindexHeaders },
+      { source: '/profiledetails', headers: noindexHeaders },
     ];
   },
 };

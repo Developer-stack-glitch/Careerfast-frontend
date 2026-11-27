@@ -1,5 +1,7 @@
+import { notFound } from 'next/navigation';
 import JobDetails from '@/JobPortal/JobDetails';
-import { fetchJobForSEO } from '@/utils/seo-fetch';
+import { fetchJobForSEO, getAbsoluteMediaUrl } from '@/utils/seo-fetch';
+import { cleanHtmlText, formatJobCompany } from '@/utils/seo-helper';
 
 export async function generateMetadata({ params, searchParams }) {
   const { slug } = await params;
@@ -7,33 +9,36 @@ export async function generateMetadata({ params, searchParams }) {
   const isPreview = sParams?.preview === 'true';
   const previewToken = sParams?.preview_token || sParams?.token;
   const jobId = slug.split("-").pop();
-  
+
   const job = await fetchJobForSEO(jobId, { preview: isPreview, preview_token: previewToken });
-  
+
   if (!job) {
     return {
       title: "Scholarship Not Found | CareerFast",
-      description: "The requested scholarship listing could not be found."
+      description: "The requested scholarship listing could not be found.",
+      robots: { index: false, follow: false },
     };
   }
 
   const siteName = 'CareerFast';
   const fullTitle = `${job.job_title} Scholarship | ${siteName}`;
-  const cleanDescription = job.seo_description || (job.job_description ? 
-    job.job_description.replace(/<[^>]*>?/gm, '').substring(0, 200) : 
-    `Apply for ${job.job_title} scholarship. Unlock educational opportunities on CareerFast.`);
+  const cleanDescription = cleanHtmlText(job.seo_description || job.job_description || '').substring(0, 160)
+    || `Apply for ${job.job_title} scholarship. Unlock educational opportunities on CareerFast.`;
+  const canonicalUrl = `https://careerfast.in/scholarship-details/${slug}`;
+  const imageUrl = getAbsoluteMediaUrl(job.company_logo, 'https://careerfast.in/og-image.png');
 
   return {
     title: fullTitle,
     description: cleanDescription,
+    robots: { index: true, follow: true },
     openGraph: {
       title: fullTitle,
       description: cleanDescription,
-      url: `https://careerfast.in/scholarship-details/${slug}`,
+      url: canonicalUrl,
       siteName: siteName,
       images: [
         {
-          url: job.company_logo || "https://careerfast.in/og-image.png",
+          url: imageUrl,
           width: 800,
           height: 600,
           alt: job.job_title,
@@ -46,10 +51,10 @@ export async function generateMetadata({ params, searchParams }) {
       card: "summary_large_image",
       title: fullTitle,
       description: cleanDescription,
-      images: [job.company_logo || "https://careerfast.in/og-image.png"],
+      images: [imageUrl],
     },
     alternates: {
-      canonical: `https://careerfast.in/scholarship-details/${slug}`,
+      canonical: canonicalUrl,
     },
   };
 }
@@ -60,39 +65,49 @@ export default async function Page({ params, searchParams }) {
   const isPreview = sParams?.preview === 'true';
   const previewToken = sParams?.preview_token || sParams?.token;
   const jobId = slug.split("-").pop();
-  
+
   const job = await fetchJobForSEO(jobId, { preview: isPreview, preview_token: previewToken });
 
-  // Scholarship Schema (using Course/EducationalOccupationalCredential as generic) or just generic JobPosting with scholarship nuances
-  const jsonLd = job ? {
-    "@context": "https://schema.org/",
-    "@type": "JobPosting",
-    "title": job.job_title,
-    "description": job.job_description,
-    "identifier": {
-      "@type": "PropertyValue",
-      "name": "CareerFast Scholarship",
-      "value": job.id
-    },
-    "datePosted": job.created_at,
-    "hiringOrganization": {
+  if (!job && !isPreview) {
+    notFound();
+  }
+
+  const canonicalUrl = `https://careerfast.in/scholarship-details/${slug}`;
+  const providerName = job ? formatJobCompany(job) : "CareerFast";
+
+  const scholarshipJsonLd = job ? {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": `${job.job_title} Scholarship`,
+    "description": cleanHtmlText(job.seo_description || job.job_description || '').substring(0, 300),
+    "url": canonicalUrl,
+    "datePublished": job.created_at,
+    "publisher": {
       "@type": "Organization",
-      "name": job.company_name || "CareerFast",
-      "sameAs": "https://careerfast.in",
-      "logo": job.company_logo
+      "name": providerName,
+      "url": "https://careerfast.in"
     }
+  } : null;
+
+  const breadcrumbJsonLd = job ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://careerfast.in/" },
+      { "@type": "ListItem", "position": 2, "name": "Scholarships", "item": "https://careerfast.in/scholarship" },
+      { "@type": "ListItem", "position": 3, "name": job.job_title, "item": canonicalUrl }
+    ]
   } : null;
 
   return (
     <>
-      {jsonLd && (
+      {scholarshipJsonLd && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify([scholarshipJsonLd, breadcrumbJsonLd]) }}
         />
       )}
       <JobDetails initialData={job} serverSlug={slug} isPreview={isPreview} previewToken={previewToken} />
     </>
   );
 }
-

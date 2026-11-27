@@ -76,18 +76,22 @@ export default function Footer() {
             <div className="footer-cat-col">
               <h3 className="footer-cat-title">Internship by Places</h3>
               <ul className="footer-cat-list">
-                {displayIntLocations.map((loc, idx) => (
-                  <li key={idx}>
-                    <a
-                      onClick={() => navigate(loc.toLowerCase() === "work from home" ? "/internships/work-from-home" : `/internships/internships-in-${generateSlug(loc)}`)}
-                      className="footer-cat-link"
-                    >
-                      Internship in {loc}
-                    </a>
-                  </li>
-                ))}
+                {displayIntLocations.map((loc, idx) => {
+                  const href = loc.toLowerCase() === "work from home" ? "/internships/work-from-home" : `/internships/internships-in-${generateSlug(loc)}`;
+                  return (
+                    <li key={idx}>
+                      <a
+                        href={href}
+                        onClick={(e) => { e.preventDefault(); navigate(href); }}
+                        className="footer-cat-link"
+                      >
+                        Internship in {loc}
+                      </a>
+                    </li>
+                  );
+                })}
                 <li>
-                  <a onClick={() => navigate("/job-filter?job_nature=Internship")} className="footer-cat-view-all">
+                  <a href="/internships" onClick={(e) => { e.preventDefault(); navigate("/job-filter?job_nature=Internship"); }} className="footer-cat-view-all">
                     View all internships &gt;
                   </a>
                 </li>
@@ -98,18 +102,22 @@ export default function Footer() {
             <div className="footer-cat-col">
               <h3 className="footer-cat-title">Internship by Stream</h3>
               <ul className="footer-cat-list">
-                {displayIntStreams.map((stream, idx) => (
-                  <li key={idx}>
-                    <a
-                      onClick={() => navigate(`/internships/${generateSlug(stream)}-jobs`)}
-                      className="footer-cat-link"
-                    >
-                      {stream} Internship
-                    </a>
-                  </li>
-                ))}
+                {displayIntStreams.map((stream, idx) => {
+                  const href = `/internships/${generateSlug(stream)}-jobs`;
+                  return (
+                    <li key={idx}>
+                      <a
+                        href={href}
+                        onClick={(e) => { e.preventDefault(); navigate(href); }}
+                        className="footer-cat-link"
+                      >
+                        {stream} Internship
+                      </a>
+                    </li>
+                  );
+                })}
                 <li>
-                  <a onClick={() => navigate("/job-filter?job_nature=Internship")} className="footer-cat-view-all">
+                  <a href="/internships" onClick={(e) => { e.preventDefault(); navigate("/job-filter?job_nature=Internship"); }} className="footer-cat-view-all">
                     View all internships &gt;
                   </a>
                 </li>
@@ -120,18 +128,22 @@ export default function Footer() {
             <div className="footer-cat-col">
               <h3 className="footer-cat-title">Jobs by Places</h3>
               <ul className="footer-cat-list">
-                {displayJobLocations.map((loc, idx) => (
-                  <li key={idx}>
-                    <a
-                      onClick={() => navigate(loc.toLowerCase() === "work from home" ? "/jobs/work-from-home" : `/jobs/jobs-in-${generateSlug(loc)}`)}
-                      className="footer-cat-link"
-                    >
-                      Jobs in {loc}
-                    </a>
-                  </li>
-                ))}
+                {displayJobLocations.map((loc, idx) => {
+                  const href = loc.toLowerCase() === "work from home" ? "/jobs/work-from-home" : `/jobs/jobs-in-${generateSlug(loc)}`;
+                  return (
+                    <li key={idx}>
+                      <a
+                        href={href}
+                        onClick={(e) => { e.preventDefault(); navigate(href); }}
+                        className="footer-cat-link"
+                      >
+                        Jobs in {loc}
+                      </a>
+                    </li>
+                  );
+                })}
                 <li>
-                  <a onClick={() => navigate("/jobs")} className="footer-cat-view-all">
+                  <a href="/jobs" onClick={(e) => { e.preventDefault(); navigate("/jobs"); }} className="footer-cat-view-all">
                     View all jobs &gt;
                   </a>
                 </li>
@@ -142,18 +154,22 @@ export default function Footer() {
             <div className="footer-cat-col">
               <h3 className="footer-cat-title">Jobs by Stream</h3>
               <ul className="footer-cat-list">
-                {displayJobStreams.map((stream, idx) => (
-                  <li key={idx}>
-                    <a
-                      onClick={() => navigate(`/jobs/${generateSlug(stream)}-jobs`)}
-                      className="footer-cat-link"
-                    >
-                      {stream} Jobs
-                    </a>
-                  </li>
-                ))}
+                {displayJobStreams.map((stream, idx) => {
+                  const href = `/jobs/${generateSlug(stream)}-jobs`;
+                  return (
+                    <li key={idx}>
+                      <a
+                        href={href}
+                        onClick={(e) => { e.preventDefault(); navigate(href); }}
+                        className="footer-cat-link"
+                      >
+                        {stream} Jobs
+                      </a>
+                    </li>
+                  );
+                })}
                 <li>
-                  <a onClick={() => navigate("/jobs")} className="footer-cat-view-all">
+                  <a href="/jobs" onClick={(e) => { e.preventDefault(); navigate("/jobs"); }} className="footer-cat-view-all">
                     View all jobs &gt;
                   </a>
                 </li>
@@ -164,18 +180,22 @@ export default function Footer() {
             <div className="footer-cat-col">
               <h3 className="footer-cat-title">Explore Courses</h3>
               <ul className="footer-cat-list">
-                {displayCourses.map((course, idx) => (
-                  <li key={idx}>
-                    <a
-                      onClick={() => navigate(`/courses/${course.slug}`)}
-                      className="footer-cat-link"
-                    >
-                      {course.title}
-                    </a>
-                  </li>
-                ))}
+                {displayCourses.map((course, idx) => {
+                  const href = `/courses/${course.slug}`;
+                  return (
+                    <li key={idx}>
+                      <a
+                        href={href}
+                        onClick={(e) => { e.preventDefault(); navigate(href); }}
+                        className="footer-cat-link"
+                      >
+                        {course.title}
+                      </a>
+                    </li>
+                  );
+                })}
                 <li>
-                  <a onClick={() => navigate("/courses")} className="footer-cat-view-all">
+                  <a href="/courses" onClick={(e) => { e.preventDefault(); navigate("/courses"); }} className="footer-cat-view-all">
                     View all courses &gt;
                   </a>
                 </li>
@@ -205,28 +225,28 @@ export default function Footer() {
           <div className="footer-nav-col">
             <h4 className="footer-menu-title">Company</h4>
             <ul className="footer-menu-list">
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/about")} className="footer-menu-link">About Us</a></li>
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/jobs")} className="footer-menu-link">Careers</a></li>
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/recruiter-pricing")} className="footer-menu-link">Recruiter Pricing</a></li>
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/blogs")} className="footer-menu-link">Blog</a></li>
+              <li><a href="/about" onClick={(e) => { e.preventDefault(); navigate("/about"); }} className="footer-menu-link">About Us</a></li>
+              <li><a href="/jobs" onClick={(e) => { e.preventDefault(); navigate("/jobs"); }} className="footer-menu-link">Careers</a></li>
+              <li><a href="/recruiter-pricing" onClick={(e) => { e.preventDefault(); navigate("/recruiter-pricing"); }} className="footer-menu-link">Recruiter Pricing</a></li>
+              <li><a href="/blogs" onClick={(e) => { e.preventDefault(); navigate("/blogs"); }} className="footer-menu-link">Blog</a></li>
             </ul>
           </div>
 
           <div className="footer-nav-col">
             <h4 className="footer-menu-title">Apply</h4>
             <ul className="footer-menu-list">
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/jobs")} className="footer-menu-link">Jobs</a></li>
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/internships")} className="footer-menu-link">Internship</a></li>
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/scholarship")} className="footer-menu-link">Scholarship</a></li>
+              <li><a href="/jobs" onClick={(e) => { e.preventDefault(); navigate("/jobs"); }} className="footer-menu-link">Jobs</a></li>
+              <li><a href="/internships" onClick={(e) => { e.preventDefault(); navigate("/internships"); }} className="footer-menu-link">Internship</a></li>
+              <li><a href="/scholarship" onClick={(e) => { e.preventDefault(); navigate("/scholarship"); }} className="footer-menu-link">Scholarship</a></li>
             </ul>
           </div>
 
           <div className="footer-nav-col">
             <h4 className="footer-menu-title">Resources</h4>
             <ul className="footer-menu-list">
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/help")} className="footer-menu-link">Help Center</a></li>
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/docs")} className="footer-menu-link">API Docs</a></li>
-              <li><a style={{ cursor: "pointer" }} onClick={() => navigate("/community")} className="footer-menu-link">Community</a></li>
+              <li><a href="/support" onClick={(e) => { e.preventDefault(); navigate("/support"); }} className="footer-menu-link">Help Center</a></li>
+              <li><a href="/courses" onClick={(e) => { e.preventDefault(); navigate("/courses"); }} className="footer-menu-link">Courses</a></li>
+              <li><a href="/mentors" onClick={(e) => { e.preventDefault(); navigate("/mentors"); }} className="footer-menu-link">Mentors</a></li>
             </ul>
           </div>
 
@@ -317,9 +337,9 @@ export default function Footer() {
           </div>
 
           <div className="footer-legal">
-            <a style={{ cursor: "pointer" }} onClick={() => navigate("/privacy")} className="footer-legal-link">Privacy Policy</a>
-            <a style={{ cursor: "pointer" }} onClick={() => navigate("/terms")} className="footer-legal-link">Terms of Service</a>
-            <a style={{ cursor: "pointer" }} onClick={() => navigate("/cookies")} className="footer-legal-link">Cookies</a>
+            <a href="/privacy" onClick={(e) => { e.preventDefault(); navigate("/privacy"); }} className="footer-legal-link">Privacy Policy</a>
+            <a href="/terms" onClick={(e) => { e.preventDefault(); navigate("/terms"); }} className="footer-legal-link">Terms of Service</a>
+            <a href="/cookies" onClick={(e) => { e.preventDefault(); navigate("/cookies"); }} className="footer-legal-link">Cookies</a>
           </div>
 
           <div className="footer-social">

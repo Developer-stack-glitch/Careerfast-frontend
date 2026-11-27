@@ -44,7 +44,6 @@ import { useLocation, useNavigate, useParams } from "@/routing-shim";
 
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
-import SEO from "../Components/SEO/SEO";
 import { CommonToaster } from "../Common/CommonToaster";
 
 import { getAllCourses, getJobCategoryData, getJobPosts, getSalaryRanges, getUniqueCompanies, saveJobPost, getSavedJobs, removeSavedJobs, getLocationCounts, googleLogin } from "../ApiService/action";
@@ -986,7 +985,7 @@ const JobCard = React.memo(function JobCard({
   onSaveToggle,
   navigate,
 }) {
-  const handleCardClick = () => {
+  const getCardHref = () => {
     const safeSlug = (val) => {
       if (!val) return "";
       if (Array.isArray(val)) return generateSlug(val.join(" "));
@@ -1023,12 +1022,20 @@ const JobCard = React.memo(function JobCard({
       experienceRequired,
       job.id
     ].filter(Boolean).join("-").replace(/-+/g, "-");
-    const finalUrl = getJobDetailsUrl(job) || `${basePath}/${fallbackSlug}`;
+    return getJobDetailsUrl(job) || `${basePath}/${fallbackSlug}`;
+  };
+
+  const cardHref = getCardHref();
+
+  const handleCardClick = (e) => {
+    if (e.target.closest('.naukri-save-btn')) {
+      return;
+    }
     const isMobile = typeof window !== 'undefined' && (window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
     if (isMobile) {
-      navigate(finalUrl);
+      navigate(cardHref);
     } else {
-      window.open(finalUrl, "_blank");
+      window.open(cardHref, "_blank");
     }
   };
 
@@ -1036,7 +1043,15 @@ const JobCard = React.memo(function JobCard({
     <div className="naukri-job-card" onClick={handleCardClick}>
       <div className="naukri-job-header">
         <div style={{ flex: 1, paddingRight: '12px' }}>
-          <h3 className="naukri-job-title">{job.title && job.title.trim() ? job.title : "N/A"}</h3>
+          <h3 className="naukri-job-title">
+            <a
+              href={cardHref}
+              onClick={(e) => e.preventDefault()}
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
+              {job.title && job.title.trim() ? job.title : "N/A"}
+            </a>
+          </h3>
           <div className="naukri-company-info">
             <span className="naukri-company-name">{job.company && job.company.trim() ? job.company : "N/A"}</span>
             <div className="naukri-company-rating">
@@ -3082,28 +3097,6 @@ export default function JobFilter() {
   /** -------------------- RENDER -------------------- **/
   return (
     <>
-
-      <SEO
-        title={getFilterTitle()}
-        description={`Explore the latest ${totalJobs} ${getFilterTitle()} available on CareerFast. ${selectedLocations.length > 0 ? `Connecting top talent with leading companies in ${selectedLocations.join(", ")}.` : "Find jobs, internships, and scholarships with top companies across India."
-          }`}
-        breadcrumbSchema={[
-          { name: "Home", item: "/" },
-          { name: jobNatureSelected === "Internship" ? "Internships" : "Jobs", item: currentPath }
-        ]}
-        structuredData={[
-          {
-            "@context": "https://schema.org",
-            "@type": "ItemList",
-            "numberOfItems": jobs.length,
-            "itemListElement": jobs.map((job, index) => ({
-              "@type": "ListItem",
-              "position": index + 1,
-              "url": `${currentOrigin}${getJobDetailsUrl(job)}`
-            }))
-          }
-        ]}
-      />
       <Header showSearch={true} />
 
       {initialLoading ? (

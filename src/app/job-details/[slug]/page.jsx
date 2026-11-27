@@ -1,12 +1,14 @@
 import { notFound } from 'next/navigation';
 import JobDetails from '@/JobPortal/JobDetails';
-import { fetchJobForSEO, fetchRelatedJobsForSEO, fetchCoursesForSEO } from '@/utils/seo-fetch';
+import { fetchJobForSEO, fetchRelatedJobsForSEO, fetchCoursesForSEO, getAbsoluteMediaUrl } from '@/utils/seo-fetch';
+import { getJobSlug } from '@/utils/slug';
 import { 
   generateNaukriJobTitle, 
   generateNaukriJobDescription, 
   formatJobLocation, 
   formatJobCompany, 
-  cleanHtmlText 
+  buildJobPostingJsonLd,
+  buildJobBreadcrumbJsonLd,
 } from '@/utils/seo-helper';
 
 export async function generateMetadata({ params, searchParams }) {
@@ -44,17 +46,20 @@ export async function generateMetadata({ params, searchParams }) {
     "CareerFast"
   ].filter(Boolean).join(", ");
 
-  const canonicalUrl = `https://careerfast.in/job-details/${slug}`;
+  const canonicalSlug = getJobSlug(job) || slug;
+  const canonicalUrl = `https://careerfast.in/job-details/${canonicalSlug}`;
+  const logoUrl = getAbsoluteMediaUrl(job.company_logo, "https://careerfast.in/og-image.png");
+  const shouldIndex = !isPreview && job.is_closed !== 1 && job.is_closed !== true;
 
   return {
     title: fullTitle,
     description: fullDescription,
     keywords: keywords,
     robots: {
-      index: true,
+      index: shouldIndex,
       follow: true,
       googleBot: {
-        index: true,
+        index: shouldIndex,
         follow: true,
         'max-video-preview': -1,
         'max-image-preview': 'large',
@@ -68,7 +73,7 @@ export async function generateMetadata({ params, searchParams }) {
       siteName: 'CareerFast',
       images: [
         {
-          url: job.company_logo || "https://careerfast.in/og-image.png",
+          url: logoUrl,
           width: 800,
           height: 600,
           alt: cleanCompany,
@@ -81,7 +86,7 @@ export async function generateMetadata({ params, searchParams }) {
       card: "summary_large_image",
       title: fullTitle,
       description: fullDescription,
-      images: [job.company_logo || "https://careerfast.in/og-image.png"],
+      images: [logoUrl],
     },
     alternates: {
       canonical: canonicalUrl,
@@ -111,44 +116,18 @@ export default async function Page({ params, searchParams }) {
     notFound();
   }
 
-  const cleanLocation = job ? formatJobLocation(job) : "India";
-  const cleanCompany = job ? formatJobCompany(job) : "Company";
-
-  const jsonLd = job ? {
-    "@context": "https://schema.org/",
-    "@type": "JobPosting",
-    "title": job.job_title,
-    "description": cleanHtmlText(job.job_description) || job.job_description,
-    "identifier": {
-      "@type": "PropertyValue",
-      "name": cleanCompany,
-      "value": String(job.id)
-    },
-    "datePosted": job.created_at,
-    "validThrough": new Date(new Date(job.created_at).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    "employmentType": job.job_nature === "Full Time" ? "FULL_TIME" : "PART_TIME",
-    "hiringOrganization": {
-      "@type": "Organization",
-      "name": cleanCompany,
-      "sameAs": "https://careerfast.in",
-      "logo": job.company_logo || "https://careerfast.in/og-image.png"
-    },
-    "jobLocation": {
-      "@type": "Place",
-      "address": {
-        "@type": "PostalAddress",
-        "addressLocality": cleanLocation,
-        "addressCountry": "IN"
-      }
-    }
-  } : null;
+  const canonicalSlug = (job && getJobSlug(job)) || slug;
+  const canonicalUrl = `https://careerfast.in/job-details/${canonicalSlug}`;
+  const jobJsonLd = buildJobPostingJsonLd(job, canonicalUrl, 'job');
+  const breadcrumbJsonLd = buildJobBreadcrumbJsonLd(job, canonicalUrl, 'job');
+  const structuredData = [jobJsonLd, breadcrumbJsonLd].filter(Boolean);
 
   return (
     <>
-      {jsonLd && (
+      {structuredData.length > 0 && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       )}
       <JobDetails

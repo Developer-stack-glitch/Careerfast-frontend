@@ -48,7 +48,6 @@ import { GoogleLogin } from "@react-oauth/google";
 import { useDispatch } from "react-redux";
 import { storeLoginStatus } from "../Redux/Slice";
 import Header from "../Header/Header";
-import SEO from "../Components/SEO/SEO";
 import LoginDrawer from "../Components/AuthDrawer/LoginDrawer";
 import CriticalProfileAlert from "../Components/CriticalProfileAlert/CriticalProfileAlert";
 import { getJobSlug, getJobDetailsUrl, generateSlug, isInternshipOpportunity, extractSkillsFromDescription, processDescription, formatExperienceDisplay } from "../utils/slug";
@@ -1170,35 +1169,6 @@ export default function JobDetails({ initialData, initialRelatedJobs, initialCou
 
   return (
     <>
-      {!initialData && job && (
-        <SEO
-          title={generateNaukriJobTitle(backendJobs[0] || job)}
-          description={generateNaukriJobDescription(backendJobs[0] || job)}
-          ogType="article"
-          ogImage={job.logo}
-          breadcrumbSchema={[
-            { name: "Home", item: "/" },
-            { name: job.type === "Internship" ? "Internships" : "Jobs", item: job.type === "Internship" ? "/internship-filter" : "/jobs" },
-            { name: job.title, item: typeof window !== 'undefined' ? window.location.pathname : "" }
-          ]}
-          structuredData={[
-            {
-              "@context": "https://schema.org/",
-              "@type": "JobPosting",
-              "title": job.title,
-              "description": job.job_description,
-              "identifier": { "@type": "PropertyValue", "name": job.company, "value": job.id },
-              "datePosted": job.created_date,
-              "validThrough": new Date(new Date(job.created_date).getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              "employmentType": job.type === "Full Time" ? "FULL_TIME" : "PART_TIME",
-              "hiringOrganization": { "@type": "Organization", "name": job.company, "sameAs": "https://careerfast.in", "logo": job.logo },
-              "jobLocation": { "@type": "Place", "address": { "@type": "PostalAddress", "addressLocality": job.location, "addressCountry": "IN" } },
-              "baseSalary": { "@type": "MonetaryAmount", "currency": "INR", "value": { "@type": "QuantitativeValue", "value": job.salary, "unitText": job.salary_duration?.toLowerCase() === "monthly" ? "MONTH" : "YEAR" } }
-            }
-          ]}
-        />
-      )}
-
       <Header noSticky={true} />
 
       {/* Sticky Compact Action Bar (Naukri style shown on scroll) */}

@@ -1,8 +1,10 @@
-'use client';
-import dynamic from 'next/dynamic';
+import NotFoundComponent from '@/NotFound/NotFound';
 
-const PageComponent = dynamic(() => import('@/NotFound/NotFound'), { ssr: false });
+export const metadata = {
+  title: "Page Not Found",
+  robots: { index: false, follow: false },
+};
 
 export default function NotFound() {
-  return <PageComponent />;
+  return <NotFoundComponent />;
 }

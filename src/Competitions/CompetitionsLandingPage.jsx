@@ -2,8 +2,6 @@
 import { getImageUrl } from "../utils/getImageUrl";
 
 import React, { useState } from "react";
-import { Helmet } from "react-helmet-async";
-import SEO from "../Components/SEO/SEO";
 import { Typography, Row, Col, Card, Button, Input, Select, Tag, Avatar, Badge, Space } from "antd";
 import { motion } from "framer-motion";
 import {
@@ -20,8 +18,10 @@ import { Modal, Form } from "antd";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
 import "./Competitions.css";
-import ParticlesBg from "particles-bg";
+import dynamic from "next/dynamic";
 import { useNavigate } from "@/routing-shim";
+
+const ParticlesBg = dynamic(() => import("particles-bg"), { ssr: false });
 
 
 const { Title, Text, Paragraph } = Typography;
@@ -147,48 +147,6 @@ const CompetitionsLandingPage = () => {
 
     return (
         <div className="competitions-page">
-            <SEO
-                title="Coding Competitions & Hackathons - Challenge Yourself"
-                description="Compete with the best minds globally. Join coding competitions, hackathons, and challenges from top companies. Showcase your skills, solve real-world problems, and win exciting prizes up to $500k+."
-                keywords="coding competitions, hackathons, programming challenges, tech competitions, coding contests, developer challenges, algorithm competitions, data science challenges, design hackathons, blockchain hackathons, CareerFast"
-                ogImage="https://careerfast.in/og-image-competitions.jpg"
-                twitterImage="https://careerfast.in/twitter-image-competitions.jpg"
-                breadcrumbSchema={[
-                    { name: "Home", item: "/" },
-                    { name: "Competitions", item: "/competitions" }
-                ]}
-                structuredData={[
-                    {
-                        "@context": "https://schema.org",
-                        "@type": "WebPage",
-                        "name": "Coding Competitions & Hackathons - CareerFast",
-                        "url": "https://careerfast.in/competitions",
-                        "description": "Compete with the best minds globally. Join coding competitions, hackathons, and challenges from top companies."
-                    },
-                    {
-                        "@context": "https://schema.org",
-                        "@type": "ItemList",
-                        "name": "Active Competitions",
-                        "description": "Browse active coding competitions and hackathons",
-                        "numberOfItems": activeCompetitions.length,
-                        "itemListElement": activeCompetitions.map((comp, index) => ({
-                            "@type": "Event",
-                            "position": index + 1,
-                            "name": comp.title,
-                            "organizer": {
-                                "@type": "Organization",
-                                "name": comp.organizer
-                            },
-                            "offers": {
-                                "@type": "Offer",
-                                "price": comp.prizePool,
-                                "priceCurrency": "USD"
-                            }
-                        }))
-                    }
-                ]}
-            />
-
             <Header />
 
             {/* Hero Section */}

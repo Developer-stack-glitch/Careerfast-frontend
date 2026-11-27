@@ -1,8 +1,20 @@
-'use client';
-import dynamic from 'next/dynamic';
+import WorkshopFilter from '@/JobPortal/WorkshopFilter';
 
-const PageComponent = dynamic(() => import('@/JobPortal/WorkshopFilter'), { ssr: false });
+export const metadata = {
+  title: "Professional Workshops - Skill Building & Hands-on Training",
+  description: "Discover and register for professional development workshops, skill-building sessions, and hands-on training programs on CareerFast.",
+  keywords: "workshops, professional workshops, skill development, hands-on training, CareerFast",
+  alternates: { canonical: "https://careerfast.in/workshop-filter" },
+  openGraph: {
+    title: "Professional Workshops - Skill Building & Hands-on Training | CareerFast",
+    description: "Discover and register for professional development workshops and hands-on training on CareerFast.",
+    url: "https://careerfast.in/workshop-filter",
+    siteName: "CareerFast",
+    images: ["https://careerfast.in/og-image.png"],
+    type: "website",
+  },
+};
 
 export default function Page() {
-  return <PageComponent />;
+  return <WorkshopFilter />;
 }

@@ -3,7 +3,6 @@
 import { Provider } from "react-redux";
 import { store } from "../Redux/store";
 import { GoogleOAuthProvider } from "@react-oauth/google";
-import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
 import { App } from "antd";
 import { useEffect, useState } from "react";
@@ -80,11 +79,11 @@ export function Providers({ children }) {
   useEffect(() => {
     // disable console logs in production
     if (process.env.NODE_ENV === "production") {
-      console.log = () => {};
-      console.debug = () => {};
-      console.info = () => {};
-      console.warn = () => {};
-      console.error = () => {};
+      console.log = () => { };
+      console.debug = () => { };
+      console.info = () => { };
+      console.warn = () => { };
+      console.error = () => { };
     }
   }, []);
 
@@ -143,28 +142,26 @@ export function Providers({ children }) {
   }, []);
 
   return (
-    <HelmetProvider>
-      <GoogleOAuthProvider clientId={CLIENT_ID}>
-        <Provider store={store}>
-          <App>
-            {children}
-          </App>
-          <Toaster 
-            position="top-center"
-            containerStyle={{
+    <GoogleOAuthProvider clientId={CLIENT_ID}>
+      <Provider store={store}>
+        <App>
+          {children}
+        </App>
+        <Toaster
+          position="top-center"
+          containerStyle={{
+            zIndex: 99999999,
+          }}
+          toastOptions={{
+            duration: 1500,
+            style: {
+              background: '#fff',
+              color: '#363636',
               zIndex: 99999999,
-            }}
-            toastOptions={{
-              duration: 1500,
-              style: {
-                background: '#fff',
-                color: '#363636',
-                zIndex: 99999999,
-              },
-            }}
-          />
-        </Provider>
-      </GoogleOAuthProvider>
-    </HelmetProvider>
+            },
+          }}
+        />
+      </Provider>
+    </GoogleOAuthProvider>
   );
 }

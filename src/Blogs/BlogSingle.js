@@ -2,8 +2,8 @@
 import { getImageUrl } from "../utils/getImageUrl";
 import { compressImage } from "../utils/imageCompressor";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams, useNavigate } from "@/routing-shim";
-import SEO from "../Components/SEO/SEO";
 import { CommonToaster } from "../Common/CommonToaster";
 import { getBlogById, deleteBlog, updateBlog, getBlogs } from "../ApiService/action";
 import { Modal, Tooltip } from "antd";
@@ -282,41 +282,6 @@ export default function BlogSingle({ initialData, serverSlug }) {
             {/* Reading Progress Bar */}
             <div className="reading-progress-bar" style={{ width: `${scrollProgress}%` }}></div>
 
-            {!initialData && (
-                <SEO
-                    title={blog.blogTitle}
-                    description={blog.overview}
-                    keywords={`blog, career tips, ${blog.blogTitle.split(' ').join(', ')}, CareerFast`}
-                    ogType="article"
-                    ogImage={blog.blogImage}
-                    structuredData={[
-                        {
-                            "@context": "https://schema.org",
-                            "@type": "BlogPosting",
-                            "headline": blog.blogTitle,
-                            "description": blog.overview,
-                            "image": blog.blogImage,
-                            "author": {
-                                "@type": "Person",
-                                "name": blog.author || "CareerFast Team"
-                            },
-                            "publisher": {
-                                "@type": "Organization",
-                                "name": "CareerFast",
-                                "logo": {
-                                    "@type": "ImageObject",
-                                    "url": "https://careerfast.in/logo.png"
-                                }
-                            },
-                            "datePublished": blog.createdDate,
-                            "mainEntityOfPage": {
-                                "@type": "WebPage",
-                                "@id": `https://careerfast.in/blog/${slug}`
-                            }
-                        }
-                    ]}
-                />
-            )}
             <Header />
 
             <div className="singleblog-page-wrapper">
@@ -332,9 +297,9 @@ export default function BlogSingle({ initialData, serverSlug }) {
                                         {/* Blog Header */}
                                         <div className="singleblog-header-premium">
                                             <nav className="breadcrumb-premium">
-                                                <span onClick={() => navigate('/')}>Home</span>
+                                                <Link href="/" style={{ color: 'inherit', textDecoration: 'none' }}>Home</Link>
                                                 <span className="separator">/</span>
-                                                <span onClick={() => navigate('/blogs')}>Blogs</span>
+                                                <Link href="/blogs" style={{ color: 'inherit', textDecoration: 'none' }}>Blogs</Link>
                                                 <span className="separator">/</span>
                                                 <span className="current">Article</span>
                                             </nav>

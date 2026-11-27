@@ -1,8 +1,7 @@
 'use client';
 import { getImageUrl } from "../utils/getImageUrl";
 import { useEffect, useState, useMemo } from "react";
-import { Helmet } from "react-helmet-async";
-import SEO from "../Components/SEO/SEO";
+import Link from "next/link";
 import { getBlogs } from "../ApiService/action";
 import { Card, Col, Row, Skeleton, Input, Tag, Empty, Pagination } from "antd";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,10 +11,10 @@ import { useNavigate } from "@/routing-shim";
 import { SearchOutlined, ClockCircleOutlined, ArrowRightOutlined, TagOutlined } from "@ant-design/icons";
 import "../css/Blogs.css";
 
-export default function Blogs() {
+export default function Blogs({ initialBlogs = [] }) {
     const navigate = useNavigate();
-    const [blogTips, setBlogTips] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [blogTips, setBlogTips] = useState(Array.isArray(initialBlogs) ? initialBlogs : []);
+    const [loading, setLoading] = useState(!Array.isArray(initialBlogs) || initialBlogs.length === 0);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [currentPage, setCurrentPage] = useState(1);
@@ -24,8 +23,10 @@ export default function Blogs() {
     const categories = ["All", "Career Advice", "Interview Tips", "Job Search", "Resumes", "Workplace"];
 
     useEffect(() => {
-        loadBlogsForTips();
-    }, []);
+        if (!Array.isArray(initialBlogs) || initialBlogs.length === 0) {
+            loadBlogsForTips();
+        }
+    }, [initialBlogs]);
 
     const generateSlug = (text) => {
         return text
@@ -82,17 +83,6 @@ export default function Blogs() {
 
     return (
         <div className="blogs-page-wrapper">
-            <SEO
-                title="Career Insights, Tips & Strategies | CareerFast"
-                description="Stay updated with the latest career insights, job search strategies, interview tips, and professional development advice. Expert guidance to boost your career growth."
-                keywords="career blogs, job search tips, interview preparation, career advice, professional development, career growth, job hunting strategies, resume tips, CareerFast blogs"
-                ogImage="https://careerfast.in/og-image-blogs.jpg"
-                breadcrumbSchema={[
-                    { name: "Home", item: "/" },
-                    { name: "Blogs", item: "/blogs" }
-                ]}
-            />
-
             <Header />
 
             {/* Premium Hero Section */}
@@ -204,7 +194,15 @@ export default function Blogs() {
                                                             {tip.readingTime || "5 min read"}
                                                         </span>
                                                     </div>
-                                                    <h3 className="blog-title-text">{tip.blogTitle}</h3>
+                                                    <h3 className="blog-title-text">
+                                                        <Link
+                                                            href={`/blog/${generateSlug(tip.blogTitle)}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            style={{ color: 'inherit', textDecoration: 'none' }}
+                                                        >
+                                                            {tip.blogTitle}
+                                                        </Link>
+                                                    </h3>
                                                     <p className="blog-excerpt">
                                                         {tip.overview?.length > 120
                                                             ? tip.overview.slice(0, 120) + "..."

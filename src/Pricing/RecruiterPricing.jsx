@@ -61,7 +61,7 @@ export default function RecruiterPricing() {
     (typeof window !== 'undefined' &&
       (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
       ? 'http://localhost:3001'
-      : 'http://recruit.careerfast.in');
+      : 'https://recruit.careerfast.in');
 
   useEffect(() => {
     fetchPlans();

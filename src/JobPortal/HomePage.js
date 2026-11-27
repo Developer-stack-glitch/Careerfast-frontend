@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef, useMemo } from "react";
+import Link from "next/link";
 import { useNavigate } from "@/routing-shim";
 import Header from "../Header/Header";
 import Footer from "../Footer/Footer";
@@ -456,7 +457,7 @@ const extractTopITCategories = (rawCats, getIconFn, limit = 10) => {
     }));
 };
 
-export default function HomePage() {
+export default function HomePage({ initialData = null }) {
     const navigate = useNavigate();
     const [skills, setSkills] = useState("");
     const [location, setLocation] = useState("");
@@ -466,7 +467,7 @@ export default function HomePage() {
     const [categories, setCategories] = useState(() => extractTopITCategories([], getCategoryIcon, 12));
     const [fresherCategories, setFresherCategories] = useState([]);
     const [internshipCategories, setInternshipCategories] = useState([]);
-    const [companies, setCompanies] = useState([]);
+    const [companies, setCompanies] = useState(() => initialData?.companies || []);
     const [roles, setRoles] = useState([
         { title: "Full Stack Developer", jobs: "500+ Jobs" },
         { title: "Software Engineer", jobs: "450+ Jobs" },
@@ -481,22 +482,22 @@ export default function HomePage() {
         { title: "Product Manager", jobs: "130+ Jobs" },
         { title: "Cloud Architect", jobs: "110+ Jobs" }
     ]);
-    const [fresherJobs, setFresherJobs] = useState([]);
-    const [internshipJobs, setInternshipJobs] = useState([]);
-    const [loadingFresher, setLoadingFresher] = useState(true);
-    const [loadingInternships, setLoadingInternships] = useState(true);
+    const [fresherJobs, setFresherJobs] = useState(() => initialData?.fresherJobs || []);
+    const [internshipJobs, setInternshipJobs] = useState(() => initialData?.internshipJobs || []);
+    const [loadingFresher, setLoadingFresher] = useState(() => !(initialData?.fresherJobs?.length > 0));
+    const [loadingInternships, setLoadingInternships] = useState(() => !(initialData?.internshipJobs?.length > 0));
     const [activeTab, setActiveTab] = useState("");
     const [activeInternshipTab, setActiveInternshipTab] = useState("");
     const [loading, setLoading] = useState(false);
-    const [stats, setStats] = useState({
+    const [stats, setStats] = useState(() => initialData?.stats || {
         totalJobs: 0,
         totalRecruiters: 0,
         totalApplications: 0
     });
     const [trendingSearches, setTrendingSearches] = useState([]);
     const [recentSearches, setRecentSearches] = useState([]);
-    const [recentBlogs, setRecentBlogs] = useState([]);
-    const [coursesList, setCoursesList] = useState([]);
+    const [recentBlogs, setRecentBlogs] = useState(() => initialData?.recentBlogs || []);
+    const [coursesList, setCoursesList] = useState(() => initialData?.coursesList || []);
     const [loadingCourses, setLoadingCourses] = useState(false);
     const [activeCourseCategory, setActiveCourseCategory] = useState("All Programs");
     const initialFetchDone = useRef(false);
@@ -1359,10 +1360,11 @@ export default function HomePage() {
                         transition={{ delay: 0.3, duration: 0.8 }}
                     >
                         {categories.map((cat, idx) => (
-                            <div
+                            <Link
                                 key={idx}
+                                href={`/jobs?c=${encodeURIComponent(cat.name)}`}
                                 className="hp-category-card"
-                                onClick={() => navigate(`/job-filter?c=${encodeURIComponent(cat.name)}`)}
+                                style={{ textDecoration: 'none', color: 'inherit' }}
                             >
                                 <div className="hp-category-left">
                                     <div className="hp-category-icon-wrapper">
@@ -1371,7 +1373,7 @@ export default function HomePage() {
                                     <span className="hp-category-name">{cat.name}</span>
                                 </div>
                                 <RightOutlined className="hp-category-arrow" />
-                            </div>
+                            </Link>
                         ))}
                     </motion.div>
                 </section>
@@ -1501,7 +1503,8 @@ export default function HomePage() {
                                             <div className="hp-company-logo-wrapper">
                                                 <img
                                                     src={getImageUrl(job.company_logo) || "/favicon.png"}
-                                                    alt={job.company_name}
+                                                    alt={job.company_name || "Company logo"}
+                                                    loading="lazy"
                                                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/favicon.png"; }}
                                                 />
                                             </div>
@@ -1511,7 +1514,7 @@ export default function HomePage() {
                                                 Actively hiring
                                             </div>
                                         </div>
-                                        <h4 className="hp-card-title" title={job.job_title}>{job.job_title}</h4>
+                                        <h3 className="hp-card-title" title={job.job_title}>{job.job_title}</h3>
                                         <div className="hp-card-company">
                                             <div className="hp-company-text">
                                                 <span className="hp-company-name-text" title={job.company_name}>{job.company_name}</span>
@@ -1656,7 +1659,8 @@ export default function HomePage() {
                                             <div className="hp-company-logo-wrapper">
                                                 <img
                                                     src={getImageUrl(job.company_logo) || "/favicon.png"}
-                                                    alt={job.company_name}
+                                                    alt={job.company_name || "Company logo"}
+                                                    loading="lazy"
                                                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = "/favicon.png"; }}
                                                 />
                                             </div>
@@ -1666,7 +1670,7 @@ export default function HomePage() {
                                             </div>
                                         </div>
 
-                                        <h4 className="hp-card-title" title={job.job_title}>{job.job_title}</h4>
+                                        <h3 className="hp-card-title" title={job.job_title}>{job.job_title}</h3>
                                         <div className="hp-card-company">
                                             <div className="hp-company-text">
                                                 <span className="hp-company-name-text" title={job.company_name}>{job.company_name}</span>
@@ -1812,10 +1816,15 @@ export default function HomePage() {
                                                     : 'Actively Hiring'}
                                             </span>
                                         </div>
-                                        <button className="hp-company-view-btn">
+                                        <Link
+                                            href={`/jobs?co=${encodeURIComponent(company.name)}`}
+                                            className="hp-company-view-btn"
+                                            style={{ textDecoration: 'none' }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
                                             <span>View jobs</span>
                                             <RightOutlined className="hp-company-btn-arrow" />
-                                        </button>
+                                        </Link>
                                     </div>
                                 </motion.div>
                             ))}
@@ -1860,12 +1869,21 @@ export default function HomePage() {
                                     <img
                                         src={getImageUrl(city.img)}
                                         alt={city.name}
+                                        loading="lazy"
                                         className="hp-city-card-img"
                                     />
                                 </div>
                                 <div className="hp-city-card-body">
                                     <div className="hp-city-title-row">
-                                        <h3 className="hp-city-card-name">{city.name}</h3>
+                                        <h3 className="hp-city-card-name">
+                                            <Link
+                                                href={`/jobs?l=${encodeURIComponent(city.name)}`}
+                                                style={{ color: 'inherit', textDecoration: 'none' }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {city.name}
+                                            </Link>
+                                        </h3>
                                         <RightOutlined className="hp-city-card-arrow" />
                                     </div>
                                     <span className="hp-city-card-jobs">{city.jobs}</span>
@@ -2024,6 +2042,7 @@ export default function HomePage() {
                                             <img
                                                 src={course.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3"}
                                                 alt={course.title}
+                                                loading="lazy"
                                                 className="hp-cert-img"
                                                 onError={(e) => {
                                                     e.target.onerror = null;
@@ -2074,10 +2093,15 @@ export default function HomePage() {
                                         </div>
 
                                         <div className="hp-cert-footer-v2">
-                                            <button className="hp-cert-btn-v2">
+                                            <Link
+                                                href={`/courses/${course.slug}`}
+                                                className="hp-cert-btn-v2"
+                                                style={{ textDecoration: 'none' }}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
                                                 <span>Explore Program</span>
                                                 <RightOutlined className="hp-btn-arrow" />
-                                            </button>
+                                            </Link>
                                         </div>
                                     </motion.div>
                                 );

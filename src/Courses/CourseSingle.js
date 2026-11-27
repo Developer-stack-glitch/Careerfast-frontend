@@ -57,11 +57,10 @@ import {
 import { VscCode } from "react-icons/vsc";
 import { useParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import SEO from "../Components/SEO/SEO";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-export default function CourseSingle() {
+export default function CourseSingle({ initialCourse = null, initialRelatedCourses = [] }) {
     const params = useParams();
     const { slug } = params;
     const [activeModule, setActiveModule] = useState(0);
@@ -124,10 +123,10 @@ export default function CourseSingle() {
         }
     ];
 
-    const [courseData, setCourseData] = useState(null);
-    const [relatedCourses, setRelatedCourses] = useState([]);
+    const [courseData, setCourseData] = useState(initialCourse);
+    const [relatedCourses, setRelatedCourses] = useState(initialRelatedCourses);
     const [allCoursesList, setAllCoursesList] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!initialCourse);
 
 
     React.useEffect(() => {
@@ -157,24 +156,29 @@ export default function CourseSingle() {
     React.useEffect(() => {
         const fetchCourse = async () => {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/courses/${slug}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setCourseData(data);
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://api.careerfast.in';
+                let currentCourse = initialCourse;
+                if (!currentCourse) {
+                    const response = await fetch(`${apiUrl}/api/courses/${slug}`);
+                    if (response.ok) {
+                        currentCourse = await response.json();
+                        setCourseData(currentCourse);
+                    } else {
+                        console.error("Failed to fetch course");
+                    }
+                }
 
+                if (currentCourse) {
                     try {
                         const allCourses = await getAllCourses();
                         if (allCourses && allCourses.length > 0) {
                             setAllCoursesList(allCourses);
-                            // Find courses in same category or just first 3 excluding current
                             const filtered = allCourses.filter(c => c.slug !== slug).slice(0, 3);
                             setRelatedCourses(filtered);
                         }
                     } catch (e) {
                         console.error("Error fetching related courses", e);
                     }
-                } else {
-                    console.error("Failed to fetch course");
                 }
             } catch (err) {
                 console.error("Error fetching course:", err);
@@ -184,7 +188,7 @@ export default function CourseSingle() {
         };
 
         if (slug) fetchCourse();
-    }, [slug]);
+    }, [slug, initialCourse]);
 
     if (loading) {
         return (
@@ -391,10 +395,6 @@ export default function CourseSingle() {
 
     return (
         <>
-            <SEO
-                title={`${courseData.title} - CareerFast Courses`}
-                description={courseData.description}
-            />
             <Header noSticky />
 
             <div className="course-single-page">
@@ -745,7 +745,7 @@ export default function CourseSingle() {
                             {/* Left Side: Title Area */}
                             <div className="title-area">
                                 <div className="real-text-wrapper">
-                                    <h1 className="real-text">REAL</h1>
+                                    <div className="real-text">REAL</div>
                                     <div className="stars-icon">
                                         <img src="https://www.learnovita.com/wp-content/uploads/2026/01/start.webp" alt="start" />
                                     </div>

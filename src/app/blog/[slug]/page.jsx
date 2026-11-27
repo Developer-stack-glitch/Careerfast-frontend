@@ -1,78 +1,79 @@
+import { notFound } from 'next/navigation';
 import BlogSingle from '@/Blogs/BlogSingle';
-import { fetchBlogForSEO } from '@/utils/seo-fetch';
-import axios from 'axios';
+import { fetchBlogBySlugForSEO, getAbsoluteMediaUrl } from '@/utils/seo-fetch';
+import { cleanHtmlText } from '@/utils/seo-helper';
 
-// Helper to generate slug consistently
-const generateSlug = (text) => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-};
-
-// Next.js doesn't have fetchBlogBySlug directly in API, but we can search for it
-const getBlogBySlug = async (slug) => {
-  try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.careerfast.in';
-    const allBlogs = await axios.get(`${apiBaseUrl}/api/blogs/all-blogs`);
-    const found = allBlogs.data?.find(b => generateSlug(b.blogTitle) === slug);
-    if (found) {
-      const res = await axios.get(`${apiBaseUrl}/api/blogs/${found.id}`);
-      return res.data;
+function getBlogOgImage(blog) {
+  if (!blog) return 'https://careerfast.in/og-image.png';
+  if (blog.blogImage && typeof blog.blogImage === 'string') {
+    if (blog.blogImage.startsWith('data:')) {
+      return `https://api.careerfast.in/api/blogs/image/${blog.id}`;
     }
-    return null;
-  } catch (error) {
-    return null;
+    return getAbsoluteMediaUrl(blog.blogImage, 'https://careerfast.in/og-image.png');
   }
-};
+  return 'https://careerfast.in/og-image.png';
+}
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
-  const blog = await getBlogBySlug(slug);
-  
+  const blog = await fetchBlogBySlugForSEO(slug);
+
   if (!blog) {
     return {
       title: "Blog Not Found | CareerFast",
+      description: "The requested career article could not be found.",
+      robots: { index: false, follow: false },
     };
   }
 
-  const cleanStr = (str) => {
-    if (!str) return '';
-    return str.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').trim();
-  };
-
-  const cleanDescription = cleanStr(blog.overview || "").substring(0, 250);
+  const cleanDescription = cleanHtmlText(blog.overview || blog.blogDescription || '').substring(0, 160)
+    || `Read ${blog.blogTitle} on CareerFast Blog.`;
+  const canonicalUrl = `https://careerfast.in/blog/${slug}`;
+  const imageUrl = getBlogOgImage(blog);
 
   return {
     title: `${blog.blogTitle} | CareerFast Blog`,
     description: cleanDescription,
     keywords: `blog, career tips, ${blog.blogTitle.split(' ').join(', ')}, CareerFast`,
+    robots: { index: true, follow: true },
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       title: blog.blogTitle,
       description: cleanDescription,
-      url: `https://careerfast.in/blog/${slug}`,
-      images: [{ url: blog.blogImage }],
+      url: canonicalUrl,
+      siteName: 'CareerFast',
+      images: [{ url: imageUrl, alt: blog.blogTitle }],
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
       title: blog.blogTitle,
       description: cleanDescription,
-      images: [blog.blogImage],
+      images: [imageUrl],
     },
   };
 }
 
 export default async function Page({ params }) {
   const { slug } = await params;
-  const blog = await getBlogBySlug(slug);
+  const blog = await fetchBlogBySlugForSEO(slug);
 
-  const jsonLd = blog ? {
+  if (!blog) {
+    notFound();
+  }
+
+  const canonicalUrl = `https://careerfast.in/blog/${slug}`;
+  const imageUrl = getBlogOgImage(blog);
+  const cleanDescription = cleanHtmlText(blog.overview || blog.blogDescription || '').substring(0, 250);
+
+  const blogJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     "headline": blog.blogTitle,
-    "description": blog.overview,
-    "image": blog.blogImage,
+    "description": cleanDescription,
+    "image": imageUrl,
     "author": {
       "@type": "Person",
       "name": blog.author || "CareerFast Team"
@@ -82,22 +83,34 @@ export default async function Page({ params }) {
       "name": "CareerFast",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://careerfast.in/logo.png"
+        "url": "https://careerfast.in/og-image.png"
       }
     },
     "datePublished": blog.createdDate,
-  } : null;
+    ...(blog.updatedDate ? { "dateModified": blog.updatedDate } : {}),
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": canonicalUrl
+    }
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://careerfast.in/" },
+      { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://careerfast.in/blogs" },
+      { "@type": "ListItem", "position": 3, "name": blog.blogTitle, "item": canonicalUrl }
+    ]
+  };
 
   return (
     <>
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      )}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify([blogJsonLd, breadcrumbJsonLd]) }}
+      />
       <BlogSingle initialData={blog} serverSlug={slug} />
     </>
   );
 }
-

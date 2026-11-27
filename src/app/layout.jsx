@@ -13,6 +13,14 @@ import ClientRouteHandler from "./client-route-handler";
 import ScrollToTop from "../ScrollTop/ScrollToTop";
 import Script from "next/script";
 import { Suspense } from "react";
+import { Geist } from "next/font/google";
+
+const geist = Geist({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+  variable: "--font-geist",
+});
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID || "G-YX6Y57X00W";
 const GOOGLE_MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyA2-QH2Uf2Jq9AyVfotBjQfgS9-VkPTLQ4";
@@ -25,9 +33,16 @@ export const viewport = {
 
 export const metadata = {
   metadataBase: new URL('https://careerfast.in'),
-  title: "CareerFast",
+  title: {
+    default: "CareerFast | Find Jobs, Internships, Courses & Scholarships",
+    template: "%s | CareerFast",
+  },
   description: "Discover premium job opportunities and internships with top-tier companies. CareerFast connects job seekers with verified recruiters.",
   robots: "index, follow",
+  manifest: "/manifest.json",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     siteName: "CareerFast",
@@ -44,17 +59,47 @@ export const metadata = {
   },
 };
 
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "CareerFast",
+  "url": "https://careerfast.in",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://careerfast.in/jobs?search={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "CareerFast",
+  "url": "https://careerfast.in",
+  "logo": "https://careerfast.in/og-image.png",
+  "description": "CareerFast connects job seekers and students with verified employers for jobs, internships, scholarships, and career courses.",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "contactType": "Customer Service",
+    "email": "careerfastcontact@gmail.com"
+  }
+};
+
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={geist.variable} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://www.transparenttextures.com" />
-        <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" precedence="default" />
       </head>
       <body suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify([organizationJsonLd, websiteJsonLd]) }}
+        />
         <Providers>
           <Suspense fallback={null}>
             <ClientRouteHandler>

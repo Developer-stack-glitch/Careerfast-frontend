@@ -106,7 +106,7 @@ export default function ClientRouteHandler({ children }) {
       if (isRecruiter) {
         // Redirect logged-in recruiters to the dedicated HR portal domain
         const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-        const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'http://recruit.careerfast.in';
+        const defaultHrUrl = isLocalhost ? 'http://localhost:3001' : 'https://recruit.careerfast.in';
         const hrPortalUrl = process.env.NEXT_PUBLIC_HR_PORTAL_URL || defaultHrUrl;
         window.location.href = `${hrPortalUrl}/overview`;
         return;

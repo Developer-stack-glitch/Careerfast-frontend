@@ -1,8 +1,21 @@
-'use client';
-import dynamic from 'next/dynamic';
+import About from '@/About/About';
 
-const PageComponent = dynamic(() => import('@/About/About'), { ssr: false });
+export const metadata = {
+  title: "About Us - Our Mission & Career Platform",
+  description: "Learn about CareerFast, our mission to connect job seekers and students with verified employers, internships, scholarships, and career training across India.",
+  alternates: {
+    canonical: "https://careerfast.in/about",
+  },
+  openGraph: {
+    title: "About CareerFast | Jobs, Internships & Career Growth",
+    description: "Learn how CareerFast connects job seekers with verified employers, internships, and career resources.",
+    url: "https://careerfast.in/about",
+    siteName: "CareerFast",
+    images: ["https://careerfast.in/og-image.png"],
+    type: "website",
+  },
+};
 
-export default function Page() {
-  return <PageComponent />;
+export default function AboutPage() {
+  return <About />;
 }

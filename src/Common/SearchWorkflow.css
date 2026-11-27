@@ -552,6 +552,18 @@
 }
 
 /* ============================================================
+   Mobile-Only Location Filter
+   (Strictly hidden on desktop, visible on mobile <= 768px)
+   ============================================================ */
+.search-flow-divider-mobile-only {
+  display: none !important;
+}
+
+.search-flow-location-wrap-mobile-only {
+  display: none !important;
+}
+
+/* ============================================================
    Responsive Styles
    ============================================================ */
 @media (max-width: 768px) {
@@ -583,9 +595,35 @@
     margin: 2px 0;
   }
 
+  .search-flow-divider-mobile-only {
+    display: block !important;
+    width: 100%;
+    height: 1px;
+    background: #e2e8f0;
+    margin: 2px 0;
+  }
+
   .search-flow-input-wrap {
     width: 100%;
     padding: 0 4px;
+  }
+
+  .search-flow-location-wrap-mobile-only {
+    display: flex !important;
+    width: 100%;
+    padding: 0 4px;
+    align-items: center;
+    position: relative;
+  }
+
+  .search-flow-loc-icon {
+    color: #7f5af0;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  .search-flow-loc-suggestions {
+    top: calc(100% + 8px);
   }
 
   .search-flow-submit-btn {

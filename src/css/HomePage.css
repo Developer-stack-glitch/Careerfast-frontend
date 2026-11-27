@@ -577,12 +577,6 @@
   }
 }
 
-@media (max-width: 480px) {
-  .hp-trending-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 /* Featured Companies - Professional Job Portal Style */
 .hp-companies-section {
   padding: 60px 20px;

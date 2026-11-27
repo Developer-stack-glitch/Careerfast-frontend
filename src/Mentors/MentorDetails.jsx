@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import SEO from '../Components/SEO/SEO';
 import { useParams } from '@/routing-shim';
 import { Modal } from 'antd';
 import mentor1 from "../images/Ankit-Sharma.jpg";
@@ -254,40 +253,6 @@ const MentorDetails = () => {
     return (
         <div className="mentor-page">
             <Header />
-            <SEO
-                title={`${mentor.name} - ${mentor.title} at ${mentor.company}`}
-                description={`Book a 1:1 mentorship session with ${mentor.name}, ${mentor.title} at ${mentor.company}. ${mentor.about}`}
-                keywords={`${mentor.name}, ${mentor.title}, ${mentor.company}, mentorship, career guidance, ${mentor.skills.join(', ')}, CareerFast`}
-                ogType="profile"
-                ogImage={getImageUrl(mentor.image)}
-                twitterCard="summary"
-                structuredData={[
-                    {
-                        "@context": "https://schema.org",
-                        "@type": "Person",
-                        "name": mentor.name,
-                        "jobTitle": mentor.title,
-                        "worksFor": {
-                            "@type": "Organization",
-                            "name": mentor.company
-                        },
-                        "description": mentor.about,
-                        "image": getImageUrl(mentor.image),
-                        "url": `https://careerfast.in/mentor/${mentor.id}`,
-                        "aggregateRating": {
-                            "@type": "AggregateRating",
-                            "ratingValue": mentor.rating,
-                            "reviewCount": mentor.reviews
-                        },
-                        "offers": {
-                            "@type": "Offer",
-                            "price": mentor.price.replace('₹', ''),
-                            "priceCurrency": "INR",
-                            "description": "1:1 Mentorship Session"
-                        }
-                    }
-                ]}
-            />
 
             {/* HERO SECTION */}
             <div className="mentor-hero">
