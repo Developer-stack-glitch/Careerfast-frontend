@@ -4,13 +4,13 @@ export const metadata = {
   title: "Latest Job Openings - Find Your Dream Job",
   description: "Search and apply for the latest jobs across various industries and locations. CareerFast brings you the best career opportunities to help you succeed.",
   keywords: "jobs, job search, careers, hiring, vacancies, recruitment, CareerFast",
-  alternates: { canonical: "https://careerfast.in/jobs" },
+  alternates: { canonical: "https://www.careerfast.in/jobs" },
   openGraph: {
     title: "Latest Job Openings - Find Your Dream Job | CareerFast",
     description: "Search and apply for the latest jobs across industries and cities on CareerFast.",
-    url: "https://careerfast.in/jobs",
+    url: "https://www.careerfast.in/jobs",
     siteName: "CareerFast",
-    images: ["https://careerfast.in/og-image.png"],
+    images: ["https://www.careerfast.in/og-image.png"],
     type: "website",
   },
 };

@@ -5,7 +5,7 @@ export const metadata = {
   title: "Terms of Service",
   description: "Review CareerFast's Terms of Service governing job seekers, students, and recruiters using careerfast.in.",
   alternates: {
-    canonical: "https://careerfast.in/terms",
+    canonical: "https://www.careerfast.in/terms",
   },
 };
 

@@ -18,8 +18,8 @@ export async function generateMetadata({ params }) {
   const title = `${course.title} - Certification Course`;
   const description = cleanHtmlText(course.description || '').substring(0, 160)
     || `Enroll in ${course.title} on CareerFast with hands-on projects and placement support.`;
-  const canonicalUrl = `https://careerfast.in/courses/${slug}`;
-  const imageUrl = getAbsoluteMediaUrl(course.image, 'https://careerfast.in/og-image.png');
+  const canonicalUrl = `https://www.careerfast.in/courses/${slug}`;
+  const imageUrl = getAbsoluteMediaUrl(course.image, 'https://www.careerfast.in/og-image.png');
 
   return {
     title,
@@ -58,7 +58,7 @@ export default async function Page({ params }) {
     ? allCourses.filter((c) => c.slug !== slug).slice(0, 3)
     : [];
 
-  const canonicalUrl = `https://careerfast.in/courses/${slug}`;
+  const canonicalUrl = `https://www.careerfast.in/courses/${slug}`;
   const cleanDesc = cleanHtmlText(course.description || '').substring(0, 300);
 
   const courseJsonLd = {
@@ -70,7 +70,7 @@ export default async function Page({ params }) {
     "provider": {
       "@type": "Organization",
       "name": "CareerFast",
-      "sameAs": "https://careerfast.in"
+      "sameAs": "https://www.careerfast.in"
     }
   };
 
@@ -78,8 +78,8 @@ export default async function Page({ params }) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://careerfast.in/" },
-      { "@type": "ListItem", "position": 2, "name": "Courses", "item": "https://careerfast.in/courses" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.careerfast.in/" },
+      { "@type": "ListItem", "position": 2, "name": "Courses", "item": "https://www.careerfast.in/courses" },
       { "@type": "ListItem", "position": 3, "name": course.title, "item": canonicalUrl }
     ]
   };

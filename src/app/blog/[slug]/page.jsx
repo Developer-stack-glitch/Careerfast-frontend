@@ -4,14 +4,14 @@ import { fetchBlogBySlugForSEO, getAbsoluteMediaUrl } from '@/utils/seo-fetch';
 import { cleanHtmlText } from '@/utils/seo-helper';
 
 function getBlogOgImage(blog) {
-  if (!blog) return 'https://careerfast.in/og-image.png';
+  if (!blog) return 'https://www.careerfast.in/og-image.png';
   if (blog.blogImage && typeof blog.blogImage === 'string') {
     if (blog.blogImage.startsWith('data:')) {
-      return `https://careerfast.in/api/blogs/image/${blog.id}`;
+      return `https://www.careerfast.in/api/blogs/image/${blog.id}`;
     }
-    return getAbsoluteMediaUrl(blog.blogImage, 'https://careerfast.in/og-image.png');
+    return getAbsoluteMediaUrl(blog.blogImage, 'https://www.careerfast.in/og-image.png');
   }
-  return 'https://careerfast.in/og-image.png';
+  return 'https://www.careerfast.in/og-image.png';
 }
 
 export async function generateMetadata({ params }) {
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }) {
 
   const cleanDescription = cleanHtmlText(blog.overview || blog.blogDescription || '').substring(0, 160)
     || `Read ${blog.blogTitle} on CareerFast Blog.`;
-  const canonicalUrl = `https://careerfast.in/blog/${slug}`;
+  const canonicalUrl = `https://www.careerfast.in/blog/${slug}`;
   const imageUrl = getBlogOgImage(blog);
 
   return {
@@ -64,7 +64,7 @@ export default async function Page({ params }) {
     notFound();
   }
 
-  const canonicalUrl = `https://careerfast.in/blog/${slug}`;
+  const canonicalUrl = `https://www.careerfast.in/blog/${slug}`;
   const imageUrl = getBlogOgImage(blog);
   const cleanDescription = cleanHtmlText(blog.overview || blog.blogDescription || '').substring(0, 250);
 
@@ -83,7 +83,7 @@ export default async function Page({ params }) {
       "name": "CareerFast",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://careerfast.in/og-image.png"
+        "url": "https://www.careerfast.in/og-image.png"
       }
     },
     "datePublished": blog.createdDate,
@@ -98,8 +98,8 @@ export default async function Page({ params }) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://careerfast.in/" },
-      { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://careerfast.in/blogs" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.careerfast.in/" },
+      { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://www.careerfast.in/blogs" },
       { "@type": "ListItem", "position": 3, "name": blog.blogTitle, "item": canonicalUrl }
     ]
   };

@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
       description,
       url: canonicalUrl,
       siteName: 'CareerFast',
-      images: ['https://careerfast.in/og-image.png'],
+      images: ['https://www.careerfast.in/og-image.png'],
       type: 'website',
     },
   };
@@ -28,8 +28,8 @@ export default async function Page({ params }) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://careerfast.in/" },
-      { "@type": "ListItem", "position": 2, "name": "Scholarships", "item": "https://careerfast.in/scholarship" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.careerfast.in/" },
+      { "@type": "ListItem", "position": 2, "name": "Scholarships", "item": "https://www.careerfast.in/scholarship" },
       { "@type": "ListItem", "position": 3, "name": headline, "item": canonicalUrl }
     ]
   };

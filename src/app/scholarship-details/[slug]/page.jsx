@@ -24,8 +24,8 @@ export async function generateMetadata({ params, searchParams }) {
   const fullTitle = `${job.job_title} Scholarship | ${siteName}`;
   const cleanDescription = cleanHtmlText(job.seo_description || job.job_description || '').substring(0, 160)
     || `Apply for ${job.job_title} scholarship. Unlock educational opportunities on CareerFast.`;
-  const canonicalUrl = `https://careerfast.in/scholarship-details/${slug}`;
-  const imageUrl = getAbsoluteMediaUrl(job.company_logo, 'https://careerfast.in/og-image.png');
+  const canonicalUrl = `https://www.careerfast.in/scholarship-details/${slug}`;
+  const imageUrl = getAbsoluteMediaUrl(job.company_logo, 'https://www.careerfast.in/og-image.png');
 
   return {
     title: fullTitle,
@@ -72,7 +72,7 @@ export default async function Page({ params, searchParams }) {
     notFound();
   }
 
-  const canonicalUrl = `https://careerfast.in/scholarship-details/${slug}`;
+  const canonicalUrl = `https://www.careerfast.in/scholarship-details/${slug}`;
   const providerName = job ? formatJobCompany(job) : "CareerFast";
 
   const scholarshipJsonLd = job ? {
@@ -85,7 +85,7 @@ export default async function Page({ params, searchParams }) {
     "publisher": {
       "@type": "Organization",
       "name": providerName,
-      "url": "https://careerfast.in"
+      "url": "https://www.careerfast.in"
     }
   } : null;
 
@@ -93,8 +93,8 @@ export default async function Page({ params, searchParams }) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://careerfast.in/" },
-      { "@type": "ListItem", "position": 2, "name": "Scholarships", "item": "https://careerfast.in/scholarship" },
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.careerfast.in/" },
+      { "@type": "ListItem", "position": 2, "name": "Scholarships", "item": "https://www.careerfast.in/scholarship" },
       { "@type": "ListItem", "position": 3, "name": job.job_title, "item": canonicalUrl }
     ]
   } : null;

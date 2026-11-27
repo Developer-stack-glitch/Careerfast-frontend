@@ -5,7 +5,7 @@ export const metadata = {
   title: "Privacy Policy",
   description: "Read CareerFast's Privacy Policy to understand how we collect, use, and protect your personal information and job application data.",
   alternates: {
-    canonical: "https://careerfast.in/privacy",
+    canonical: "https://www.careerfast.in/privacy",
   },
 };
 

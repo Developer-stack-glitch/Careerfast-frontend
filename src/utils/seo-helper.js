@@ -196,11 +196,11 @@ export function parseFilterSlugMetadata(filterSlug = '', type = 'Jobs') {
     headline,
     title: `${headline} - Apply Online | CareerFast`,
     description: `Explore the latest ${headline.toLowerCase()} from verified companies on CareerFast. Filter by location, salary, and work mode and apply directly.`,
-    canonicalUrl: `https://careerfast.in${basePath}/${filterSlug}`,
+    canonicalUrl: `https://www.careerfast.in${basePath}/${filterSlug}`,
   };
 }
 
-function resolveSeoMediaUrl(url, fallback = 'https://careerfast.in/og-image.png') {
+function resolveSeoMediaUrl(url, fallback = 'https://www.careerfast.in/og-image.png') {
   if (!url || typeof url !== 'string') return fallback;
   const trimmed = url.trim();
   if (!trimmed || trimmed.startsWith('data:')) return fallback;
@@ -208,9 +208,9 @@ function resolveSeoMediaUrl(url, fallback = 'https://careerfast.in/og-image.png'
   const envApi = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL;
   const apiBase = (envApi && !(process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/i.test(envApi)))
     ? envApi
-    : 'https://careerfast.in';
+    : 'https://www.careerfast.in';
   if (trimmed.startsWith('/api/')) return `${apiBase}${trimmed}`;
-  if (trimmed.startsWith('/')) return `https://careerfast.in${trimmed}`;
+  if (trimmed.startsWith('/')) return `https://www.careerfast.in${trimmed}`;
   return `${apiBase}/${trimmed}`;
 }
 
@@ -307,7 +307,7 @@ export function buildJobPostingJsonLd(job, canonicalUrl, type = 'job') {
     hiringOrganization: {
       '@type': 'Organization',
       name: cleanCompany,
-      sameAs: 'https://careerfast.in',
+      sameAs: 'https://www.careerfast.in',
       logo: resolveSeoMediaUrl(job.company_logo),
     },
     jobLocation: {
@@ -346,12 +346,12 @@ export function buildJobBreadcrumbJsonLd(job, canonicalUrl, type = 'job') {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://careerfast.in/' },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.careerfast.in/' },
       {
         '@type': 'ListItem',
         position: 2,
         name: isInternship ? 'Internships' : 'Jobs',
-        item: isInternship ? 'https://careerfast.in/internships' : 'https://careerfast.in/jobs',
+        item: isInternship ? 'https://www.careerfast.in/internships' : 'https://www.careerfast.in/jobs',
       },
       {
         '@type': 'ListItem',

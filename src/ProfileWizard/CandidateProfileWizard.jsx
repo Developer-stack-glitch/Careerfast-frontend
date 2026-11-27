@@ -30,7 +30,7 @@ const WizardHeader = () => {
         className="flex items-center gap-2 cursor-pointer select-none"
       >
         <img
-          src="https://careerfast.in/_next/static/media/careerfastlogofinal.0nplzw.k4hsr8.png"
+          src="https://www.careerfast.in/_next/static/media/careerfastlogofinal.0nplzw.k4hsr8.png"
           alt="Careerfast"
           className="w-32 sm:w-44 h-auto object-contain"
         />

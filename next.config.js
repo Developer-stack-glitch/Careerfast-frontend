@@ -51,6 +51,21 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'careerfast.in' }],
+        destination: 'https://www.careerfast.in/:path*',
+        permanent: true,
+      },
+      {
+        source: '/:path*',
+        has: [
+          { type: 'host', value: 'www.careerfast.in' },
+          { type: 'header', key: 'x-forwarded-proto', value: 'http' },
+        ],
+        destination: 'https://www.careerfast.in/:path*',
+        permanent: true,
+      },
       { source: '/hr-jobs', destination: '/recruiter/overview', permanent: true },
       { source: '/hr-profile', destination: '/recruiter/profile', permanent: true },
       { source: '/post-jobs', destination: '/recruiter/post-job', permanent: true },

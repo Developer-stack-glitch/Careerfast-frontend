@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
 
   const title = `${mentor.name} - ${mentor.title} at ${mentor.company}`;
   const description = `Book a 1:1 mentorship session with ${mentor.name}, ${mentor.title} at ${mentor.company}. ${mentor.about}`;
-  const canonicalUrl = `https://careerfast.in/mentor/${mentor.id}`;
+  const canonicalUrl = `https://www.careerfast.in/mentor/${mentor.id}`;
 
   return {
     title,
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }) {
       description: description.substring(0, 160),
       url: canonicalUrl,
       siteName: 'CareerFast',
-      images: ['https://careerfast.in/og-image.png'],
+      images: ['https://www.careerfast.in/og-image.png'],
       type: 'profile',
     },
   };
@@ -47,7 +47,7 @@ export default async function Page({ params }) {
     "jobTitle": mentor.title,
     "worksFor": { "@type": "Organization", "name": mentor.company },
     "description": mentor.about,
-    "url": `https://careerfast.in/mentor/${mentor.id}`
+    "url": `https://www.careerfast.in/mentor/${mentor.id}`
   };
 
   return (

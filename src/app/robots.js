@@ -33,6 +33,6 @@ export default function robots() {
         ],
       },
     ],
-    sitemap: 'https://careerfast.in/sitemap.xml',
+    sitemap: 'https://www.careerfast.in/sitemap.xml',
   };
 }

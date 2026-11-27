@@ -47,8 +47,8 @@ export async function generateMetadata({ params, searchParams }) {
   ].filter(Boolean).join(", ");
 
   const canonicalSlug = getJobSlug(job) || slug;
-  const canonicalUrl = `https://careerfast.in/job-details/${canonicalSlug}`;
-  const logoUrl = getAbsoluteMediaUrl(job.company_logo, "https://careerfast.in/og-image.png");
+  const canonicalUrl = `https://www.careerfast.in/job-details/${canonicalSlug}`;
+  const logoUrl = getAbsoluteMediaUrl(job.company_logo, "https://www.careerfast.in/og-image.png");
   const shouldIndex = !isPreview && job.is_closed !== 1 && job.is_closed !== true;
 
   return {
@@ -117,7 +117,7 @@ export default async function Page({ params, searchParams }) {
   }
 
   const canonicalSlug = (job && getJobSlug(job)) || slug;
-  const canonicalUrl = `https://careerfast.in/job-details/${canonicalSlug}`;
+  const canonicalUrl = `https://www.careerfast.in/job-details/${canonicalSlug}`;
   const jobJsonLd = buildJobPostingJsonLd(job, canonicalUrl, 'job');
   const breadcrumbJsonLd = buildJobBreadcrumbJsonLd(job, canonicalUrl, 'job');
   const structuredData = [jobJsonLd, breadcrumbJsonLd].filter(Boolean);

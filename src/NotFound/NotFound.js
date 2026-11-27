@@ -167,7 +167,7 @@ const NotFound = () => {
 
       {/* Footer */}
       <div className="absolute bottom-8 w-full max-w-[1200px] flex flex-col md:flex-row justify-between items-center text-[13.5px] text-slate-500 px-8 z-10">
-        <p className="mb-4 md:mb-0 font-medium">© 2026 <a href="https://careerfast.in/" target="_blank" className="text-[#5D4FEC] transition-colors hover:text-[#4C40D4]">Careerfast</a>. All rights reserved.</p>
+        <p className="mb-4 md:mb-0 font-medium">© 2026 <a href="https://www.careerfast.in/" target="_blank" className="text-[#5D4FEC] transition-colors hover:text-[#4C40D4]">Careerfast</a>. All rights reserved.</p>
         <button onClick={() => navigate("/contact")} className="hover:text-[#5D4FEC] transition-colors flex items-center gap-1.5 group">
           Need help? <span className="font-semibold text-[#5D4FEC]">Contact Support</span>
           <ArrowRight className="w-4 h-4 text-[#5D4FEC] group-hover:translate-x-1 transition-transform" />

@@ -8,19 +8,19 @@ export const metadata = {
   openGraph: {
     title: "CareerFast | Find Jobs & Internships - Your Career Growth Partner",
     description: "Discover premium job opportunities and internships with top-tier companies. Connect with 25K+ verified recruiters and explore 100K+ listings.",
-    url: "https://careerfast.in/",
+    url: "https://www.careerfast.in/",
     siteName: "CareerFast",
-    images: ["https://careerfast.in/og-image.png"],
+    images: ["https://www.careerfast.in/og-image.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "CareerFast | Find Jobs & Internships - Your Career Growth Partner",
     description: "Discover premium job opportunities and internships with top-tier companies. Connect with 25K+ verified recruiters and explore 100K+ listings.",
-    images: ["https://careerfast.in/og-image.png"],
+    images: ["https://www.careerfast.in/og-image.png"],
   },
   alternates: {
-    canonical: "https://careerfast.in/",
+    canonical: "https://www.careerfast.in/",
   },
 };
 

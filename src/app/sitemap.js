@@ -5,11 +5,11 @@ const getApiBaseUrl = () => {
   if (envUrl && !(process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/i.test(envUrl))) {
     return envUrl;
   }
-  return 'https://careerfast.in';
+  return 'https://www.careerfast.in';
 };
 
 const apiBaseUrl = getApiBaseUrl();
-const baseUrl = 'https://careerfast.in';
+const baseUrl = 'https://www.careerfast.in';
 
 export const revalidate = 3600;
 

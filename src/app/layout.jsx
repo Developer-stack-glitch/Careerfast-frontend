@@ -32,7 +32,7 @@ export const viewport = {
 };
 
 export const metadata = {
-  metadataBase: new URL('https://careerfast.in'),
+  metadataBase: new URL('https://www.careerfast.in'),
   title: {
     default: "CareerFast | Find Jobs, Internships, Courses & Scholarships",
     template: "%s | CareerFast",
@@ -46,12 +46,12 @@ export const metadata = {
   openGraph: {
     type: "website",
     siteName: "CareerFast",
-    images: ["https://careerfast.in/og-image.png"],
+    images: ["https://www.careerfast.in/og-image.png"],
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    images: ["https://careerfast.in/og-image.png"],
+    images: ["https://www.careerfast.in/og-image.png"],
   },
   icons: {
     icon: "/favicon.png",
@@ -63,12 +63,12 @@ const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   "name": "CareerFast",
-  "url": "https://careerfast.in",
+  "url": "https://www.careerfast.in",
   "potentialAction": {
     "@type": "SearchAction",
     "target": {
       "@type": "EntryPoint",
-      "urlTemplate": "https://careerfast.in/jobs?search={search_term_string}"
+      "urlTemplate": "https://www.careerfast.in/jobs?search={search_term_string}"
     },
     "query-input": "required name=search_term_string"
   }
@@ -78,8 +78,8 @@ const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "CareerFast",
-  "url": "https://careerfast.in",
-  "logo": "https://careerfast.in/og-image.png",
+  "url": "https://www.careerfast.in",
+  "logo": "https://www.careerfast.in/og-image.png",
   "description": "CareerFast connects job seekers and students with verified employers for jobs, internships, scholarships, and career courses.",
   "contactPoint": {
     "@type": "ContactPoint",

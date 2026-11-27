@@ -5,20 +5,20 @@ export const metadata = {
   title: "Career Insights, Tips & Strategies",
   description: "Stay updated with the latest career insights, job search strategies, interview tips, and professional development advice on CareerFast.",
   keywords: "career blogs, job search tips, interview preparation, career advice, resume tips, CareerFast",
-  alternates: { canonical: "https://careerfast.in/blogs" },
+  alternates: { canonical: "https://www.careerfast.in/blogs" },
   openGraph: {
     title: "Career Insights, Tips & Strategies | CareerFast",
     description: "Expert career insights, job search strategies, and interview tips from CareerFast.",
-    url: "https://careerfast.in/blogs",
+    url: "https://www.careerfast.in/blogs",
     siteName: "CareerFast",
-    images: ["https://careerfast.in/og-image.png"],
+    images: ["https://www.careerfast.in/og-image.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title: "Career Insights, Tips & Strategies | CareerFast",
     description: "Expert career insights, job search strategies, and interview tips from CareerFast.",
-    images: ["https://careerfast.in/og-image.png"],
+    images: ["https://www.careerfast.in/og-image.png"],
   },
 };
 
@@ -29,8 +29,8 @@ export default async function Page() {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://careerfast.in/" },
-      { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://careerfast.in/blogs" }
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://www.careerfast.in/" },
+      { "@type": "ListItem", "position": 2, "name": "Blogs", "item": "https://www.careerfast.in/blogs" }
     ]
   };
 

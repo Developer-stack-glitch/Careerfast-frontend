@@ -5,18 +5,18 @@ const getApiBaseUrl = () => {
   if (envUrl && !(process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/i.test(envUrl))) {
     return envUrl;
   }
-  return 'https://careerfast.in';
+  return 'https://www.careerfast.in';
 };
 
 const apiBaseUrl = getApiBaseUrl();
 
-export const getAbsoluteMediaUrl = (url, fallback = 'https://careerfast.in/og-image.png') => {
+export const getAbsoluteMediaUrl = (url, fallback = 'https://www.careerfast.in/og-image.png') => {
   if (!url || typeof url !== 'string') return fallback;
   const trimmed = url.trim();
   if (!trimmed || trimmed.startsWith('data:')) return fallback;
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
   if (trimmed.startsWith('/api/')) return `${apiBaseUrl}${trimmed}`;
-  if (trimmed.startsWith('/')) return `https://careerfast.in${trimmed}`;
+  if (trimmed.startsWith('/')) return `https://www.careerfast.in${trimmed}`;
   return `${apiBaseUrl}/${trimmed}`;
 };
 

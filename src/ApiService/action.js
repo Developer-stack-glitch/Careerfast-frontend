@@ -10,11 +10,11 @@ const resolveApiBaseUrl = () => {
       window.location.hostname === "127.0.0.1";
     if (!isBrowserLocal) {
       if (!envUrl || /localhost|127\.0\.0\.1/i.test(envUrl)) {
-        return "https://careerfast.in";
+        return "https://www.careerfast.in";
       }
     }
   }
-  return envUrl || "https://careerfast.in";
+  return envUrl || "https://www.careerfast.in";
 };
 
 const api = axios.create({
@@ -1338,7 +1338,7 @@ export const sendNotification = async () => {
       {
         title: "New Job Post Created 🚀",
         body: "Check out the job post details and apply now!",
-        link: "https://careerfast.in/",
+        link: "https://www.careerfast.in/",
         icon: "/favicon.png",
       }
     );
@@ -2547,6 +2547,6 @@ export const uploadBulkCandidates = async (payload, isFormData = true) => {
 };
 
 export const downloadCandidateTemplateUrl = (type = "standard") => {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "https://careerfast.in";
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || "https://www.careerfast.in";
   return `${baseUrl}/api/admin/bulk-upload-candidates/sample-template?type=${type}`;
 };

@@ -332,7 +332,7 @@ export default function Footer() {
         <div className="footer-bottom">
           <div className="footer-bottom-left">
             <p className="footer-copyright">
-              © 2026 All rights reserved by <a href="https://careerfast.in" style={{ color: "#818cf8", cursor: "pointer" }} target="_blank" rel="noopener noreferrer">Careerfast.in</a>.
+              © 2026 All rights reserved by <a href="https://www.careerfast.in" style={{ color: "#818cf8", cursor: "pointer" }} target="_blank" rel="noopener noreferrer">Careerfast.in</a>.
             </p>
           </div>
 

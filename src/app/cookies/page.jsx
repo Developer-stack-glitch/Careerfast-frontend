@@ -5,7 +5,7 @@ export const metadata = {
   title: "Cookie Policy",
   description: "Learn how CareerFast uses cookies and local storage to keep your session secure and personalize your job search.",
   alternates: {
-    canonical: "https://careerfast.in/cookies",
+    canonical: "https://www.careerfast.in/cookies",
   },
 };
 
