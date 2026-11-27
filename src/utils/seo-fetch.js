@@ -1,9 +1,11 @@
 import { generateSlug } from './slug';
 
 const getApiBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-  if (process.env.REACT_APP_API_URL) return process.env.REACT_APP_API_URL;
-  return 'https://api.careerfast.in';
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL;
+  if (envUrl && !(process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/i.test(envUrl))) {
+    return envUrl;
+  }
+  return 'https://careerfast.in';
 };
 
 const apiBaseUrl = getApiBaseUrl();
@@ -116,7 +118,7 @@ export const fetchRelatedJobsForSEO = async (excludeJobId, category = null, type
 export const fetchCoursesForSEO = async (limit = 4) => {
   try {
     const response = await fetch(`${apiBaseUrl}/api/courses?limit=${limit}`, {
-      next: { revalidate: 3600 }
+      cache: 'no-store',
     });
     if (!response.ok) return [];
     const courses = await response.json();
@@ -194,7 +196,7 @@ export const fetchHomePageDataForSEO = async () => {
       }),
       fetch(`${apiBaseUrl}/api/courses?limit=6`, {
         signal: controller.signal,
-        next: { revalidate: 1800 },
+        cache: 'no-store',
       }),
       fetch(`${apiBaseUrl}/api/getHomePageStats`, {
         signal: controller.signal,

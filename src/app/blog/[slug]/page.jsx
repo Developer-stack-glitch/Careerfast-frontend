@@ -7,7 +7,7 @@ function getBlogOgImage(blog) {
   if (!blog) return 'https://careerfast.in/og-image.png';
   if (blog.blogImage && typeof blog.blogImage === 'string') {
     if (blog.blogImage.startsWith('data:')) {
-      return `https://api.careerfast.in/api/blogs/image/${blog.id}`;
+      return `https://careerfast.in/api/blogs/image/${blog.id}`;
     }
     return getAbsoluteMediaUrl(blog.blogImage, 'https://careerfast.in/og-image.png');
   }

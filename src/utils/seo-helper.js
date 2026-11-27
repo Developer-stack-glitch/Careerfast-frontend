@@ -205,7 +205,10 @@ function resolveSeoMediaUrl(url, fallback = 'https://careerfast.in/og-image.png'
   const trimmed = url.trim();
   if (!trimmed || trimmed.startsWith('data:')) return fallback;
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://api.careerfast.in';
+  const envApi = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL;
+  const apiBase = (envApi && !(process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/i.test(envApi)))
+    ? envApi
+    : 'https://careerfast.in';
   if (trimmed.startsWith('/api/')) return `${apiBase}${trimmed}`;
   if (trimmed.startsWith('/')) return `https://careerfast.in${trimmed}`;
   return `${apiBase}/${trimmed}`;

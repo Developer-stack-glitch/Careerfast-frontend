@@ -2,8 +2,23 @@
 import axios from "axios";
 import { Modal } from "antd";
 
+const resolveApiBaseUrl = () => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL;
+  if (typeof window !== "undefined") {
+    const isBrowserLocal =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    if (!isBrowserLocal) {
+      if (!envUrl || /localhost|127\.0\.0\.1/i.test(envUrl)) {
+        return "https://careerfast.in";
+      }
+    }
+  }
+  return envUrl || "https://careerfast.in";
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || process.env.REACT_APP_API_URL || 'https://careerfast.in',
+  baseURL: resolveApiBaseUrl(),
 });
 
 let isModalVisible = false;
@@ -279,7 +294,7 @@ export const getUsers = async (payload) => {
 
 export const googleLogin = async (data) => {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3006";
+    const baseUrl = resolveApiBaseUrl();
     try {
       const response = await axios.post(`${baseUrl}/auth/google`, data);
       return response;
